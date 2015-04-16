@@ -16,7 +16,10 @@ written. Any other objects are coerced to a character type. Elements are concate
 separator to form the text for a list item.}
 
 \item{type}{List type to be used for the list and/or its sublists in case the attribute \code{type} is not
-              specified.}
+specified.}
+}
+\value{
+The modified report, invisibly.
 }
 \description{
 Generates HTML code for a list in the specified report.

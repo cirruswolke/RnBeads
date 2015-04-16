@@ -6,14 +6,14 @@
 \usage{
 read.bed.files(base.dir = NULL, file.names = NULL, sample.sheet = NULL,
   file.names.col = 0, assembly = rnb.getOption("assembly"),
-  region.types = rnb.region.types.for.analysis(rnb.getOption("assembly")),
+  region.types = rnb.region.types.for.analysis(assembly),
   pos.coord.shift = 1L, skip.lines = 1,
   sep.samples = rnb.getOption("import.table.separator"),
   merge.bed.files = TRUE, useff = rnb.getOption("disk.dump.big.matrices"),
   verbose = TRUE, ...)
 }
 \arguments{
-\item{base.dir}{Directory with 6+2 formatted BED files contatining processed methylation data}
+\item{base.dir}{Directory with BED files contatining processed methylation data}
 
 \item{file.names}{Optional non-empty \code{character} vector listing the names of the files that should be
 loaded relative to \code{base.dir}. If supplied, this vector must not contain \code{NA}
@@ -55,13 +55,14 @@ stored in case of an error.}
 
 \item{...}{Further arguments which are passed to the internal function \code{read.single.bed} and to \code{read.table}}
 }
+\value{
+an object of class \code{\linkS4class{RnBiseqSet}}
+}
 \description{
 Reads a reduced-representation/whole-genome bisulfite sequencing data set from a set of BED files
 }
 \details{
-Each loaded BED file should follow the 6+2 convention: six standard BED columns (chromosome, start, end, feature.name,
-						feature value, strand) plus two additional columns -- mean methylation level of a methylation site and the number of reads
-						covering it.
+To control the BED column assignment, one should also supply arguments to \code{read.single.bed}
 }
 \author{
 Pavlo Lutsik

@@ -6,6 +6,9 @@
 \usage{
 \method{parallel}{teardown}()
 }
+\value{
+\code{TRUE}, invisibly.
+}
 \description{
 Disables parallel processing.
 }

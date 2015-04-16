@@ -6,8 +6,11 @@
 \usage{
 logger.machine.name()
 }
+\value{
+None (invisible \code{NULL}).
+}
 \description{
-log the machine name the analysis is run on
+Log the machine name the analysis is run on
 }
 \author{
 Fabian Mueller

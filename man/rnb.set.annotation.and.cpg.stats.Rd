@@ -13,6 +13,9 @@ rnb.set.annotation.and.cpg.stats(type, regions, description = NULL,
 \item{regions}{a data.frame handled similarly as by \code{\link{rnb.set.annotation}} with the exception that
 the genomic location columns should be specified using upper case first letters}
 }
+\value{
+Invisibly, \code{TRUE} if an existing annotation was replaced and \code{FALSE} otherwise.
+}
 \description{
 wrapper for \code{\link{rnb.set.annotation}} to accept the region format as output by \code{annotation(rnb.set)}.
 Additionally, CpG statistics are added to the annotation.

@@ -24,7 +24,10 @@ identifiers.}
 this vector are concatenated without a separator to form the description of the annotation.}
 
 \item{assembly}{Genome assembly of interest. See \code{\link{rnb.get.assemblies}} for the list of supported
-                   genomes.}
+genomes.}
+}
+\value{
+Invisibly, \code{TRUE} if an existing annotation was replaced and \code{FALSE} otherwise.
 }
 \description{
 Adds or replaces a region annotation table.

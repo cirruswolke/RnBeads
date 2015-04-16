@@ -9,6 +9,9 @@ rnb.show.report(report)
 \arguments{
 \item{report}{\code{\linkS4class{Report}} object to open.}
 }
+\value{
+None (invisible \code{NULL}).
+}
 \description{
 Opens the given HMTL report file in the browser.
 }

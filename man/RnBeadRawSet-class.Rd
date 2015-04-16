@@ -49,6 +49,9 @@ RnBeadRawSet(pheno, probes, M, U, M0 = NULL, U0 = NULL,
 
 \item{ffcleanup}{If \code{TRUE} and disk dumping has been enabled the data of the input \code{ff} objects will be deleted}
 }
+\value{
+an object of class RnBeadRawSet
+}
 \description{
 Main class for storing HumanMethylation micorarray data which includes intensity information
 

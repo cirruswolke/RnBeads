@@ -37,6 +37,9 @@ strand (\code{character}, one of \code{"+"}, \code{"-"} or \code{"*"}}
 \item{verbose}{flag specifying whether the diagnostic messages should be written to the
                         console or to the RnBeads logger, if the latter is initialized}
 }
+\value{
+an object of class RnBiseqSet
+}
 \description{
 A class for storing the DNA methylation and quality information from bisulfite sequencing experiments
 

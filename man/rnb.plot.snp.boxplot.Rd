@@ -13,6 +13,10 @@ rnb.plot.snp.boxplot(rnb.set, writeToFile = FALSE, ...)
 
 \item{...}{other arguments to \code{\link{createReportPlot}}}
 }
+\value{
+plot as an object of type \code{\linkS4class{ReportPlot}} if \code{writeToFile} is \code{TRUE} and of class
+			\code{\link{ggplot}} otherwise.
+}
 \description{
 Box plots of beta-values from the genotyping probes
 }

@@ -16,6 +16,9 @@ this file already exists, it will be overwritten.}
 
 \item{format}{Output format. currently only \code{"bed"} is supported.}
 }
+\value{
+\code{TRUE}, invisibly.
+}
 \description{
 Export the annotation to a defined format (currently only bed is supported
 }

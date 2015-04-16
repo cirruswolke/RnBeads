@@ -13,12 +13,15 @@ rnb.add.paragraph(report, txt, paragraph.class = NULL)
 are concatenated without a separator.}
 
 \item{paragraph.class}{CSS class definition of the paragraph. This must be either \code{NULL} (default) or one of:
-                       \describe{
-                         \item{\code{"centered"}}{This paragraph gives a formula or a short statement. Text is
-                              horizontally centered.}
-                         \item{\code{"note"}}{This paragraph describes a note. Text is italic.}
-                         \item{\code{"task"}}{This paragraph describes a task. Text is bold and bright red.}
-                       }}
+\describe{
+  \item{\code{"centered"}}{This paragraph gives a formula or a short statement. Text is
+       horizontally centered.}
+  \item{\code{"note"}}{This paragraph describes a note. Text is italic.}
+  \item{\code{"task"}}{This paragraph describes a task. Text is bold and bright red.}
+}}
+}
+\value{
+The modified report, invisibly.
 }
 \description{
 Generates HTML code for a new paragraph in the specified report.

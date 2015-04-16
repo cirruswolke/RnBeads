@@ -38,7 +38,10 @@ separate line, applying the indentation given by \code{indent}.}
 caption.}
 
 \item{na}{\code{character} to be used for printing \code{NA} values in the table. This parameter is
-                        not considered when printing \code{thead} or the table's column names.}
+not considered when printing \code{thead} or the table's column names.}
+}
+\value{
+The modified report, invisibly.
 }
 \description{
 Generates HTML code for a table in the specified report.
