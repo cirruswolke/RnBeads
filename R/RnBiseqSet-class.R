@@ -83,6 +83,7 @@ setMethod("initialize", "RnBiseqSet",
 #' @param verbose		flag specifying whether the diagnostic messages should be written to the 
 #' 						console or to the RnBeads logger, if the latter is initialized
 #' 
+#' @return an object of class RnBiseqSet
 #' 
 #' @name RnBiseqSet
 #' @rdname RnBiseqSet-class

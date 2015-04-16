@@ -601,7 +601,7 @@ read.idat.files <- function(base.dir,
 	if(is.null(barcodes) && is.null(sample.sheet)){
 		stop("invalid value for barcodes and/or sample.sheet")
 	}
-	if(any(is.na(barcodes))){
+	if(!is.null(barcodes) && any(is.na(barcodes))){
 		stop("invalid value for barcodes: missing values")
 	}
 	if(ncol(sample.sheet) < 2){
@@ -894,7 +894,7 @@ read.GS.report<-function(
 #' 
 #' Reads a reduced-representation/whole-genome bisulfite sequencing data set from a set of BED files 
 #' 
-#' @param base.dir 		Directory with 6+2 formatted BED files contatining processed methylation data
+#' @param base.dir 		Directory with BED files contatining processed methylation data
 #' @param file.names    Optional non-empty \code{character} vector listing the names of the files that should be
 #'                      loaded relative to \code{base.dir}. If supplied, this vector must not contain \code{NA} 
 #' 						among its elements.
@@ -924,18 +924,19 @@ read.GS.report<-function(
 #'                      stored in case of an error.
 #' @param ...			Further arguments which are passed to the internal function \code{read.single.bed} and to \code{read.table}
 #' 
-#' @details 			Each loaded BED file should follow the 6+2 convention: six standard BED columns (chromosome, start, end, feature.name,
-#' 						feature value, strand) plus two additional columns -- mean methylation level of a methylation site and the number of reads
-#' 						covering it.
+#' @return an object of class \code{\linkS4class{RnBiseqSet}}
+#' 
+#' @details 			To control the BED column assignment, one should also supply arguments to \code{read.single.bed}
+#' 
 #' @author Pavlo Lutsik
 #' @export 
-
+#' 
 read.bed.files<-function(base.dir=NULL, 
 		file.names = NULL, 
 		sample.sheet = NULL, 
 		file.names.col=0, 
 		assembly=rnb.getOption("assembly"), 
-		region.types=rnb.region.types.for.analysis(rnb.getOption("assembly")),
+		region.types=rnb.region.types.for.analysis(assembly),
 		pos.coord.shift=1L, 
 		skip.lines=1, 
 		sep.samples=rnb.getOption("import.table.separator"),
@@ -1244,27 +1245,37 @@ read.bed.files<-function(base.dir=NULL,
 }
 
 ########################################################################################################################
-
-##	read.bissnp.bed
-## 
-##	reads a BED file with methylation information
-## 
-##	@param file											the input BED file
-##  @param context										the prefix of the output rownames
-##  @param chr.col, start.col,end.col,strand.col		the column with the chromosome information
-##	@param mean.meth.col, c.col, t.col					columns with methylation information
-##	@param coverage.col									column with coverage information
-##  @param is.epp.style									flag for custom Broad Epigenome Pipeline (EPP) bed style: 
-##                                                      chrom \t start \t end \t 'methylated_count/total_count' \t meth_score_scaled_0_1000 \t strand
-##                                                      OVERWRITES ALL OTHER parameters except \code{file} (also neglects ...)
-##  @param coord.shift 									An integer specifying the coordinate adjustment applied to the start and end coordinates.
-## 
-##  @return a \code{data.frame} object with DNA methylation and coverage information. The row names are formed by the following convension: 
-##  		\code{context\\.read.delim(file,...)[,chr.col]\\.read.delim(file,...)[,start.col]\\.read.delim(file,...)[,strand.col]}.
-##  @author Pavlo Lutsik
-##
+#'	read.single.bed
+#' 
+#'	reads a BED file with methylation information
+#' 
+#'	@param file				the input BED file
+#'  @param chr.col			chromosome column index
+#'  @param start.col		start column index
+#'  @param end.col			end column index
+#'  @param strand.col		strand column index
+#'	@param mean.meth.col	mean methylation column index
+#'  @param c.col			converted C counts column index
+#'  @param t.col			unconverted C counts column index
+#'	@param coverage.col		column with coverage information
+#'  @param is.epp.style		Flag for custom Broad Epigenome Pipeline (EPP) bed style (columns \code{"chrom"}, \code{"start"},
+#'                          \code{"end"}, \code{"methylated_count/total_count"}, \code{"meth_score_scaled_0_1000"} and
+#'                          \code{"strand"} in this order). Setting this to \code{TRUE} overwrites all other parameters except
+#'                          \code{file}, and also neglects \code{...}.
+#'  @param coord.shift 		An integer specifying the coordinate adjustment applied to the start and end coordinates.
+#'  @param ffread			Use \code{ff} package functionality
+#'  @param context			prefix for the output rownames
+#'  @param ...				further arguments to \code{read.table} or \code{read.table.ffdf}
+#' 
+#'  @details Missing columns should be assigned with \code{NA}. In case \code{mean.meth.col} is absent at least \code{coverage.col} 
+#' 			and one of \code{c.col} or \code{t.col} should be specified.
+#' 
+#'  @return a \code{data.frame} or \code{ff.data.frame} object with DNA methylation and coverage information. The row names are formed by the following convension: 
+#'  		\code{context\\.read.delim(file,...)[,chr.col]\\.read.delim(file,...)[,start.col]\\.read.delim(file,...)[,strand.col]}.
+#' 
+#'  @author Pavlo Lutsik
+#'  @export
 read.single.bed<-function(file, 
-		context="cg", 
 		chr.col=1L, 
 		start.col=2L, 
 		end.col=3L, 
@@ -1276,6 +1287,7 @@ read.single.bed<-function(file,
 		is.epp.style=FALSE, 
 		coord.shift=0L,
 		ffread=FALSE,
+		context="cg",
 		...){
 	
 	if(all(is.na(mean.meth.col), any(is.na(c(c.col, t.col)))) && !is.epp.style){
@@ -1439,7 +1451,6 @@ read.single.bed<-function(file,
 }
 
 ########################################################################################################################
-
 ##
 ##	find.bed.column
 ##
@@ -1503,6 +1514,13 @@ find.bed.column<-function(annotation,
 	return(list(potential.fnames[candidate.fname], absolute))
 }
 ########################################################################################################################
+##
+##	get.bed.column.classes
+##
+##	Tries to infer classes of the BED columns based on several top lines of the file 
+##
+##	@author Pavlo Lutsik
+##
 get.bed.column.classes<-function(bed.top,
 		chr.col=1L, 
 		start.col=2L, 
@@ -1546,6 +1564,13 @@ get.bed.column.classes<-function(bed.top,
 	return(classes)
 }
 ########################################################################################################################
+##
+##	detect.infinium.platform
+##
+##	Tries to infer the version of the Infinium platform based on the names of IDAT files
+##
+##	@author Pavlo Lutsik
+##
 detect.infinium.platform<-function(barcodes){
 	
 	inf27k.idats.present<-any(grepl("_[ABCDEFGHIJKL]$", barcodes))
@@ -1561,3 +1586,4 @@ detect.infinium.platform<-function(barcodes){
 	}
 	rnb.error("Undefined platform; please check Sentrix ID and Sentrix Position columns in the sample sheet")
 }
+########################################################################################################################

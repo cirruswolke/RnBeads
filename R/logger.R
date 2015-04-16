@@ -184,6 +184,7 @@ logger.isinitialized <- function() {
 #' @param txt       Text to add to the log file. This must be a \code{character} vector; its elements are concatenated
 #'                  using a single space (\code{" "}) as a separator.
 #' @param terminate Flag indicating if the execution is to be terminated after this error message is added to the log.
+#' @return None (invisible \code{NULL}).
 #'
 #' @examples
 #' \donttest{
@@ -274,6 +275,7 @@ logger.error <- function(txt, terminate = rnb.getOption("logging.exit.on.error")
 #'              containing one file name and \code{NA}, the logger is (re)initialized to print messages both to the
 #'              given file name and the console. A value of \code{NULL} (default) indicates the logger should continue
 #'              using the previously specified file.
+#' @return None (invisible \code{NULL}).
 #'
 #' @examples
 #' \donttest{

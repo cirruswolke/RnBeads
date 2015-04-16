@@ -338,7 +338,7 @@ setMethod("off", "ReportGgPlot",
 #' createReportGgPlot
 #'
 #' creates a report plot containing a \code{ggplot object}. Except for the \code{ggp} parameter, the signature and
-#' behavior is identical to \code{\link{createReportPlot}}
+#' behavior is identical to \code{\link{createReportPlot}}.
 #' 
 #' @param ggp        \code{ggplot} object to be plotted
 #' @param fname      \code{character} vector with one element storing the name of the output file, without the
@@ -355,6 +355,7 @@ setMethod("off", "ReportGgPlot",
 #'                   to disable the creation of a low resolution image. The length of this vector must be \code{1}.
 #' @param high.png   Resolution, in dots per inch, used for a dedicated image. Set this to \code{0} or a negative value
 #'                   to disable the creation of a high resolution image. The length of this vector must be \code{1}.
+#' @return Newly created \code{ReportGgPlot} object.
 #'
 #' @author Fabian Mueller
 #' @export

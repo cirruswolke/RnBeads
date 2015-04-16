@@ -328,6 +328,7 @@ rnb.sample.replicates <- function(rnb.set, replicate.id.col) {
 #' Opens the given HMTL report file in the browser.
 #' 
 #' @param report \code{\linkS4class{Report}} object to open.
+#' @return None (invisible \code{NULL}).
 #' @author Pavlo Lutsik
 #' @export
 rnb.show.report <- function(report) {

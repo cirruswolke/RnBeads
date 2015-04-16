@@ -8,11 +8,13 @@ citEntry(entry = "Article",
 		as.person("Joern Walter"),
 		as.person("Thomas Lengauer"),
 		as.person("Christoph Bock")),
-	year = 2014L,
 	journal = "Nature Methods",
-	issn = "1548-7091",
-	publisher = "Macmillan Publishers Limited",
+	year = 2014L,
+	volume = 11L,
+	number = 11L,
+	pages = "1138--1140",
+	month = "nov",
 	url = "http://rnbeads.mpi-inf.mpg.de",
-	note = "in press",
-	textVersion = "Yassen Assenov*, Fabian Mueller*, Pavlo Lutsik*, Joern Walter, Thomas Lengauer and Christoph Bock (2014) Comprehensive Analysis of DNA Methylation Data with RnBeads. Nature Methods, in press."
+	doi = "10.1038/nmeth.3115",
+	textVersion = "Yassen Assenov*, Fabian Mueller*, Pavlo Lutsik*, Joern Walter, Thomas Lengauer and Christoph Bock (2014) Comprehensive Analysis of DNA Methylation Data with RnBeads. Nature Methods, 11(11), 1138-1140."
 )

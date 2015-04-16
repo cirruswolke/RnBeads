@@ -291,8 +291,8 @@ estimateProportionsCP<-function(
 	
 	# Linear transformation of coefficient vector
 	#  representing contrast to test F statistic
-	#L.forFstat <- diag(sizeModel)[-1,,drop=F]  #All non-intercept coefficients
-	L.forFstat <- diag(sizeModel)[,drop=F]
+	#L.forFstat <- diag(sizeModel)[-1,,drop=FALSE]  #All non-intercept coefficients
+	L.forFstat <- diag(sizeModel)[,drop=FALSE]
 	
 	# Initialize various containers
 	sigmaResid <- sigmaIcept <- nObserved <- nClusters <- Fstat <- rep(NA, M)
@@ -335,10 +335,10 @@ estimateProportionsCP<-function(
 					coefEsts[j,] <- fitCoef
 					coefVcovs[[j]] <- vcov(fit)
 					
-#					useCoef <- L.forFstat[!is.na(fitCoef)[-1],!is.na(fitCoef),drop=F] %*% fitCoef[!is.na(fitCoef)]
-					#useCoef <- L.forFstat[!is.na(fitCoef),!is.na(fitCoef),drop=F] %*% fitCoef[!is.na(fitCoef)]
-#					useV <- L.forFstat[!is.na(fitCoef)[-1],!is.na(fitCoef),drop=F] %*% coefVcovs[[j]] %*% t(L.forFstat[!is.na(fitCoef)[-1],!is.na(fitCoef),drop=F])
-					#useV <- L.forFstat[!is.na(fitCoef),!is.na(fitCoef),drop=F] %*% coefVcovs[[j]] %*% t(L.forFstat[!is.na(fitCoef),!is.na(fitCoef),drop=F])
+#					useCoef <- L.forFstat[!is.na(fitCoef)[-1],!is.na(fitCoef),drop=FALSE] %*% fitCoef[!is.na(fitCoef)]
+					#useCoef <- L.forFstat[!is.na(fitCoef),!is.na(fitCoef),drop=FALSE] %*% fitCoef[!is.na(fitCoef)]
+#					useV <- L.forFstat[!is.na(fitCoef)[-1],!is.na(fitCoef),drop=FALSE] %*% coefVcovs[[j]] %*% t(L.forFstat[!is.na(fitCoef)[-1],!is.na(fitCoef),drop=FALSE])
+					#useV <- L.forFstat[!is.na(fitCoef),!is.na(fitCoef),drop=FALSE] %*% coefVcovs[[j]] %*% t(L.forFstat[!is.na(fitCoef),!is.na(fitCoef),drop=FALSE])
 					#Fstat[j] <- (t(useCoef) %*% solve(useV, useCoef))/sizeModel
 					rss<-sum(residuals(fit)^2)
 					rss0<-sum(residuals(fit0)^2)
@@ -389,7 +389,7 @@ estimateProportionsCP<-function(
 #	}
 	
 	Lwbc <- diag(sizeModel) 
-	#Lwbc <- diag(sizeModel)[-1L,,drop=F]
+	#Lwbc <- diag(sizeModel)[-1L,,drop=FALSE]
 	#Lwbc[,1] <- 1
 	rownames(Lwbc) <- colnames(coefEsts)
 	colnames(Lwbc) <- colnames(coefEsts)
