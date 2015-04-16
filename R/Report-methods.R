@@ -483,6 +483,7 @@ rnb.add.section <- function(report, title, description, level = 1L, collapsed = 
 #'                          \item{\code{"note"}}{This paragraph describes a note. Text is italic.}
 #'                          \item{\code{"task"}}{This paragraph describes a task. Text is bold and bright red.}
 #'                        }
+#' @return The modified report, invisibly.
 #'
 #' @examples
 #' \donttest{
@@ -513,6 +514,7 @@ rnb.add.paragraph <- function(report, txt, paragraph.class = NULL) {
 		paragraph.class <- paste(" class=", paragraph.class, "", sep = "\"")
 	}
 	write.line(c("<p", paragraph.class, ">", txt, "</p>"), report@fname)
+	return(invisible(report))
 }
 
 ########################################################################################################################
@@ -529,6 +531,7 @@ rnb.add.paragraph <- function(report, txt, paragraph.class = NULL) {
 #'               separator to form the text for a list item.
 #' @param type   List type to be used for the list and/or its sublists in case the attribute \code{type} is not
 #'               specified.
+#' @return The modified report, invisibly.
 #'
 #' @details There are two ways to specify a list type: (1) setting a value for the attribute \code{type} of the list, or
 #'          (2) using the function's parameter \code{type}. The value of the function's parameter is used only for lists
@@ -585,6 +588,7 @@ rnb.add.list <- function(report, txt, type = "u") {
 		paste0(indenttext, c(paste0("<", tagtext, ">\n"), contents, paste0("</", tagtext, ">")))
 	}
 	write.line(get.html(txt, 0L), report@fname)
+	return(invisible(report))
 }
 
 ########################################################################################################################
@@ -615,6 +619,7 @@ rnb.add.list <- function(report, txt, type = "u") {
 #'                         caption.
 #' @param na               \code{character} to be used for printing \code{NA} values in the table. This parameter is
 #'                         not considered when printing \code{thead} or the table's column names.
+#' @return The modified report, invisibly.
 #'
 #' @seealso \code{\link{rnb.add.tables}} for adding a listing of tables; \code{\linkS4class{Report}} for other functions
 #'   adding contents to an HTML report
@@ -717,6 +722,7 @@ rnb.add.table <- function(report, tdata, row.names = TRUE, first.col.header = FA
 		wline(c("<p class=\"centered\"><span class=\"note\">", tcaption, "</span></p>"))
 	}
 	wline("", indentation = 0)
+	return(invisible(report))
 }
 
 ########################################################################################################################

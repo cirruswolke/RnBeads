@@ -533,6 +533,9 @@ control.probe.PCA <- function(
 #' @param writeToFile a flag specifying whether the output should be saved as \code{\linkS4class{ReportPlot}}
 #' @param ... other arguments to \code{\link{createReportPlot}}
 #' 
+#'  @return plot as an object of type \code{\linkS4class{ReportPlot}} if \code{writeToFile} is \code{TRUE} and of class 
+#' 			\code{\link{ggplot}} otherwise.
+#' 
 #' @export
 #' @author Pavlo Lutsik
 #' @examples

@@ -556,9 +556,13 @@ setMethod("run",
 ################################################################################
 # Helper and utility functions
 ################################################################################
+
 #' logger.machine.name
 #'
-#' log the machine name the analysis is run on
+#' Log the machine name the analysis is run on
+#' 
+#' @return None (invisible \code{NULL}).
+#'
 #' @author Fabian Mueller
 #' @export
 logger.machine.name <- function(){

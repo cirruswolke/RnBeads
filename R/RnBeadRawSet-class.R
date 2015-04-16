@@ -152,6 +152,8 @@ setMethod("initialize", "RnBeadRawSet",
 #' @param useff		  		If \code{TRUE} the data matrices will be stored as \code{ff} objects
 #' @param ffcleanup		  	If \code{TRUE} and disk dumping has been enabled the data of the input \code{ff} objects will be deleted 
 #'
+#' @return an object of class RnBeadRawSet
+#' 
 #' @name RnBeadRawSet
 #' @rdname RnBeadRawSet-class
 #' @aliases initialize,RnBeadRawSet-method
@@ -751,14 +753,14 @@ setMethod("remove.samples", signature(object = "RnBeadRawSet"),
 				for(sl in RNBRAWSET.SLOTNAMES){
 					if(!is.null(slot(object,sl))){
 						if(!is.null(object@status) && object@status$disk.dump){
-							new.matrix<-slot(object,sl)[,-inds, drop=F]
+							new.matrix<-slot(object,sl)[,-inds, drop=FALSE]
 							if(isTRUE(object@status$discard.ff.matrices)){
 								delete(slot(object,sl))
 							}
 							slot(object,sl)<-convert.to.ff.matrix.tmp(new.matrix)
 							rm(new.matrix); rnb.cleanMem()
 						}else{
-							slot(object,sl)<-slot(object,sl)[,-inds, drop=F]
+							slot(object,sl)<-slot(object,sl)[,-inds, drop=FALSE]
 						}
 					}
 				}
@@ -896,6 +898,8 @@ m.value<-function(M,U,offset=100){
 #' @param add.controls		if \code{TRUE} the control probe intensities are included
 #' @param add.missing		if \code{TRUE} the rows for the probes missing in \code{raw.set} is imputed with \code{NA} values
 #' 
+#' @return a \code{list} with elements \code{Cy3} and \code{Cy5} containing average bead intensities 
+#' measured for each probe in the green and red channels, respectively
 #' 
 #' @author Pavlo Lutsik
 intensities.by.color<-function(raw.set, 

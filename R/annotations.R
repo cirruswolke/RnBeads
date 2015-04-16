@@ -743,6 +743,7 @@ rnb.get.annotation <- function(type = "CpG", assembly = "hg19") {
 #'                    this vector are concatenated without a separator to form the description of the annotation.
 #' @param assembly    Genome assembly of interest. See \code{\link{rnb.get.assemblies}} for the list of supported
 #'                    genomes.
+#' @return Invisibly, \code{TRUE} if an existing annotation was replaced and \code{FALSE} otherwise.
 #'
 #' @details
 #' In case the parameter \code{regions} specifies an existing BED file, regions are loaded from this file. The number of
@@ -821,11 +822,13 @@ rnb.set.annotation <- function(type, regions, description = NULL, assembly = "hg
 	mappings <- lapply(sites, function(x) { rnb.regions2sites(regions, sites = x) })
 
 	## Add the region annotation table to the environment
+	annotation.exists <- isTRUE(type %in% names(.rnb.annotations[[assembly]][["regions"]]))
 	.rnb.annotations[[assembly]][["regions"]][[type]] <- regions
 	## Add mappings to the environment
 	.rnb.annotations[[assembly]][["mappings"]][[type]] <- mappings
 	## Set annotation attributes and sizes (lengths)
 	rnb.update.annotation.infos(type, assembly)
+	return(invisible(annotation.exists))
 }
 
 ########################################################################################################################
@@ -837,11 +840,13 @@ rnb.set.annotation <- function(type, regions, description = NULL, assembly = "hg
 #' @param regions a data.frame handled similarly as by \code{\link{rnb.set.annotation}} with the exception that
 #'                 the genomic location columns should be specified using upper case first letters
 #' @param type,description,assembly Parameters handled exactly as in \code{\link{rnb.set.annotation}}
+#' @return Invisibly, \code{TRUE} if an existing annotation was replaced and \code{FALSE} otherwise.
+#'
 #' @seealso \code{\link{rnb.set.annotation}}
 #' @author Fabian Mueller
 #' @export
 rnb.set.annotation.and.cpg.stats <- function(type, regions, description = NULL, assembly = "hg19"){
-	## TODO: Incorporate this as a parameter in rnb.set.annotation 
+	## FIXME: Incorporate this function as a parameter in rnb.set.annotation 
 	genome.data <- get.genome.data(assembly)
 	regs.gr <- data.frame2GRanges(regions, chrom.column = "Chromosome", start.column = "Start",
 		end.column = "End", strand.column = "Strand", assembly = assembly)
@@ -867,6 +872,7 @@ rnb.set.annotation.and.cpg.stats <- function(type, regions, description = NULL, 
 #'                 this file already exists, it will be overwritten.
 #' @param type     One-element \code{character} vector giving the name of the region annotation.
 #' @param assembly Genome assembly of interest. See \code{\link{rnb.get.assemblies}} for the list of supported genomes.
+#' @return \code{TRUE}, invisibly.
 #'
 #' @details
 #' This function is used in combination with \code{\link{rnb.load.annotation}} to enable fast reloading of custom region
@@ -896,8 +902,9 @@ rnb.save.annotation <- function(fname, type, assembly = "hg19") {
 
 	regions <- .rnb.annotations[[assembly]][["regions"]][[type]]
 	mappings <- .rnb.annotations[[assembly]][["mappings"]][[type]]
-	tryCatch(save(assembly, regions, mappings, file = fname, compress = "xz"),
+	tryCatch(save(assembly, regions, mappings, file = fname, compression_level = 9L),
 		error = function(er) { stop(paste("unable to save objects to", fname)) })
+	return(invisible(TRUE))
 }
 
 ########################################################################################################################
@@ -911,6 +918,7 @@ rnb.save.annotation <- function(fname, type, assembly = "hg19") {
 #' @param type     One-element \code{character} vector giving the name of the region annotation.
 #' @param assembly Genome assembly of interest. See \code{\link{rnb.get.assemblies}} for the list of supported genomes.
 #' @param format   Output format. currently only \code{"bed"} is supported.
+#' @return \code{TRUE}, invisibly.
 #'
 #' @author Fabian Mueller
 #' @export
@@ -951,7 +959,7 @@ rnb.export.annotation <- function(fname, type, assembly = "hg19", format = "bed"
 		write.table(format(tab.2.export,scientific=FALSE),file=fname,
 				quote=FALSE,sep="\t",row.names=FALSE,col.names=TRUE,na=".")
 	}
-	return(TRUE)
+	return(invisible(TRUE))
 }
 
 ########################################################################################################################
@@ -964,6 +972,7 @@ rnb.export.annotation <- function(fname, type, assembly = "hg19", format = "bed"
 #' @param types    One-element \code{character} vector giving the name of the region annotation.
 #' @param assembly Genome assembly of interest. See \code{\link{rnb.get.assemblies}} for the list of supported genomes.
 #' @param format   output format. currently only \code{"bed"} is supported.
+#' @return \code{TRUE}, invisibly.
 #'
 #' @author Fabian Mueller
 #' @export
@@ -991,7 +1000,7 @@ rnb.export.all.annotation <- function(out.dir, types=c("CpG",rnb.region.types(as
 			logger.completed()
 		}
 	}
-	return(TRUE)
+	return(invisible(TRUE))
 }
 
 ########################################################################################################################

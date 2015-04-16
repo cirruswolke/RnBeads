@@ -721,43 +721,43 @@ setMethod("remove.samples", signature(object = "RnBSet"),
 			if (length(inds) != 0) {
 				if(object@status$disk.dump){
 					mat <- object@meth.sites[,]
-					new.matrix <- mat[,-inds, drop=F]
+					new.matrix <- mat[,-inds, drop=FALSE]
 					# delete(object@meth.sites)
 					if(isTRUE(object@status$discard.ff.matrices)){
 						delete(object@meth.sites)
 					}
 					object@meth.sites <- convert.to.ff.matrix.tmp(new.matrix)
 				}else{
-					object@meth.sites <- object@meth.sites[,-inds, drop=F]
+					object@meth.sites <- object@meth.sites[,-inds, drop=FALSE]
 				}
 				
 				if (!is.null(object@pheno)) {
-					object@pheno <- object@pheno[-inds, ,drop=F]
+					object@pheno <- object@pheno[-inds, ,drop=FALSE]
 				}
 				if (!is.null(object@covg.sites)) {
 					if(object@status$disk.dump){
 						mat <- object@covg.sites[,]
-						new.matrix <- mat[,-inds, drop=F]
+						new.matrix <- mat[,-inds, drop=FALSE]
 						# delete(object@covg.sites)
 						if(isTRUE(object@status$discard.ff.matrices)){
 							delete(object@covg.sites)
 						}
 						object@covg.sites <- convert.to.ff.matrix.tmp(new.matrix)
 					}else{
-						object@covg.sites <- object@covg.sites[,-inds, drop=F]
+						object@covg.sites <- object@covg.sites[,-inds, drop=FALSE]
 					}
 				}
 				for (region in names(object@regions)) {
 					if(object@status$disk.dump){
 						mat <- object@meth.regions[[region]][,]
-						meth.matrix <- mat[, -inds, drop=F]
+						meth.matrix <- mat[, -inds, drop=FALSE]
 						if(isTRUE(object@status$discard.ff.matrices)){
 							delete(object@meth.regions[[region]])
 						}
 						object@meth.regions[[region]]<-convert.to.ff.matrix.tmp(meth.matrix)
 						if(!is.null(object@covg.regions)){
 							mat <- object@covg.regions[[region]][,]
-							covg.matrix <- mat[, -inds, drop=F]
+							covg.matrix <- mat[, -inds, drop=FALSE]
 							if(isTRUE(object@status$discard.ff.matrices)){
 								delete(object@covg.regions[[region]])
 							}
@@ -766,9 +766,9 @@ setMethod("remove.samples", signature(object = "RnBSet"),
 						# delete(object@meth.regions[[region]])
 						# delete(object@covg.regions[[region]])
 					}else{
-						object@meth.regions[[region]] <- object@meth.regions[[region]][, -inds, drop=F]
+						object@meth.regions[[region]] <- object@meth.regions[[region]][, -inds, drop=FALSE]
 						if(!is.null(object@covg.regions)){
-							object@covg.regions[[region]] <- object@covg.regions[[region]][, -inds, drop=F]
+							object@covg.regions[[region]] <- object@covg.regions[[region]][, -inds, drop=FALSE]
 						}
 					}
 					

@@ -891,6 +891,7 @@ rnb.options2xml <- function(pretty = TRUE) {
 #'
 #' @param data.type Type of dataset targeted; this must be one of \code{"450k"} (default) or \code{"bs"}.
 #' @param profile   Option profile; this must be one of \code{"minimal"}, \code{"moderate"} or \code{"full"}.
+#' @return Invisibly, a \code{list} containing the previous values of all modified options.
 #' 
 #' @author Pavlo Lutsik
 #' @export

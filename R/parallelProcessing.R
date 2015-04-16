@@ -10,7 +10,7 @@
 
 .parallel <- new.env()
 .parallel[["do.par"]] <- FALSE
-.parallel[["num.cores"]] <- -1
+.parallel[["num.cores"]] <- -1L
 
 ## F U N C T I O N S ###################################################################################################
 
@@ -48,6 +48,8 @@ parallel.setup <- function(...){
 #'
 #' Disables parallel processing.
 #'
+#' @return \code{TRUE}, invisibly.
+#'
 #' @author Fabian Mueller
 #' @export parallel.teardown
 #' @examples
@@ -69,7 +71,9 @@ parallel.teardown <- function(){
 
 #' parallel.getNumWorkers
 #'
-#' Return the number of workers used for parallel processing.
+#' Gets the number of workers used for parallel processing.
+#' 
+#' @return Number of workers used for parallel processing; \code{-1} if parallel processing is not enabled.
 #'
 #' @author Fabian Mueller
 #' @export parallel.getNumWorkers

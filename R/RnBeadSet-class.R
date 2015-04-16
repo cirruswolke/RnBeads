@@ -162,7 +162,9 @@ setMethod("initialize", "RnBeadSet",
 #' @param summarize.regions ...
 #' @param region.types		A \code{character} vector specifying the region types, for which the methylation infromation will be summarized.
 #' @param useff		  		If \code{TRUE} the data matrices will be stored as \code{ff} objects
-#'
+#' 
+#' @return an object of class RnBeadSet
+#' 
 #' @name RnBeadSet
 #' @rdname RnBeadSet-class
 #' @aliases initialize,RnBeadSet-method
@@ -250,7 +252,7 @@ RnBeadSet<-function(
 		
 		if(useff){
 			if(!"ff" %in% class(betas)){
-				betas<-convert.to.ff.matrix.tmp(betas[site.ids,,drop=F])
+				betas<-convert.to.ff.matrix.tmp(betas[site.ids,,drop=FALSE])
 			}
 			if(!is.null(p.values) && !"ff" %in% class(p.values)){
 				p.values<-convert.to.ff.matrix.tmp(p.values)
@@ -259,7 +261,7 @@ RnBeadSet<-function(
 				bead.counts<-convert.to.ff.matrix.tmp(bead.counts)
 			}
 		}else{
-			betas<-betas[site.ids,,drop=F]
+			betas<-betas[site.ids,,drop=FALSE]
 			if(!is.null(p.values)){
 				p.values<-p.values[site.ids,,drop=FALSE]
 			}
@@ -541,19 +543,19 @@ setMethod("remove.samples", signature(object = "RnBeadSet"),
 		if (length(inds) != 0) {
 			if (!is.null(object@pval.sites)) {
 				if(object@status$disk.dump){
-					new.matrix<-object@pval.sites[,-inds, drop=F]
+					new.matrix<-object@pval.sites[,-inds, drop=FALSE]
 					if(isTRUE(object@status$discard.ff.matrices)){
 						delete(object@pval.sites)
 					}
 					object@pval.sites <- convert.to.ff.matrix.tmp(new.matrix)
 					rm(new.matrix); rnb.cleanMem()
 				}else{
-					object@pval.sites <- object@pval.sites[,-inds, drop=F]
+					object@pval.sites <- object@pval.sites[,-inds, drop=FALSE]
 				}
 			}
 			if (!is.null(object@qc)) {
-				object@qc$Cy3 <- object@qc$Cy3[,-inds, drop=F]
-				object@qc$Cy5 <- object@qc$Cy5[,-inds, drop=F]
+				object@qc$Cy3 <- object@qc$Cy3[,-inds, drop=FALSE]
+				object@qc$Cy5 <- object@qc$Cy5[,-inds, drop=FALSE]
 			}
 		}
 		callNextMethod()

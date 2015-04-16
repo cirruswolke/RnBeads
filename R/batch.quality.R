@@ -229,10 +229,10 @@ rnb.section.batch.qc <- function(report, qccorrelations) {
 	txt <- c("The heatmaps below visualize the Pearson correlation coefficients between the principal ",
 		"components and the signal levels of selected quality control probes.")
 	rnb.add.paragraph(report, txt)
-	
-	report.plots.corrs<-unlist(lapply(all.plots, el, "correlations"), recursive = F)
-	report.plots.pvals<-unlist(lapply(all.plots, el, "pvalues"), recursive = F)
-	
+
+	report.plots.corrs<-unlist(lapply(all.plots, el, "correlations"), recursive = FALSE)
+	report.plots.pvals<-unlist(lapply(all.plots, el, "pvalues"), recursive = FALSE)
+
 	report <- rnb.add.figure(report, report.descriptions["correlations"], report.plots.corrs, setting.names)
 
 	if (!is.null(report.plots.pvals) && all(!sapply(report.plots.pvals, is.null))) {
