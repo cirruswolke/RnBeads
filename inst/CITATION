@@ -1,4 +1,4 @@
-citHeader("To cite package 'RnBeads' in publications use:")
+citHeader("To cite package 'RnBeads' in publications please use:")
 
 citEntry(entry = "Article",
 	title = "Compehensive Analysis of DNA Methylation Data with RnBeads",
