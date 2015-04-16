@@ -16,6 +16,9 @@ rnb.export.all.annotation(out.dir, types = c("CpG",
 
 \item{format}{output format. currently only \code{"bed"} is supported.}
 }
+\value{
+\code{TRUE}, invisibly.
+}
 \description{
 Wrapper for exporting all annotation sets
 }

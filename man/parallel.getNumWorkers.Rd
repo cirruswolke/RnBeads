@@ -6,8 +6,11 @@
 \usage{
 \method{parallel}{getNumWorkers}()
 }
+\value{
+Number of workers used for parallel processing; \code{-1} if parallel processing is not enabled.
+}
 \description{
-Return the number of workers used for parallel processing.
+Gets the number of workers used for parallel processing.
 }
 \examples{
 \donttest{

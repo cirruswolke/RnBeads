@@ -33,6 +33,9 @@ RnBeadSet(pheno, probes, betas, p.values = NULL, bead.counts = NULL,
 
 \item{useff}{If \code{TRUE} the data matrices will be stored as \code{ff} objects}
 }
+\value{
+an object of class RnBeadSet
+}
 \description{
 Stores the preprocessed information from HumanMethylation experiments
 

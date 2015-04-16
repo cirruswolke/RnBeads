@@ -21,6 +21,9 @@ using a single space (\code{" "}) as a separator.}
 
 \item{terminate}{Flag indicating if the execution is to be terminated after this error message is added to the log.}
 }
+\value{
+None (invisible \code{NULL}).
+}
 \description{
 Appends a single-line status message to the log text file. The message is prepended by its type, which is one of
 \code{STATUS}, \code{INFO}, \code{WARNING} or \code{ERROR}.

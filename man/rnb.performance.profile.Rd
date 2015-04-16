@@ -11,6 +11,9 @@ rnb.performance.profile(data.type = "450k", profile)
 
 \item{profile}{Option profile; this must be one of \code{"minimal"}, \code{"moderate"} or \code{"full"}.}
 }
+\value{
+Invisibly, a \code{list} containing the previous values of all modified options.
+}
 \description{
 Enables one of the pre-installed anlaysis option profiles.
 }

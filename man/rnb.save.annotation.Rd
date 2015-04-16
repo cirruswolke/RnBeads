@@ -14,6 +14,9 @@ this file already exists, it will be overwritten.}
 
 \item{assembly}{Genome assembly of interest. See \code{\link{rnb.get.assemblies}} for the list of supported genomes.}
 }
+\value{
+\code{TRUE}, invisibly.
+}
 \description{
 Saves the specified region annotation table and its accompanying data structures to a binary file.
 }

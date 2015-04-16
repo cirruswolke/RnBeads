@@ -17,11 +17,14 @@ logger.close()
 message upon initialization and completion of the section, respectively.}
 
 \item{fname}{Name of the log file and/or console. Note that at most one file name can be specified. The function
-             \code{logger.start} normalizes the given name, that is, it converts it to an absolute name. If this
-             parameter is \code{NA}, logger messages are printed to the console. If it is a two-element vector
-             containing one file name and \code{NA}, the logger is (re)initialized to print messages both to the
-             given file name and the console. A value of \code{NULL} (default) indicates the logger should continue
-             using the previously specified file.}
+\code{logger.start} normalizes the given name, that is, it converts it to an absolute name. If this
+parameter is \code{NA}, logger messages are printed to the console. If it is a two-element vector
+containing one file name and \code{NA}, the logger is (re)initialized to print messages both to the
+given file name and the console. A value of \code{NULL} (default) indicates the logger should continue
+using the previously specified file.}
+}
+\value{
+None (invisible \code{NULL}).
 }
 \description{
 Functions for logger management.
