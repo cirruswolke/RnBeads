@@ -7,13 +7,25 @@
 #' The complete analysis can be performed by calling the function \code{\link{rnb.run.analysis}}. 
 #' 
 #' @references Yassen Assenov*, Fabian Mueller*, Pavlo Lutsik*, Joern Walter, Thomas Lengauer and Christoph Bock (2014) Compehensive Analysis of DNA Methylation Data with RnBeads, Nature Methods, 11(11):1138-1140.
-#' @import methods MASS cluster RColorBrewer fields ggplot2 matrixStats IRanges GenomicRanges methylumi ff gridExtra limma
+#' @import methods MASS cluster RColorBrewer fields ggplot2 IRanges GenomicRanges methylumi ff gridExtra limma
 #' @importFrom BiocGenerics annotation
 #' @importFrom BiocGenerics annotation<-
 #' @importFrom illuminaio readIDAT
 #' @importFrom gplots colorpanel
 #' @importFrom gplots heatmap.2
 #' @importFrom plyr rbind.fill
+#' @importFrom matrixStats rowVars
+#' @importFrom matrixStats colVars
+#' @importFrom matrixStats rowMins
+#' @importFrom matrixStats colMins
+#' @importFrom matrixStats rowMaxs
+#' @importFrom matrixStats colMaxs
+#' @importFrom matrixStats rowSds
+#' @importFrom matrixStats colSds
+#' @importFrom matrixStats rowQuantiles
+#' @importFrom matrixStats colQuantiles
+#' @importFrom matrixStats rowMedians
+#' @importFrom matrixStats colMedians
 #' @docType package
 #' @name RnBeads
 NULL
