@@ -43,12 +43,14 @@ performGOenrichment.diffMeth.entrez <- function(gids,uids,ontology,assembly="hg1
 #		unlist(strsplit(idstr, ";", fixed = TRUE))
 #	})))
 #	#/testing
-	if (assembly == "hg19"){
+	if (is.element(assembly,c("hg19","hg38"))){
 		ass <- "org.Hs.eg.db"
 	} else if (is.element(assembly,c("mm9","mm10"))){
 		ass <- "org.Mm.eg.db"
 	} else if (is.element(assembly,c("rn5"))){
 		ass <- "org.Rn.eg.db"
+	} else if (is.element(assembly,c("zv9"))){
+		ass <- "org.Dr.eg.db"
 	} else {
 		stop("Unsupported assembly")
 	}
