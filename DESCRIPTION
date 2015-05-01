@@ -12,10 +12,6 @@ Authors@R: c(
 Date: 2015-04-22
 Version: 1.1.1
 Suggests:
-    BSgenome.Hsapiens.UCSC.hg19,
-    BSgenome.Mmusculus.UCSC.mm10,
-    BSgenome.Mmusculus.UCSC.mm9,
-    BSgenome.Rnorvegicus.UCSC.rn5,
     Category,
     GEOquery,
     GOstats,
@@ -24,9 +20,6 @@ Suggests:
     RPMM,
     RefFreeEWAS,
     RnBeads.hg19,
-    RnBeads.mm10,
-    RnBeads.mm9,
-    RnBeads.rn5,
     XML,
     annotate,
     biomaRt,
