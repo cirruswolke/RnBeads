@@ -9,18 +9,18 @@
 #' RnBeads Annotation Tables
 #'
 #' RnBeads uses sets of annotation tables and mappings (from regions to sites) for each of the supported genomes. The
-#' structures for one assembly are stored in a separate dedicated data package. Currently, the following assemblies are
-#' supported:
+#' structures for one assembly are stored in a separate dedicated annotation package. The following annotation packages
+#' are available in Bioconductor:
 #' \describe{
-#'   \item{\code{"hg19"}}{through the package \pkg{RnBeads.hg19}}
-#'   \item{\code{"mm10"}}{through the package \pkg{RnBeads.mm10}}
-#'   \item{\code{"mm9"}}{through the package \pkg{RnBeads.mm9}}
-#'   \item{\code{"rn5"}}{through the package \pkg{RnBeads.rn5}}
+#'   \item{\pkg{RnBeads.hg19}}{for \code{"hg19"}}
+#'   \item{\pkg{RnBeads.mm10}}{for \code{"mm10"}}
+#'   \item{\pkg{RnBeads.mm9}}{for \code{"mm9"}}
+#'   \item{\pkg{RnBeads.rn5}}{for \code{"rn5"}}
 #' }
 #' 
 #' @details
-#' The assembly-specific structures are automatically loaded upon initialization of the annotation, that is, by the
-#' first valid call to any of the following functions: \code{\link{rnb.get.chromosomes}},
+#' An assembly-specific scaffold is automatically loaded upon initialization of its annotation, that is, by the first
+#' valid call to any of the following functions: \code{\link{rnb.get.chromosomes}},
 #' \code{\link{rnb.get.annotation}}, \code{\link{rnb.set.annotation}}, \code{\link{rnb.get.mapping}},
 #' \code{\link{rnb.annotation.size}}. Adding an annotation amounts to attaching its table(s) and mapping structures to
 #' the scaffold.
@@ -28,7 +28,6 @@
 #' @docType data
 #' @keywords datasets
 #' @name RnBeads.data
-#' @aliases hg19 mm10 mm9 rn5
 #' @format \code{list} of four elements - \code{"regions"}, \code{"sites"}, \code{"controls"} and \code{"mappings"}.
 #'         These elements are described below.
 #'         \describe{
@@ -52,6 +51,8 @@ NULL
 ## Environment to contain all probe, site and region annotation tables.
 ##
 ##  hg19
+##      $GENOME                 character
+##      $CHROMOSOMES            character
 ##      $regions
 ##          $tiling             GRangesList
 ##          $genes              GRangesList
@@ -77,17 +78,6 @@ NULL
 ##              $probes450      list of IRanges
 ##      $lengths                int[ <chromosomes> , <annotations> ]
 .rnb.annotations <- new.env()
-
-## Chromosomes supported by the annotation packages
-CHROMOSOMES.L2S <- list("hg19" = c(1:22, "X", "Y"), "mm9" = c(1:19, "X", "Y"), "mm10" = c(1:19, "X", "Y"),
-	"rn5" = c(1:20, "X"))
-CHROMOSOMES.S2L <- lapply(CHROMOSOMES.L2S, function(x) { paste0("chr", x) })
-CHROMOSOMES <- CHROMOSOMES.S2L
-for (assembly.name in names(CHROMOSOMES)) {
-	names(CHROMOSOMES.S2L[[assembly.name]]) <- CHROMOSOMES.L2S[[assembly.name]]
-	names(CHROMOSOMES[[assembly.name]]) <- names(CHROMOSOMES.L2S[[assembly.name]]) <- CHROMOSOMES[[assembly.name]]
-}
-rm(assembly.name)
 
 ## Control probe types
 HM450.CONTROL.TARGETS <- c(
@@ -152,38 +142,6 @@ HM27.CY5.SNP.PROBES<-c(
 		)
 
 ## F U N C T I O N S ###################################################################################################
-
-#' get.genome.data
-#'
-#' Gets the specified genome.
-#'
-#' @param assembly Genome assembly of interest. Currently the only supported genomes are \code{"hg19"}, \code{"mm9"},
-#'                 \code{"mm10"} and \code{"rn5"}.
-#' @return Sequence data object for the specified assembly.
-#'
-#' @author Yassen Assenov
-#' @noRd
-get.genome.data <- function(assembly) {
-	## TODO: Move this function to an extension package
-	if (assembly == "hg19") {
-		suppressPackageStartupMessages(require(BSgenome.Hsapiens.UCSC.hg19))
-		genome.data <- BSgenome.Hsapiens.UCSC.hg19::Hsapiens
-	} else if (assembly == "mm9") {
-		suppressPackageStartupMessages(require(BSgenome.Mmusculus.UCSC.mm9))
-		genome.data <- BSgenome.Mmusculus.UCSC.mm9::Mmusculus
-	} else if (assembly == "mm10") {
-		suppressPackageStartupMessages(require(BSgenome.Mmusculus.UCSC.mm10))
-		genome.data <- BSgenome.Mmusculus.UCSC.mm10::Mmusculus
-	} else if (assembly == "rn5") {
-		suppressPackageStartupMessages(require(BSgenome.Rnorvegicus.UCSC.rn5))
-		genome.data <- BSgenome.Rnorvegicus.UCSC.rn5::Rnorvegicus
-	} else {
-		stop("unsupported assembly")
-	}
-	return(genome.data)
-}
-
-########################################################################################################################
 
 #' rnb.fix.strand
 #'
@@ -323,16 +281,18 @@ get.cpg.stats <- function(chrom.sequence, starts, ends) {
 #'         with similar names.
 #'
 #' @author Yassen Assenov
-#'
+#' @noRd
 append.cpg.stats <- function(genome.data, regionlist) {
 	cpg.stats <- function(chrom) {
+		chromName.gd <- match.chrom.names(chrom,seqnames(genome.data))
 		stats <- get.cpg.stats(genome.data[[chromName.gd]], start(regionlist[[chrom]]), end(regionlist[[chrom]]))
 		result <- regionlist[[chrom]]
 		mcols(result) <- IRanges::cbind(mcols(result), DataFrame(stats))
 		result
 	}
-	regions.enriched <- foreach(chrom = names(regionlist), .packages = "GenomicRanges",
-		.export = c("get.cpg.stats", "genome.data", "regionlist")) %dopar% cpg.stats(chrom)
+	regions.enriched <- suppressWarnings(
+		foreach(chrom = names(regionlist), .packages = "GenomicRanges",
+			.export = c("get.cpg.stats", "genome.data", "regionlist")) %dopar% cpg.stats(chrom))
 	names(regions.enriched) <- names(regionlist)
 	return(GRangesList(regions.enriched))
 }
@@ -383,14 +343,15 @@ data.frame2GRanges <- function(dframe, ids = rownames(dframe), chrom.column = "c
 	for (cname in colnames(dframe)[-c(chrom.column, start.column, end.column, strand.column)]) {
 		param.list[[cname]] <- dframe[[cname]]
 	}
+	CHROMOSOMES <- names(.rnb.annotations[[assembly]][['CHROMOSOMES']])
 	if (!is.null(assembly)) {
-		i.valid <- (chroms %in% names(CHROMOSOMES[[assembly]]))
+		i.valid <- (chroms %in% CHROMOSOMES)
 		param.list <- lapply(param.list, function(x) { x[i.valid] })
 	}
 	param.list[["check.names"]] <- FALSE
 	result <- do.call(GRanges, param.list)
 	if (!is.null(assembly)) {
-		seqlevels(result) <- names(CHROMOSOMES[[assembly]])
+		seqlevels(result) <- CHROMOSOMES
 		genome(result) <- assembly
 	}
 	if (sort.result){
@@ -415,38 +376,45 @@ data.frame2GRanges <- function(dframe, ids = rownames(dframe), chrom.column = "c
 load.annotations <- function(assembly = NULL, sites = NULL) {
 	load.f <- function(fname, pname = paste0("RnBeads.", assembly)) {
 		if (pname != "RnBeads") {
-			suppressPackageStartupMessages(library(pname, character.only = TRUE))
+			if (!suppressPackageStartupMessages(require(pname, character.only = TRUE))) {
+				return(invisible(FALSE))
+			}
 		}
-		tryCatch(load(system.file(fname, package = pname), envir = .rnb.annotations),
+		tryCatch(load(system.file(paste0("data/", fname), package = pname), envir = .rnb.annotations),
 			error = function(e) {
-				stop(paste("Internal error in RnBeads: loading required file", fname, "failed"))
+				stop(paste0("Internal error in ", pname, ": loading required file", fname, "failed"))
 			}
 		)
-	}
-	if (length(ls(envir = .rnb.annotations)) == 0) {
-		## Load the basic structure, showing supported assemblies, regions and sites
-		load.f(file.path("data", "annotations.RData"), pname = "RnBeads")
-		for (o.name in ls(envir = .rnb.annotations)) {
-			genome.info <- get(o.name, envir = .rnb.annotations, inherits = FALSE)
-			a.names <- c(names(genome.info$sites), names(genome.info$regions))
-			lengths <- matrix(as.integer(NA), nrow = length(CHROMOSOMES[[o.name]]), ncol = length(a.names),
-				dimnames = list(as.character(CHROMOSOMES[[o.name]]), a.names))
-			.rnb.annotations[[o.name]][["lengths"]] <- lengths
-		}
-		rm(o.name, genome.info, a.names, lengths)
+		invisible(TRUE)
 	}
 
 	if (!is.null(assembly)) {
-		updated <- c()
+		updated <- character()
 		if (!exists(assembly, where = .rnb.annotations)) {
-			return(FALSE)
-		}
-		if (is.null(.rnb.annotations[[assembly]][["regions"]][[1]])) {
-			## Load assembly regions
-			load.f(file.path("data", paste(assembly, ".regions.RData", sep = "")))
-			.rnb.annotations[[assembly]][["regions"]] <- get("regions", envir = .rnb.annotations, inherits = FALSE)
-			rm("regions", envir = .rnb.annotations)
+			## Add scaffold for sites, probes and control probes
+			if (!load.f(paste0(assembly, ".RData"))) {
+				return(FALSE)
+			}
+			## Load built-in regions
+			if (!load.f("regions.RData")) {
+				return(FALSE)
+			}
+#			assign(assembly, list("sites" = list(), "controls" = list(), "mappings" = list()), .rnb.annotations)
+#			vnames <- c("CHROMOSOMES", "GENOME", "regions")
+#			for (vname in vnames) {
+#				.rnb.annotations[[assembly]][[vname]] <- get(vname, .rnb.annotations, inherits = FALSE)
+#			}
+#			rm(list = vnames, pos = .rnb.annotations)
+			.rnb.annotations[[assembly]][["regions"]] <- .rnb.annotations[["regions"]]
 			updated <- names(.rnb.annotations[[assembly]][["regions"]])
+			rm(list = "regions", pos = .rnb.annotations)
+
+			## Create matrix of elements per chromosome
+			CHROMOSOMES <- names(.rnb.annotations[[assembly]][["CHROMOSOMES"]])
+			s.names <- c(names(.rnb.annotations[[assembly]][["sites"]]), updated)
+			.rnb.annotations[[assembly]][["lengths"]] <-
+				matrix(0L, nrow = length(CHROMOSOMES), ncol = length(s.names), dimnames = list(CHROMOSOMES, s.names))
+			rm(CHROMOSOMES, s.names)
 		}
 		if (!is.null(sites)) {
 			if (sites %in% names(.rnb.annotations[[assembly]][["controls"]])) {
@@ -459,9 +427,9 @@ load.annotations <- function(assembly = NULL, sites = NULL) {
 			}
 			if (is.null(.rnb.annotations[[assembly]][["sites"]][[sites]])) {
 				## Load the required sites
-				load.f(file.path("data", paste(assembly, ".", sites, ".RData", sep = "")))
-				sinfo <- get("sites", envir = .rnb.annotations, inherits = FALSE)
-				rm("sites", envir = .rnb.annotations)
+				load.f(paste0(sites, ".RData"))
+				sinfo <- get("sites", .rnb.annotations, inherits = FALSE)
+				rm(list = "sites", pos = .rnb.annotations)
 				.rnb.annotations[[assembly]][["sites"]][[sites]] <- sinfo$sites
 				for (cnames in setdiff(names(sinfo), c("sites", "mappings"))) {
 					.rnb.annotations[[assembly]][["controls"]][[cnames]] <- sinfo[[cnames]]
@@ -483,7 +451,7 @@ load.annotations <- function(assembly = NULL, sites = NULL) {
 		}
 		if (length(updated) != 0) {
 			## Update annotations lengths for the newly loaded regions and/or sites
-			genome.info <- get(assembly, envir = .rnb.annotations, inherits = FALSE)
+			genome.info <- get(assembly, .rnb.annotations, inherits = FALSE)
 			for (a.name in updated) {
 				.rnb.annotations[[assembly]][["lengths"]][, a.name] <- 0L
 				if (a.name %in% names(genome.info$regions)) {
@@ -535,8 +503,9 @@ rnb.update.annotation.infos <- function(type, assembly) {
 	attr(.rnb.annotations[[assembly]][["regions"]], "builtin") <- region.builtin
 
 	## Set the information for number of regions per chromosome
-	a.lengths.full <- rep.int(0L, length(CHROMOSOMES[[assembly]]))
-	names(a.lengths.full) <- names(CHROMOSOMES[[assembly]])
+	CHROMOSOMES <- names(.rnb.annotations[[assembly]][['CHROMOSOMES']])
+	a.lengths.full <- rep.int(0L, length(CHROMOSOMES))
+	names(a.lengths.full) <- CHROMOSOMES
 	a.lengths <- elementLengths(.rnb.annotations[[assembly]][["regions"]][[type]])
 	a.lengths.full[names(a.lengths)] <- a.lengths
 	i.type <- which(colnames(.rnb.annotations[[assembly]][["lengths"]]) == type)
@@ -669,8 +638,9 @@ rnb.annotation2data.frame <- function(annotation.table, add.names = TRUE) {
 #' @author Yassen Assenov
 #' @export
 rnb.get.assemblies <- function() {
-	load.annotations()
-	return(ls(envir = .rnb.annotations))
+	package.regex <- "^RnBeads\\.(.+)$"
+	pnames <- grep(package.regex, rownames(installed.packages(noCache = TRUE, fields = character())), value = TRUE)
+	sort(sub(package.regex, "\\1", pnames))
 }
 
 ########################################################################################################################
@@ -846,8 +816,12 @@ rnb.set.annotation <- function(type, regions, description = NULL, assembly = "hg
 #' @author Fabian Mueller
 #' @export
 rnb.set.annotation.and.cpg.stats <- function(type, regions, description = NULL, assembly = "hg19"){
-	## FIXME: Incorporate this function as a parameter in rnb.set.annotation 
-	genome.data <- get.genome.data(assembly)
+	## FIXME: Incorporate this function as a parameter in rnb.set.annotation
+	GENOME <- .rnb.annotations[[assembly]][['GENOME']]
+	if (!suppressWarnings(suppressPackageStartupMessages(require(GENOME, character.only = TRUE)))) {
+		stop(paste("missing required package"), GENOME)
+	}
+	genome.data <- get(GENOME)
 	regs.gr <- data.frame2GRanges(regions, chrom.column = "Chromosome", start.column = "Start",
 		end.column = "End", strand.column = "Strand", assembly = assembly)
 	regs.grl <- GenomicRanges::split(regs.gr, seqnames(regs.gr))
@@ -1229,7 +1203,7 @@ rnb.get.chromosomes <- function(assembly = "hg19") {
 	if (!load.annotations(assembly)) {
 		stop("unsupported assembly")
 	}
-	return(CHROMOSOMES.L2S[[assembly]])
+	return(.rnb.annotations[[assembly]][['CHROMOSOMES']])
 }
 
 ########################################################################################################################
