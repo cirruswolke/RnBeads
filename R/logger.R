@@ -23,17 +23,37 @@
 ## @return Memory, in Gigabytes, used in this R session.
 ## @details
 ## In Windows, the returned value measures only the memory allocated by this session. It does not include the memory
-## used by the R system itself (and many of the loaded libraries). In Linux, the returned value is the total memory used
-## by the R process that runs this script.
+## used by the R system itself (and many of the loaded libraries). In Linux and Mac OS, the returned value is the total
+## memory used by the R process that runs this script.
 ## @author Yassen Assenov
 get.memory.usage <- function() {
 	if (.Platform$OS == "windows") {
-		return(memory.size() / 1024)
+		memused <- memory.size() / 1024
+	} else if (Sys.info()["sysname"] == "Darwin") {
+		processinfo <- system(paste('top -pid', Sys.getpid(), '-l 1 -stats MEM'), intern = TRUE)
+		processinfo <- gsub("\\+$", "", processinfo[length(processinfo)])
+		regex.process <- "(\\d+)([A-Z]?)$"
+		if (grepl(regex.process, processinfo)) {
+			memused <- as.double(gsub(regex.process, "\\1", processinfo))
+			memscale <- gsub(regex.process, "\\2", processinfo)
+			if (memscale == "") {
+				memused <- (memused / 1048576) / 1024
+			} else if (memscale == "K") {
+				memused <- memused / 1048576
+			} else if (memscale == "M") {
+				memused <- memused / 1024
+			} else if (memscale == "T") {
+				memused <- memused * 1024
+			}
+		} else {
+			memused <- 0
+		}
+	} else {
+		processinfo <- paste("/proc", Sys.getpid(), "status", sep = "/")
+		processinfo <- scan(processinfo, what = character(), sep = "\n", quiet = TRUE)
+		memused <- grep("^VmSize\\:(.+)kB", processinfo, value = TRUE)
+		memused <- as.double(gsub("\\s+", "", substr(memused, 8, nchar(memused) - 2))) / 1048576
 	}
-	processinfo <- paste("/proc", Sys.getpid(), "status", sep = "/")
-	processinfo <- scan(processinfo, what = character(), sep = "\n", quiet = TRUE)
-	memused <- grep("^VmSize\\:(.+)kB", processinfo, value = TRUE)
-	memused <- as.double(gsub("\\s+", "", substr(memused, 8, nchar(memused) - 2))) / 1048576
 	return(memused)
 }
 
