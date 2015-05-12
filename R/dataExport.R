@@ -183,14 +183,25 @@ rnb.RnBSet.to.bed <- function(rnb.set,out.dir,reg.type="sites",names.quant.meth=
 
 #' rnb.RnBSet.to.bedGraph
 #'
-#' convert an \code{\linkS4class{RnBSet}}  object to \code{*.bedGraph} files.
-#' @param rnb.set Object of class \code{\linkS4class{RnBSet}} 
-#' @param out.dir output directory. If not existing, it will be created. otherwise files in that directory are overwritten.
-#' @param reg.type region type to be converted
+#' Exports the methylation data of an \code{\linkS4class{RnBSet}} object to \code{*.bedGraph} files.
+#'
+#' @param rnb.set    Dataset as an instance of class \code{\linkS4class{RnBSet}}.
+#' @param out.dir    One-element \code{character} vector signifying the output directory in which to create
+#'                   \code{bedGraph} files. Setting this to \code{"."} (default) uses the current working directory. If
+#'                   the output directory does not exist, this function attempts to create it. Any existing files in
+#'                   this directory could be overwritten.
+#' @param reg.type   Site or region type to be exported.
+#' @param parameters Named \code{character} vector storing parameters (other than \code{"type"} and \code{"name"}) to
+#'                   include in the track definition line. The names of this vector must be the parameter names, and its
+#'                   elements - the corresponding values; missing values (\code{NA}s) are allowed neither for names, nor
+#'                   for values. This function does not test if all provided parameter names and values conform to the
+#'                   BedGraph track specification.
+#' @param digits     Optionally, number of significant digits after the decimal point to round methylation values to. If
+#'                   specified, this parameter must be an \code{integer} between \code{0} and \code{10}.
 #' @return (invisibly) a summary list containing information on the conversion step.
 #'         elements are \code{filenames} (a table containing information on which sample has been written to what filename)
 #'         and \code{assembly} (a string indicating the assembly used by \code{rnb.set}).
-#' @details Details on bedGraph can be found \href{http://genome.ucsc.edu/goldenPath/help/bedgraph.html}{here}. 
+#' @details The description of the BedGraph track format can be found \href{http://genome.ucsc.edu/goldenPath/help/bedgraph.html}{here}. 
 #'          Each methylation site is an entry in the resulting bedGraph file. The Score column corresponds to a site's
 #'          methylation value in the interval \code{[0,1]}.
 #' @author Fabian Mueller
@@ -202,29 +213,73 @@ rnb.RnBSet.to.bed <- function(rnb.set,out.dir,reg.type="sites",names.quant.meth=
 #' logger.start(fname=NA)
 #' rnb.RnBSet.to.bedGraph(rnb.set.example,tempdir())
 #' }
-rnb.RnBSet.to.bedGraph <- function(rnb.set,out.dir,reg.type="sites"){
-	if (!suppressPackageStartupMessages(require(rtracklayer))) {
-		stop("missing required package rtracklayer")
+rnb.RnBSet.to.bedGraph <- function(rnb.set,out.dir=".",reg.type="sites",parameters=character(),digits=NULL){
+	## Validate parameters
+	if (!inherits(rnb.set, "RnBSet")) {
+		stop("invalid value for rnb.set")
 	}
-	if (!file.exists(out.dir)){
-		dir.create(out.dir)
+	if (!(is.character(out.dir) && length(out.dir) == 1 && isTRUE(out.dir != ""))) {
+		stop("invalid value for out.dir")
 	}
-	if (!(reg.type %in% c(rnb.region.types(assembly(rnb.set)),"sites"))){
-		stop("Unsupported region type")
+	if (!(is.character(reg.type) && length(reg.type) == 1 && isTRUE(reg.type != ""))) {
+		stop("invalid value for reg.type")
 	}
-	#convert RnBSet to GRangesList
-	rnb.set.grl <- rnb.RnBSet.to.GRangesList(rnb.set,reg.type=reg.type,return.regular.list=TRUE) #might take a while
-	
-	#output the text files
-	for (i in 1:length(samples(rnb.set))){
-		ss <- samples(rnb.set)[i]
-		rtracklayer::export(rnb.set.grl[[ss]],file.path(out.dir,paste("rnbeads_sample",i,".bedGraph",sep="")),"bedGraph")
+	if (!is.character(parameters)) {
+		stop("invalid value for parameters")
 	}
-	res <- list()
-	res[["filenames"]] <- data.frame(i=1:length(samples(rnb.set)),sample=samples(rnb.set),filename=paste("rnbeads_sample",1:length(samples(rnb.set)),".bedGraph",sep=""))
-	res[["assembly"]] <- assembly(rnb.set)
-	res[["contains.overlapping.regions"]] <- !isDisjoint(rnb.set.grl[[1]])
-	invisible(res)
+	if (length(parameters) != 0) {
+		if (any(is.na(parameters)) || is.null(names(parameters)) || any(is.na(names(parameters)))) {
+			stop("invalid value for parameters")
+		}
+		parameters <- paste0(" ", paste(names(parameters), parameters, sep = "=", collapse = " "))
+	}
+	if (!is.null(digits)) {
+		if (isTRUE(is.double(digits) && all(digits == as.integer(digits)))) {
+			digits <- as.integer(digits)
+		}
+		if (!(is.integer(digits) && length(digits) == 1 && isTRUE(0L <= digits && digits <= 10L))) {
+			stop("invalid value for digits")			
+		}
+	}
+
+	## Create output directory if needed
+	if (file.exists(out.dir)) {
+		if (!file.info(out.dir)[, "isdir"]) {
+			stop("out.dir is an existing file")
+		}
+	} else if (!dir.create(out.dir, showWarnings = FALSE, recursive = TRUE)) {
+		stop(paste("Could not create directory", out.dir))
+	}
+
+	## Extract annotation table and methylation values
+	sample.ids <- samples(rnb.set)
+	tbl <- annotation(rnb.set, type = reg.type)[, c("Chromosome", "Start", "End")]
+	tbl[, 2] <- tbl[, 2] - 1L # switch from 1-based closed intervals to 0-based half-open
+	tbl[["Value"]] <- 0
+	mm <- meth(rnb.set, type = reg.type)
+
+	## Export to bedGraph files
+	nd <- as.integer(ceiling(log10(length(sample.ids)))) + 1L
+	filenames <- data.frame(
+		"Sample" = sample.ids,
+		"File" = sprintf(paste0("rnbeads_sample_%0", nd, "d.bedGraph"), 1:length(sample.ids)),
+		stringsAsFactors = FALSE)
+	for (i in 1:length(sample.ids)) {
+		fname <- file.path(out.dir, filenames[i, 2L])
+		if (is.null(digits)) {
+			tbl[, "Value"] <- mm[, i]
+		} else {
+			tbl[, "Value"] <- round(mm[, i], digits = digits)
+		}
+		j <- which(!is.na(mm[, i]))
+		cat(paste0('track type=bedGraph name="', sample.ids[i], '"', parameters, "\n"), file = fname)
+		write.table(tbl[j, ], fname, TRUE, FALSE, "\t", row.names = FALSE, col.names = FALSE)
+	}
+	are.disjoint <- tapply(1:nrow(tbl), tbl[, 1], function(ii) {
+		(length(ii) < 2) || all(tbl[ii[-length(ii)], 3] <= tbl[ii[-1], 2])
+	})
+	invisible(
+		list("filenames" = filenames, "assembly" = assembly(rnb.set), "contains.overlapping.regions" = !all(are.disjoint)))
 }
 
 ## rnb.diffmeth.to.EpiExplorer.file
