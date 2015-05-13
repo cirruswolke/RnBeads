@@ -1,3 +1,14 @@
+RnBeads 1.1.2
+===============
+
+ * New annotation package format
+ * Improved logging on a Mac
+
+RnBeads 1.0.0
+===============
+
+ * Bioconductor release
+
 RnBeads 0.99.23
 ===============
 
