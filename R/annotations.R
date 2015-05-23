@@ -17,7 +17,7 @@
 #'   \item{\pkg{RnBeads.mm9}}{for \code{"mm9"}}
 #'   \item{\pkg{RnBeads.rn5}}{for \code{"rn5"}}
 #' }
-#' 
+#'
 #' @details
 #' An assembly-specific scaffold is automatically loaded upon initialization of its annotation, that is, by the first
 #' valid call to any of the following functions: \code{\link{rnb.get.chromosomes}},
@@ -126,7 +126,7 @@ HM27.CY3.SNP.PROBES<-c(
 		"rs2125573",
 		"rs2804694"
 		)
-		
+
 HM27.CY5.SNP.PROBES<-c(
 		"rs1941955",
 		"rs845016",
@@ -243,7 +243,7 @@ rnb.load.bed <- function(fname) {
 #'
 #' @param chrom.sequence Chromosome sequence, usually obtained from the assembly's genome definition. This must be an
 #'                       object of type \code{MaskedDNAString}.
-#' @param starts         \code{integer} vector of start positions for the regions of interest. 
+#' @param starts         \code{integer} vector of start positions for the regions of interest.
 #' @param ends           \code{integer} vector of end positions for the regions of interest.
 #' @return Table of statistics for the regions in the form of a \code{matrix} with the following columns:
 #'         \code{"CpG"} and \code{"GC"}. The columns contain the number of CpG dinucleoties and the number of C and G
@@ -324,27 +324,27 @@ data.frame2GRanges <- function(dframe, ids = rownames(dframe), chrom.column = "c
 	if (is.character(start.column)) { start.column <- which(colnames(dframe) == start.column) }
 	if (is.character(end.column)) { end.column <- which(colnames(dframe) == end.column) }
 	if (is.character(strand.column)) { strand.column <- which(colnames(dframe) == strand.column) }
-	
+
 	## Process the chromosome names
 	chroms <- as.character(dframe[, chrom.column])
 	chroms <- paste0("chr", sub("^chr", "", chroms))
 	param.list <- list()
 	param.list[["seqnames"]] <- chroms
-	
+
 	## Process the regions
 	dframe <- dframe[!(is.na(dframe[, start.column]) | is.na(dframe[, end.column])), ]
 	param.list[["ranges"]] <- IRanges(start = dframe[, start.column], end = dframe[, end.column], names = ids)
-	
+
 	## Process the strands
 	if (!is.null(strand.column)) {
 		param.list[["strand"]] <- rnb.fix.strand(dframe[, strand.column])
 	}
-	
+
 	for (cname in colnames(dframe)[-c(chrom.column, start.column, end.column, strand.column)]) {
 		param.list[[cname]] <- dframe[[cname]]
 	}
-	CHROMOSOMES <- names(.rnb.annotations[[assembly]][['CHROMOSOMES']])
 	if (!is.null(assembly)) {
+		CHROMOSOMES <- names(.rnb.annotations[[assembly]][['CHROMOSOMES']])
 		i.valid <- (chroms %in% CHROMOSOMES)
 		param.list <- lapply(param.list, function(x) { x[i.valid] })
 	}
@@ -648,13 +648,13 @@ rnb.get.assemblies <- function() {
 #' rnb.get.annotation
 #'
 #' Extracts the requested annotation for the given genome.
-#' 
+#'
 #' @param type     Name of annotation.
 #' @param assembly Genome assembly of interest. See \code{\link{rnb.get.assemblies}} for the list of supported genomes.
 #' @return Probe, site or region annotation table. If the specified type refers to control probes, the returned value is
 #'         a \code{data.frame} listing all respective control probes. Otherwise, this function returns an object of type
 #'         \code{\link{GRangesList}} - a list of consistent \code{\link{GRanges}} objects, one per chromosome.
-#' 
+#'
 #' @details
 #' When the returned value is of type \code{GRangesList}, it defines the genomic positions of the requested sites,
 #' probes or regions. Identifiers, if present, can be obtained using the \code{names} method. Strand information is also
@@ -982,7 +982,7 @@ rnb.export.all.annotation <- function(out.dir, types=c("CpG",rnb.region.types(as
 #' rnb.load.annotation
 #'
 #' Loads a previously saved custom region annotation from a binary (RData) file.
-#' 
+#'
 #' @param fname One-element \code{character} vector giving the name of the file that contains the annotation data.
 #' @param type  One-element \code{character} vector giving the name of the region annotation. If this annotation
 #'              is already available, it will be overwritten for the current session.
@@ -993,7 +993,7 @@ rnb.export.all.annotation <- function(out.dir, types=c("CpG",rnb.region.types(as
 #' If the region annotation cannot be loaded from the specified location, this function exits with an error message in
 #' the form \code{"unable to load object from ..."}. This could happen, for example, when \code{fname} does not refer to
 #' a valid RData file, or the file cannot be accessed due to security restrictions.
-#' 
+#'
 #' If the file is loaded in the current session, but no annotation was added, the function returns invisibly one of the
 #' following short failure messages:
 #' \describe{
@@ -1180,7 +1180,7 @@ rnb.get.mapping <- function(region.type, target.type, assembly = "hg19") {
 ########################################################################################################################
 
 #' rnb.get.chromosomes
-#' 
+#'
 #' Gets the chromosome names supported for the specified assembly.
 #'
 #' @param assembly Genome assembly of interest. See \code{\link{rnb.get.assemblies}} for the list of supported genomes.
@@ -1211,11 +1211,11 @@ rnb.get.chromosomes <- function(assembly = "hg19") {
 #' rnb.infinium.control.targets
 #'
 #' Extracts all control probe types in the HumanMethylation450 assay.
-#' 
-#' @param target  A singleton of type \code{character}, specifying the microarray platform. 
-#' 				  \code{"probes450"} and \code{"probes27"} correspond to HumanMethylation450 
+#'
+#' @param target  A singleton of type \code{character}, specifying the microarray platform.
+#' 				  \code{"probes450"} and \code{"probes27"} correspond to HumanMethylation450
 #' 				 respectively HumanMethylation27 microarrays
-#' 
+#'
 #' @return \code{character} vector of control targets.
 #'
 #' @examples
@@ -1223,7 +1223,7 @@ rnb.get.chromosomes <- function(assembly = "hg19") {
 #' "NEGATIVE" %in% rnb.infinium.control.targets()
 #' }
 #' @author Pavlo Lutsik
-#' @export 
+#' @export
 rnb.infinium.control.targets <- function(target="probes450") {
 	if(target=="probes450"){
 		return(HM450.CONTROL.TARGETS)
