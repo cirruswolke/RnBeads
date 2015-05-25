@@ -1006,13 +1006,15 @@ rnb.run.preprocessing<-function(rnb.set, dir.reports,
 	report <- init.pipeline.report("preprocessing", dir.reports, init.configuration)
 
 	o.greedycut.threshold <- ifelse(inherits(rnb.set, "RnBeadSet"), "filtering.greedycut.pvalue.threshold",
-			"filtering.coverage.threshold")
-	optionlist <- rnb.options("filtering.whitelist", "filtering.blacklist",
-			"filtering.snp", "filtering.missing.value.quantile",
-			"filtering.greedycut", o.greedycut.threshold,
-			"filtering.greedycut.rc.ties", "distribution.subsample")
-	attr.vec <- c(TRUE, TRUE, TRUE, TRUE, TRUE, optionlist[["filtering.greedycut"]] || inherits(rnb.set, "RnBiseqSet"),
-			optionlist[["filtering.greedycut"]], TRUE)
+		"filtering.coverage.threshold")
+	optionlist <- rnb.options("filtering.whitelist", "filtering.blacklist", "filtering.snp",
+		"filtering.cross.reactive", "filtering.greedycut", o.greedycut.threshold, "filtering.greedycut.rc.ties")
+	attr.vec <- c(TRUE, TRUE, TRUE, TRUE, TRUE,
+		optionlist[["filtering.greedycut"]] || inherits(rnb.set, "RnBiseqSet"), optionlist[["filtering.greedycut"]])
+	if (!inherits(rnb.set, "RnBeadSet")) {
+		optionlist <- optionlist[-4]
+		attr.vec <- attr.vec[-4]
+	}
 
 	if (is.null(optionlist[["filtering.whitelist"]])) {
 		optionlist[["filtering.whitelist"]] <- ""
@@ -1025,12 +1027,12 @@ rnb.run.preprocessing<-function(rnb.set, dir.reports,
 		attr.vec <- c(attr.vec, TRUE, TRUE)
 	}
 
-	optionlist <- c(optionlist, rnb.options("normalization.method", "normalization.background.method", "normalization.plot.shifts"))
-	attr.vec<-c(attr.vec, TRUE, TRUE, TRUE)
+	optionlist <- c(optionlist,
+			rnb.options("normalization.method", "normalization.background.method", "normalization.plot.shifts"))
+	attr.vec <- c(attr.vec, TRUE, TRUE, TRUE)
 
-	optionlist <- c(optionlist, rnb.options("filtering.context.removal",
-					"filtering.missing.value.quantile", "filtering.sex.chromosomes.removal",
-					"filtering.deviation.threshold", "distribution.subsample"))
+	optionlist <- c(optionlist, rnb.options("filtering.context.removal", "filtering.missing.value.quantile",
+			"filtering.sex.chromosomes.removal", "filtering.deviation.threshold", "distribution.subsample"))
 	attr.vec <- c(attr.vec, TRUE, TRUE, TRUE, TRUE, TRUE)
 
 	attr(optionlist, "enabled") <- attr.vec
@@ -1103,7 +1105,6 @@ rnb.run.preprocessing<-function(rnb.set, dir.reports,
 		logger.completed()
 	}
 
-
 	logger.start("Manipulating the object")
 	needs.summary <- FALSE
 	if (base::exists("mask", inherits = FALSE)) {
@@ -1141,7 +1142,6 @@ rnb.run.preprocessing<-function(rnb.set, dir.reports,
 	}
 	logger.completed()
 
-
 	if (do.normalization) {
 		## Normalization
 		normalization.result <- rnb.step.normalization(rnb.set, report)
@@ -1149,11 +1149,9 @@ rnb.run.preprocessing<-function(rnb.set, dir.reports,
 		report<-normalization.result$report
 		suppressWarnings(rm(normalization.result))
 		rnb.cleanMem()
-
 	}
 
 	## Postfiltering
-
 	if(do.normalization){
 		logger.start("Filtering Procedures II")
 	}
@@ -1239,7 +1237,6 @@ rnb.run.preprocessing<-function(rnb.set, dir.reports,
 
 	module.complete(report, close.report, show.report)
 	return(list(rnb.set = rnb.set, report = report))
-
 }
 
 ########################################################################################################################

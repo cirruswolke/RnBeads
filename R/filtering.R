@@ -363,7 +363,7 @@ rnb.section.cross.reactive.removal.internal <- function(report, filtered, anno.t
 
 	if (N != 0) {
 		p.columns <- c("ID", "Chromosome", "Start", "End", "Cross-reactive")
-		fname <- "removed_sites_snp.csv"
+		fname <- "removed_sites_cross_reactive.csv"
 		fname <- rnb.save.removed.sites(anno.table[filtered, ], report, fname, p.columns)
 		txt <- paste(txt, "The", ifelse(N == 1, paste("removed", txt.site), paste("list of removed", txt.sites)),
 			' is available in a <a href="', fname, '">dedicated table</a> accompanying this report.')
@@ -464,20 +464,32 @@ rnb.execute.snp.removal <- function(rnb.set, snp = rnb.getOption("filtering.snp"
 		msg <- paste0('"', accepted, '"', collapse = ", ")
 		stop(paste("invalid value for snp; expected one of", msg))
 	}
-	filtered <- rnb.execute.snp.removal.internal(integer(), snp[1], annotation(rnb.set))
+	filtered <- rnb.execute.snp.removal.internal(integer(), snp[1], inherits(rnb.set, "RnBeadSet"),
+		annotation(rnb.set))
 
 	list(dataset.before = rnb.set, dataset = remove.sites(rnb.set, filtered), filtered = filtered, snp = snp)
 }
 
-rnb.execute.snp.removal.internal <- function(sites2ignore, snp, anno.table) {
+rnb.execute.snp.removal.internal <- function(sites2ignore, snp, is.infinium, anno.table) {
 	if (snp == "no") {
 		filtered <- NULL
 	} else {
-		snp.overlap.column <- paste("SNPs", ifelse(snp %in% c("3", "5"), snp, "Full"))
-		if (snp.overlap.column %in% colnames(anno.table)) {
-			filtered <- setdiff(which(anno.table[, snp.overlap.column] > 0), sites2ignore)
+		if (is.infinium) {
+			## Infinium datasets
+			snp.overlap.column <- paste("SNPs", ifelse(snp %in% c("3", "5"), snp, "Full"))
+			if (snp.overlap.column %in% colnames(anno.table)) {
+				filtered <- setdiff(which(anno.table[, snp.overlap.column] > 0), sites2ignore)
+			} else {
+				stop("no SNP annotation")
+			}
 		} else {
-			stop("no SNP annotation")
+			## Bisulfite sequencing datasets
+			snp.overlap.column <- "SNPs"
+			if (snp.overlap.column %in% colnames(anno.table)) {
+				filtered <- setdiff(which(!is.na(anno.table[, snp.overlap.column])), sites2ignore)
+			} else {
+				stop("no SNP annotation")
+			}
 		}
 	}
 	filtered
@@ -608,10 +620,11 @@ rnb.step.snp.removal <- function(rnb.set, report) {
 }
 
 rnb.step.snp.removal.internal <- function(dataset.class, sites2ignore, report, anno.table) {
-	snp <- rnb.getOption("filtering.snp")
 	logger.start("Removal of SNP-enriched Sites")
-	filtered <- tryCatch(
-		rnb.execute.snp.removal.internal(sites2ignore, snp, anno.table), error = function(x) { NULL })
+	snp <- rnb.getOption("filtering.snp")
+	is.infinium <- !(dataset.class %in% c("RnBiseqSet", "RnBSet"))
+	filtered <- tryCatch(rnb.execute.snp.removal.internal(sites2ignore, snp, is.infinium, anno.table),
+			error = function(x) { NULL })
 	if (is.null(filtered)) {
 		filtered <- integer()
 		report <- rnb.section.snp.removal.internal(report, dataset.class, NULL, anno.table, snp)
