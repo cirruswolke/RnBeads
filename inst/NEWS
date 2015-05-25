@@ -1,12 +1,12 @@
 RnBeads 1.1.2
-===============
+=============
 
  * New annotation package format
  * Support for filtering out cross-reactive probes in Infinium 450k dataset
  * Improved logging on a Mac
 
 RnBeads 1.0.0
-===============
+=============
 
  * Bioconductor release
 

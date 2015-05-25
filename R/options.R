@@ -9,7 +9,6 @@
 ## G L O B A L S #######################################################################################################
 
 .rnb.options <- new.env()
-load(system.file("data/options.RData", package = "RnBeads"), .rnb.options) # -> infos, accepted, current, previous
 
 ## F U N C T I O N S ###################################################################################################
 
@@ -60,16 +59,13 @@ parse.default <- function(otype, ovalue) {
 
 ## parse.options
 ##
-## Parses the text file with option definitions and saves the analysis option structure. This function is used for
-## development purposes only.
+## Parses the text file with option definitions and saves the analysis option structure. This function is used during
+## loading of RnBeads only.
 ##
 ## @param fname.input  File name containing the TAB-separated text file defining options, this should point to the file
 ##                     \code{"inst/extdata/options.txt"} in the package source.
-## @param fname.output File name to store the option-related objects that are loaded in the analysis option environment
-##                     when the package loads. This should point to the file \code{"data/options.RData"} in the package
-##                     source.
 ## @author Yassen Assenov
-parse.options <- function(fname.input, fname.output) {
+parse.options <- function(fname.input = system.file("extdata/options.txt", package = "RnBeads")) {
 
 	TABLE.COLS <- c(
 		"Name" = "character",
@@ -125,8 +121,13 @@ parse.options <- function(fname.input, fname.output) {
 
 	infos <- infos[, setdiff(colnames(infos), c("Values", "Default")), drop = FALSE]
 
-	save(infos, accepted, current, previous, file = fname.output, compression_level = 9L)
+	assign('infos', infos, .rnb.options)
+	assign('accepted', accepted, .rnb.options)
+	assign('current', current, .rnb.options)
+	assign('previous', previous, .rnb.options)
 }
+parse.options()
+rm(parse.default, parse.options)
 
 ########################################################################################################################
 

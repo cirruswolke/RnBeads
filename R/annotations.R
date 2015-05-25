@@ -96,7 +96,6 @@ HM450.CONTROL.TARGETS <- c(
 	"staining" = "STAINING",
 	"target removal" = "TARGET REMOVAL")
 
-
 HM27.CONTROL.TARGETS<-c(
 		"bisulfite conversion" = "Bisulfite conversion",
 		"extension" = "Extension",
