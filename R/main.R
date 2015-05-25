@@ -213,7 +213,7 @@ rnb.build.index.internal <- function(dir.reports, fname = "index.html", dir.conf
 #'         directory, the returned value is an empty \code{character} vector.
 #'
 #' @details
-#' In order to ensure independence of the operating system, there are strong restrictions on the name of the index file. 
+#' In order to ensure independence of the operating system, there are strong restrictions on the name of the index file.
 #' It can consist of the following symbols only: Latin letters, digits, dot (\code{.}), dash (\code{-}) and underline
 #' (\code{_}). The extension of the file must be one of \code{htm}, \code{html}, \code{xhtml} or \code{xml}. The name
 #' must not include paths, that is, slash (\code{/}) or backslash (\code{\\}) cannot be used. In addition, it cannot be
@@ -522,11 +522,11 @@ rnb.run.xml <- function(fname, create.r.command = FALSE) {
 #' @param data.source        Methylation dataset as an object of type inheriting \code{\linkS4class{RnBSet}}, or a
 #'                           \code{character} vector specifying the location of the data items on disk. The expected
 #'                           length of the vector differs for different values of \code{data.type};
-#'                           see \code{\link{rnb.execute.import}} for a more detailed description. If set, the parameters 
+#'                           see \code{\link{rnb.execute.import}} for a more detailed description. If set, the parameters
 #' 							 \code{sample.sheet}, \code{data.dir}, \code{GS.report}, \code{GEO.acc} will be ignored.
 #' @param sample.sheet		 A spreadsheet-like text file with sample annotations. The required columns are different
 #' 							 for different values of \code{data.type}.
-#' @param data.dir			 For \code{data.type \%in\% c("data.dir", "idat.dir", "bed.dir")} a character singleton 
+#' @param data.dir			 For \code{data.type \%in\% c("data.dir", "idat.dir", "bed.dir")} a character singleton
 #' 							 specifying the location of the directory with data files. The directory should have zero
 #' 							 depth, i.e. should contain no subdirectories.
 #' @param GS.report			 GenomeStudio report file. \code{data.type} will be automatically set to \code{"GS.report"}.
@@ -542,7 +542,7 @@ rnb.run.xml <- function(fname, create.r.command = FALSE) {
 #' @param build.index        Flag indicating if a report index file (named \code{"index.html"}) should be created after
 #'                           all modules in the pipeline complete their analyses. If this is \code{TRUE}, the index file
 #'                           is also displayed using the function \code{\link{rnb.show.report}}.
-#' @param save.rdata		 Flag indicating whether important data objects (the filtered and unfiltered RnBSets, 
+#' @param save.rdata		 Flag indicating whether important data objects (the filtered and unfiltered RnBSets,
 #' 							 differential methylation) should be saved to an RData file in the reports folder.
 #' @return Invisibly, the loaded, normalized and/or possibly filtered dataset as an object of type inheriting
 #'         \code{\linkS4class{RnBSet}}.
@@ -550,38 +550,38 @@ rnb.run.xml <- function(fname, create.r.command = FALSE) {
 #' @seealso \link[=rnb.run.import]{RnBeads modules}
 #' @author Yassen Assenov
 #' @export
-rnb.run.analysis <- function(dir.reports, data.source=NULL, sample.sheet=NULL, data.dir=NULL, GS.report=NULL, GEO.acc=NULL, 
+rnb.run.analysis <- function(dir.reports, data.source=NULL, sample.sheet=NULL, data.dir=NULL, GS.report=NULL, GEO.acc=NULL,
 		data.type = rnb.getOption("import.default.data.type"),
 	initialize.reports = TRUE, build.index = TRUE, save.rdata = TRUE) {
-			
+
 	if(all(is.null(c(sample.sheet, data.dir, GS.report, GEO.acc, data.source)))){
 		stop("one of the sample.sheet, data.dir, GS.report, GEO.acc, data.source should be specified")
 	}
-	
+
 	if(is.null(data.source)){
-		
+
 		if(!is.null(GS.report)){
-			
+
 			data.type<-"GS.report"
 			data.source<-GS.report
-			
+
 		}else if(!is.null(GEO.acc)){
-			
+
 			data.type<-"GEO"
 			data.source<-GEO.acc
-			
+
 		}else if(!is.null(sample.sheet) & !is.null(data.dir)){
 
 			data.source<-list(data.dir=data.dir, sample.sheet=sample.sheet)
-						
+
 		}else if(!is.null(sample.sheet) & is.null(data.dir)){
-			
+
 			stop("data directory is missing")
-			
+
 		}else if(is.null(sample.sheet) & !is.null(data.dir)){
-			
+
 			stop("sample sheet is missing")
-			
+
 		}
 	}
 
@@ -643,7 +643,7 @@ rnb.run.analysis <- function(dir.reports, data.source=NULL, sample.sheet=NULL, d
 			stop("invalid value for data.source")
 		}
 	} else if (inherits(data.source, "RnBSet")) {
-		rnb.set <- data.source 
+		rnb.set <- data.source
 	} else if (inherits(data.source, "MethyLumiSet")) {
 		rnb.set <- as(data.source, "RnBeadSet")
 	} else {
@@ -658,7 +658,7 @@ rnb.run.analysis <- function(dir.reports, data.source=NULL, sample.sheet=NULL, d
 	if (save.rdata){
 		analysis.options <- rnb.options()
 		# if(!is.null(rnb.set@status) && rnb.set@status$disk.dump){
-		# 	save.matrices(rnb.set, 
+		# 	save.matrices(rnb.set,
 		# 			path=file.path(dir.reports, "rnbSet_unfiltered_ffmatrices"))
 		# }
 		save.rnb.set(rnb.set,file.path(dir.reports, "rnbSet_unnormalized"),
@@ -666,7 +666,7 @@ rnb.run.analysis <- function(dir.reports, data.source=NULL, sample.sheet=NULL, d
 		save(analysis.options,
 				file = file.path(dir.reports, "analysis_options.RData"))
 	}
-	
+
 	## Quality control
 	if (rnb.getOption("qc")) {
 		update.index(rnb.set, "quality_control")
@@ -675,16 +675,16 @@ rnb.run.analysis <- function(dir.reports, data.source=NULL, sample.sheet=NULL, d
 	}
 
 	## Preprocessing
-	if (rnb.getOption("preprocessing")) { 
+	if (rnb.getOption("preprocessing")) {
 		update.index(rnb.set, "preprocessing")
 		rnb.cleanMem()
 		result <- rnb.run.preprocessing(rnb.set, dir.reports)
 		rnb.set <- result$rnb.set
 		rm(result); rnb.cleanMem()
-		
+
 		if (save.rdata){
 			# if(!is.null(rnb.set@status) && rnb.set@status$disk.dump){
-			# 	save.matrices(rnb.set, 
+			# 	save.matrices(rnb.set,
 			# 			path=file.path(dir.reports, "rnbSet_filtered_ffmatrices"))
 			# }
 			save.rnb.set(rnb.set,file.path(dir.reports, "rnbSet_preprocessed"),
@@ -703,7 +703,7 @@ rnb.run.analysis <- function(dir.reports, data.source=NULL, sample.sheet=NULL, d
 			rnb.cleanMem()
 			rnb.run.tnt(rnb.set, dir.reports)
 		}
-		
+
 		## Annotation inference
 		if (rnb.getOption("inference")) {
 			update.index(rnb.set, "covariate_inference")
@@ -713,7 +713,7 @@ rnb.run.analysis <- function(dir.reports, data.source=NULL, sample.sheet=NULL, d
 					 archive=rnb.getOption("gz.large.files"))
 			}
 		}
-		
+
 		## Exploratory analysis
 		if (rnb.getOption("exploratory")) {
 			update.index(rnb.set, "exploratory_analysis")
@@ -730,7 +730,7 @@ rnb.run.analysis <- function(dir.reports, data.source=NULL, sample.sheet=NULL, d
 	}
 
 	update.index(rnb.set)
-	
+
 	if (save.rdata){
 		rnb.cleanMem()
 		logger.start("Saving RData")
@@ -876,13 +876,13 @@ module.complete <- function(report, close.report, show.report) {
 #'
 #' @examples
 #' \donttest{
-#' ### Running the modules step by step 
-#' 
+#' ### Running the modules step by step
+#'
 #' # Directory where your data is located
 #' data.dir <- "~/RnBeads/data/Ziller2011_PLoSGen_450K"
 #' idat.dir <- file.path(data.dir, "idat")
 #' sample.annotation <- file.path(data.dir, "sample_annotation.csv")
-#' 
+#'
 #' # Directory where the output should be written to
 #' analysis.dir <- "~/RnBeads/analysis"
 #' # Directory where the report files should be written to
@@ -892,29 +892,29 @@ module.complete <- function(report, close.report, show.report) {
 #' rnb.options(filtering.sex.chromosomes.removal = TRUE, identifiers.column = "Sample_ID")
 #' ## Restrict logging to the console only
 #' logger.start(fname = NA)
-#' 
+#'
 #' ## Data import
 #' data.source <- c(idat.dir, sample.annotation)
 #' result <- rnb.run.import(data.source = data.source, data.type = "idat.dir", dir.reports = report.dir)
 #' rnb.set <- result$rnb.set
-#' 
+#'
 #' ## Quality Control
 #' rnb.run.qc(rnb.set, report.dir)
-#' 
+#'
 #' ## Preprocessing
 #' rnb.set <- rnb.run.preprocessing(rnb.set, dir.reports=report.dir)$rnb.set
-#' 
+#'
 #' ## Data export
 #' rnb.options(export.to.csv = TRUE)
 #' rnb.run.tnt(rnb.set, report.dir)
-#' 
+#'
 #' ## Exploratory analysis
 #' rnb.run.exploratory(rnb.set, report.dir)
-#' 
+#'
 #' ## Differential methylation
 #' rnb.run.differential(rnb.set, report.dir)
 #' }
-#' 
+#'
 #' @seealso \code{\link{rnb.run.analysis}} which executes these modules in the order given above
 #' @author Yassen Assenov
 #' @export
@@ -930,7 +930,7 @@ rnb.run.import <- function(data.source, data.type = rnb.getOption("import.defaul
 		stop("invalid value for show.report; expected TRUE or FALSE")
 	}
 	module.start.log("Loading Data")
-		
+
 	report <- init.pipeline.report("data_import", dir.reports, init.configuration)
 	optionlist <- rnb.options("import.default.data.type", "import.table.separator", "import.bed.style",
 		"import.bed.columns", "import.bed.frame.shift")
@@ -944,7 +944,7 @@ rnb.run.import <- function(data.source, data.type = rnb.getOption("import.defaul
 		result$rnb.set@inferred.covariates$gender <- FALSE
 	}
 
-	module.complete(result$report, close.report, show.report)	
+	module.complete(result$report, close.report, show.report)
 	return(result)
 }
 
@@ -956,12 +956,12 @@ rnb.run.qc <- function(rnb.set, dir.reports, init.configuration = !file.exists(f
 	close.report = TRUE, show.report = FALSE) {
 	validate.module.parameters(rnb.set, dir.reports, close.report, show.report)
 	module.start.log("Quality Control")
-	
+
 	report <- init.pipeline.report("quality_control", dir.reports, init.configuration)
 	optionlist <- rnb.options("qc.boxplots", "qc.barplots", "qc.negative.boxplot", "qc.snp.heatmap", "qc.snp.distances",
 		"qc.snp.boxplot", "qc.snp.barplot")
 	report <- rnb.add.optionlist(report, optionlist)
-	
+
 	report <- rnb.step.quality(rnb.set, report)
 	include.mixups <- any(unlist(rnb.options("qc.snp.heatmap", "qc.snp.boxplot", "qc.snp.barplot")))
 	if (inherits(rnb.set, "RnBeadSet") && include.mixups) {
@@ -975,7 +975,7 @@ rnb.run.qc <- function(rnb.set, dir.reports, init.configuration = !file.exists(f
 		}
 		report <- rnb.section.gender.prediction(rnb.set, signal.increases, report)
 	}
-	module.complete(report, close.report, show.report)	
+	module.complete(report, close.report, show.report)
 	invisible(report)
 }
 
@@ -989,22 +989,22 @@ rnb.run.preprocessing<-function(rnb.set, dir.reports,
 
 	validate.module.parameters(rnb.set, dir.reports, close.report, show.report)
 	module.start.log("Preprocessing")
-	
+
 	do.normalization <- rnb.getOption("normalization")
-	
+
 	if (is.null(do.normalization)) {
 		do.normalization <- inherits(rnb.set, "RnBeadSet")
 	}
-	
+
 	if (inherits(rnb.set, "RnBiseqSet")) {
 		logger.warning("Skipped normalization module for sequencing data.")
 		do.normalization <- FALSE
 	}
-	
+
 	## Option list
-	
+
 	report <- init.pipeline.report("preprocessing", dir.reports, init.configuration)
-	
+
 	o.greedycut.threshold <- ifelse(inherits(rnb.set, "RnBeadSet"), "filtering.greedycut.pvalue.threshold",
 			"filtering.coverage.threshold")
 	optionlist <- rnb.options("filtering.whitelist", "filtering.blacklist",
@@ -1013,7 +1013,7 @@ rnb.run.preprocessing<-function(rnb.set, dir.reports,
 			"filtering.greedycut.rc.ties", "distribution.subsample")
 	attr.vec <- c(TRUE, TRUE, TRUE, TRUE, TRUE, optionlist[["filtering.greedycut"]] || inherits(rnb.set, "RnBiseqSet"),
 			optionlist[["filtering.greedycut"]], TRUE)
-	
+
 	if (is.null(optionlist[["filtering.whitelist"]])) {
 		optionlist[["filtering.whitelist"]] <- ""
 	}
@@ -1024,18 +1024,18 @@ rnb.run.preprocessing<-function(rnb.set, dir.reports,
 		optionlist <- c(optionlist, rnb.options("filtering.high.coverage.outliers", "filtering.low.coverage.masking"))
 		attr.vec <- c(attr.vec, TRUE, TRUE)
 	}
-	
+
 	optionlist <- c(optionlist, rnb.options("normalization.method", "normalization.background.method", "normalization.plot.shifts"))
 	attr.vec<-c(attr.vec, TRUE, TRUE, TRUE)
-	
+
 	optionlist <- c(optionlist, rnb.options("filtering.context.removal",
 					"filtering.missing.value.quantile", "filtering.sex.chromosomes.removal",
 					"filtering.deviation.threshold", "distribution.subsample"))
 	attr.vec <- c(attr.vec, TRUE, TRUE, TRUE, TRUE, TRUE)
-	
+
 	attr(optionlist, "enabled") <- attr.vec
 	report <- rnb.add.optionlist(report, optionlist)
-	
+
 	### Prefiltering
 	if(do.normalization){
 		logger.start("Filtering Procedures I")
@@ -1043,19 +1043,24 @@ rnb.run.preprocessing<-function(rnb.set, dir.reports,
 		logger.start("Filtering Procedures")
 	}
 	anno.table <- annotation(rnb.set, add.names = inherits(rnb.set, "RnBeadSet"))
-	
+
 	whitelist <- rnb.process.sitelist(rnb.getOption("filtering.whitelist"), anno.table)
 	blacklist <- rnb.process.sitelist(rnb.getOption("filtering.blacklist"), anno.table)
 	removed.sites <- sort(union(blacklist, whitelist))
 	removed.samples <- integer()
-	
+
 	if (length(whitelist) != 0 || length(blacklist) != 0) {
 		## TODO: Add a section on whitelisted and/or blacklisted sites
 		# setdiff(blacklist, whitelist)
 	}
-	
+
 	if (rnb.getOption("filtering.snp") != "no") {
 		result <- rnb.step.snp.removal.internal(class(rnb.set), removed.sites, report, anno.table)
+		report <- result$report
+		removed.sites <- sort(c(removed.sites, result$filtered))
+	}
+	if (rnb.getOption("filtering.cross.reactive")) {
+		result <- rnb.step.cross.reactive.removal.internal(removed.sites, report, anno.table)
 		report <- result$report
 		removed.sites <- sort(c(removed.sites, result$filtered))
 	}
@@ -1079,7 +1084,7 @@ rnb.run.preprocessing<-function(rnb.set, dir.reports,
 		report <- result$report
 	}
 	suppressWarnings(rm(result))
-	
+
 	removed.sites <- setdiff(removed.sites, whitelist)
 
 	if (do.normalization) {
@@ -1090,15 +1095,15 @@ rnb.run.preprocessing<-function(rnb.set, dir.reports,
 		logger.status(c("Retained", retained.s, "samples and", retained.p, "sites"))
 		rm(mm, retained.p, retained.s)
 		logger.completed()
-		
+
 		logger.start("Summary of Filtering Procedures I")
 		relm <- rnb.get.reliability.matrix(rnb.set)
 		report <- rnb.step.filter.summary.internal(class(rnb.set), meth(rnb.set), relm, removed.samples, removed.sites,
 				report, section.name="Filtering Summary I", section.order=1)
 		logger.completed()
 	}
-	
-	
+
+
 	logger.start("Manipulating the object")
 	needs.summary <- FALSE
 	if (base::exists("mask", inherits = FALSE)) {
@@ -1108,7 +1113,7 @@ rnb.run.preprocessing<-function(rnb.set, dir.reports,
 	}
 	if (length(removed.samples) != 0) {
 		if(rnb.getOption("enforce.destroy.disk.dumps")){
-			rnb.set@status$discard.ff.matrices<-TRUE			
+			rnb.set@status$discard.ff.matrices<-TRUE
 		}
 		rnb.set <- remove.samples(rnb.set, removed.samples)
 		if(isTRUE(rnb.set@status$discard.ff.matrices)){
@@ -1117,10 +1122,10 @@ rnb.run.preprocessing<-function(rnb.set, dir.reports,
 		needs.summary <- FALSE
 		logger.status(sprintf("Removed %d samples", length(removed.samples)))
 	}
-	
+
 	if (length(removed.sites)) {
 		if(rnb.getOption("enforce.destroy.disk.dumps")){
-			rnb.set@status$discard.ff.matrices<-TRUE			
+			rnb.set@status$discard.ff.matrices<-TRUE
 		}
 		rnb.set <- remove.sites(rnb.set, removed.sites)
 		if(isTRUE(rnb.set@status$discard.ff.matrices)){
@@ -1129,14 +1134,14 @@ rnb.run.preprocessing<-function(rnb.set, dir.reports,
 		needs.summary <- FALSE
 		logger.status(sprintf("Removed %d sites (probes)", length(removed.sites)))
 	}
-	
+
 	if (needs.summary) {
 		rnb.set <- updateRegionSummaries(rnb.set)
 		logger.status(sprintf("Updated region-level data"))
 	}
 	logger.completed()
-	
-		
+
+
 	if (do.normalization) {
 		## Normalization
 		normalization.result <- rnb.step.normalization(rnb.set, report)
@@ -1144,25 +1149,25 @@ rnb.run.preprocessing<-function(rnb.set, dir.reports,
 		report<-normalization.result$report
 		suppressWarnings(rm(normalization.result))
 		rnb.cleanMem()
-		
+
 	}
-	
+
 	## Postfiltering
-	
+
 	if(do.normalization){
 		logger.start("Filtering Procedures II")
 	}
-	
+
 	anno.table <- annotation(rnb.set, add.names = inherits(rnb.set, "RnBeadSet"))
 	whitelist <- rnb.process.sitelist(rnb.getOption("filtering.whitelist"), anno.table)
 	blacklist <- rnb.process.sitelist(rnb.getOption("filtering.blacklist"), anno.table)
 	removed.sites <- sort(union(blacklist, whitelist))
-	
+
 	if (length(whitelist) != 0 || length(blacklist) != 0) {
 		## TODO: Add a section on whitelisted and/or blacklisted sites
 		# setdiff(blacklist, whitelist)
 	}
-	
+
 	mm <- meth(rnb.set)
 	if (length(rnb.getOption("filtering.context.removal")) != 0 && inherits(rnb.set, "RnBeadSet")) {
 		result <- rnb.step.context.removal.internal(removed.sites, report, anno.table)
@@ -1187,14 +1192,14 @@ rnb.run.preprocessing<-function(rnb.set, dir.reports,
 		removed.sites <- sort(c(removed.sites, result$filtered))
 	}
 	suppressWarnings(rm(result, ttt))
-	
+
 	## Summary II
-	
+
 	removed.sites <- setdiff(removed.sites, whitelist)
 	logger.status(c("Retained", ncol(mm), "samples and", nrow(mm) - length(removed.sites), "sites"))
 	rm(mm)
 	logger.completed()
-	
+
 	if(do.normalization){
 		logger.start("Summary of Filtering Procedures II")
 	}else{
@@ -1211,11 +1216,11 @@ rnb.run.preprocessing<-function(rnb.set, dir.reports,
 	report <- rnb.step.filter.summary.internal(class(rnb.set), meth(rnb.set), relm, integer(), removed.sites,
 			report, section.name=sn, section.order=so)
 	logger.completed()
-	
+
 	logger.start("Manipulating the object")
 	if (length(removed.sites)) {
 		if(rnb.getOption("enforce.destroy.disk.dumps")){
-			rnb.set@status$discard.ff.matrices<-TRUE			
+			rnb.set@status$discard.ff.matrices<-TRUE
 		}
 		rnb.set <- remove.sites(rnb.set, removed.sites)
 		if(isTRUE(rnb.set@status$discard.ff.matrices)){
@@ -1224,17 +1229,17 @@ rnb.run.preprocessing<-function(rnb.set, dir.reports,
 		logger.status(sprintf("Removed %d sites (probes)", length(removed.sites)))
 	}
 	logger.completed()
-	
+
 	if (rnb.getOption("region.subsegments") > 1L) {
 		res <- rnb.step.region.subsegmentation(rnb.set, report, region.types=rnb.getOption("region.subsegments.types"))
 		rnb.set <- res$rnb.set
 		report <- res$report
 	}
 	rnb.cleanMem()
-	
+
 	module.complete(report, close.report, show.report)
 	return(list(rnb.set = rnb.set, report = report))
-	
+
 }
 
 ########################################################################################################################
@@ -1261,7 +1266,7 @@ rnb.run.inference <- function(rnb.set, dir.reports,
 		rnb.set <- result$rnb.set
 		logger.completed()
 	}
-	
+
 	if(!is.null(rnb.getOption("inference.reference.methylome.column"))){
 		result <- rnb.step.cell.types(rnb.set, report)
 		report <- result$report
@@ -1277,7 +1282,7 @@ rnb.run.inference <- function(rnb.set, dir.reports,
 		report <- rnb.section.export.ct.adj(res.exp,rnb.set,report)
 	}
 
-	module.complete(report, close.report, show.report)	
+	module.complete(report, close.report, show.report)
 	return(list(rnb.set = rnb.set, report = report))
 }
 
@@ -1448,7 +1453,7 @@ rnb.run.differential <- function(rnb.set, dir.reports,
 		}
 	logger.completed()
 
-	logger.start("Report Generation")	
+	logger.start("Report Generation")
 	if (is.null(diffmeth)){
 		txt <- "Differential methylation analyis was skipped because no valid grouping information could be found."
 		report <- rnb.add.section(report, "Differential Methylation Analysis", txt)
@@ -1465,7 +1470,7 @@ rnb.run.differential <- function(rnb.set, dir.reports,
 	}
 	logger.completed()
 
-	module.complete(report, close.report, show.report)	
+	module.complete(report, close.report, show.report)
 	invisible(list(report=report,diffmeth=diffmeth,dm.enrich=dm.enrich))
 }
 
@@ -1500,14 +1505,14 @@ rnb.run.tnt <- function(rnb.set, dir.reports,
 	report <- rnb.section.tnt(res,rnb.set,report)
 	logger.completed()
 
-	module.complete(report, close.report, show.report)	
+	module.complete(report, close.report, show.report)
 	invisible(report)
 }
 
 ########################################################################################################################
 
 #' rnb.run.example
-#' 
+#'
 #' Executes the analysis pipeline for an example from the RnBeads web site.
 #'
 #' @param index      Example to start. This must be one of \code{1}, \code{2}, \code{3} or \code{4}.

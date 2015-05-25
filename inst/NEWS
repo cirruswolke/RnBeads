@@ -2,6 +2,7 @@ RnBeads 1.1.2
 ===============
 
  * New annotation package format
+ * Support for filtering out cross-reactive probes in Infinium 450k dataset
  * Improved logging on a Mac
 
 RnBeads 1.0.0
@@ -12,7 +13,7 @@ RnBeads 1.0.0
 RnBeads 0.99.23
 ===============
 
- * incorporated some bioconductor check related improvements
+ * Incorporated some bioconductor check related improvements
 
 RnBeads 0.99.22
 ===============
@@ -57,13 +58,13 @@ RnBeads 0.99.16
 
  * Enhanced XML-based analysis though the tag preanalysis.script
  * Optimized loading of the sequencing data sets
- * Enhanced region profiles plots. Added region site distribution plots 
+ * Enhanced region profiles plots. Added region site distribution plots
  * Locus profiles can now be generated in the exploratory report for regions specified in custom bed files and for genes listed as gene symbols
  * Improved cell type heterogeneity inference (no cell types excluded anymore)
  * Added more support for paired differential methylation with limma
  * Some functions were renamed: merge.samples->mergeSamples, add.pheno->addPheno, add.region.subsegments->addRegionSubsegments, and all functions operating on Report
  * Added helper classes for submitting RnBeads to a scientific compute cluster. Current implementation includes Sun Grid Engine
- * The default pipeline now uses ff functionality and saves intermediate objects into the report directory 
+ * The default pipeline now uses ff functionality and saves intermediate objects into the report directory
  * Minor bugfixes
 
 RnBeads 0.99.15
@@ -124,7 +125,7 @@ RnBeads 0.99.9
 
  * Bugfixes in paired analysis
  * Usability of bisulfite sequencing
- 
+
 RnBeads 0.99.8
 ==============
 
@@ -134,7 +135,7 @@ RnBeads 0.99.8
  * Paired analysis (testing stage)
  * Webservice installed
  * Multiple bugfixes
- 
+
 RnBeads 0.99.7
 ==============
 

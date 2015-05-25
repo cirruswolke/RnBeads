@@ -49,14 +49,15 @@ filtering.whitelist	character	no	yes		NULL
 filtering.blacklist	character	no	yes		NULL
 filtering.context.removal	character.vector	no	yes	(CC,CG,CAG,CAH,CTG,CTH,Other)	(CC,CAG,CAH,CTG,CTH,Other)
 filtering.snp	character	no	no	(no,3,5,any,yes)	3
+filtering.cross.reactive	logical	no	no		FALSE
+filtering.greedycut	logical	no	no		TRUE
+filtering.greedycut.pvalue.threshold	double	no	no	[0,1]	0.05
+filtering.greedycut.rc.ties	character	no	no	(any,column,row)	row
 filtering.sex.chromosomes.removal	logical	no	no		FALSE
 filtering.missing.value.quantile	double	no	no	[0,1]	1
 filtering.coverage.threshold	integer	no	no	[0,	5
 filtering.low.coverage.masking	logical	no	no		FALSE
 filtering.high.coverage.outliers	logical	no	no		FALSE
-filtering.greedycut	logical	no	no		TRUE
-filtering.greedycut.pvalue.threshold	double	no	no	[0,1]	0.05
-filtering.greedycut.rc.ties	character	no	no	(any,column,row)	row
 filtering.deviation.threshold	double	no	no	[0,1]	0
 inference	logical	no	no		FALSE
 inference.targets.sva	character.vector	no	no		()

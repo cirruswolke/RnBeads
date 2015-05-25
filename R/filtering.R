@@ -263,6 +263,168 @@ rnb.step.context.removal.internal <- function(sites2ignore, report, anno.table) 
 
 ########################################################################################################################
 
+#' rnb.execute.cross.reactive.removal
+#'
+#' Removes all probes defined as cross-reactive from the given dataset.
+#'
+#' @param rnb.set Methylation dataset as an object of type inheriting \code{\linkS4class{RnBeadSet}}.
+#' @return \code{list} of four elements:
+#'         \describe{
+#'           \item{\code{"dataset.before"}}{Copy of \code{rnb.set}.}
+#'           \item{\code{"dataset"}}{The (possibly) modified dataset object after removing probes that have a high
+#'                likelihood of cross-hybridization.}
+#'           \item{\code{"filtered"}}{\code{integer} vector storing the indices (in beta matrix of the unfiltered
+#'                dataset) of all removed probes.}
+#'         }
+#'
+#' @examples
+#' \donttest{
+#' library(RnBeads.hg19)
+#' data(small.example.object)
+#' rnb.set.filtered <- rnb.execute.cross.reactive.removal(rnb.set.example)$dataset
+#' identical(meth(rnb.set.example), meth(rnb.set.filtered)) # FALSE
+#' }
+#' @author Yassen Assenov
+#' @export
+rnb.execute.cross.reactive.removal <- function(rnb.set) {
+	if (!inherits(rnb.set, "RnBeadSet")) {
+		stop("invalid value for rnb.set")
+	}
+	filtered <- rnb.execute.cross.reactive.removal.internal(integer(), annotation(rnb.set))
+	list(dataset.before = rnb.set, dataset = remove.sites(rnb.set, filtered), filtered = filtered)
+}
+
+rnb.execute.cross.reactive.removal.internal <- function(sites2ignore, anno.table) {
+	if (!("Cross-reactive" %in% colnames(anno.table))) {
+		stop("no Cross-reactive information in the annotation table")
+	}
+	setdiff(which(anno.table[, "Cross-reactive"] != 0), sites2ignore)
+}
+
+########################################################################################################################
+
+#' rnb.section.cross.reactive.removal
+#'
+#' Adds a section on removing cross-reactive probes to the specified report.
+#'
+#' @param report  Report to contain the new section. This must be an object of type \code{\linkS4class{Report}}.
+#' @param rnb.set Methylation dataset before filtering as an object of type inheriting \code{\linkS4class{RnBeadSet}}.
+#' @param stats   Statistics on cross-reactive probe filtering, as returned by
+#'                \code{\link{rnb.execute.cross.reactive.removal}}. See the documentation of the function for more
+#'                details.
+#' @return The possibly modified report.
+#'
+#' @seealso \code{\link{rnb.execute.cross.reactive.removal}}, \code{\link{rnb.step.cross.reactive.removal}},
+#'          \code{\link{rnb.run.filtering}}
+#'
+#' @author Yassen Assenov
+#' @noRd
+rnb.section.cross.reactive.removal <- function(report, rnb.set, stats) {
+	if (!inherits(report, "Report")) {
+		stop("invalid value for report")
+	}
+	validate.stats(stats)
+	if (!inherits(stats$dataset, "RnBeadSet")) {
+		stop("invalid value for stats$dataset; expected RnBeadSet")
+	}
+	anno.table <- annotation(stats$dataset.before, add.names = TRUE)
+	filtered <- stats$filtered
+	if (length(filtered) != 0 && max(filtered) > nrow(anno.table)) {
+		stop("invalid value for stats$filtered")
+	}
+	rnb.section.cross.reactive.removal.internal(report, filtered, anno.table)
+}
+
+rnb.section.cross.reactive.removal.internal <- function(report, filtered, anno.table) {
+	txt.site <- rnb.get.row.token("RnBeadSet")
+	txt.sites <- rnb.get.row.token("RnBeadSet", plural = TRUE)
+	txt.title <- paste("Removal of Cross-reactive", capitalize(txt.sites))
+	if (is.null(filtered)) {
+		txt <- paste0("Filtering of cross-reactive probes was not performed because the probe annotation table does ",
+			"not include information on cross-hybridization.")
+		report <- rnb.add.section(report, txt.title, txt)
+		return(report)
+	}
+
+	refText <- paste0("Chen, Y., Lemire, M., Choufani, S., Butcher, D.T.,  Grafodatskaya, D., Zanke, B.W., ",
+		"Gallinger, S., Hudson, T.J., Weksberg, R. (2013) Discovery of cross-reactive probes and polymorphic CpGs in ",
+		"the Illumina Infinium HumanMethylation450 microarray. <i>Epigenetics</i>, <b>8</b>(2), 203-209")
+	report <- rnb.add.reference(report, refText)
+	txt <- " non-specific and "
+	N <- length(filtered)
+	if (N == 0) {
+		txt <- paste0("No probes were found that have sequences which are", txt, "have")
+	} else if (N == 1) {
+		txt <- paste0("<b>One</b> probe was removed because its sequence is", txt, "has")
+	} else {
+		txt <- paste0("<b>", N, "</b> probes were removed because their sequences are", txt, "have")
+	}
+	txt <- paste0(txt, " a high likelihood of cross-hybridization ", rnb.get.reference(report, refText), ".")
+
+	if (N != 0) {
+		p.columns <- c("ID", "Chromosome", "Start", "End", "Cross-reactive")
+		fname <- "removed_sites_snp.csv"
+		fname <- rnb.save.removed.sites(anno.table[filtered, ], report, fname, p.columns)
+		txt <- paste(txt, "The", ifelse(N == 1, paste("removed", txt.site), paste("list of removed", txt.sites)),
+			' is available in a <a href="', fname, '">dedicated table</a> accompanying this report.')
+	}
+	return(rnb.add.section(report, txt.title, txt))
+}
+
+########################################################################################################################
+
+#' rnb.step.cross.reactive.removal
+#'
+#' Performs the procedure for removal of cross-reactive probes (if any) given an Infinium methylation dataset and adds a
+#' corresponding section to the specified report.
+#'
+#' @param rnb.set Methylation dataset as an object of type inheriting \code{\linkS4class{RnBeadSet}}.
+#' @param report  Report to summarize the outcome of this procedure. This must be an object of type
+#'                \code{\linkS4class{Report}}.
+#' @return List of two elements:
+#'         \describe{
+#'           \item{\code{"dataset"}}{The (possibly modified) dataset after removing cross-reactive probes.}
+#'           \item{\code{"report"}}{The modified report.}
+#'         }
+#'
+#' @seealso \code{\link{rnb.execute.cross.reactive.removal}}, \code{\link{rnb.section.cross.reactive.removal}},
+#'          \code{\link{rnb.run.filtering}}
+#'
+#' @author Yassen Assenov
+#' @noRd
+rnb.step.cross.reactive.removal <- function(rnb.set, report) {
+	if (!inherits(rnb.set, "RnBeadSet")) {
+		stop("invalid value for rnb.set")
+	}
+	if (!inherits(report, "Report")) {
+		stop("invalid value for report")
+	}
+	if (rnb.getOption("logging") && logger.isinitialized() == FALSE) {
+		logger.start(fname = NA) # initialize console logger
+	}
+	result <- rnb.step.cross.reactive.removal.internal(integer(), report, annotation(rnb.set, add.names = TRUE))
+	return(list(dataset = remove.sites(rnb.set, result$filtered), report = result$report))
+}
+
+rnb.step.cross.reactive.removal.internal <- function(sites2ignore, report, anno.table) {
+	logger.start("Removal of Cross-reactive Probes")
+	filtered <- tryCatch(
+		rnb.execute.cross.reactive.removal.internal(sites2ignore, anno.table), error = function(x) { NULL })
+	if (is.null(filtered)) {
+		filtered <- integer()
+		report <- rnb.section.cross.reactive.removal.internal(report, NULL, anno.table)
+	} else {
+		msg <- paste("Removed", length(filtered), ifelse(length(filtered) == 1, "site", "sites"))
+		logger.status(msg)
+		report <- rnb.section.cross.reactive.removal.internal(report, filtered, anno.table)
+	}
+	logger.status("Added a corresponding section to the report")
+	logger.completed()
+	list(report = report, filtered = filtered)
+}
+
+########################################################################################################################
+
 #' rnb.execute.snp.removal
 #'
 #' Removes all probes overlapping with single nucleotide polymorphisms (SNPs) from the given dataset.
@@ -303,7 +465,7 @@ rnb.execute.snp.removal <- function(rnb.set, snp = rnb.getOption("filtering.snp"
 		stop(paste("invalid value for snp; expected one of", msg))
 	}
 	filtered <- rnb.execute.snp.removal.internal(integer(), snp[1], annotation(rnb.set))
-	
+
 	list(dataset.before = rnb.set, dataset = remove.sites(rnb.set, filtered), filtered = filtered, snp = snp)
 }
 
@@ -342,9 +504,6 @@ rnb.section.snp.removal <- function(report, rnb.set, stats) {
 		stop("invalid value for report")
 	}
 	validate.stats(stats)
-	if (!inherits(stats$dataset, "RnBSet")) {
-		stop("invalid value for stats$dataset; expected RnBset")
-	}
 	anno.table <- annotation(stats$dataset.before, add.names = inherits(stats$dataset, "RnBeadSet"))
 	filtered <- stats$filtered
 	if (!(is.integer(filtered) && anyDuplicated(filtered) == 0 && 1 <= min(filtered) &&
@@ -399,7 +558,7 @@ rnb.section.snp.removal.internal <- function(report, dataset.class, filtered, an
 		}
 		txt <- paste(txt, "with SNPs.")
 	}
-	
+
 	if (N != 0) {
 		snp.overlap.column <- paste("SNPs", ifelse(snp %in% c("3", "5"), snp, "Full"))
 		p.columns <- c("ID", "Chromosome", "Start", "End", snp.overlap.column)
@@ -1011,7 +1170,7 @@ rnb.section.na.removal.internal <- function(report, dataset.class, mm, filtered,
 				binwidth <- max((binwidth[2] - binwidth[1]) / 40, 1)
 				rplot <- createReportPlot(x$fname, report, width = 5, height = 5)
 				pp <- ggplot(dframe, aes_string(x = "x")) + labs(x = "Number of missing values", y = "Frequency") +
-					geom_histogram(aes_string(y = "..count.."), binwidth = binwidth) 
+					geom_histogram(aes_string(y = "..count.."), binwidth = binwidth)
 				if (0 < threshold && threshold < 1) {
 					pp <- pp + geom_vline(xintercept = threshold * ncol(mm), linetype = "dotted")
 				}
@@ -1027,7 +1186,7 @@ rnb.section.na.removal.internal <- function(report, dataset.class, mm, filtered,
 		rnb.add.paragraph(report, txt)
 		txt <- c("Histogram of number of ", txt.sites, " that contain missing values.")
 		if (0 < threshold && threshold < 1) {
-			txt <- c(txt, " The vertical line, if visible, denotes the applied threshold.") 
+			txt <- c(txt, " The vertical line, if visible, denotes the applied threshold.")
 		}
 		report <- rnb.add.figure(report, txt, report.plots, setting.names)
 	}
