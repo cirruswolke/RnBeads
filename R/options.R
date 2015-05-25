@@ -292,9 +292,9 @@ rnb.validate.option <- function(oname, ovalue) {
 		} else if (ovalue == "bismarkCov"){
 			.rnb.options[["current"]][["import.bed.columns"]] <-
 				c(chr = 1L, start = 2L, end = NA, strand = NA, meth = NA, coverage = NA, c = 5L, t = 6L)
-		} #else assume custom style or EPP style which is handled in read.bissnp.bed() 
+		} #else assume custom style or EPP style which is handled in read.bissnp.bed()
 	}
-	
+
 	return(ovalue)
 }
 
@@ -316,7 +316,7 @@ rnb.get.option <- function(oname, ovalue = NULL, setvalue = FALSE) {
 	result <- ""
 	cvalue <- .rnb.options[["current"]][[oname]]
 	if (is.null(cvalue)) {
-		.rnb.options[["previous"]][oname] <- list(NULL) 
+		.rnb.options[["previous"]][oname] <- list(NULL)
 	} else {
 		.rnb.options[["previous"]][[oname]] <- cvalue
 	}
@@ -338,10 +338,10 @@ rnb.get.option <- function(oname, ovalue = NULL, setvalue = FALSE) {
 #' rnb.is.option
 #'
 #' Checks if the specified text is an option name.
-#' 
+#'
 #' @param txt Potential option name. This should be a one-element \code{character} vector.
 #' @return \code{TRUE} if the specified parameter is a valid analysis option name; \code{FALSE} otherwise.
-#' 
+#'
 #' @seealso \code{\link{rnb.options}} for getting and setting option values
 #' @examples
 #' \donttest{
@@ -394,7 +394,7 @@ rnb.is.option <- function(txt) {
 #'        always operates on the site level (only), regardless of the value of this option.}
 #'   \item{\bold{\code{region.types}}\code{ = NULL}}{
 #'        Region types to carry out analysis on, in the form of a \code{character} vector. \code{NULL} (default value)
-#'        signifies that all available region annotations (as returned by \code{\link{rnb.region.types}}) are summarized 
+#'        signifies that all available region annotations (as returned by \code{\link{rnb.region.types}}) are summarized
 #'        upon loading and normalization, and the other modules analyze all regions summarized in the dataset. If this
 #'        option is set to an empty vector, analysis on the region level is skipped.}
 #'   \item{\bold{\code{region.aggregation}}\code{ = "mean"}}{
@@ -405,9 +405,9 @@ rnb.is.option <- function(txt) {
 #'        the associated CpGs, whereby weights are calculated based on the coverages of the respective sites.}
 #'   \item{\bold{\code{region.subsegments}}\code{ = 0}}{
 #'        If a number larger than 1 is specified, \pkg{RnBeads} will subdivide each region specified in the
-#'        \code{region.types} option into subsegments containing on average \code{region.subsegments} sites per 
+#'        \code{region.types} option into subsegments containing on average \code{region.subsegments} sites per
 #'        subsegment. This is done by clustering the sites within each regions according to their genomic coordinates.
-#'        These subsegments are then used for subsequent analysis. 
+#'        These subsegments are then used for subsequent analysis.
 #'        Use cautiously as this will significantly increase the runtime of the pipeline.}
 #'   \item{\bold{\code{region.subsegments.types}}\code{ = NULL}}{
 #'        The region types to which subsegmentation will be applied. Defaults to \code{region.types} when set to
@@ -444,8 +444,8 @@ rnb.is.option <- function(txt) {
 #'        the provided data source is an object of type \linkS4class{RnBSet}, i.e. the data has been previously loaded
 #'        by \pkg{RnBeads}.}
 #'   \item{\bold{\code{import.default.data.type}}\code{ = "infinium.idat.dir"}}{
-#'        Type of data assumed to be supplied by default (Infinium 450k microarray). 
-#' 		  For sequencing data set this to \code{bs.bed.dir} and save the options. 
+#'        Type of data assumed to be supplied by default (Infinium 450k microarray).
+#' 		  For sequencing data set this to \code{bs.bed.dir} and save the options.
 #' 		  See \code{\link{rnb.execute.import}} for further details.}
 #'   \item{\bold{\code{import.table.separator}}\code{ = ","}}{
 #'        Separator used in the plain text data tables. See \code{\link{rnb.execute.import}} for details.}
@@ -460,14 +460,14 @@ rnb.is.option <- function(txt) {
 #'        coverage, if not specified, are inferred from the values in the columns \code{"c"} and \code{"t"}.
 #' 		  Further details and examples of BED files can be found in Section 4.1 of the RnBeads vignette.}
 #'   \item{\bold{\code{import.bed.frame.shift}}\code{ = 1}}{Singleton of type \code{integer} specifying the frame shift between
-#'        the coordinates in the input BED file and the corresponding genomic reference. This (\code{integer}) value 
+#'        the coordinates in the input BED file and the corresponding genomic reference. This (\code{integer}) value
 #'        is added to the coordinates from the BED file before matching the methylation sites to the annotated ones.}
 #'   \item{\bold{\code{import.bed.test}}\code{ = TRUE}}{
 #' 		  Perform a small loading test, by reading 1000 rows from each BED file, after which normal loading is performed.
 #'        See \pkg{RnBeads} vignette and the FAQ section on the website for more details.}
 #'   \item{\bold{\code{import.bed.test.only}}\code{ = FALSE}}{
 #' 		  Perform only the small loading test, and skip loading all the data.}
-#'   \item{\bold{\code{preprocessing}}\code{ = TRUE}}{Flag controlling whether the data should be preprocessed 
+#'   \item{\bold{\code{preprocessing}}\code{ = TRUE}}{Flag controlling whether the data should be preprocessed
 #' 		  (whether quality filtering and in case of Infinium microarray data normalization should be applied).}
 #'   \item{\bold{\code{normalization}}\code{ = NULL}}{
 #'        Flag controlling whether the data should be normalized and normalization report generated. Setting this to
@@ -531,7 +531,7 @@ rnb.is.option <- function(txt) {
 #'        blacklisted. Every line in this file must contain exactly one identifier. The blacklisted sites are removed
 #'        from the analysed datasets as a first step in the preprocessing module. For Infinium studies, the file must
 #'        contain Infinium probe identifiers. For bisulfite sequencing studies, the file must contain CpG positions in
-#'        the form "chromosome:coordinate" (1-based coordinate of the cytosine), e.g. \code{chr2:48607772}. 
+#'        the form "chromosome:coordinate" (1-based coordinate of the cytosine), e.g. \code{chr2:48607772}.
 #'        Unknown identifiers are silently ignored.}
 #'   \item{\bold{\code{filtering.context.removal}}\code{ = c("CC","CAG",...)}}{
 #'        \code{character} vector giving the list of probe context types to be removed as a filtering step. Possible
@@ -549,6 +549,20 @@ rnb.is.option <- function(txt) {
 #'                overlaps with SNP.}}
 #'        Bisulfite sequencing datasets operate on sites instead of probes, therefore, the values \code{"3"} and
 #'        \code{"5"} are treated as \code{"yes"}.}
+#'   \item{\bold{\code{filtering.cross.reactive}}\code{ = FALSE}}{
+#'        Flag indicating if the removal of potentially cross-reactive probes should be performed as a filtering step
+#'        in the preprocessing module. A probes whose sequence maps to multiple genomic locations (allowing up to 3
+#'        mismatches) is cross-reactive.}
+#'   \item{\bold{\code{filtering.greedycut}}\code{ = TRUE}}{
+#'        Flag indicating if the Greedycut procedure should be run as a filtering step in the preprocessing module.}
+#'   \item{\bold{\code{filtering.greedycut.pvalue.threshold}}\code{ = 0.05}}{
+#'        Threshold for the detection p-value to be used in Greedycut. This is a value between 0 and 1. This option has
+#'        effect only when \code{filtering.greedycut} is \code{TRUE}.}
+#'   \item{\bold{\code{filtering.greedycut.rc.ties}}\code{ = "row"}}{
+#'        Indicator of what the behaviour of Greedycut should be in case of ties between the scores of rows (probes) and
+#'        columns (samples). The value of this option must be one of \code{"row"}, \code{"column"} or \code{"any"}; the
+#'        last one indicating random choice. This option has effect only when \code{filtering.greedycut} is
+#'        \code{TRUE}.}
 #'   \item{\bold{\code{filtering.sex.chromosomes.removal}}\code{ = FALSE}}{
 #'        Flag indicating if the removal of probes located on sex chromosomes should be performed as a filtering step.}
 #'   \item{\bold{\code{filtering.missing.value.quantile}}\code{ = 1}}{
@@ -565,16 +579,6 @@ rnb.is.option <- function(txt) {
 #'   \item{\bold{\code{filtering.high.coverage.outliers}}\code{ = FALSE}}{
 #'        (Bisulfite sequencing mode) Flag indicating whether methylation sites with a coverage of more than 10 times
 #'        the 95-percentile of coverage should be removed.}
-#'   \item{\bold{\code{filtering.greedycut}}\code{ = TRUE}}{
-#'        Flag indicating if the Greedycut procedure should be run as part of the preprocessing module.}
-#'   \item{\bold{\code{filtering.greedycut.pvalue.threshold}}\code{ = 0.05}}{
-#'        Threshold for the detection p-value to be used in Greedycut. This is a value between 0 and 1. This option has
-#'        effect only when \code{filtering.greedycut} is \code{TRUE}.}
-#'   \item{\bold{\code{filtering.greedycut.rc.ties}}\code{ = "row"}}{
-#'        Indicator of what the behaviour of Greedycut should be in case of ties between the scores of rows (probes) and
-#'        columns (samples). The value of this option must be one of \code{"row"}, \code{"column"} or \code{"any"}; the
-#'        last one indicating random choice. This option has effect only when \code{filtering.greedycut} is
-#'        \code{TRUE}.}
 #'   \item{\bold{\code{filtering.deviation.threshold}}\code{ = 0}}{
 #'        Threshold used to filter probes based on the variability of their assigned beta values. This must be a real
 #'        value between 0 and 1, denoting minimum standard deviation of the beta values in one site across all samples.
@@ -592,10 +596,10 @@ rnb.is.option <- function(txt) {
 #'   \item{\bold{\code{inference.max.cell.type.markers}}\code{ = 10000}}{
 #'        A number of most variable CpGs which are tested for association with the reference cell types.}
 #'   \item{\bold{\code{inference.top.cell.type.markers}}\code{ = 500}}{
-#'        The number of top cell type markers used for determining cell type contributions to the target 
+#'        The number of top cell type markers used for determining cell type contributions to the target
 #' 		  DNA methylation profiles using the projection method of Houseman et al.}
 #'   \item{\bold{\code{inference.sva.num.method}}\code{ = "leek"}}{
-#'        Name of the method to be used for estimating the number of surrogate variables. 
+#'        Name of the method to be used for estimating the number of surrogate variables.
 #'		  must be either 'leek' or 'be', See \code{sva} function for details.}
 #'   \item{\bold{\code{exploratory}}\code{ = TRUE}}{
 #'        Flag indicating if the exploratory analysis module is to be executed.}
@@ -666,7 +670,7 @@ rnb.is.option <- function(txt) {
 #'   \item{\bold{\code{differential.site.test.method}}\code{ = "limma"}}{
 #'        Method to be used for calculating p-values on the site level. Currently supported options are "ttest" for a (paired)
 #'        t-test and "limma" for a linear modeling approach implemented in the \code{limma} package for differential expression
-#'        in microarrays.} 
+#'        in microarrays.}
 #'   \item{\bold{\code{differential.permutations}}\code{ = 0}}{
 #'        Number of permutation tests performed to compute the p-value of rank permutation tests in the differential
 #'        methylation analysis. This must be a non-negative \code{integer}. Setting this option to \code{0} (default)
@@ -675,7 +679,7 @@ rnb.is.option <- function(txt) {
 #'   \item{\bold{\code{differential.comparison.columns}}\code{ = NULL}}{
 #'        Column names or indices in the table of the sample annotation table to be used for group definition in the
 #'        differential methylation analysis. The default value - \code{NULL} - indicates that columns should be
-#'        automatically selected. See\code{\link{rnb.sample.groups}} for how this is done. By default, 
+#'        automatically selected. See\code{\link{rnb.sample.groups}} for how this is done. By default,
 #'		  the comparisons are done in a one vs. all manner if there are multiple
 #'		  groups defined in a column. }
 #'   \item{\bold{\code{differential.comparison.columns.all.pairwise}}\code{ = NULL}}{
@@ -684,7 +688,7 @@ rnb.is.option <- function(txt) {
 #'		  is one vs all if multiple groups are specified in a column).
 #'        Caution: for large numbers of sample groups this can lead to combinatorial explosion and thus to huge runtimes.
 #'        A value of \code{NULL} (default) indicates that no column is selected for all pairwise comparisons explicitely.
-#'        If specified, the selected columns must be a subset of the columns that will be selected according to the 
+#'        If specified, the selected columns must be a subset of the columns that will be selected according to the
 #'        \code{differential.comparison.columns} option.}
 #'   \item{\bold{\code{covariate.adjustment.columns}}\code{ = NULL}}{
 #'        Column names or indices in the table of phenotypic information to be used for confounder adjustment in the
@@ -892,7 +896,7 @@ rnb.options2xml <- function(pretty = TRUE) {
 #' @param data.type Type of dataset targeted; this must be one of \code{"450k"} (default) or \code{"bs"}.
 #' @param profile   Option profile; this must be one of \code{"minimal"}, \code{"moderate"} or \code{"full"}.
 #' @return Invisibly, a \code{list} containing the previous values of all modified options.
-#' 
+#'
 #' @author Pavlo Lutsik
 #' @export
 rnb.performance.profile<-function(data.type = "450k", profile) {

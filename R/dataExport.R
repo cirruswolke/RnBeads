@@ -30,7 +30,7 @@ rnb.export.fail <- function(report, txt = character()) {
 #' rnb.RnBSet.to.GRangesList
 #'
 #' convert an \code{\linkS4class{RnBSet}} object to a \code{GRangesList} object
-#' @param rnb.set Object of class \code{\linkS4class{RnBSet}} 
+#' @param rnb.set Object of class \code{\linkS4class{RnBSet}}
 #' @param reg.type region type to be converted
 #' @param return.regular.list flag indicating whether a regular \code{list} object should be returned instead
 #'             of a \code{GRangesList}. Might improve performance in some cases
@@ -86,12 +86,12 @@ rnb.RnBSet.to.GRangesList <- function(rnb.set,reg.type="sites",return.regular.li
 	# rnbs.grl <- rep(GRangesList(granges.coords),length(samples(rnb.set)))
 	# names(rnbs.grl) <- samples(rnb.set)
 	# logger.status("Adding sample information") #DEBUG MESSAGE
-	# i <- 1 
+	# i <- 1
 	# rnbs.grl <- endoapply(rnbs.grl , function(gr){
 	# 	#a bit of a hack getting the sample name using i in endoapply.
 	# 	#If you can think of a better way, let me know.
 	# 	#endoapply was necessary for performance reasons in large WGBS datasets
-	# 	ss <- names(rnbs.grl)[i] 
+	# 	ss <- names(rnbs.grl)[i]
 	# 	i <<- i + 1
 	# 	logger.status(c("...processing sample",ss)) #DEBUG MESSAGE
 	# 	if (!is.null(ccov)){
@@ -115,7 +115,7 @@ rnb.RnBSet.to.GRangesList <- function(rnb.set,reg.type="sites",return.regular.li
 #' @param rnb.set Object of class \code{\linkS4class{RnBSet}}
 #' @param out.dir output directory. If not existing, it will be created. otherwise files in that directory are overwritten.
 #' @param reg.type region type to be converted
-#' @param names.quant.meth should the names of the bed regions contain information on the methylation level. 
+#' @param names.quant.meth should the names of the bed regions contain information on the methylation level.
 #' 		   If TRUE the following format is applied: meth_percent%[coverage]. Coverage is available only when
 #' 			\code{covg(rnb.set)} is not NULL
 #' @param add.track.line Add a track line to the bed file to enable browsers like IGV to display the data better
@@ -201,7 +201,7 @@ rnb.RnBSet.to.bed <- function(rnb.set,out.dir,reg.type="sites",names.quant.meth=
 #' @return (invisibly) a summary list containing information on the conversion step.
 #'         elements are \code{filenames} (a table containing information on which sample has been written to what filename)
 #'         and \code{assembly} (a string indicating the assembly used by \code{rnb.set}).
-#' @details The description of the BedGraph track format can be found \href{http://genome.ucsc.edu/goldenPath/help/bedgraph.html}{here}. 
+#' @details The description of the BedGraph track format can be found \href{http://genome.ucsc.edu/goldenPath/help/bedgraph.html}{here}.
 #'          Each methylation site is an entry in the resulting bedGraph file. The Score column corresponds to a site's
 #'          methylation value in the interval \code{[0,1]}.
 #' @author Fabian Mueller
@@ -238,7 +238,7 @@ rnb.RnBSet.to.bedGraph <- function(rnb.set,out.dir=".",reg.type="sites",paramete
 			digits <- as.integer(digits)
 		}
 		if (!(is.integer(digits) && length(digits) == 1 && isTRUE(0L <= digits && digits <= 10L))) {
-			stop("invalid value for digits")			
+			stop("invalid value for digits")
 		}
 	}
 
@@ -311,12 +311,12 @@ rnb.diffmeth.to.EpiExplorer.file <- function(rnb.set, diffmeth, fname, comp.name
 		index.map <- rnb.set@regions[[reg.type]]
 	}
 	aa.rnbd <- rnb.get.annotation(get.type,assembly(rnb.set))
-	
+
 	#go over each chromosome and get the corresponding diffmeth data as GRanges object
 	dm.grl <- lapply(1:length(aa.rnbd),FUN=function(cci){
 		res <- aa.rnbd[[cci]]
 		cur.chrom.members <- index.map[,2]==cci #get all the indexes belonging to the current chromosome
-		inds <- index.map[cur.chrom.members,3] 
+		inds <- index.map[cur.chrom.members,3]
 		dm.df <- dmt[cur.chrom.members,c(col.rank,col.diff,col.quot,col.p.val)]
 		dm.df <- data.frame(inRnBSet=rep(TRUE,nrow(dm.df)),dm.df)
 		na.vec <- rep(NA,length(res))
@@ -330,7 +330,7 @@ rnb.diffmeth.to.EpiExplorer.file <- function(rnb.set, diffmeth, fname, comp.name
 	})
 	dm.gr <- do.call(c,dm.grl)
 	df2export <- as.data.frame(elementMetadata(dm.gr))
-	
+
 	write.table(format(df2export,scientific=FALSE),file=fname,
 			quote=FALSE,sep="\t",row.names=FALSE,col.names=TRUE,na="")
 	return(fname)
@@ -396,7 +396,7 @@ create.ucsc.track.hub <- function(hub.dir,rnb.set,data.type="bigBed",ana.name="R
 						paste("shortLabel",paste(ss)),
 						paste("longLabel",paste("RnBeads methylation track for sample",ss)),
 						paste("visibility","dense"),
-						paste("color","0,60,120"), 
+						paste("color","0,60,120"),
 						paste("spectrum","on"),
 						paste("type ",type.str,"\n",sep=""))
 			)
@@ -410,7 +410,7 @@ create.ucsc.track.hub <- function(hub.dir,rnb.set,data.type="bigBed",ana.name="R
 					 paste("viewLimits","0:1"), #bigWig
 					 paste("viewLimitsMax","0:1"), #bigWig
 					 paste("maxHeightPixels","100:30:10"), #bigWig
-					 paste("color","0,60,120"), 
+					 paste("color","0,60,120"),
 					 paste("spectrum","on"),
 	 				 paste("type ",type.str,"\n",sep=""))
 			)
@@ -454,7 +454,7 @@ rnb.convert.bedGraph.to.bigWig <- function(bedGraphFilenames,bigWigFilenames,ass
 		bedGraphTobigWig.exe <- get.f("bin/macOSX.i386/bedGraphToBigWig")
 	}
 	chromSizes.file <- get.f(paste("extdata/chromSizes/",assembly,".chrom.sizes",sep=""))
-	
+
 	n <- length(bedGraphFilenames)
 	for (i in 1:n){
 		system(paste(bedGraphTobigWig.exe,bedGraphFilenames[i],chromSizes.file,bigWigFilenames[i]),ignore.stdout=TRUE)
@@ -492,7 +492,7 @@ rnb.convert.bed.to.bigBed <- function(bedFilenames,bigBedFilenames,assembly){
 		bedToBigBed.exe <- get.f("bin/macOSX.i386/bedToBigBed")
 	}
 	chromSizes.file <- get.f(paste("extdata/chromSizes/",assembly,".chrom.sizes",sep=""))
-	
+
 	n <- length(bedFilenames)
 	for (i in 1:n){
 		bedFn <- bedFilenames[i]
@@ -518,7 +518,7 @@ rnb.convert.bed.to.bigBed <- function(bedFilenames,bigBedFilenames,assembly){
 
 #' rnb.export.to.trackhub
 #'
-#' convert an \code{\linkS4class{RnBSet}}  object to a UCSC-style track hub. 
+#' convert an \code{\linkS4class{RnBSet}}  object to a UCSC-style track hub.
 #' @param rnb.set Object of class \code{\linkS4class{RnBSet}}
 #' @param out.dir output directory. If not existing, it will be created. otherwise files in that directory are overwritten.
 #' @param reg.type region type to be converted
@@ -556,7 +556,7 @@ rnb.export.to.trackhub <- function(rnb.set,out.dir,reg.type="sites",data.type="b
 	if (data.type=="bigBed"){
 		track.hub.dir <- file.path(out.dir,"trackHub_bigBed")
 		bed.dir <- file.path(out.dir,"bed")
-		
+
 		#convert RnBSet to bed
 		rnb.logger.start("Conversion to BED")
 		bed.conv <- rnb.RnBSet.to.bed(rnb.set,bed.dir,reg.type=reg.type,names.quant.meth=TRUE)
@@ -564,9 +564,9 @@ rnb.export.to.trackhub <- function(rnb.set,out.dir,reg.type="sites",data.type="b
 		#convert to binary
 		in.file.list <- file.path(bed.dir,bed.conv$filenames$filename)
 		out.file.list <- file.path(track.hub.dir,assembly(rnb.set),paste("rnbeads_sample",bed.conv$filenames$i,".bigBed",sep=""))
-		
+
 		res[["filenames.bed"]] <- bed.conv$filenames
-		
+
 		rnb.logger.start("Creating Track Hub")
 		#write the UCSC track hub structure
 		create.ucsc.track.hub(track.hub.dir,rnb.set,data.type="bigBed",...)
@@ -582,7 +582,7 @@ rnb.export.to.trackhub <- function(rnb.set,out.dir,reg.type="sites",data.type="b
 	} else if (data.type=="bigWig"){
 		track.hub.dir <- file.path(out.dir,"trackHub_bigWig")
 		bedgraph.dir <- file.path(out.dir,"bedgraph")
-		
+
 		#convert RnBSet to bedGraph
 		rnb.logger.start("Conversion to bedGraph")
 		bedGraph.conv <- rnb.RnBSet.to.bedGraph(rnb.set,bedgraph.dir,reg.type=reg.type)
@@ -590,7 +590,7 @@ rnb.export.to.trackhub <- function(rnb.set,out.dir,reg.type="sites",data.type="b
 		#convert to binary
 		in.file.list <- file.path(bedgraph.dir,bedGraph.conv$filenames$filename)
 		out.file.list <- file.path(track.hub.dir,assembly(rnb.set),paste("rnbeads_sample",bedGraph.conv$filenames$i,".bigWig",sep=""))
-		
+
 		res[["contains.overlapping.regions"]] <- bedGraph.conv[["contains.overlapping.regions"]]
 		res[["filenames.bedGraph"]] <- bedGraph.conv$filenames
 		if (res[["contains.overlapping.regions"]]){
@@ -600,7 +600,7 @@ rnb.export.to.trackhub <- function(rnb.set,out.dir,reg.type="sites",data.type="b
 			unlink(bedgraph.dir, recursive = TRUE, force = TRUE)
 			return(res)
 		}
-		
+
 		rnb.logger.start("Creating Track Hub")
 		#write the UCSC track hub structure
 		create.ucsc.track.hub(track.hub.dir,rnb.set,data.type="bigWig",...)
@@ -616,7 +616,7 @@ rnb.export.to.trackhub <- function(rnb.set,out.dir,reg.type="sites",data.type="b
 		}
 		rnb.logger.completed()
 	}
-	
+
 	invisible(res)
 }
 
@@ -625,7 +625,7 @@ rnb.export.to.trackhub <- function(rnb.set,out.dir,reg.type="sites",data.type="b
 #' Data exported to a format compatible with the FaST-LMM-EWASher tool for cell-mixture adjustment.
 #' see \href{http://www.nature.com/nmeth/journal/v11/n3/full/nmeth.2815.html}{Zou, J., et al., Nature Methods, 2014}
 #' for further details on the tool.
-#' @param rnb.set Object of class \code{\linkS4class{RnBSet}} 
+#' @param rnb.set Object of class \code{\linkS4class{RnBSet}}
 #' @param out.dir output directory. If not existing, it will be created and all exported files will be placed here.
 #' 				  If existing, this functions results in an error.
 #' @param reg.type region type to be exported
@@ -666,7 +666,7 @@ rnb.export.to.ewasher <- function(rnb.set, out.dir, reg.type="sites", ...){
 
 
 	cmp.info <- get.comparison.info(rnb.set,adjust.celltype=FALSE,...)
-	
+
 	mm <- meth(rnb.set,type=reg.type)
 	aa <- annotation(rnb.set,type=reg.type)
 	site.ids <- rownames(aa)
@@ -859,7 +859,7 @@ rnb.section.tnt <- function(res.exp,rnbSet,report){
 		if (export.ewasher){
 			refText <- c("Zou, J., Lippert, C., Heckerman, D., Aryee, M., Listgarten, J. (2014). ",
 				"Epigenome-wide association studies without the need for cell-type composition. ",
-				"<i>Nature Methods.</i>, 11(3), 309-311")
+				"<i>Nature Methods</i>, 11(3), 309-311")
 			report <- rnb.add.reference(report, refText)
 			sectionText <- paste(sectionText, "<li>Input for the FaST-LMM-EWASher tool for cell-mixture adjustment ",
 				rnb.get.reference(report, refText), "</li>")
@@ -909,7 +909,7 @@ rnb.section.tnt <- function(res.exp,rnbSet,report){
 			colnames(tt)[2:ncol(tt)] <- paste0(names(res.exp),"_bedFile")
 			rownames(tt) <- tt$sample
 			bed.df <- data.frame(tt[summary.tab$sampleName,2:ncol(tt)],stringsAsFactors=FALSE)
-			colnames(bed.df) <- colnames(tt)[2:ncol(tt)] 
+			colnames(bed.df) <- colnames(tt)[2:ncol(tt)]
 			summary.tab <- data.frame(sampleName=summary.tab$sampleName,bed.df,summary.tab[,2:ncol(summary.tab)],stringsAsFactors=FALSE)
 		}
 		if ("bigBed" %in% export.ucsc.types){
@@ -924,15 +924,15 @@ rnb.section.tnt <- function(res.exp,rnbSet,report){
 			colnames(tt)[2:ncol(tt)] <- paste0(names(res.exp),"_bigBedFile")
 			rownames(tt) <- tt$sample
 			bigbed.df <- data.frame(tt[summary.tab$sampleName,2:ncol(tt)],stringsAsFactors=FALSE)
-			colnames(bigbed.df) <- colnames(tt)[2:ncol(tt)] 
+			colnames(bigbed.df) <- colnames(tt)[2:ncol(tt)]
 			summary.tab <- data.frame(sampleName=summary.tab$sampleName,bigbed.df,summary.tab[,2:ncol(summary.tab)],stringsAsFactors=FALSE)
 		}
 
 		report <- rnb.add.section(report, "Sample summary", sectionText, level=2)
 		rnb.add.table(report,summary.tab)
-		
+
 		if (length(export.ucsc.types)>0){
-			
+
 			sectionText <- paste("Track Hub data was generated for export to various genome browsers. Note that you need a server that is capable of
 							serving the tracks to the genome browser via URL. Below, instructions are provided to view the tracks in the UCSC genome browser. Of course the files can also be viewed in other browsers such as the
 							<a href=\"http://www.ensembl.org/\">Ensembl genome browser</a>.
@@ -960,17 +960,17 @@ rnb.section.tnt <- function(res.exp,rnbSet,report){
 							If you don't want to copy the entire report, it suffices to copy the track hub directories (see table(s) below).</li>")
 			sectionText <- paste(sectionText,"<li>Make sure the",res.exp[[1]][["assembly"]],"subdirectories",
 								"in the track hub directory (for its location be referred to the table(s) below) contain all the required bigBed/bigWig files</li>")
-			sectionText <- paste(sectionText,"<li>Go to the <a href=\"http://genome.ucsc.edu/cgi-bin/hgHubConnect\">UCSC hub connection website</a> 
+			sectionText <- paste(sectionText,"<li>Go to the <a href=\"http://genome.ucsc.edu/cgi-bin/hgHubConnect\">UCSC hub connection website</a>
 							to the \"My Hubs\" tab and add the web-URL of the <code>hub.txt</code> file in the directory you just copied.
 							Hint: You can use the copy link functionality of your browser (right mouse click) on the track hub txt column in the table(s) below.
 							Don't forget to click on \"Load Selected Hubs\".</li>")
 			sectionText <- paste(sectionText,paste("<li>Make sure you are looking at the correct genome (",res.exp[[1]][["assembly"]],").
 							The loaded hubs should now appear below the browsing window where you can modify their display settings.</li>",sep=""))
-			sectionText <- paste(sectionText,"</ol>\nMore information on UCSC track hubs can be found 
+			sectionText <- paste(sectionText,"</ol>\nMore information on UCSC track hubs can be found
 						   <a href=\"http://genome.ucsc.edu/goldenPath/help/hgTrackHubHelp.html\">here</a>. Below, you find table(s) containing the directory names
 						   for the bed/bedGraph and track hub directories for all exported data, site and region types.\n")
 			report <- rnb.add.section(report, 'Tracks Hubs', sectionText, level=2)
-			
+
 			rrs <- names(res.exp)
 			if ("bigBed" %in% export.ucsc.types){
 				track.hub.dirs <- file.path(rnb.get.directory(report, "data"),rrs,"trackHub_bigBed")
@@ -988,7 +988,7 @@ rnb.section.tnt <- function(res.exp,rnbSet,report){
 				regions.contain.overlap <- unlist(lapply(res.exp,FUN=function(x){
 					base::ifelse(is.null(x[["contains.overlapping.regions"]]),FALSE,x[["contains.overlapping.regions"]])
 				}))
-				
+
 				if (sum(!regions.contain.overlap)>0){
 					track.hub.dirs <- file.path(rnb.get.directory(report, "data"),rrs[!regions.contain.overlap],"trackHub_bigWig")
 					track.hub.urls <- file.path(rnb.get.directory(report, "data"),rrs[!regions.contain.overlap],"trackHub_bigWig","hub.txt")
@@ -1037,7 +1037,7 @@ rnb.execute.tnt <- function(rnb.set,out.dir,exp.bed=rnb.getOption("export.to.bed
 	logger.start("Generating Tracks and Tables")
 	reg.types <- intersect(region.types,c(rnb.region.types(assembly(rnb.set)),"sites"))
 	if (length(reg.types)<1){
-		stop("Region types not found")	
+		stop("Region types not found")
 	}
 	if (length(reg.types) < length(region.types)){
 		logger.warning("Not all region types were found in the annotation")
@@ -1076,7 +1076,7 @@ rnb.execute.tnt <- function(rnb.set,out.dir,exp.bed=rnb.getOption("export.to.bed
 			if (!res[["contains.overlapping.regions"]]){
 				res[["export.trackhub"]] <- c(res[["export.trackhub"]],"bigWig")
 			}
-			
+
 		}
 		ress <- c(ress,list(res))
 		logger.completed()
@@ -1117,7 +1117,7 @@ rnb.execute.export.csv.save <- function(rnb.set, region.type, output.location, f
 #' rnb.execute.export.csv
 #'
 #' Exports (selected) methylation tables of the given dataset to comma-separated value files.
-#' 
+#'
 #' @param rnb.set         Methylation dataset as an object of type inheriting \code{\linkS4class{RnBSet}}.
 #' @param output.location \code{character} or \code{\linkS4class{Report}} specifying the output directory. If this is a
 #'                        report, the output directory is set to be a subdirectory named \code{csv} of the report's data
@@ -1133,7 +1133,7 @@ rnb.execute.export.csv.save <- function(rnb.set, region.type, output.location, f
 #' 1 and \code{length(region.types)}. The extension is \code{.csv} or \code{.csv.gz}, depending on the value of the
 #' \pkg{RnBeads} option \code{"gz.large.files"}. Any such files that already exist in the output directory, are
 #' overwritten.
-#' 
+#'
 #' There are several reasons why a certain output file cannot be (fully) generated. Examples for failures are listed
 #' below:
 #' \itemize{
