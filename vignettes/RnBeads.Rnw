@@ -714,7 +714,7 @@ rnb.set.new <- rnb.run.inference(rnb.set, report.dir)$rnb.set
 	If you just want to conduct the analysis without generating a report, you can compute the SVs and add the information to an \cs{RnBSet} the following way:
 <<eval=FALSE>>=
 sva.obj <- rnb.execute.sva(rnb.set, cmp.cols="Sample_Group", numSVmethod="be")
-rnb.set <- rnb.set.add.covariates.sva(rnb.set, sva.obj)
+rnb.set <- set.covariates.sva(rnb.set, sva.obj)
 @
 
 	Section~\ref{recipe:SVAdjust} contains a recipe on how these covariates can be used for adjustment during differential methylation detection.
@@ -1451,7 +1451,7 @@ cmp.name <- "hESC vs. hiPSC (based on Sample_Group)"
 reg.types <- c("cpgislands", "promoters")
 # if you have not done so yet, compute the SVs and add them to the RnBSet object
 sva.obj <- rnb.execute.sva(rnb.set,cmp.cols=cmp.cols,numSVmethod="be")
-rnb.set.sva <- rnb.set.add.covariates.sva(rnb.set, sva.obj)
+rnb.set.sva <- set.covariates.sva(rnb.set, sva.obj)
 
 # compute differential methylation tables: unadjusted and SVA adjusted
 diffmeth.base <- rnb.execute.computeDiffMeth(
