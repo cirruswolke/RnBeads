@@ -930,7 +930,11 @@ exportDMRs2regionFile <- function(rnbSet,diffmeth,dest,comp.name,region.type,ran
 	}
 	n.regs <- nrow(dmt)
 	score <- round((n.regs-dmt[,"combinedRank"]-1)/n.regs * 1000,0)
-	outtab <- data.frame(chr=annot$Chromosome,chromStart=annot$Start,chromEnd=annot$End,name=annot$ID,score=score,strand=annot$Strand)
+	reg.names <- paste0("reg",1:n.regs)
+	if (!is.null(rownames(annot))){
+		reg.names <- rownames(annot)
+	}
+	outtab <- data.frame(chr=annot$Chromosome,chromStart=annot$Start,chromEnd=annot$End,name=reg.names,score=score,strand=annot$Strand)
 	write.table(outtab,sep="\t",quote=FALSE,col.names=FALSE,row.names=FALSE,file=dest)
 	return(NULL)
 }
