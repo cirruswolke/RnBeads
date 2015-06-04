@@ -41,13 +41,17 @@ refFreeEWASP <- function(
 		rescale.residual=TRUE) {
 
 	if (!suppressPackageStartupMessages(require(RefFreeEWAS))) {
-		stop("missing required package RefFreeEWAS")
+		rnb.error("missing required package RefFreeEWAS")
 	}
 	if (paired && packageVersion("RefFreeEWAS")<'1.3'){
 		rnb.warning("RefFreeEWAS version >=1.3 is required for paired analysis, pairing will be disregarded")
 		paired<-FALSE
 	}
 	## TODO: Validate parameter values
+	
+	ind.vec <- c(inds.g1,inds.g2)
+	if (length(ind.vec) < 2) rnb.error("need at least two samples indices to compare")
+	X <- X[,ind.vec,drop=FALSE]
 
 	rnb.logger.start("Fitting the reference-free EWAS model")
 
