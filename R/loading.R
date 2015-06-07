@@ -249,7 +249,7 @@ rnb.execute.import<-function(data.source, data.type=rnb.getOption("import.defaul
 		} else if (rnb.getOption("import.bed.style")=="bismarkCytosine"){
 			result <- read.bed.files(base.dir=data.source[[1]], sample.sheet=data.source[[2]], file.names.col=filename.column,
 					verbose=verbose,
-					pos.coord.shift=1,
+					pos.coord.shift=1L,
 					skip.lines=0,
 					chr.col=1L,
 					start.col=2L,
@@ -259,7 +259,7 @@ rnb.execute.import<-function(data.source, data.type=rnb.getOption("import.defaul
 					strand.col=3L,
 					mean.meth.col=NA,
 					coverage.col=NA,
-					coord.shift = 0L,
+					coord.shift = -1L,
 					nrows=nrows)
 		} else if (rnb.getOption("import.bed.style")=="bismarkCov"){
 			result <- read.bed.files(base.dir=data.source[[1]], sample.sheet=data.source[[2]], file.names.col=filename.column,
