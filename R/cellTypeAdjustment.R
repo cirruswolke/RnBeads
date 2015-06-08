@@ -48,6 +48,14 @@ refFreeEWASP <- function(
 		paired<-FALSE
 	}
 	## TODO: Validate parameter values
+	if(rescale.residual){
+		ranges<-apply(X,1,range)
+		range.diff<-apply(ranges, 2, function(rng) rng[2]-rng[1])
+		if(any(range.diff==0)){
+			rescale.residual<-FALSE
+			rnb.warning("Found non-variable rows in the methylation data, residual scaling was disabled")
+		}
+	}
 	
 	ind.vec <- c(inds.g1,inds.g2)
 	if (length(ind.vec) < 2) rnb.error("need at least two samples indices to compare")
