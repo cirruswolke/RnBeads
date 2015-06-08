@@ -1173,7 +1173,11 @@ read.bed.files<-function(base.dir=NULL,
 		}
 	}
 	
+	## A workaround for chromosome names, not starting with "chr"
 	chroms<-names(rnb.get.chromosomes(assembly=assembly))
+	if(!any(grepl("^chr", found.chroms))){
+		chroms<-gsub("chr", "", chroms)
+	}
 	dump<-sapply(1:length(data.matrices), function(indx){
 				if(useff){
 					open(data.matrices[[indx]])
