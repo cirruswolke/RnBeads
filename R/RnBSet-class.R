@@ -1051,7 +1051,7 @@ setMethod("combine", signature(x="RnBSet",y="RnBSet"),
 						new.matrix[ix[subs1[[chr]]],1:nrow(pheno(x))]<-slot(x,sl)[sites1[,2]==chr,,drop=FALSE]
 						new.matrix[ix[subs2[[chr]]],(nrow(pheno(x))+1):nrow(pheno(new.set))]<-slot(y,sl)[sites2[,2]==chr,,drop=FALSE]
 					}
-					colnames(new.matrix)<-c(colnames(slot(x,sl)), colnames(slot(y,sl)))
+					#colnames(new.matrix)<-c(colnames(slot(x,sl)), colnames(slot(y,sl)))
 					slot(new.set, sl)<-new.matrix
 					rm(new.matrix)
 					rnb.cleanMem()
