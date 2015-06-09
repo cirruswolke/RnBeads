@@ -279,7 +279,7 @@ RnBiseqSet<-function(
 	}
 	
 	if(!is.null(covg)){
-		zero.covg.sites <- rowSums(covg[sites[,4L],], na.rm=TRUE)==0
+		zero.covg.sites <- rowSums(covg[sites[,4L],,drop=FALSE], na.rm=TRUE)==0
 		if(verbose && any(zero.covg.sites)) {
 			rnb.status(c("Removed",length(intersect(which(zero.covg.sites), which(valid))),"of",
 							sum(valid),"methylation sites because they were not covered in any sample"))
@@ -297,9 +297,9 @@ RnBiseqSet<-function(
 	
 	sites<-sites[valid,]
 	if(!useff){
-		meth<-meth[which(legal.sites)[sites[,4L]],]
+		meth<-meth[which(legal.sites)[sites[,4L]],,drop=FALSE]
 		if(!is.null(covg)){
-			covg<-covg[which(legal.sites)[sites[,4L]],]
+			covg<-covg[which(legal.sites)[sites[,4L]],,drop=FALSE]
 		}
 	}else{
 		meth.old<-meth
