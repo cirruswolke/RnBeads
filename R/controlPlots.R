@@ -558,7 +558,7 @@ rnb.plot.snp.boxplot<-function(
 	
 	if(rnb.set@target=="probes450"){
 		snp.betas<-meth(rnb.set, row.names=TRUE)
-		snp.betas<-t(snp.betas[grep("rs", rownames(snp.betas)),])
+		snp.betas<-t(snp.betas[grep("rs", rownames(snp.betas)),,drop=FALSE])
 	}else if(rnb.set@target=="probes27"){
 		snp.betas<-t(HM27.snp.betas(qc(rnb.set)))
 	}
@@ -632,8 +632,8 @@ rnb.plot.snp.barplot<-function(
 	}
 	
 	if(rnb.set@target=="probes450"){
-		snp.betas<-meth(rnb.set, row.names=TRUE)[,match(sample, ids)]
-		snp.betas<-snp.betas[grep("rs", names(snp.betas))]
+		snp.betas<-meth(rnb.set, row.names=TRUE)[,match(sample, ids),drop=FALSE]
+		snp.betas<-snp.betas[grep("rs", names(snp.betas)),,drop=FALSE]
 	}else if(rnb.set@target=="probes27"){
 		snp.betas<-HM27.snp.betas(qc(rnb.set))[,match(sample, ids)]
 	}
@@ -698,7 +698,7 @@ rnb.plot.snp.heatmap<-function(
 	sample.ids<-abbreviate.names(samples(rnb.set))
 	if(rnb.set@target=="probes450"){
 		snp.betas<-meth(rnb.set, row.names=TRUE)
-		snp.betas<-snp.betas[grep("rs", rownames(snp.betas)),]
+		snp.betas<-snp.betas[grep("rs", rownames(snp.betas)),,drop=FALSE]
 	}else if(rnb.set@target=="probes27"){
 		snp.betas<-HM27.snp.betas(qc(rnb.set))
 	}
@@ -717,7 +717,7 @@ rnb.plot.snp.heatmap<-function(
 		stop("No SNP information present for any of the samples [ERROR_ID: snp_heatmap_rnas]")
 	}
 	if(any(rnas>thresh.perc.na)){
-		snp.betas<-snp.betas[,rnas<=thresh.perc.na]
+		snp.betas<-snp.betas[,rnas<=thresh.perc.na,drop=FALSE]
 		sample.ids<-sample.ids[rnas<=thresh.perc.na]
 		num.rem <- sum(rnas>thresh.perc.na)
 		rnb.warning(c(num.rem,"samples were removed when generating SNP heatmap"))
@@ -726,7 +726,7 @@ rnb.plot.snp.heatmap<-function(
 		stop("No SNP information present for any of the samples [ERROR_ID: snp_heatmap_cnas]")
 	}
 	if(any(cnas>thresh.perc.na)){
-		snp.betas<-snp.betas[cnas<=thresh.perc.na,]
+		snp.betas<-snp.betas[cnas<=thresh.perc.na,,drop=FALSE]
 		num.rem <- sum(cnas>thresh.perc.na)
 		rnb.warning(c(num.rem,"SNP probes were removed when generating SNP heatmap"))
 	}
@@ -734,13 +734,19 @@ rnb.plot.snp.heatmap<-function(
 	if(writeToFile) {
 		plot.file<-createReportPlot('SNPHeatmap', ...)
 	}
-			
-	heatmap.2(snp.betas, 
-			scale = "none", trace = "none", margins = c(8,8), #ColSideColors = pheno.colors$colors[,si],
-			labRow = rownames(snp.betas), labCol = sample.ids, col = get.methylation.color.panel())
-	 
-			#lmat=matrix(c(3,4,1,2), ncol=2, byrow=TRUE), lwid=c(0.75, 0.25), lhei=c(0.2,0.8))
 	
+	if(nrow(snp.betas)<2 || ncol(snp.betas)<2){
+		
+		rnb.message.plot(sprintf("Heatmap is not available due to insufficient data. Try the SNP bar plot."))
+		
+	}else{
+	
+		heatmap.2(snp.betas, 
+				scale = "none", trace = "none", margins = c(8,8), #ColSideColors = pheno.colors$colors[,si],
+				labRow = rownames(snp.betas), labCol = sample.ids, col = get.methylation.color.panel())
+		 
+				#lmat=matrix(c(3,4,1,2), ncol=2, byrow=TRUE), lwid=c(0.75, 0.25), lhei=c(0.2,0.8))
+	}
 	if(writeToFile) {
 		off(plot.file)
 		return(plot.file)
@@ -811,6 +817,9 @@ rnb.plot.sentrix.distribution <- function(rnb.set, sentrix.id) {
 
 	## Compute mean methylation and standard deviation
 	m.methylations <- apply(as.matrix(meth(rnb.set)), 2, function(x) { c(mean(x, na.rm = TRUE), sd(x, na.rm = TRUE)) })
+	if(!is.matrix(m.methylations)){
+		m.methylations<-matrix(m.methylations, ncol=1)
+	}
 	yrange <- range(m.methylations[1, ] - m.methylations[2, ], m.methylations[1, ] + m.methylations[2, ])
 	m.methylations <- cbind(dframe[s.indices, ], data.frame(
 			"Identifier" = colnames(meth(rnb.set))[s.indices],
@@ -862,11 +871,14 @@ rnb.plot.sentrix.distributions <- function(rnb.set, fprefix = "sentrix_whisker",
 	}
 
 	m.methylations <- apply(meth(rnb.set), 2, function(x) { c(mean(x, na.rm = TRUE), sd(x, na.rm = TRUE)) })
+	if(!is.matrix(m.methylations)){
+		m.methylations<-matrix(m.methylations, ncol=1)
+	}
 	i.valid <- which(!is.na(m.methylations[2, ]))
 	if (length(i.valid) == 0) {
 		return(NULL)
 	}
-	m.methylations <- m.methylations[, i.valid]
+	m.methylations <- m.methylations[, i.valid, drop=FALSE]
 	yrange <- range(m.methylations[1, ] - m.methylations[2, ], m.methylations[1, ] + m.methylations[2, ])
 	m.methylations <- cbind(dframe[i.valid, ], data.frame(
 			"Identifier" = samples(rnb.set)[i.valid],

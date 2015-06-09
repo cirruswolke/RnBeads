@@ -511,14 +511,14 @@ setMethod("remove.sites", signature(object = "RnBeadSet"),
 		if (length(inds) != 0) {
 			if (!is.null(object@pval.sites)) {
 				if(object@status$disk.dump){
-					new.matrix<-object@pval.sites[-inds,]
+					new.matrix<-object@pval.sites[-inds,,drop=FALSE]
 					if(isTRUE(object@status$discard.ff.matrices)){
 						delete(object@pval.sites)
 					}
 					object@pval.sites <- convert.to.ff.matrix.tmp(new.matrix)
 					rm(new.matrix); rnb.cleanMem()
 				}else{
-					object@pval.sites <- object@pval.sites[-inds, ]
+					object@pval.sites <- object@pval.sites[-inds, ,drop=FALSE]
 				}
 			}
 		}

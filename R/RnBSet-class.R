@@ -626,7 +626,7 @@ setMethod("remove.sites", signature(object = "RnBSet"),
 					object@sites <- object@sites[-inds, ]
 					if(!is.null(object@status) && object@status$disk.dump){
 						mat <- object@meth.sites[,]
-						new.matrix <- mat[-inds, ]
+						new.matrix <- mat[-inds, ,drop=FALSE]
 						if(isTRUE(object@status$discard.ff.matrices)){
 							delete(object@meth.sites)
 						}
@@ -634,7 +634,7 @@ setMethod("remove.sites", signature(object = "RnBSet"),
 						rm(new.matrix); rnb.cleanMem()
 						if(!is.null(object@covg.sites)) {
 							mat <- object@covg.sites[,]
-							new.matrix <- mat[-inds, ]
+							new.matrix <- mat[-inds, ,drop=FALSE]
 							if(isTRUE(object@status$discard.ff.matrices)){
 								delete(object@covg.sites)
 						 	}
@@ -642,9 +642,9 @@ setMethod("remove.sites", signature(object = "RnBSet"),
 							rm(new.matrix); rnb.cleanMem()
 						}					
 					}else{
-						object@meth.sites <- object@meth.sites[-inds, ]
+						object@meth.sites <- object@meth.sites[-inds, ,drop=FALSE]
 						if(!is.null(object@covg.sites)) {
-							object@covg.sites <- object@covg.sites[-inds, ]
+							object@covg.sites <- object@covg.sites[-inds, ,drop=FALSE]
 						}
 					}
 				

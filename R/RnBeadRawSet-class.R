@@ -718,14 +718,14 @@ setMethod("remove.sites", signature(object = "RnBeadRawSet"),
 				for(sl in RNBRAWSET.SLOTNAMES){
 					if(!is.null(slot(object,sl))){
 						if(!is.null(object@status) && object@status$disk.dump){
-							new.matrix<-slot(object,sl)[-inds,]
+							new.matrix<-slot(object,sl)[-inds,,drop=FALSE]
 							if(isTRUE(object@status$discard.ff.matrices)){
 								delete(slot(object,sl))
 							}
 							slot(object,sl)<-convert.to.ff.matrix.tmp(new.matrix)
 							rm(new.matrix); rnb.cleanMem()
 						}else{
-							slot(object,sl)<-slot(object,sl)[-inds,]
+							slot(object,sl)<-slot(object,sl)[-inds,,drop=FALSE]
 						}
 					
 					}
@@ -952,10 +952,10 @@ intensities.by.color<-function(raw.set,
 	
 		tII<-tII[match(dII.probes, tII$Name),]
 	}
-	dII.grn<-Mmatrix[pinfos[,"Design"] == "II",]
+	dII.grn<-Mmatrix[pinfos[,"Design"] == "II",,drop=FALSE]
 	if(address.rownames) rownames(dII.grn)<-tII$AddressA
 	
-	dII.red<-Umatrix[pinfos[,"Design"] == "II",]
+	dII.red<-Umatrix[pinfos[,"Design"] == "II",,drop=FALSE]
 	if(address.rownames) rownames(dII.red)<-tII$AddressA
 	
 	dI.red.probes <- rnb.set.probe.ids[pinfos[, "Color"] == "Red"]
@@ -976,32 +976,32 @@ intensities.by.color<-function(raw.set,
 		tI.grn<-tI.grn[match(dI.green.probes, tI.grn$Name),]
 	}
 	
-	dI.red.meth<-Mmatrix[pinfos[, "Color"] == "Red",]
+	dI.red.meth<-Mmatrix[pinfos[, "Color"] == "Red",,drop=FALSE]
 	
 	if(address.rownames) rownames(dI.red.meth)<-tI.red[,"AddressB"]
 	
-	dI.red.umeth<-Umatrix[pinfos[, "Color"] == "Red",]
+	dI.red.umeth<-Umatrix[pinfos[, "Color"] == "Red",,drop=FALSE]
 	if(address.rownames) rownames(dI.red.umeth)<-tI.red[,"AddressA"]
 	
 	if(add.oob){
-		dI.red.meth.oob<-M0matrix[pinfos[, "Color"] == "Red",]
+		dI.red.meth.oob<-M0matrix[pinfos[, "Color"] == "Red",,drop=FALSE]
 		if(address.rownames) rownames(dI.red.meth.oob)<-tI.red[,"AddressB"]
 		
-		dI.red.umeth.oob<-U0matrix[pinfos[, "Color"] == "Red",]
+		dI.red.umeth.oob<-U0matrix[pinfos[, "Color"] == "Red",,drop=FALSE]
 		if(address.rownames) rownames(dI.red.umeth.oob)<-tI.red[,"AddressA"]
 	}
 	
-	dI.grn.meth<-Mmatrix[pinfos[, "Color"] == "Grn",]
+	dI.grn.meth<-Mmatrix[pinfos[, "Color"] == "Grn",,drop=FALSE]
 	if(address.rownames) rownames(dI.grn.meth)<-tI.grn[,"AddressB"]
 	
-	dI.grn.umeth<-Umatrix[pinfos[, "Color"] == "Grn",]
+	dI.grn.umeth<-Umatrix[pinfos[, "Color"] == "Grn",,drop=FALSE]
 	if(address.rownames) rownames(dI.grn.umeth)<-tI.grn[,"AddressA"]
 	
 	if(add.oob){
-		dI.grn.meth.oob<-M0matrix[pinfos[, "Color"] == "Grn",]
+		dI.grn.meth.oob<-M0matrix[pinfos[, "Color"] == "Grn",,drop=FALSE]
 		if(address.rownames) rownames(dI.grn.meth.oob)<-tI.grn[,"AddressB"]
 		
-		dI.grn.umeth.oob<-U0matrix[pinfos[, "Color"] == "Grn",]
+		dI.grn.umeth.oob<-U0matrix[pinfos[, "Color"] == "Grn",,drop=FALSE]
 		if(address.rownames) rownames(dI.grn.umeth.oob)<-tI.grn[,"AddressA"]
 	}
 	
@@ -1016,15 +1016,15 @@ intensities.by.color<-function(raw.set,
 
 	gc()
 	
-	if(address.rownames) intensities.by.channel$Cy5<-intensities.by.channel$Cy5[rownames(intensities.by.channel$Cy3),]
+	if(address.rownames) intensities.by.channel$Cy5<-intensities.by.channel$Cy5[rownames(intensities.by.channel$Cy3),,drop=FALSE]
 	if(add.controls){
 		ncd<-rnb.get.annotation("controls450")
 		#ncd<-ncd[ncd[["Target"]] == "NEGATIVE", ]
 		ncd$Target<-tolower(ncd$Target)
 		controls.by.channel<-qc(raw.set)
 			
-		controls.by.channel$Cy3<-controls.by.channel$Cy3[as.character(ncd$ID),]
-		controls.by.channel$Cy5<-controls.by.channel$Cy5[as.character(ncd$ID),]
+		controls.by.channel$Cy3<-controls.by.channel$Cy3[as.character(ncd$ID),,drop=FALSE]
+		controls.by.channel$Cy5<-controls.by.channel$Cy5[as.character(ncd$ID),,drop=FALSE]
 		
 		intensities.by.channel$Cy3<-rbind(intensities.by.channel$Cy3, controls.by.channel$Cy3)
 		intensities.by.channel$Cy5<-rbind(intensities.by.channel$Cy5, controls.by.channel$Cy5)
