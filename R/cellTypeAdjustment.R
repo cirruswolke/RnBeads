@@ -185,25 +185,25 @@ estimateProportionsCP<-function(
 		full.output=FALSE){
 	
 	if (!suppressPackageStartupMessages(require(nlme))) {
-		stop("missing required package nlme")
+		rnb.error("missing required package nlme")
 	}
 	
 	if(!inherits(rnb.set, "RnBSet")){
-		stop("invalid value for rnb.set: object of class RnBSet is expected")
+		rnb.error("invalid value for rnb.set: object of class RnBSet is expected")
 	}
 	
 	if(!is.integer(cell.type.column) && !is.character(cell.type.column)){
-		stop("invalid value for cell.type.column: integer or character singleton is expected")		
+		rnb.error("invalid value for cell.type.column: integer or character singleton is expected")		
 	}
 	
 	if(is.integer(cell.type.column) && 
 			(length(cell.type.column)!=1 || cell.type.column<0L || cell.type.column>ncol(pheno(rnb.set)))){
-		stop("invalid value for cell.type.column: integer index is out of bounds")		
+		rnb.error("invalid value for cell.type.column: integer index is out of bounds")		
 	}	
 	
 	if(is.character(cell.type.column) && 
 			(length(cell.type.column)!=1 || !cell.type.column %in% colnames(pheno(rnb.set)))){
-		stop("invalid value for cell.type.column: integer index is out of bounds")		
+		rnb.error("invalid value for cell.type.column: integer index is out of bounds")		
 	}	
 	if(full.output){
 		result<-list()
@@ -225,7 +225,7 @@ estimateProportionsCP<-function(
 		}
 	}
 	
-	if(all(table(na.omit(pheno(rnb.set)[,cell.type.column])))==1){
+	if(all(table(na.omit(pheno(rnb.set)[,cell.type.column]))==1)){
 		stop("Found only one sample per each cell type")
 		if(full.output){
 			return(result)	
@@ -617,7 +617,8 @@ rnb.execute.ct.estimation<-function(rnb.set,
 				n.most.variable=test.max.markers,
 				n.markers=top.markers, full.output=TRUE)
 	}else{
-		stop("the supplied inference method is not supported yet")
+		rnb.warning("the supplied inference method is not supported yet")
+		return(NULL)
 	}
 	
 	result$method <- method
@@ -730,25 +731,41 @@ rnb.step.cell.types<-function(rnb.set, report){
 	
 	logger.start("Estimation of the cell type heterogeneity effects")
 	
-	logger.start("Performing computations")
-		result<-rnb.execute.ct.estimation(rnb.set, 
-				cell.type.column=rnb.getOption("inference.reference.methylome.column"),
-				test.max.markers=rnb.getOption("inference.max.cell.type.markers"), 
-				top.markers=rnb.getOption("inference.top.cell.type.markers"),
-				method="houseman1")
-	logger.completed()
+	cell.type.column<-rnb.getOption("inference.reference.methylome.column")
 	
-	logger.start("Adding a section to the report")
-		new.report<-rnb.section.ct.estimation(report, result)
-	logger.completed()
-	
+	if(is.na(cell.type.column)){
+		rnb.warning("Invalid value for cell.type.column, non-NA value required. Skipped the cell type heterogeneity analysis")
+		result<-NULL
+		new.report<-report
+	}else if((is.integer(cell.type.column) && (cell.type.column<0 || cell.type.column>length(samples(rnb.set))))){
+		rnb.warning("Invalid value for cell.type.column, integer index not in permissible range. Skipped the cell type heterogeneity analysis")
+		result<-NULL
+		new.report<-report
+	}else if(is.character(cell.type.column) && !cell.type.column %in% colnames(pheno(rnb.set))){
+		rnb.warning("Invalid value for cell.type.column, specified column not found. Skipped the cell type heterogeneity analysis")
+		result<-NULL
+		new.report<-report
+	}else{
+
+		logger.start("Performing computations")
+			result<-rnb.execute.ct.estimation(rnb.set, 
+					cell.type.column=rnb.getOption("inference.reference.methylome.column"),
+					test.max.markers=rnb.getOption("inference.max.cell.type.markers"), 
+					top.markers=rnb.getOption("inference.top.cell.type.markers"),
+					method="houseman1")
+		logger.completed()
+		
+		logger.start("Adding a section to the report")
+			new.report<-rnb.section.ct.estimation(report, result)
+		logger.completed()
+		
+	}
 	logger.completed()
 	
 	if(!is.null(result)){
 		rnb.set<-set.covariates.ct(rnb.set, result)
 		logger.info("Added cell type covariates to the RnBSet object")
 	}
-	
 	return(list(rnb.set=rnb.set, report=new.report))
 }
 
