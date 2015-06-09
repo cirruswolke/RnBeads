@@ -59,8 +59,8 @@ rnb.RnBSet.to.GRangesList <- function(rnb.set,reg.type="sites",return.regular.li
 	# logger.status("...getting data into the correct order") #DEBUG MESSAGE
 	oo <- order(as.integer(seqnames(granges.coords)),start(granges.coords), end(granges.coords), as.integer(strand(granges.coords)))
 	granges.coords <- granges.coords[oo]
-	mm <- meth(rnb.set,type=reg.type)[oo,]
-	ccov <- covg(rnb.set,type=reg.type)[oo,]
+	mm <- meth(rnb.set,type=reg.type)[oo,,drop=FALSE]
+	ccov <- covg(rnb.set,type=reg.type)[oo,,drop=FALSE]
 
 	# logger.status("Creating list for GRanges objects") #DEBUG MESSAGE
 	rnbs.grl <- lapply(samples(rnb.set),FUN=function(ss){
