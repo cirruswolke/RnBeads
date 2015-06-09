@@ -225,8 +225,8 @@ estimateProportionsCP<-function(
 		}
 	}
 	
-	if(length(cell.types)>length(samples(rnb.set))){
-		stop("Found too many reference cell types")
+	if(all(table(na.omit(pheno(rnb.set)[,cell.type.column])))==1){
+		stop("Found only one sample per each cell type")
 		if(full.output){
 			return(result)	
 		}else{
