@@ -220,7 +220,8 @@ logger.isinitialized <- function() {
 logger.status <- function(txt) {
 	if (rnb.getOption("logging")) {
 		if (!logger.isinitialized()) {
-			stop("logger is not initialized")
+			# stop("logger is not initialized")
+			logger.start(fname=NA) #initialize the logger to the console if not started yet
 		}
 		logger.paste("STATUS", txt)
 	}
@@ -233,7 +234,8 @@ logger.status <- function(txt) {
 logger.info <- function(txt) {
 	if (rnb.getOption("logging")) {
 		if (!logger.isinitialized()) {
-			stop("logger is not initialized")
+			# stop("logger is not initialized")
+			logger.start(fname=NA) #initialize the logger to the console if not started yet
 		}
 		logger.paste("INFO", txt)
 	}
@@ -246,7 +248,8 @@ logger.info <- function(txt) {
 logger.warning <- function(txt) {
 	if (rnb.getOption("logging")) {
 		if (!logger.isinitialized()) {
-			stop("logger is not initialized")
+			# stop("logger is not initialized")
+			logger.start(fname=NA) #initialize the logger to the console if not started yet
 		}
 		logger.paste("WARNING", txt)
 	}
@@ -260,6 +263,7 @@ logger.error <- function(txt, terminate = rnb.getOption("logging.exit.on.error")
 	if (rnb.getOption("logging")) {
 		if (!logger.isinitialized()) {
 			stop("logger is not initialized")
+			logger.start(fname=NA) #initialize the logger to the console if not started yet
 		}
 		logger.paste("ERROR", txt)
 		if (terminate) {
@@ -317,7 +321,8 @@ logger.start <- function(txt = character(0), fname = NULL) {
 	if (rnb.getOption("logging")) {
 		if (!logger.isinitialized()) {
 			if (is.null(fname)) {
-				stop("logger is not initialized")
+				logger.start(fname=NA) #initialize the logger to the console if not started yet
+				# stop("logger is not initialized")
 			}
 		}
 		if (!is.null(fname)) {
@@ -385,7 +390,8 @@ logger.addfile <- function(fname) {
 			stop("invalid value for fname")
 		}
 		if (!logger.isinitialized()) {
-			stop("logger is not initialized")
+			# stop("logger is not initialized")
+			logger.start(fname=NA) #initialize the logger to the console if not started yet
 		}
 		logfiles <- get("logfiles", envir = .LOG.INFO, inherits = FALSE)
 		if (!(fname %in% logfiles)) {
