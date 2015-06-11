@@ -230,6 +230,11 @@ rnb.section.region.profiles <- function(report, rnb.set, reg.types, columns=rnb.
 	if (!inherits(report, "Report")) {
 		stop("invalid value for report")
 	}
+	regTypes_notInSet <- setdiff(reg.types, summarized.regions(rnb.set))
+	if (length(regTypes_notInSet)>0){
+		reg.types <- intersect(reg.types, summarized.regions(rnb.set))
+		logger.warning(c("The following regions are not annotated in the RnBSet object:", paste(regTypes_notInSet,collapse=","), "--> just using",paste(reg.types,collapse=",")))
+	}
 
 	txt <- c("Methylation profiles were computed for the specified region types. ",
 			 "Composite plots are shown")
