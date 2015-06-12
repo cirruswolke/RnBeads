@@ -698,9 +698,9 @@ read.idat.files <- function(base.dir,
 				"typeIred"=list(Design="I", Color="Red", Msource="Red", Usource="Red"),
 				"typeIgrn"=list(Design="I", Color="Grn", Msource="Grn", Usource="Grn"),
 				"typeII"=list(Design="II", Color="Both", Msource="Grn", Usource="Red")),
-			probe27=list(
-				"typeIred"=list(Design="I", Color="red", Msource="red", Usource="red"),
-				"typeIgrn"=list(Design="I", Color="green", Msource="green", Usource="green"))
+			probes27=list(
+				"typeIred"=list(Design="I", Color="red", Msource="Red", Usource="Red"),
+				"typeIgrn"=list(Design="I", Color="green", Msource="Grn", Usource="Grn"))
 	)
 	
 	probe.categories<-INTENSITY.SUMMARIZATION.INFO[[platform]]
