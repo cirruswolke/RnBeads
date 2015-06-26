@@ -251,7 +251,7 @@ rnb.load.bed <- function(fname) {
 #' @author Yassen Assenov
 #' @export
 get.cpg.stats <- function(chrom.sequence, starts, ends) {
-	if (!inherits(chrom.sequence, "MaskedDNAString")) {
+	if (!(inherits(chrom.sequence, "MaskedDNAString") | inherits(chrom.sequence, "MaskedDNAString"))) {
 		stop("invalid value for chrom.sequence")
 	}
 	if (!(is.integer(starts) && !any(is.na(starts)))) {
@@ -267,6 +267,24 @@ get.cpg.stats <- function(chrom.sequence, starts, ends) {
 }
 
 ########################################################################################################################
+#' match.chrom.names
+#'
+#' invariant chromosome name matching. I.e. find the occurrences of the names in the first
+#' vector in the second vector, neglecting the "chr" prefix
+#'
+#' @param q chromosome name query
+#' @param q chromosome name reference
+#' @return the names from r corresponding to the entries in q
+#'
+#' @author Fabian Mueller
+#' @noRd
+match.chrom.names <- function(q, r) {
+	rr <- gsub("^chr","",r)
+	qq <- gsub("^chr","",q)
+	res <- r[match(qq,rr)]
+	names(res) <- q
+	return(res)
+}
 
 #' append.cpg.stats
 #'
