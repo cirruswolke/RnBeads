@@ -33,8 +33,9 @@ parallel.setup <- function(...){
 	logger.start("Setting up Multicore")
 	require(foreach)
 	require(doParallel)
-	.parallel[["cl"]] <- makeCluster(...)
-	registerDoParallel(.parallel[["cl"]])
+	# .parallel[["cl"]] <- makeCluster(...)
+	# registerDoParallel(.parallel[["cl"]])
+	registerDoParallel(...)
 	.parallel[["num.cores"]] <- getDoParWorkers()
 	.parallel[["do.par"]] <- TRUE
 	logger.info(c("Using",.parallel[["num.cores"]],"cores"))
@@ -63,7 +64,8 @@ parallel.setup <- function(...){
 parallel.teardown <- function(){
 	.parallel[["do.par"]] <- FALSE
 	.parallel[["num.cores"]] <- -1
-	stopCluster(.parallel[["cl"]])
+	# stopCluster(.parallel[["cl"]])
+	stopImplicitCluster()
 	invisible(TRUE)
 }
 

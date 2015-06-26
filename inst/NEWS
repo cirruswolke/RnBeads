@@ -1,3 +1,9 @@
+RnBeads 1.1.3
+=============
+
+ * Some fixes in data loading
+ * fixes in parallel environment setup
+
 RnBeads 1.1.2
 =============
 

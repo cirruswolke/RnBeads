@@ -165,7 +165,7 @@ test_differential <- function(){
 			test_rowWelchP()
 		logger.completed()
 		logger.start(c("Testing function:","limmaP"))
-			test_rowWelchP()
+			test_limmaP_1()
 		logger.completed()
 		logger.start(c("Testing function:","computeDiffTab.extended.site"))
 			test_computeDiffTab.extended.site()
