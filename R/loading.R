@@ -211,14 +211,14 @@ rnb.execute.import<-function(data.source, data.type=rnb.getOption("import.defaul
 				rnb.info(msg)
 			}
 		}else{
-			if(is.integer(data.source[[3L]])){
-				filename.column=data.source[[3L]]
-			}else{
-				filename.column=NA
-				if(verbose){
-					rnb.info(msg)
-				}
-			}
+			# if(is.integer(data.source[[3L]])){
+			filename.column=data.source[[3L]]
+			# }else{
+			# 	filename.column=NA
+			# 	if(verbose){
+			# 		rnb.info(msg)
+			# 	}
+			# }
 		}
 		
 		if(dry.run){
