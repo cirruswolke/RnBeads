@@ -263,6 +263,7 @@ rnb.RnBSet.to.bedGraph <- function(rnb.set,out.dir=".",reg.type="sites",paramete
 	filenames <- data.frame(
 		"Sample" = sample.ids,
 		"File" = sprintf(paste0("rnbeads_sample_%0", nd, "d.bedGraph"), 1:length(sample.ids)),
+		"Fileprefix" = sprintf(paste0("rnbeads_sample_%0", nd, "d"), 1:length(sample.ids)),
 		stringsAsFactors = FALSE)
 	for (i in 1:length(sample.ids)) {
 		fname <- file.path(out.dir, filenames[i, 2L])
@@ -275,7 +276,7 @@ rnb.RnBSet.to.bedGraph <- function(rnb.set,out.dir=".",reg.type="sites",paramete
 		cat(paste0('track type=bedGraph name="', sample.ids[i], '"', parameters, "\n"), file = fname)
 		write.table(tbl[j, ], fname, TRUE, FALSE, "\t", row.names = FALSE, col.names = FALSE)
 	}
-	are.disjoint <- tapply(1:nrow(tbl), tbl[, 1], function(ii) {
+	are.disjoint <- tapply(1:nrow(tbl), as.character(tbl[, 1]), function(ii) {
 		(length(ii) < 2) || all(tbl[ii[-length(ii)], 3] <= tbl[ii[-1], 2])
 	})
 	invisible(
@@ -588,8 +589,8 @@ rnb.export.to.trackhub <- function(rnb.set,out.dir,reg.type="sites",data.type="b
 		bedGraph.conv <- rnb.RnBSet.to.bedGraph(rnb.set,bedgraph.dir,reg.type=reg.type)
 		rnb.logger.completed()
 		#convert to binary
-		in.file.list <- file.path(bedgraph.dir,bedGraph.conv$filenames$filename)
-		out.file.list <- file.path(track.hub.dir,assembly(rnb.set),paste("rnbeads_sample",bedGraph.conv$filenames$i,".bigWig",sep=""))
+		in.file.list <- file.path(bedgraph.dir,bedGraph.conv$filenames$File)
+		out.file.list <- file.path(track.hub.dir,assembly(rnb.set),paste(bedGraph.conv$filenames$Fileprefix,".bigWig",sep=""))
 
 		res[["contains.overlapping.regions"]] <- bedGraph.conv[["contains.overlapping.regions"]]
 		res[["filenames.bedGraph"]] <- bedGraph.conv$filenames
