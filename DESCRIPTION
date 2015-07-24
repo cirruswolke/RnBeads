@@ -10,7 +10,7 @@ Authors@R: c(
     person("Fabian", "Mueller", email = "rnbeads@mpi-inf.mpg.de",
     role = c("aut", "cre")))
 Date: 2015-06-16
-Version: 1.1.3
+Version: 1.1.4
 Suggests:
     Category,
     GEOquery,
