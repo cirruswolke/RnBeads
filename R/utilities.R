@@ -1257,3 +1257,14 @@ prepare.slot.matrix<-function(slotmatrix, useff=FALSE, full.match=FALSE, subset=
 	}
 	preparedmatrix
 }
+
+
+ ".stopImplicitCluster" <- function()
+ {
+    if(exists(".revoDoParCluster", where=doParallel:::.options) && 
+      !is.null(doParallel:::.options[['.revoDoParCluster']]))
+    {
+      stopCluster(doParallel:::.options[['.revoDoParCluster']])
+      remove('.revoDoParCluster', envir=doParallel:::.options)
+     }
+ }

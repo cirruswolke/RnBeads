@@ -65,7 +65,7 @@ parallel.teardown <- function(){
 	.parallel[["do.par"]] <- FALSE
 	.parallel[["num.cores"]] <- -1
 	# stopCluster(.parallel[["cl"]])
-	stopImplicitCluster()
+	.stopImplicitCluster()
 	invisible(TRUE)
 }
 
