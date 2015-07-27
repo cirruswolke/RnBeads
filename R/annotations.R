@@ -251,7 +251,7 @@ rnb.load.bed <- function(fname) {
 #' @author Yassen Assenov
 #' @export
 get.cpg.stats <- function(chrom.sequence, starts, ends) {
-	if (!(inherits(chrom.sequence, "MaskedDNAString") | inherits(chrom.sequence, "MaskedDNAString"))) {
+	if (!(inherits(chrom.sequence, "MaskedDNAString") | inherits(chrom.sequence, "DNAString"))) {
 		stop("invalid value for chrom.sequence")
 	}
 	if (!(is.integer(starts) && !any(is.na(starts)))) {
