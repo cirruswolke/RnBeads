@@ -353,6 +353,7 @@ RnBiseqSet<-function(
 #		}
 #	}
 	
+	status<-list(disk.dump=FALSE)
 	if(useff){
 		
 		#subsampling for large datasets (ff currently supports only objects of size .Machine$integer.max)
