@@ -1114,7 +1114,7 @@ read.bed.files<-function(base.dir=NULL,
 	}
 	
 	dm.subsample<-list()
-	if(prod(length(site.ints), length(data.matrices))>.Machine$integer.max){
+	if(useff && (prod(length(site.ints), length(data.matrices))>.Machine$integer.max)){
 		sites.allowed <- as.integer(.Machine$integer.max/length(data.matrices))
 		sample.site.inds <- sort(sample.int(length(site.ints),sites.allowed))
 		msg<-c("Full dataset is too large to be supported by ff. --> downsampling to",sites.allowed,"( of",length(site.ints),") sites")
