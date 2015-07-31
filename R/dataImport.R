@@ -1019,13 +1019,18 @@ read.bed.files<-function(base.dir=NULL,
 			bed.col<-find.bed.column(sample.sheet)
 			file.names.col<-bed.col[[1]]
 			file.names<-sample.sheet[,bed.col[[1]]]
-		}else if(file.names.col>0 && file.names.col<=ncol(sample.sheet)){
+		}else if(is.integer(file.names.col) && file.names.col>0 && file.names.col<=ncol(sample.sheet)){
+			file.names<-sample.sheet[,file.names.col]
+		}else if(is.character(file.names.col) && length(file.names.col)==1 && file.names.col %in% colnames(sample.sheet)){
 			file.names<-sample.sheet[,file.names.col]
 		}else{
 			file.names.col<-grep("BED|bed", colnames(sample.sheet))
-			file.names<-sample.sheet[,file.names.col]
+			file.names<-sample.sheet[,file.names.col[1]]
 		}
 		file.names<-as.character(file.names)
+		if(length(file.names)!=nrow(sample.sheet)){
+			rnb.error("Could not find a sample annotation column with valid BED file names. Exiting...")
+		}
 		### manage the multiple file names 
 		
 		fn.lists<-strsplit(file.names, split=";")
@@ -1394,7 +1399,7 @@ read.single.bed<-function(file,
 		if(coord.shift!=0L){
 			data.set[,start.col] <- data.set[,start.col] + coord.shift
 			if(!is.na(end.col)){
-				data.set[,start.col] <- data.set[,start.col] + coord.shift
+				data.set[,end.col] <- data.set[,end.col] + coord.shift
 			}
 		}
 #		rn<-paste(rep(context, dim(data.set)[1]), data.set[,chr.col], data.set[,start.col], data.set[,strand.col], sep=".")
