@@ -1,3 +1,13 @@
+RnBeads 1.1.5
+=============
+
+ * new option: disk.dump.bigff for using a wrapper class of the ff package to avoid their INT_MAX issue
+
+RnBeads 1.1.4
+=============
+
+ * fixes in parallel environment setup from bioconcuctor
+
 RnBeads 1.1.3
 =============
 

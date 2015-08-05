@@ -102,5 +102,6 @@ logging.disk	logical	no	no		FALSE
 logging.exit.on.error	logical	no	no		FALSE
 distribution.subsample	integer	no	no	[0,	1000000
 disk.dump.big.matrices	logical	no	no		TRUE
+disk.dump.bigff	logical	no	no		FALSE
 enforce.memory.management	logical	no	no		FALSE
 enforce.destroy.disk.dumps	logical	no	no		FALSE

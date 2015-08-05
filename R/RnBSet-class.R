@@ -19,10 +19,12 @@ get.rnb.version<-function(){
 ## ---------------------------------------------------------------------------------------------------------------------
 ## CLASS DEFINITIONS
 ## ---------------------------------------------------------------------------------------------------------------------
-
+#' @include bigFf.R
 setOldClass(c("ff_matrix"))
 setClassUnion("matrixOrff", c("matrix", "ff_matrix"))
+setClassUnion("matrixOrffOrBigFfMat", c("matrix", "ff_matrix", "BigFfMat"))
 setClassUnion("matrixOrffOrNULL", c("matrix", "ff_matrix", "NULL"))
+setClassUnion("matrixOrffOrBigFfMatOrNULL", c("matrix", "ff_matrix", "BigFfMat", "NULL"))
 setClassUnion("listOrNULL", c("list", "NULL"))
 setClassUnion("characterOrNULL", c("character", "NULL"))
 
@@ -84,8 +86,8 @@ setClassUnion("characterOrNULL", c("character", "NULL"))
 setClass("RnBSet",
 		representation(pheno="data.frame",
 				sites="matrix",
-				meth.sites="matrixOrff",
-				covg.sites="matrixOrffOrNULL",
+				meth.sites="matrixOrffOrBigFfMat",
+				covg.sites="matrixOrffOrBigFfMatOrNULL",
 				regions="list",
 				meth.regions="list",
 				covg.regions="listOrNULL",
@@ -630,7 +632,14 @@ setMethod("remove.sites", signature(object = "RnBSet"),
 						if(isTRUE(object@status$discard.ff.matrices)){
 							delete(object@meth.sites)
 						}
-						object@meth.sites <- convert.to.ff.matrix.tmp(new.matrix)
+						doBigFf <- !is.null(object@status$disk.dump.bigff)
+						if (doBigFf) doBigFf <- object@status$disk.dump.bigff
+
+						if (doBigFf){
+							object@meth.sites <- BigFfMat(new.matrix, finalizer="delete")
+						} else {
+							object@meth.sites <- convert.to.ff.matrix.tmp(new.matrix)
+						}
 						rm(new.matrix); rnb.cleanMem()
 						if(!is.null(object@covg.sites)) {
 							mat <- object@covg.sites[,]
@@ -638,7 +647,11 @@ setMethod("remove.sites", signature(object = "RnBSet"),
 							if(isTRUE(object@status$discard.ff.matrices)){
 								delete(object@covg.sites)
 						 	}
-							object@covg.sites <-convert.to.ff.matrix.tmp(new.matrix)
+						 	if (doBigFf){
+						 		object@covg.sites <- BigFfMat(new.matrix, finalizer="delete")
+						 	} else {
+								object@covg.sites <- convert.to.ff.matrix.tmp(new.matrix)
+							}
 							rm(new.matrix); rnb.cleanMem()
 						}					
 					}else{
@@ -720,13 +733,20 @@ setMethod("remove.samples", signature(object = "RnBSet"),
 			inds <- get.i.vector(samplelist, samples(object))
 			if (length(inds) != 0) {
 				if(object@status$disk.dump){
+					doBigFf <- !is.null(object@status$disk.dump.bigff)
+					if (doBigFf) doBigFf <- object@status$disk.dump.bigff
+
 					mat <- object@meth.sites[,]
 					new.matrix <- mat[,-inds, drop=FALSE]
 					# delete(object@meth.sites)
 					if(isTRUE(object@status$discard.ff.matrices)){
 						delete(object@meth.sites)
 					}
-					object@meth.sites <- convert.to.ff.matrix.tmp(new.matrix)
+					if (doBigFf){
+						object@meth.sites <- BigFfMat(new.matrix, finalizer="delete")
+					} else {
+						object@meth.sites <- convert.to.ff.matrix.tmp(new.matrix)
+					}
 				}else{
 					object@meth.sites <- object@meth.sites[,-inds, drop=FALSE]
 				}
@@ -736,32 +756,50 @@ setMethod("remove.samples", signature(object = "RnBSet"),
 				}
 				if (!is.null(object@covg.sites)) {
 					if(object@status$disk.dump){
+						doBigFf <- !is.null(object@status$disk.dump.bigff)
+						if (doBigFf) doBigFf <- object@status$disk.dump.bigff
+
 						mat <- object@covg.sites[,]
 						new.matrix <- mat[,-inds, drop=FALSE]
 						# delete(object@covg.sites)
 						if(isTRUE(object@status$discard.ff.matrices)){
 							delete(object@covg.sites)
 						}
-						object@covg.sites <- convert.to.ff.matrix.tmp(new.matrix)
+						if (doBigFf){
+							object@covg.sites <- BigFfMat(new.matrix, finalizer="delete")
+						} else {
+							object@covg.sites <- convert.to.ff.matrix.tmp(new.matrix)
+						}
 					}else{
 						object@covg.sites <- object@covg.sites[,-inds, drop=FALSE]
 					}
 				}
 				for (region in names(object@regions)) {
 					if(object@status$disk.dump){
+						doBigFf <- !is.null(object@status$disk.dump.bigff)
+						if (doBigFf) doBigFf <- object@status$disk.dump.bigff
+
 						mat <- object@meth.regions[[region]][,]
 						meth.matrix <- mat[, -inds, drop=FALSE]
 						if(isTRUE(object@status$discard.ff.matrices)){
 							delete(object@meth.regions[[region]])
 						}
-						object@meth.regions[[region]]<-convert.to.ff.matrix.tmp(meth.matrix)
+						if (doBigFf){
+							object@meth.regions[[region]] <- BigFfMat(meth.matrix, finalizer="delete")
+						} else {
+							object@meth.regions[[region]] <- convert.to.ff.matrix.tmp(meth.matrix)
+						}
 						if(!is.null(object@covg.regions)){
 							mat <- object@covg.regions[[region]][,]
 							covg.matrix <- mat[, -inds, drop=FALSE]
 							if(isTRUE(object@status$discard.ff.matrices)){
 								delete(object@covg.regions[[region]])
 							}
-							object@covg.regions[[region]]<-convert.to.ff.matrix.tmp(covg.matrix)
+							if (doBigFf){
+								object@covg.regions[[region]] <- BigFfMat(covg.matrix, finalizer="delete")
+							} else {
+								object@covg.regions[[region]] <- convert.to.ff.matrix.tmp(covg.matrix)
+							}
 						}
 						# delete(object@meth.regions[[region]])
 						# delete(object@covg.regions[[region]])
@@ -984,6 +1022,9 @@ setMethod("combine", signature(x="RnBSet",y="RnBSet"),
 			if (x@status$disk.dump != y@status$disk.dump){
 				warning(paste0("disk dump status of the two objects to combine disagree. Using disk dump: ", useff))
 			}
+			usebigff <- useff
+			if (usebigff) usebigff <- !is.null(x@status$disk.dump.bigff)
+			if (usebigff) usebigff <- x@status$disk.dump.bigff
 			
 			# prepare a new object
 			if(nrow(pheno(x))>=nrow(pheno(y))){
@@ -1014,7 +1055,7 @@ setMethod("combine", signature(x="RnBSet",y="RnBSet"),
 			total.sites<-sum(sapply(common.sites, nrow))
 			
 			if("ff_matrix" %in% c(class(sites1), class(sites2))){
-				new.sites<-ff(vmode="integer", dim=c(total.sites,3))
+				new.sites <- ff(vmode="integer", dim=c(total.sites,3))
 				ixx<-1
 				for(sts in common.sites){
 					new.sites[ixx:(ixx+nrow(sts)),]<-sts
@@ -1040,7 +1081,11 @@ setMethod("combine", signature(x="RnBSet",y="RnBSet"),
 				if(all(!is.null(slot(x,sl)),!is.null(slot(y,sl)))){
 					if(useff){
 						#new.matrix<-ff(vmode=vmode(slot(x,sl)), dim=c(total.sites,nrow(pheno(new.set))))
-						new.matrix<-create.empty.ff.matrix.tmp(vm=vmode(slot(x,sl)), dim=c(total.sites,nrow(pheno(new.set))))
+						if (usebigff){
+							new.matrix <- BigFfMat(row.n=total.sites, col.n=nrow(pheno(new.set)), vmode=vmode(slot(x,sl)), finalizer="delete")
+						} else {
+							new.matrix <- create.empty.ff.matrix.tmp(vm=vmode(slot(x,sl)), dim=c(total.sites,nrow(pheno(new.set))))
+						}
 					}else{
 						new.matrix<-matrix(NA, nrow=total.sites, ncol=nrow(pheno(new.set)))						
 					}
@@ -1297,15 +1342,29 @@ setMethod("summarize.regions", signature(object="RnBSet"),
 			if(region.type=="strands"){
 				
 				if(!is.null(object@status) && object@status$disk.dump){
+					doBigFf <- !is.null(object@status$disk.dump.bigff)
+					if (doBigFf) doBigFf <- object@status$disk.dump.bigff
+
 					# delete(object@meth.sites)
-					object@meth.sites <- convert.to.ff.matrix.tmp(region.meth)
+					if (doBigFf) {
+						object@meth.sites <- BigFfMat(region.meth, finalizer="delete")
+					} else {
+						object@meth.sites <- convert.to.ff.matrix.tmp(region.meth)
+					}
 				}else{
 					object@meth.sites <- region.meth
 				}
 				if(!is.null(object@covg.sites)) {
 					if(!is.null(object@status) && object@status$disk.dump){
+						doBigFf <- !is.null(object@status$disk.dump.bigff)
+						if (doBigFf) doBigFf <- object@status$disk.dump.bigff
+
 						# delete(object@covg.sites)
-						object@covg.sites <- convert.to.ff.matrix.tmp(region.covg)
+						if (doBigFf) {
+							object@covg.sites <- BigFfMat(region.covg, finalizer="delete")
+						} else {
+							object@covg.sites <- convert.to.ff.matrix.tmp(region.covg)
+						}
 					}else{
 						object@covg.sites <- region.covg
 					}
@@ -1315,30 +1374,43 @@ setMethod("summarize.regions", signature(object="RnBSet"),
 				object@sites <- region.indices
 			}else if(!is.null(region.indices)){
 				if(!is.null(object@status) && object@status$disk.dump){
+					doBigFf <- !is.null(object@status$disk.dump.bigff)
+					if (doBigFf) doBigFf <- object@status$disk.dump.bigff
 					# if(!is.null(object@meth.regions[[region.type]])){
 					# 	delete(object@meth.regions[[region.type]])
 					# }
 					if(rnb.getOption("enforce.destroy.disk.dumps")){
 						delete(object@meth.regions[[region.type]])
 					}
-					object@meth.regions[[region.type]] <- convert.to.ff.matrix.tmp(region.meth)
-				}else{
+					if (doBigFf){
+						object@meth.regions[[region.type]] <- BigFfMat(region.meth, finalizer="delete")
+					} else {
+						object@meth.regions[[region.type]] <- convert.to.ff.matrix.tmp(region.meth)
+					}
+				} else {
 					object@meth.regions[[region.type]] <- region.meth
 				}
 				if(!is.null(object@covg.sites)) {
 					if(!is.null(object@status) && object@status$disk.dump){
+						doBigFf <- !is.null(object@status$disk.dump.bigff)
+						if (doBigFf) doBigFf <- object@status$disk.dump.bigff
 						# if(!is.null(object@covg.regions[[region.type]])) {
 						# 	delete(object@covg.regions[[region.type]])
 						# }
 						if(rnb.getOption("enforce.destroy.disk.dumps")){
 							delete(object@covg.regions[[region.type]])
 						}
-						object@covg.regions[[region.type]] <- convert.to.ff.matrix.tmp(region.covg)
+						if (doBigFf){
+							if (is.null(object@covg.regions)) object@covg.regions <- list()
+							object@covg.regions[[region.type]] <- BigFfMat(region.covg, finalizer="delete")
+						} else {
+							object@covg.regions[[region.type]] <- convert.to.ff.matrix.tmp(region.covg)
+						}
 					}else{
 						object@covg.regions[[region.type]] <- region.covg
 					}
 				}else{
-					object@covg.regions<-NULL
+					object@covg.regions <- NULL
 				}
 				
 				attr(object@meth.regions[[region.type]], "aggregation")<-aggregation
@@ -1530,18 +1602,19 @@ setMethod("save.matrices", signature(object="RnBSet", path="character"),
 
 			if(!is.null(object@status) && object@status$disk.dump){
 				if("ff" %in% class(object@meth.sites)){
-					
-					ffmatrix<-object@meth.sites
+					ffmatrix <- object@meth.sites
 					ffsave(ffmatrix,file=file.path(path, "rnb.meth"),rootpath=getOption('fftempdir'))
 					rm(ffmatrix)
-				}			
+				} else if("BigFfMat" %in% class(object@meth.sites)){
+					save.bigFfMatrix(object@meth.sites, file=file.path(path, "rnb.meth"), rootpath=getOption('fftempdir'))
+				}
 				
 				if("ff" %in% class(object@covg.sites)){
-					
-					ffmatrix<-object@covg.sites
+					ffmatrix <- object@covg.sites
 					ffsave(ffmatrix, file=file.path(path, "rnb.covg"),rootpath=getOption('fftempdir'))
 					rm(ffmatrix)
-					
+				} else if("BigFfMat" %in% class(object@covg.sites)){
+					save.bigFfMatrix(object@covg.sites, file=file.path(path, "rnb.covg"), rootpath=getOption('fftempdir'))
 				}
 				
 				if(!is.null(object@regions)){
@@ -1554,18 +1627,19 @@ setMethod("save.matrices", signature(object="RnBSet", path="character"),
 						}
 						
 						if("ff" %in% class(object@meth.regions[[rgn]])){
-							
 							ffmatrix<-object@meth.regions[[rgn]]
 							ffsave(ffmatrix, file=file.path(path, rgn, "rnb.meth"),rootpath=getOption('fftempdir'))
 							rm(ffmatrix)
-						}			
+						} else if("BigFfMat" %in% class(object@meth.regions[[rgn]])){
+							save.bigFfMatrix(object@meth.regions[[rgn]], file=file.path(path, rgn, "rnb.meth"), rootpath=getOption('fftempdir'))
+						}	
 						
 						if("ff" %in% class(object@covg.regions[[rgn]])){
-							
 							ffmatrix<-object@covg.regions[[rgn]]
 							ffsave(ffmatrix, file=file.path(path, rgn, "rnb.covg"),rootpath=getOption('fftempdir'))
 							rm(ffmatrix)
-							
+						} else if("BigFfMat" %in% class(object@covg.regions[[rgn]])){
+							save.bigFfMatrix(object@covg.regions[[rgn]], file=file.path(path, rgn, "rnb.covg"), rootpath=getOption('fftempdir'))
 						}
 			
 					}					
@@ -1583,18 +1657,29 @@ setGeneric("load.matrices",
 
 setMethod("load.matrices", signature(object="RnBSet", path="character"),
 		function(object, path, temp.dir=tempdir()){
-			if(sum(grepl("rnb.meth", list.files(path)))==2){
-				load_env<-new.env()
-				suppressMessages(ffload(file=file.path(path, "rnb.meth"), envir=load_env,rootpath=getOption("fftempdir")))
-				object@meth.sites<-get("ffmatrix", envir=load_env)
-				rm(load_env)
-			}
-			
-			if(sum(grepl("rnb.covg", list.files(path)))==2){
-				load_env<-new.env()
-				suppressMessages(ffload(file=file.path(path, "rnb.covg"), envir=load_env,rootpath=getOption("fftempdir")))
-				object@covg.sites<-get("ffmatrix", envir=load_env)
-				rm(load_env)
+			doBigFf <- !is.null(object@status)
+			if (doBigFf) doBigFf <- !is.null(object@status$disk.dump.bigff)
+			if (doBigFf) doBigFf <- object@status$disk.dump.bigff
+
+			if (doBigFf){
+				object@meth.sites <- load.bigFfMatrix(file.path(path, "rnb.meth"), rootpath=getOption("fftempdir"))
+				if(!is.null(object@covg.sites)){
+					object@covg.sites <- load.bigFfMatrix(file.path(path, "rnb.covg"), rootpath=getOption("fftempdir"))
+				}
+			} else {
+				if(sum(grepl("rnb.meth", list.files(path)))==2){
+					load_env<-new.env()
+					suppressMessages(ffload(file=file.path(path, "rnb.meth"), envir=load_env,rootpath=getOption("fftempdir")))
+					object@meth.sites<-get("ffmatrix", envir=load_env)
+					rm(load_env)
+				}
+				
+				if(sum(grepl("rnb.covg", list.files(path)))==2){
+					load_env<-new.env()
+					suppressMessages(ffload(file=file.path(path, "rnb.covg"), envir=load_env,rootpath=getOption("fftempdir")))
+					object@covg.sites<-get("ffmatrix", envir=load_env)
+					rm(load_env)
+				}
 			}
 			
 			rgns <- names(object@regions)
@@ -1604,18 +1689,25 @@ setMethod("load.matrices", signature(object="RnBSet", path="character"),
 				}
 
 				for(rgn in rgns){
-					if(sum(grepl("rnb.meth",list.files(file.path(path, rgn))))==2){
-						load_env<-new.env()
-						suppressMessages(ffload(file=file.path(path, rgn, "rnb.meth"), envir=load_env, rootpath=getOption("fftempdir")))
-						object@meth.regions[[rgn]]<-get("ffmatrix", envir=load_env)
-						rm(load_env)
+					if (doBigFf){
+						object@meth.regions[[rgn]] <- load.bigFfMatrix(file.path(path, rgn, "rnb.meth"), rootpath=getOption("fftempdir"))
+						if(!is.null(object@covg.regions[[rgn]])){
+							object@covg.regions[[rgn]] <- load.bigFfMatrix(file.path(path, "rnb.covg"), rootpath=getOption("fftempdir"))
+						}
+					} else {
+						if(sum(grepl("rnb.meth",list.files(file.path(path, rgn))))==2){
+							load_env<-new.env()
+							suppressMessages(ffload(file=file.path(path, rgn, "rnb.meth"), envir=load_env, rootpath=getOption("fftempdir")))
+							object@meth.regions[[rgn]]<-get("ffmatrix", envir=load_env)
+							rm(load_env)
+						}
+						if(sum(grepl("rnb.covg",list.files(file.path(path, rgn))))==2){
+							load_env<-new.env()
+							suppressMessages(ffload(file=file.path(path, rgn, "rnb.covg"), envir=load_env, rootpath=getOption("fftempdir")))
+							object@covg.regions[[rgn]]<-get("ffmatrix", envir=load_env)
+							rm(load_env)
+						}
 					}
-					if(sum(grepl("rnb.covg",list.files(file.path(path, rgn))))==2){
-						load_env<-new.env()
-						suppressMessages(ffload(file=file.path(path, rgn, "rnb.covg"), envir=load_env, rootpath=getOption("fftempdir")))
-						object@covg.regions[[rgn]]<-get("ffmatrix", envir=load_env)
-						rm(load_env)
-					}		
 				}
 			}
 			

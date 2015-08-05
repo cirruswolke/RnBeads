@@ -37,33 +37,34 @@ setClass("RnBiseqSet",
 ## ---------------------------------------------------------------------------------------------------------------------
 
 setMethod("initialize", "RnBiseqSet",
-		function(.Object,
-				pheno=data.frame(),
-				sites=matrix(ncol=0,nrow=0),
-				meth.sites=matrix(ncol=0,nrow=0),
-				covg.sites=matrix(ncol=0,nrow=0),
-				regions=list(),
-				meth.regions=list(),
-				assembly="hg19",
-				target="CpG",
-				status=list(),
-				inferred.covariates=list()
-				){
-			
-			.Object@pheno<-pheno	
-			.Object@sites<-sites
-			.Object@meth.sites<-meth.sites
-			.Object@covg.sites<-covg.sites
-			.Object@regions<-regions
-			.Object@meth.regions<-meth.regions
-			.Object@assembly<-assembly
-			.Object@target<-target
-			.Object@status<-status
-			.Object@inferred.covariates <- inferred.covariates
-			
-			.Object
-			
-		})
+	function(.Object,
+			pheno=data.frame(),
+			sites=matrix(ncol=0,nrow=0),
+			meth.sites=matrix(ncol=0,nrow=0),
+			covg.sites=matrix(ncol=0,nrow=0),
+			regions=list(),
+			meth.regions=list(),
+			assembly="hg19",
+			target="CpG",
+			status=list(),
+			inferred.covariates=list()
+			){
+		
+		.Object@pheno<-pheno	
+		.Object@sites<-sites
+		.Object@meth.sites<-meth.sites
+		.Object@covg.sites<-covg.sites
+		.Object@regions<-regions
+		.Object@meth.regions<-meth.regions
+		.Object@assembly<-assembly
+		.Object@target<-target
+		.Object@status<-status
+		.Object@inferred.covariates <- inferred.covariates
+		
+		.Object
+		
+	}
+)
 		
 
 #' Wrapper function RnBiseqSet
@@ -99,6 +100,7 @@ RnBiseqSet<-function(
 		summarize.regions=TRUE,
 		region.types=rnb.region.types.for.analysis(assembly),
 		useff=rnb.getOption("disk.dump.big.matrices"),
+		usebigff=rnb.getOption("disk.dump.bigff"),
 		verbose=FALSE){
 	
 	if(missing(pheno)){
@@ -123,11 +125,11 @@ RnBiseqSet<-function(
 		stop("invalid value for sites: should be a data frame or a matrix of type")
 	}
 	
-	if(!any(c('matrix', 'ff_matrix') %in% class(meth))){
+	if(!any(c('matrix', 'ff_matrix', 'BigFfMat') %in% class(meth))){
 		stop("invalid value for meth: should be a matrix or an ff_matrix")
 	}
 	
-	if(!is.null(covg) && !any(c('matrix', 'ff_matrix') %in% class(covg))){
+	if(!is.null(covg) && !any(c('matrix', 'ff_matrix', 'BigFfMat') %in% class(covg))){
 		stop("invalid value for covg: should be a matrix or an ff_matrix")
 	}
 	
@@ -295,25 +297,33 @@ RnBiseqSet<-function(
 		}
 	}
 	
-	sites<-sites[valid,]
+	sites <- sites[valid,]
 	if(!useff){
-		meth<-meth[which(legal.sites)[sites[,4L]],,drop=FALSE]
+		meth <- meth[which(legal.sites)[sites[,4L]],,drop=FALSE]
 		if(!is.null(covg)){
-			covg<-covg[which(legal.sites)[sites[,4L]],,drop=FALSE]
+			covg <- covg[which(legal.sites)[sites[,4L]],,drop=FALSE]
 		}
 	}else{
-		meth.old<-meth
-		meth<-ff(NA, dim=c(nrow(sites), ncol(meth.old)), dimnames=list(NULL, sample.names), vmode="double")
-		meth[,]<-meth.old[which(legal.sites)[sites[,4L]],]
+		meth.old <- meth
+		if (usebigff) {
+			meth <- BigFfMat(row.n=nrow(sites), col.n=ncol(meth.old), row.names=NULL, col.names=sample.names)
+		} else {
+			meth <- ff(NA, dim=c(nrow(sites), ncol(meth.old)), dimnames=list(NULL, sample.names), vmode="double")
+		}
+		meth[,] <- meth.old[which(legal.sites)[sites[,4L]],]
 		rm(meth.old); rnb.cleanMem()
 		if(!is.null(covg)){
-			covg.old<-covg
-			covg<-ff(NA_integer_, dim=c(nrow(sites), ncol(covg.old)), dimnames=list(NULL, sample.names))
-			covg[,]<-covg.old[which(legal.sites)[sites[,4L]],]
+			covg.old <- covg
+			if (usebigff) {
+				covg <- BigFfMat(row.n=nrow(sites), col.n=ncol(covg.old), row.names=NULL, col.names=sample.names, na.prototype=as.integer(NA))
+			} else {
+				covg <- ff(NA_integer_, dim=c(nrow(sites), ncol(covg.old)), dimnames=list(NULL, sample.names))
+			}
+			covg[,] <- covg.old[which(legal.sites)[sites[,4L]],]
 			rm(covg.old); rnb.cleanMem()
 		}
 	}
-	sites<-sites[,-4L]
+	sites <- sites[,-4L]
 	colnames(sites)<-c("context", "chr", "index")
 	
 	meth.sample.n.valid<-integer()
@@ -353,11 +363,10 @@ RnBiseqSet<-function(
 #		}
 #	}
 	
-	status<-list(disk.dump=FALSE)
+	status <- list(disk.dump=FALSE)
 	if(useff){
-		
 		#subsampling for large datasets (ff currently supports only objects of size .Machine$integer.max)
-		if (prod(dim(meth))>.Machine$integer.max){
+		if (prod(dim(meth))>.Machine$integer.max & !usebigff){
 			sites.allowed <- as.integer(.Machine$integer.max/ncol(meth))
 			sample.site.inds <- sort(sample.int(nrow(meth),sites.allowed))
 			msg<-c("Full dataset is too large to be supported by ff. --> downsampling to",sites.allowed,"( of",nrow(meth),") sites")
@@ -370,16 +379,23 @@ RnBiseqSet<-function(
 		}
 		
 		if("matrix" %in% class(meth)){
-			meth<-convert.to.ff.matrix.tmp(meth)
+			if (usebigff){
+				meth <- BigFfMat(meth, finalizer="delete")
+			} else {
+				meth <- convert.to.ff.matrix.tmp(meth)
+			}
 		}
 		
 		if(!is.null(covg)){
 			if("matrix" %in% class(covg)){
-				covg<-convert.to.ff.matrix.tmp(covg)
+				if (usebigff){
+					covg <- BigFfMat(covg, finalizer="delete")
+				} else {
+					covg <- convert.to.ff.matrix.tmp(covg)
+				}
 			}
 		}
-		
-		status<-list(disk.dump=TRUE)
+		status <- list(disk.dump=TRUE, disk.dump.bigff=usebigff)
 	}
 
 	object<-new("RnBiseqSet",
@@ -449,7 +465,7 @@ check.rnb.biseq.set<-function(object, verbose=TRUE){
 	
 	#check the methylation data
 	
-	mm<-meth(object)
+	mm <- meth(object)
 	
 	if(nrow(mm)<1){
 		if(verbose){
