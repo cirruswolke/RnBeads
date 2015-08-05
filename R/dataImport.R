@@ -942,6 +942,7 @@ read.bed.files<-function(base.dir=NULL,
 		sep.samples=rnb.getOption("import.table.separator"),
 		merge.bed.files=TRUE,
 		useff=rnb.getOption("disk.dump.big.matrices"),
+		usebigff=rnb.getOption("disk.dump.bigff"),
 		verbose = TRUE,
 		...){
 	
@@ -1017,7 +1018,7 @@ read.bed.files<-function(base.dir=NULL,
 		
 		if(is.na(file.names.col)){
 			bed.col<-find.bed.column(sample.sheet)
-			file.names.col<-bed.col[[1]]
+			file.names.col <- bed.col[[1]]
 			file.names<-sample.sheet[,bed.col[[1]]]
 		}else if(is.integer(file.names.col) && file.names.col>0 && file.names.col<=ncol(sample.sheet)){
 			file.names<-sample.sheet[,file.names.col]
@@ -1053,7 +1054,7 @@ read.bed.files<-function(base.dir=NULL,
 		}
 		
 		if(!is.null(base.dir)){
-			present.files<-list.files(base.dir, pattern="*", full.names=FALSE)
+			present.files <- list.files(base.dir, pattern="*", full.names=FALSE)
 			if(length(setdiff(file.names, present.files))){
 				rnb.error(c("These BED files", setdiff(file.names, present.files),"are missing in", base.dir))
 			}
@@ -1067,7 +1068,7 @@ read.bed.files<-function(base.dir=NULL,
 	}
 	
 	#skip.lines <- 1
-	data.matrices<-lapply(file.names, read.single.bed, context="cg", 
+	data.matrices <- lapply(file.names, read.single.bed, context="cg", 
 			...,
 #			chr.col=1L,
 #			start.col=2L,
@@ -1097,21 +1098,21 @@ read.bed.files<-function(base.dir=NULL,
 		if(useff){
 			open(data.matrices[[dmi]])
 		}
-		chrs.dm<-as.character(unique(data.matrices[[dmi]][,1L]))
-		found.chroms<-c(found.chroms, unique(chrs.dm[!(chrs.dm %in% found.chroms)]))
-		chr.match<-match(data.matrices[[dmi]][,1L], found.chroms)
+		chrs.dm <- as.character(unique(data.matrices[[dmi]][,1L]))
+		found.chroms <- c(found.chroms, unique(chrs.dm[!(chrs.dm %in% found.chroms)]))
+		chr.match <- match(data.matrices[[dmi]][,1L], found.chroms)
 		
-		strands.dm<-as.character(unique(data.matrices[[dmi]][,3L]))
-		found.strands<-c(found.strands, strands.dm[!(strands.dm %in% found.strands)])
-		strand.match<-match(data.matrices[[dmi]][,3L], found.strands)
-		site.ints.dm<-chr.match*chr.offset + strand.match*strand.offset + data.matrices[[dmi]][,2L]
+		strands.dm <- as.character(unique(data.matrices[[dmi]][,3L]))
+		found.strands <- c(found.strands, strands.dm[!(strands.dm %in% found.strands)])
+		strand.match <- match(data.matrices[[dmi]][,3L], found.strands)
+		site.ints.dm <- chr.match*chr.offset + strand.match*strand.offset + data.matrices[[dmi]][,2L]
 		if(is.null(site.ints)){
 			site.ints<-site.ints.dm
-			site.indices[[dmi]]<-1:nrow(data.matrices[[dmi]])
+			site.indices[[dmi]] <- 1:nrow(data.matrices[[dmi]])
 			next
 		}else{
 			site.ints<-c(site.ints, unique(site.ints.dm[!(site.ints.dm %in% site.ints)]))
-			site.indices[[dmi]]<-match(site.ints.dm, site.ints)
+			site.indices[[dmi]] <- match(site.ints.dm, site.ints)
 		}
 		if(useff){
 			close(data.matrices[[dmi]])
@@ -1119,20 +1120,20 @@ read.bed.files<-function(base.dir=NULL,
 	}
 	
 	dm.subsample<-list()
-	if(useff && (prod(length(site.ints), length(data.matrices))>.Machine$integer.max)){
+	if(useff && (prod(length(site.ints), length(data.matrices))>.Machine$integer.max) && !usebigff){
 		sites.allowed <- as.integer(.Machine$integer.max/length(data.matrices))
 		sample.site.inds <- sort(sample.int(length(site.ints),sites.allowed))
-		msg<-c("Full dataset is too large to be supported by ff. --> downsampling to",sites.allowed,"( of",length(site.ints),") sites")
+		msg <- c("Full dataset is too large to be supported by ff. --> downsampling to",sites.allowed,"( of",length(site.ints),") sites")
 		rnb.warning(msg)
-		all.sites<-site.ints[sample.site.inds]
+		all.sites <- site.ints[sample.site.inds]
 		for(dmi in 1:length(data.matrices)){
 			if(useff){
 				open(data.matrices[[dmi]])
 			}
-			site.ints.dm<-site.ints[site.indices[[dmi]]]
-			new.sites<-match(site.ints.dm, all.sites)
-			dm.subsample[[dmi]]<-which(!is.na(new.sites))
-			site.indices[[dmi]]<-new.sites[!is.na(new.sites)]
+			site.ints.dm <- site.ints[site.indices[[dmi]]]
+			new.sites <- match(site.ints.dm, all.sites)
+			dm.subsample[[dmi]] <- which(!is.na(new.sites))
+			site.indices[[dmi]] <- new.sites[!is.na(new.sites)]
 			if(useff){
 				close(data.matrices[[dmi]])
 			}
@@ -1144,68 +1145,76 @@ read.bed.files<-function(base.dir=NULL,
 		}
 	}
 	
-	covg.present<-sapply(1:length(data.matrices), function(indx){
-				if(useff){
-					open(data.matrices[[indx]])
-				}
-				present<-dim(data.matrices[[indx]])[2]==5L
-				if(useff){
-					close(data.matrices[[indx]])
-				}
-				return(present)
-			})
+	covg.present <- sapply(1:length(data.matrices), function(indx){
+		if(useff){
+			open(data.matrices[[indx]])
+		}
+		present<-dim(data.matrices[[indx]])[2]==5L
+		if(useff){
+			close(data.matrices[[indx]])
+		}
+		return(present)
+	})
 	
 	if(!all(covg.present)){
 		rnb.warning(c("Coverage information is not present for the following BED files: ", paste(file.names[which(!covg.present)], sep=", ")))
 		rnb.warning(c("Discarded coverage information"))
 	}
 	
-	sites<-matrix(nrow=length(all.sites), ncol=3, dimnames=list(NULL, c("chr", "coord", "strand")))
+	sites <- matrix(nrow=length(all.sites), ncol=3, dimnames=list(NULL, c("chr", "coord", "strand")))
 	if(!useff){
-		meth<-matrix(nrow=length(all.sites), ncol=length(data.matrices), dimnames=list(NULL, sample.names))
+		meth <- matrix(nrow=length(all.sites), ncol=length(data.matrices), dimnames=list(NULL, sample.names))
 		if(all(covg.present)){
-			covg<-matrix(nrow=length(all.sites), ncol=length(data.matrices), dimnames=list(NULL, sample.names))
+			covg <- matrix(nrow=length(all.sites), ncol=length(data.matrices), dimnames=list(NULL, sample.names))
 		}else{
-			covg<-NULL
+			covg <- NULL
 		}
 	}else{
 		#sites<-ff(NA_integer_, dim=c(length(all.sites), 3), dimnames=list(NULL, c("chr", "coord", "strand")))
-		meth<-ff(NA, dim=c(length(all.sites), length(data.matrices)), dimnames=list(NULL, sample.names), vmode="double")
+		if (usebigff){
+			meth <- BigFfMat(row.n=length(all.sites), col.n=length(data.matrices), row.names=NULL, col.names=sample.names)
+		} else {
+			meth <- ff(NA, dim=c(length(all.sites), length(data.matrices)), dimnames=list(NULL, sample.names), vmode="double")
+		}
 		if(all(covg.present)){
-			covg<-ff(NA_integer_, dim=c(length(all.sites), length(data.matrices)), dimnames=list(NULL, sample.names))
+			if (usebigff){
+				covg <- BigFfMat(row.n=length(all.sites), col.n=length(data.matrices), row.names=NULL, col.names=sample.names, na.prototype=as.integer(NA))
+			} else {
+				covg <- ff(NA_integer_, dim=c(length(all.sites), length(data.matrices)), dimnames=list(NULL, sample.names))
+			}
 		}else{
-			covg<-NULL
+			covg <- NULL
 		}
 	}
 	
 	## A workaround for chromosome names, not starting with "chr"
-	chroms<-names(rnb.get.chromosomes(assembly=assembly))
+	chroms <- names(rnb.get.chromosomes(assembly=assembly))
 	if(!any(grepl("^chr", found.chroms))){
-		chroms<-gsub("chr", "", chroms)
+		chroms <- gsub("chr", "", chroms)
 	}
 	dump<-sapply(1:length(data.matrices), function(indx){
-				if(useff){
-					open(data.matrices[[indx]])
-				}
-				dm<-data.matrices[[indx]]
-				#dm.rows2<-intersect(all.sites, rownames(dm))
-				#dm.rows<-match(all.sites, rownames(dm))
-				#dm<-dm[dm.rows[!is.na(dm.rows)],]
-				#rows<-which(all.sites %in% rownames(dm))
-				rows<-site.indices[[indx]]
-				rows.dm<-dm.subsample[[indx]]
-				sites[rows,1]<<-as.integer(match(dm[rows.dm,1L], chroms))
-				sites[rows,3]<<-as.integer(factor(dm[rows.dm,3L], levels=c("+","-","*")))
-				sites[rows,2]<<-as.integer(dm[rows.dm,2L]) + c(pos.coord.shift, 0L, 0L)[sites[rows,3]]
-				meth[rows,indx]<<-as.numeric(dm[rows.dm,4L])/100
-				if(!is.null(covg)){
-					covg[rows,indx]<<-as.integer(dm[rows.dm,5L])
-				}
-				if(useff){
-					delete(dm)
-				}
-				return(NULL)		
-			})
+		if(useff){
+			open(data.matrices[[indx]])
+		}
+		dm <- data.matrices[[indx]]
+		#dm.rows2<-intersect(all.sites, rownames(dm))
+		#dm.rows<-match(all.sites, rownames(dm))
+		#dm<-dm[dm.rows[!is.na(dm.rows)],]
+		#rows<-which(all.sites %in% rownames(dm))
+		rows <- site.indices[[indx]]
+		rows.dm <- dm.subsample[[indx]]
+		sites[rows,1] <<- as.integer(match(dm[rows.dm,1L], chroms))
+		sites[rows,3] <<- as.integer(factor(dm[rows.dm,3L], levels=c("+","-","*")))
+		sites[rows,2] <<- as.integer(dm[rows.dm,2L]) + c(pos.coord.shift, 0L, 0L)[sites[rows,3]]
+		meth[rows,indx] <<- as.numeric(dm[rows.dm,4L])/100
+		if(!is.null(covg)){
+			covg[rows,indx] <<- as.integer(dm[rows.dm,5L])
+		}
+		if(useff){
+			delete(dm)
+		}
+		return(NULL)		
+	})
 	rm(dump)
 	#clean the memory of big objects
 	rm(data.matrices)
@@ -1240,6 +1249,7 @@ read.bed.files<-function(base.dir=NULL,
 			assembly=assembly,
 			target="CpG",
 			useff=useff,
+			usebigff=usebigff,
 			verbose=verbose
 			)
 	

@@ -9,8 +9,8 @@ Authors@R: c(
     role = c("aut")),
     person("Fabian", "Mueller", email = "rnbeads@mpi-inf.mpg.de",
     role = c("aut", "cre")))
-Date: 2015-06-16
-Version: 1.1.4
+Date: 2015-08-03
+Version: 1.1.5
 Suggests:
     Category,
     GEOquery,
@@ -65,6 +65,7 @@ biocViews: DNAMethylation, MethylationArray, MethylSeq, Epigenetics,
     QualityControl, Preprocessing, BatchEffect, DifferentialMethylation,
     Sequencing, CpGIsland, TwoChannel, DataImport
 Collate:
+    'bigFf.R'
     'CNV.R'
     'Report-class.R'
     'Report-methods.R'
