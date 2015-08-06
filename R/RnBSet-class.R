@@ -1606,7 +1606,7 @@ setMethod("save.matrices", signature(object="RnBSet", path="character"),
 					ffsave(ffmatrix,file=file.path(path, "rnb.meth"),rootpath=getOption('fftempdir'))
 					rm(ffmatrix)
 				} else if("BigFfMat" %in% class(object@meth.sites)){
-					save.bigFfMatrix(object@meth.sites, file=file.path(path, "rnb.meth"), rootpath=getOption('fftempdir'))
+					save.bigFfMat(object@meth.sites, file=file.path(path, "rnb.meth"), rootpath=getOption('fftempdir'))
 				}
 				
 				if("ff" %in% class(object@covg.sites)){
@@ -1614,7 +1614,7 @@ setMethod("save.matrices", signature(object="RnBSet", path="character"),
 					ffsave(ffmatrix, file=file.path(path, "rnb.covg"),rootpath=getOption('fftempdir'))
 					rm(ffmatrix)
 				} else if("BigFfMat" %in% class(object@covg.sites)){
-					save.bigFfMatrix(object@covg.sites, file=file.path(path, "rnb.covg"), rootpath=getOption('fftempdir'))
+					save.bigFfMat(object@covg.sites, file=file.path(path, "rnb.covg"), rootpath=getOption('fftempdir'))
 				}
 				
 				if(!is.null(object@regions)){
@@ -1631,7 +1631,7 @@ setMethod("save.matrices", signature(object="RnBSet", path="character"),
 							ffsave(ffmatrix, file=file.path(path, rgn, "rnb.meth"),rootpath=getOption('fftempdir'))
 							rm(ffmatrix)
 						} else if("BigFfMat" %in% class(object@meth.regions[[rgn]])){
-							save.bigFfMatrix(object@meth.regions[[rgn]], file=file.path(path, rgn, "rnb.meth"), rootpath=getOption('fftempdir'))
+							save.bigFfMat(object@meth.regions[[rgn]], file=file.path(path, rgn, "rnb.meth"), rootpath=getOption('fftempdir'))
 						}	
 						
 						if("ff" %in% class(object@covg.regions[[rgn]])){
@@ -1639,7 +1639,7 @@ setMethod("save.matrices", signature(object="RnBSet", path="character"),
 							ffsave(ffmatrix, file=file.path(path, rgn, "rnb.covg"),rootpath=getOption('fftempdir'))
 							rm(ffmatrix)
 						} else if("BigFfMat" %in% class(object@covg.regions[[rgn]])){
-							save.bigFfMatrix(object@covg.regions[[rgn]], file=file.path(path, rgn, "rnb.covg"), rootpath=getOption('fftempdir'))
+							save.bigFfMat(object@covg.regions[[rgn]], file=file.path(path, rgn, "rnb.covg"), rootpath=getOption('fftempdir'))
 						}
 			
 					}					
@@ -1662,9 +1662,9 @@ setMethod("load.matrices", signature(object="RnBSet", path="character"),
 			if (doBigFf) doBigFf <- object@status$disk.dump.bigff
 
 			if (doBigFf){
-				object@meth.sites <- load.bigFfMatrix(file.path(path, "rnb.meth"), rootpath=getOption("fftempdir"))
+				object@meth.sites <- load.bigFfMat(file.path(path, "rnb.meth"), rootpath=getOption("fftempdir"))
 				if(!is.null(object@covg.sites)){
-					object@covg.sites <- load.bigFfMatrix(file.path(path, "rnb.covg"), rootpath=getOption("fftempdir"))
+					object@covg.sites <- load.bigFfMat(file.path(path, "rnb.covg"), rootpath=getOption("fftempdir"))
 				}
 			} else {
 				if(sum(grepl("rnb.meth", list.files(path)))==2){
@@ -1690,9 +1690,9 @@ setMethod("load.matrices", signature(object="RnBSet", path="character"),
 
 				for(rgn in rgns){
 					if (doBigFf){
-						object@meth.regions[[rgn]] <- load.bigFfMatrix(file.path(path, rgn, "rnb.meth"), rootpath=getOption("fftempdir"))
+						object@meth.regions[[rgn]] <- load.bigFfMat(file.path(path, rgn, "rnb.meth"), rootpath=getOption("fftempdir"))
 						if(!is.null(object@covg.regions[[rgn]])){
-							object@covg.regions[[rgn]] <- load.bigFfMatrix(file.path(path, "rnb.covg"), rootpath=getOption("fftempdir"))
+							object@covg.regions[[rgn]] <- load.bigFfMat(file.path(path, "rnb.covg"), rootpath=getOption("fftempdir"))
 						}
 					} else {
 						if(sum(grepl("rnb.meth",list.files(file.path(path, rgn))))==2){
