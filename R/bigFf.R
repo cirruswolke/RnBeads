@@ -220,7 +220,7 @@ setMethod("[", "BigFfMat",
 			stop("Invalid column selection (non-vector)")
 		}
 		# print(paste("get: i:",paste(i,collapse=","),"j:",paste(j,collapse=",")))
-		res <- do.call("cbind", lapply(x@cols[j],FUN=function(cc){cc[i]}))
+		res <- do.call("cbind", lapply(x@cols[j],FUN=function(cc){suppressMessages(cc[i])}))
 		colnames(res) <- x@colNames[j]
 		rownames(res) <- x@rowNames[i]
 		if (drop) res <- drop(res)
@@ -302,7 +302,7 @@ setMethod("delete", signature(x="BigFfMat"),
 	}
 )
 
-#' save.bigFfMatrix
+#' save.bigFfMat
 #'
 #' save an \code{\linkS4class{BigFfMat}} object to disk
 #'
@@ -311,9 +311,9 @@ setMethod("delete", signature(x="BigFfMat"),
 #' @param ...  arguments passed on to \code{ffsave}
 #' @return Nothing of particular interest
 #' @author Fabian Mueller
-#' @aliases save.bigFfMatrix
+#' @aliases save.bigFfMat
 #' @noRd
-save.bigFfMatrix <- function(bff, file, ...){
+save.bigFfMat <- function(bff, file, ...){
 	if (dir.exists(file) || file.exists(file)){
 		stop("Destination directory or file already exists")
 	}
@@ -330,7 +330,7 @@ save.bigFfMatrix <- function(bff, file, ...){
 	invisible(NULL)
 }
 
-#' load.bigFfMatrix
+#' load.bigFfMat
 #'
 #' loads a saved \code{\linkS4class{BigFfMat}} object from disk
 #'
@@ -338,9 +338,9 @@ save.bigFfMatrix <- function(bff, file, ...){
 #' @param ...  arguments passed on to \code{ffload}
 #' @return the loaded \code{\linkS4class{BigFfMat}} object
 #' @author Fabian Mueller
-#' @aliases load.bigFfMatrix
+#' @aliases load.bigFfMat
 #' @noRd
-load.bigFfMatrix <- function(path, ...){
+load.bigFfMat <- function(path, ...){
 	if (!file.exists(path)){
 		stop("Loading unsuccessfull. Path does not exist")
 	}
