@@ -253,7 +253,7 @@ rnb.execute.normalization<-function(
 			if(object@status$disk.dump){
 				object@meth.sites<-convert.to.ff.matrix.tmp(beta.value(object@M[,], object@U[,]))	
 			}else{
-				object@meth.sites<-beta.value(object@M[,], object@U[,])
+				object@meth.sites<-beta.value(object@M[,,drop=FALSE], object@U[,,drop=FALSE])
 			}
 			rm(rg.set,methyl.set, meth.minfi, umeth.minfi)
 		}
@@ -271,13 +271,13 @@ rnb.execute.normalization<-function(
 			probe.design <- rnb.annotation2data.frame(rnb.get.annotation("probes450"), add.names = TRUE)
 			probe.design <- as.integer(probe.design[rownames(beta.vals), "Design"])
 		} else {
-			beta.vals <- object@meth.sites[,]
+			beta.vals <- object@meth.sites[, , drop = FALSE]
 			probe.design <- as.integer(annotation(object)[, "Design"])
 		}
 
 		## Perform BMIQ
 		samples.skipped <- integer()
-		if (parallel.isEnabled()) {
+		if (parallel.isEnabled() && ncol(beta.vals) > 1) {
 			beta.names <- dimnames(beta.vals)
 			beta.vals <- foreach(beta.v = as.data.frame(beta.vals), .combine = cbind, .packages = "RPMM",
 					.export = c("BMIQ", "betaEst2", "blc2"),
