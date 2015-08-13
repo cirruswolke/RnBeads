@@ -306,7 +306,7 @@ RnBiseqSet<-function(
 	}else{
 		meth.old <- meth
 		if (usebigff) {
-			meth <- BigFfMat(row.n=nrow(sites), col.n=ncol(meth.old), row.names=NULL, col.names=sample.names)
+			meth <- BigFfMat(row.n=nrow(sites), col.n=ncol(meth.old), row.names=NULL, col.names=sample.names, finalizer="delete")
 		} else {
 			meth <- ff(NA, dim=c(nrow(sites), ncol(meth.old)), dimnames=list(NULL, sample.names), vmode="double")
 		}
@@ -315,7 +315,7 @@ RnBiseqSet<-function(
 		if(!is.null(covg)){
 			covg.old <- covg
 			if (usebigff) {
-				covg <- BigFfMat(row.n=nrow(sites), col.n=ncol(covg.old), row.names=NULL, col.names=sample.names, na.prototype=as.integer(NA))
+				covg <- BigFfMat(row.n=nrow(sites), col.n=ncol(covg.old), row.names=NULL, col.names=sample.names, na.prototype=as.integer(NA), finalizer="delete")
 			} else {
 				covg <- ff(NA_integer_, dim=c(nrow(sites), ncol(covg.old)), dimnames=list(NULL, sample.names))
 			}
@@ -418,6 +418,7 @@ RnBiseqSet<-function(
 			aggr<-"coverage.weighted"
 		}
 		object <- summarize.regions(object, "strands", aggregation=aggr)
+		rnb.cleanMem()
 	}
 	
 	for (region.type in region.types) {
@@ -427,6 +428,7 @@ RnBiseqSet<-function(
 				rnb.status(msg)
 			}
 			object <- summarize.regions(object, region.type)
+			rnb.cleanMem()
 		}
 	}
 	object

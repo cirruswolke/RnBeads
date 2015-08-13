@@ -531,6 +531,7 @@ rnb.step.import <- function(data.source, data.type = rnb.getOption("import.defau
 				logger.warning(c("The loaded object contains invalid information (see details above).",
 								"Please check the whether the data source arguments as well as the data import options, like table separator, BED style or BED column assignment, are set correctly"))
 			}
+			rnb.cleanMem()
 			logger.completed()
 		}
 	}

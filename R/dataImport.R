@@ -1172,13 +1172,13 @@ read.bed.files<-function(base.dir=NULL,
 	}else{
 		#sites<-ff(NA_integer_, dim=c(length(all.sites), 3), dimnames=list(NULL, c("chr", "coord", "strand")))
 		if (usebigff){
-			meth <- BigFfMat(row.n=length(all.sites), col.n=length(data.matrices), row.names=NULL, col.names=sample.names)
+			meth <- BigFfMat(row.n=length(all.sites), col.n=length(data.matrices), row.names=NULL, col.names=sample.names, finalizer="delete")
 		} else {
 			meth <- ff(NA, dim=c(length(all.sites), length(data.matrices)), dimnames=list(NULL, sample.names), vmode="double")
 		}
 		if(all(covg.present)){
 			if (usebigff){
-				covg <- BigFfMat(row.n=length(all.sites), col.n=length(data.matrices), row.names=NULL, col.names=sample.names, na.prototype=as.integer(NA))
+				covg <- BigFfMat(row.n=length(all.sites), col.n=length(data.matrices), row.names=NULL, col.names=sample.names, na.prototype=as.integer(NA), finalizer="delete")
 			} else {
 				covg <- ff(NA_integer_, dim=c(length(all.sites), length(data.matrices)), dimnames=list(NULL, sample.names))
 			}

@@ -68,7 +68,7 @@ setClassUnion("characterOrNULL", c("character", "NULL"))
 #' tt
 #' ttr
 setClass("BigFfMat",
-	slots=list(cols="list", colNames="characterOrNULL", rowNames="characterOrNULL", colN="integer", rowN="integer")
+	slots=list(cols="list", colNames="characterOrNULL", rowNames="characterOrNULL", colN="integer", rowN="integer", activeClosing="logical")
 )
 
 #' Construct BigFfMat objects
@@ -85,7 +85,7 @@ setClass("BigFfMat",
 #' 
 #' @name BigFfMat
 #' @noRd
-BigFfMat <- function(df, row.n, col.n, row.names=NULL, col.names=NULL, na.prototype=as.numeric(NA), ...){
+BigFfMat <- function(df, row.n, col.n, row.names=NULL, col.names=NULL, na.prototype=as.numeric(NA), active.closing=TRUE, ...){
 	#initialize empty matrix if the df object is missing
 	if (missing(df)){
 		if (missing(row.n) | missing(col.n)){
@@ -93,7 +93,9 @@ BigFfMat <- function(df, row.n, col.n, row.names=NULL, col.names=NULL, na.protot
 		}
 		# df <- matrix(na.prototype, nrow=row.n, ncol=col.n)
 		ffList <- lapply(1:col.n, FUN=function(j){
-			ff(rep(na.prototype, row.n), ...)
+			res <- ff(rep(na.prototype, row.n), ...)
+			if (active.closing) close.ff(res)
+			res
 		})
 		row.n <- as.integer(row.n)
 		col.n <- as.integer(col.n)
@@ -117,12 +119,14 @@ BigFfMat <- function(df, row.n, col.n, row.names=NULL, col.names=NULL, na.protot
 		row.n <- nrow(df)
 		col.n <- ncol(df)
 		ffList <- lapply(1:col.n, FUN=function(j){
-			ff(df[,j], ...)
+			res <- ff(df[,j], ...)
+			if (active.closing) close.ff(res)
+			res
 		})
 		row.names <- rownames(df)
 		col.names <- colnames(df)
 	}
-	res <- new("BigFfMat", cols=ffList, colNames=col.names, rowNames=row.names, colN=col.n, rowN=row.n)
+	res <- new("BigFfMat", cols=ffList, colNames=col.names, rowNames=row.names, colN=col.n, rowN=row.n, activeClosing=active.closing)
 }
 
 setMethod("show", "BigFfMat",
@@ -220,7 +224,12 @@ setMethod("[", "BigFfMat",
 			stop("Invalid column selection (non-vector)")
 		}
 		# print(paste("get: i:",paste(i,collapse=","),"j:",paste(j,collapse=",")))
-		res <- do.call("cbind", lapply(x@cols[j],FUN=function(cc){suppressMessages(cc[i])}))
+		res <- do.call("cbind", lapply(x@cols[j],FUN=function(cc){
+			if (x@activeClosing) open.ff(cc)
+			res <- suppressMessages(cc[i])
+			if (x@activeClosing) close.ff(cc)
+			res
+		}))
 		colnames(res) <- x@colNames[j]
 		rownames(res) <- x@rowNames[i]
 		if (drop) res <- drop(res)
@@ -258,19 +267,33 @@ setReplaceMethod("[", "BigFfMat",
 
 		if (is.vector(value)){
 			if (length(value)==1){
+				if (x@activeClosing) {
+					for (jjj in j) open.ff(x@cols[[jjj]])
+				}
 				x@cols[j] <- lapply(1:length(j), FUN=function(jj){
 					ccMod <- x@cols[j][[jj]]
 					ccMod[i] <- value
 					return(ccMod)
 				})
+				if (x@activeClosing) {
+					for (jjj in j) close.ff(x@cols[[jjj]])
+				}
 			} else if (length(i)==length(value) && length(j)==1){
+				if (x@activeClosing) open.ff(x@cols[[j]])
 				x@cols[[j]][i] <- value 
+				if (x@activeClosing) close.ff(x@cols[[j]])
 			} else if (length(j)==length(value) && length(i)==1){
+				if (x@activeClosing) {
+					for (jjj in j) open.ff(x@cols[[jjj]])
+				}
 				x@cols[j] <- lapply(1:length(value), FUN=function(jj){
 					ccMod <- x@cols[j][[jj]]
 					ccMod[i] <- value[jj]
 					return(ccMod)
-				}) 
+				})
+				if (x@activeClosing) {
+					for (jjj in j) close.ff(x@cols[[jjj]])
+				}
 			} else {
 				stop("Invalid specification for replacement object of type vector.")
 			}
@@ -284,7 +307,9 @@ setReplaceMethod("[", "BigFfMat",
 			# 	return(ccMod)
 			# })
 			dummy <- lapply(1:ncol(value), FUN=function(jj){
+				if (x@activeClosing) open.ff(x@cols[j][[jj]])
 				x@cols[j][[jj]][i] <<- value[,jj]
+				if (x@activeClosing) close.ff(x@cols[j][[jj]])
 				return(NULL)
 			})
 		}
@@ -295,6 +320,7 @@ setReplaceMethod("[", "BigFfMat",
 if (!isGeneric("delete")) setGeneric("delete", function(x) standardGeneric("delete"))
 setMethod("delete", signature(x="BigFfMat"),
 	function(x){
+		# message("removing BigFfMat object") #TODO: remove me
 		for (j in 1:x@colN){
 			ff::delete(x@cols[[j]])
 		}
