@@ -1438,6 +1438,7 @@ rnb.run.differential <- function(rnb.set, dir.reports,
 			adjust.sva=rnb.getOption("differential.adjustment.sva"),
 			pheno.cols.adjust.sva=rnb.getOption("inference.targets.sva"),
 			adjust.celltype=rnb.getOption("differential.adjustment.celltype"),
+			skip.sites=!rnb.getOption("analyze.sites"),
 			disk.dump=disk.dump,disk.dump.dir=disk.dump.dir
 		)
 		rnb.cleanMem()

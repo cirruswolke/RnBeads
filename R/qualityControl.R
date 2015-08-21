@@ -220,9 +220,9 @@ rnb.section.quality<-function(report, rnb.set, qc.boxplots=rnb.getOption("qc.box
 			report <- rnb.add.section(report, "Sequencing Coverage Histograms", txt, level = 2)
 			report <- add.seq.coverage.histograms(report, rnb.set)
 			logger.status("Added sequencing coverage histograms")
-			report <- add.seq.coverage.num.sites.covg.tabs(report, rnb.set)
-			logger.status("Added sample coverage section")
 		}
+		report <- add.seq.coverage.num.sites.covg.tabs(report, rnb.set)
+		logger.status("Added sample coverage section")
 		
 		if(qc.coverage.violins){
 			txt <- c("The plots below show an alternative approach to visualizing the coverage distribution.")

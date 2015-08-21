@@ -103,6 +103,9 @@ performEnrichment.diffMeth <- function(rnbSet,diffmeth,ontologies=c("BP","MF"),r
 	}
 	comps <- get.comparisons(diffmeth)
 	region.types <- get.region.types(diffmeth)
+	skipSites <- !includes.sites(diffmeth)
+	diff.col.reg <- "mean.mean.diff"
+	if (skipSites) diff.col.reg <- "mean.diff"
 	dm.enrich <- list(probe=list(),region=list())
 	for (cc in comps){
 		logger.start(c("Comparison: ",cc))
@@ -126,8 +129,8 @@ performEnrichment.diffMeth <- function(rnbSet,diffmeth,ontologies=c("BP","MF"),r
 				rrs <- dmt[,"combinedRank"]
 				rrs.hyper <- rrs
 				rrs.hypo <- rrs
-				rrs.hyper[dmt[,"mean.mean.diff"] <= 0] <- NA
-				rrs.hypo[dmt[,"mean.mean.diff"] >= 0] <- NA
+				rrs.hyper[dmt[,diff.col.reg] <= 0] <- NA
+				rrs.hypo[dmt[,diff.col.reg] >= 0] <- NA
 				#automatically select rank cutoff
 				rc.auto <- 0L
 				if (add.auto.rank.cut){

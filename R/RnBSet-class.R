@@ -1369,7 +1369,7 @@ setMethod("summarize.regions", signature(object="RnBSet"),
 						object@covg.sites <- region.covg
 					}
 				}else{
-					object@covg.regions<-NULL
+					object@covg.sites <- NULL
 				}
 				object@sites <- region.indices
 			}else if(!is.null(region.indices)){
@@ -1692,7 +1692,7 @@ setMethod("load.matrices", signature(object="RnBSet", path="character"),
 					if (doBigFf){
 						object@meth.regions[[rgn]] <- load.bigFfMat(file.path(path, rgn, "rnb.meth"), rootpath=getOption("fftempdir"))
 						if(!is.null(object@covg.regions[[rgn]])){
-							object@covg.regions[[rgn]] <- load.bigFfMat(file.path(path, "rnb.covg"), rootpath=getOption("fftempdir"))
+							object@covg.regions[[rgn]] <- load.bigFfMat(file.path(path, rgn, "rnb.covg"), rootpath=getOption("fftempdir"))
 						}
 					} else {
 						if(sum(grepl("rnb.meth",list.files(file.path(path, rgn))))==2){
@@ -2016,11 +2016,16 @@ rnb.sample.summary.table <- function(rnbSet) {
 	reg.types.regions <- summarized.regions(rnbSet)
 	reg.types <- c("sites",reg.types.regions)
 	mm.s <- meth(rnbSet,type="sites")
-	cc.s <- covg(rnbSet,type="sites")
+	# cc.s <- covg(rnbSet,type="sites")
 	for (rr in reg.types){
-		mm <- meth(rnbSet,type=rr)
+		if (rr == "sites"){
+			mm <- mm.s
+		} else {
+			mm <- meth(rnbSet,type=rr)
+		}
 		cc <- covg(rnbSet,type=rr)
 		cc[cc==0] <- NA
+		# rnb.cleanMem()
 		tt.cur <- df.empty
 		tt.cur$num <- apply(mm,2,function(x){sum(!is.na(x))})
 		if (is.biseq){
