@@ -1,7 +1,9 @@
-RnBeads 1.1.5
+RnBeads 1.1.6
 =============
 
- * differential methylation support for regions only (not using sites)
+ * differential methylation based on region level ONLY (without computing site-level differential methylation) is now supported
+ * minor updates to the differential methylation report generation
+ * performance improvements and minor bugfixes for using disk.dump.bigff
  * performance improvements (more memory clean-up)
 
 
