@@ -863,26 +863,37 @@ computeDiffMeth.bin.site <- function(b,inds.g1,inds.g2,n.perm=0,...){
 ### @param inds.g2 column indices in \code{b} of group 2 members
 ### @param n.perm number of permutations to be performed for the ranking permutaion tests. Set to values < 1 to disable permutation tests
 ### @return blubb
-computeDiffMeth.bin.region <- function(rnbSet,dmtp,inds.g1,inds.g2,region.types=rnb.region.types(assembly(rnbSet))){
+computeDiffMeth.bin.region <- function(rnbSet,dmtp,inds.g1,inds.g2,region.types=rnb.region.types(assembly(rnbSet)), ...){
 	#sanity checks
 	if (length(union(inds.g1,inds.g2)) != (length(inds.g1)+length(inds.g2))){
 		logger.error("Overlapping sample sets in differential methylation analysis")
 	}
 	logger.start('Computing Differential Methylation Tables (Region Level)')
+	skip.sites <- FALSE
+	if (is.null(dmtp)){
+		logger.info("Computing differential methylation for regions directly (NOT using site-specific differential methylation)")
+		skip.sites <- TRUE
+	}
 	diffmeth.tabs <- list()
 	for (rt in region.types){
-		regions2sites <- regionMapping(rnbSet,rt)
-		regions2sites.is.all.na <- sapply(regions2sites,FUN=function(x){all(is.na(x))})
-		if (any(regions2sites.is.all.na)) {
-			stop(paste("Region mapping of RnBSet from sites to regions is inconsistent (",rt,")"))
+		if (skip.sites){
+			covMat <- covg(rnbSet, rt)
+			dmtr <- computeDiffMeth.bin.site(meth(rnbSet,rt), inds.g1, inds.g2, covg=covMat, ...)
+		} else {
+			inclCov <- !is.null(covg(rnbSet))
+			regions2sites <- regionMapping(rnbSet,rt)
+			regions2sites.is.all.na <- sapply(regions2sites,FUN=function(x){all(is.na(x))})
+			if (any(regions2sites.is.all.na)) {
+				stop(paste("Region mapping of RnBSet from sites to regions is inconsistent (",rt,")"))
+			}
+			# regions2sites <- regions2sites[!regions2sites.is.all.na]
+			# regions2sites <- lapply(regions2sites,FUN=function(x){na.omit(x)})
+			# attr(regions2sites, "omitted.regions") <- which(regions2sites.is.all.na)
+			dmtr <- computeDiffTab.default.region(dmtp,regions2sites,includeCovg=inclCov)
+			dmtr4ranks <- extractRankingCols.region(dmtr)
+			combRank <- combinedRanking.tab(dmtr4ranks,rerank=FALSE)
+			dmtr$combinedRank <- combRank
 		}
-#		regions2sites <- regions2sites[!regions2sites.is.all.na]
-#		regions2sites <- lapply(regions2sites,FUN=function(x){na.omit(x)})
-#		attr(regions2sites, "omitted.regions") <- which(regions2sites.is.all.na)
-		dmtr <- computeDiffTab.default.region(dmtp,regions2sites,includeCovg=!is.null(covg(rnbSet)))
-		dmtr4ranks <- extractRankingCols.region(dmtr)
-		combRank <- combinedRanking.tab(dmtr4ranks,rerank=FALSE)
-		dmtr$combinedRank <- combRank
 		diffmeth.tabs <- c(diffmeth.tabs,list(dmtr))
 		logger.status(c("Computed table for", rt))
 	}
@@ -1245,17 +1256,28 @@ create.diffMeth.bin.dens.dmr.scatter <- function(df2p,grp1.name,grp2.name){
 ### @param diffSiteRankCut vector of combined ranking cutoffs for classifying a site as differentially methylated
 ### @param grp1.name name of group 1 in the compoarison (for labelling in the plots)
 ### @param grp2.name name of group 2 in the compoarison (for labelling in the plots)
+### @param useSiteCols use site specific column names instead of region ones
 ### @return list of report plot objects added
-addReportPlots.diffMeth.bin.region.scatter <- function(report,dmt,cmpName,regName,diffRegionRankCut,autoRankCut=NULL,grp1.name="Group1",grp2.name="Group2",rerank=TRUE){
+addReportPlots.diffMeth.bin.region.scatter <- function(report,dmt,cmpName,regName,diffRegionRankCut,autoRankCut=NULL,grp1.name="Group1",grp2.name="Group2",rerank=TRUE,useSiteCols=FALSE){
 	df2p <- dmt #data frame to plot
 	figPlots <- list()
 	
+	cn.x <- "mean.mean.g1"
+	cn.y <- "mean.mean.g2"
+	al.x <- paste("mean.mean.beta",grp1.name,sep=".")
+	al.y <- paste("mean.mean.beta",grp2.name,sep=".")
+	if (useSiteCols){
+		cn.x <- "mean.g1"
+		cn.y <- "mean.g2"
+		al.x <- paste("mean.beta",grp1.name,sep=".")
+		al.y <- paste("mean.beta",grp2.name,sep=".")
+	}
 	#scatterplot based on adjusted p-value significance
 	if (is.element("comb.p.adj.fdr",colnames(dmt))){
 		df2p$isDMR <- df2p[,"comb.p.adj.fdr"] < P.VAL.CUT
 
-		pp <- create.densityScatter(df2p[,c("mean.mean.g1","mean.mean.g2")],is.special=df2p$isDMR,add.text.cor=TRUE) +
-				labs(x=paste("mean.mean.beta",grp1.name,sep="."),y=paste("mean.mean.beta",grp2.name,sep=".")) + coord_fixed()
+		pp <- create.densityScatter(df2p[,c(cn.x, cn.y)],is.special=df2p$isDMR,add.text.cor=TRUE) +
+				labs(x=al.x, y=al.y) + coord_fixed()
 		cur.cut.name <- "fdrAdjPval"
 		figName <- paste("diffMeth_region",cmpName,regName,cur.cut.name,sep="_")
 		report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
@@ -1270,8 +1292,8 @@ addReportPlots.diffMeth.bin.region.scatter <- function(report,dmt,cmpName,regNam
 		cur.cut.name <- paste("rc",i,sep="")
 		df2p$isDMR <- rrs < rc
 		
-		pp <- create.densityScatter(df2p[,c("mean.mean.g1","mean.mean.g2")],is.special=df2p$isDMR,add.text.cor=TRUE) +
-				labs(x=paste("mean.mean.beta",grp1.name,sep="."),y=paste("mean.mean.beta",grp2.name,sep=".")) + coord_fixed()
+		pp <- create.densityScatter(df2p[,c(cn.x, cn.y)],is.special=df2p$isDMR,add.text.cor=TRUE) +
+				labs(x=al.x, y=al.y) + coord_fixed()
 		
 		figName <- paste("diffMeth_region",cmpName,regName,cur.cut.name,sep="_")
 		report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
@@ -1281,8 +1303,8 @@ addReportPlots.diffMeth.bin.region.scatter <- function(report,dmt,cmpName,regNam
 	
 	if (is.integer(autoRankCut)){
 		df2p$isDMR <- dmt[,"combinedRank"] <= autoRankCut
-		pp <- create.densityScatter(df2p[,c("mean.mean.g1","mean.mean.g2")],is.special=df2p$isDMR,add.text.cor=TRUE) +
-				labs(x=paste("mean.mean.beta",grp1.name,sep="."),y=paste("mean.mean.beta",grp2.name,sep=".")) + coord_fixed()
+		pp <- create.densityScatter(df2p[,c(cn.x, cn.y)],is.special=df2p$isDMR,add.text.cor=TRUE) +
+				labs(x=al.x, y=al.y) + coord_fixed()
 		figName <- paste("diffMeth_region",cmpName,regName,"rcAuto",sep="_")
 		report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
 		report.plot <- off(report.plot,handle.errors=TRUE)
@@ -1291,7 +1313,7 @@ addReportPlots.diffMeth.bin.region.scatter <- function(report,dmt,cmpName,regNam
 
 	figName <- paste("diffMeth_region",cmpName,regName,"rankGradient",sep="_")
 	pp <- create.hex.summary.plot(df2p,q="combinedRank") + coord_fixed() +
-		labs(x=paste("mean.mean.beta",grp1.name,sep="."),y=paste("mean.mean.beta",grp2.name,sep="."),fill = "median combined rank")
+		labs(x=al.x, y=al.y, fill="median combined rank")
 	report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
 	report.plot <- off(report.plot,handle.errors=TRUE)
 	figPlots <- c(figPlots,list(report.plot))
@@ -1310,15 +1332,27 @@ addReportPlots.diffMeth.bin.region.scatter <- function(report,dmt,cmpName,regNam
 ### @param regName Region type name as it will appear in the filename and figure selection box
 ### @param grp1.name name of group 1 in the compoarison (for labelling in the plots)
 ### @param grp2.name name of group 2 in the compoarison (for labelling in the plots)
+### @param useSiteCols use site specific column names instead of region ones
 ### @return list of report plot objects added
-addReportPlots.diffMeth.bin.region.volcano <- function(report,dmt,cmpName,regName,grp1.name="Group1",grp2.name="Group2"){
+addReportPlots.diffMeth.bin.region.volcano <- function(report,dmt,cmpName,regName,grp1.name="Group1",grp2.name="Group2",useSiteCols=FALSE){
+	cn.d <- "mean.mean.diff"
+	cn.q <- "mean.mean.quot.log2"
+	cn.p <- "comb.p.val"
+	cn.pa <- "comb.p.adj.fdr"
+	if (useSiteCols){
+		cn.d <- "mean.diff"
+		cn.q <- "mean.quot.log2"
+		cn.p <- "diffmeth.p.val"
+		cn.pa <- "diffmeth.p.adj.fdr"
+	}
+
 	df2p <- dmt #data frame to plot
 	figPlots <- list()
-	dont.plot.p.val <- all(is.na(df2p[,"comb.p.val"]))
+	dont.plot.p.val <- all(is.na(df2p[,cn.p]))
 	
 	figName <- paste("diffMeth_region_volcano",cmpName,regName,"diff","pVal",sep="_")
 	if (!dont.plot.p.val){
-		pp <- ggplot(df2p) + aes_string("mean.mean.diff","-log10(comb.p.val)",color="log10(combinedRank)") +
+		pp <- ggplot(df2p) + aes_string(cn.d, paste0("-log10(",cn.p,")"), color="log10(combinedRank)") +
 			scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
 			geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))#(alpha=0.3)
 	} else {
@@ -1329,7 +1363,7 @@ addReportPlots.diffMeth.bin.region.volcano <- function(report,dmt,cmpName,regNam
 	figPlots <- c(figPlots,list(report.plot))
 	
 	figName <- paste("diffMeth_region_volcano",cmpName,regName,"diff","pValAdj",sep="_")
-	pp <- ggplot(df2p) + aes_string("mean.mean.diff","-log10(comb.p.adj.fdr)",color="log10(combinedRank)") +
+	pp <- ggplot(df2p) + aes_string(cn.d, paste0("-log10(",cn.pa,")"), color="log10(combinedRank)") +
 		scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
 		geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))#(alpha=0.3)
 	report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
@@ -1338,7 +1372,7 @@ addReportPlots.diffMeth.bin.region.volcano <- function(report,dmt,cmpName,regNam
 	
 	figName <- paste("diffMeth_region_volcano",cmpName,regName,"quot","pVal",sep="_")
 	if (!dont.plot.p.val){
-		pp <- ggplot(df2p) + aes_string("mean.mean.quot.log2","-log10(comb.p.val)",color="log10(combinedRank)") +
+		pp <- ggplot(df2p) + aes_string(cn.q, paste0("-log10(",cn.p,")"), color="log10(combinedRank)") +
 			scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
 			geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))#(alpha=0.3)
 	} else {
@@ -1349,7 +1383,7 @@ addReportPlots.diffMeth.bin.region.volcano <- function(report,dmt,cmpName,regNam
 	figPlots <- c(figPlots,list(report.plot))
 	
 	figName <- paste("diffMeth_region_volcano",cmpName,regName,"quot","pValAdj",sep="_")
-	pp <- ggplot(df2p) + aes_string("mean.mean.quot.log2","-log10(comb.p.adj.fdr)",color="log10(combinedRank)") +
+	pp <- ggplot(df2p) + aes_string(cn.q, paste0("-log10(",cn.pa,")"), color="log10(combinedRank)") +
 		scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
 		geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))#(alpha=0.3)
 	report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
@@ -1357,10 +1391,10 @@ addReportPlots.diffMeth.bin.region.volcano <- function(report,dmt,cmpName,regNam
 	figPlots <- c(figPlots,list(report.plot))
 	
 	figName <- paste("diffMeth_region_volcano",cmpName,regName,"diff","quotSig",sep="_")
-	pp <- ggplot(df2p) + aes_string("mean.mean.diff","mean.mean.quot.log2",color="log10(combinedRank)") +
+	pp <- ggplot(df2p) + aes_string(cn.d, cn.q, color="log10(combinedRank)") +
 		scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
 		geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))#(alpha=0.3)
-	report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
+	report.plot <- createReportGgPlot(pp, figName, report,create.pdf=FALSE,high.png=200)
 	report.plot <- off(report.plot,handle.errors=TRUE)
 	figPlots <- c(figPlots,list(report.plot))
 	
@@ -1601,6 +1635,148 @@ rnb.section.replicate.concordance <- function(rnbSet,replicateList,types,report)
 	return(report)
 }
 
+get.diffmeth.tab.col.desc.list.txt <- function(target, includeCovg, covgThres=-1L, comb.p.ref.txt="", skipSites=FALSE){
+	targ <- "site"
+	if (target=="regions") targ <- "region"
+
+	res <- list(
+		paste0("id: ", targ, " id"),
+		paste0("Chromosome: chromosome of the ", targ),
+		paste0("Start: start coordinate of the ", targ)
+	)
+	if (target=="regions") {
+		res <- c(res, list(
+			paste0("End: end coordinate of the ", targ)
+		))
+	} else if (target=="sites") {
+		res <- c(res, list(
+			paste0("Strand: strand of the ", targ)
+		))
+	}
+	if (target=="sites" || skipSites) {
+		res <- c(res, list(
+			paste0("mean.g1,mean.g2: (where g1 and g2 is replaced by the respective group names in the table) mean methylation in each of the two groups"),
+			paste0("mean.diff: difference in methylation means between the two groups: mean.g1-mean.g2. In case of paired analysis, it is the mean of the pairwise differences."),
+			paste0("mean.quot.log2: log2 of the quotient in methylation: log2((mean.g1+epsilon)/(mean.g2+epsilon)), where epsilon:=0.01. In case of paired analysis, it is the mean of the pairwise quotients."),
+			paste0("diffmeth.p.val: p-value obtained from linear models employed in the limma package (or alternatively from a two-sided Welch t-test; which type of p-value is computed is specified in the differential.site.test.method option)."),
+			paste0("max.g1,max.g2: maximum methylation level in group 1 and 2 respectively"),
+			paste0("min.g1,min.g2: minimum methylation level in group 1 and 2 respectively"),
+			paste0("sd.g1,sd.g2: standard deviation of methylation levels"),
+			paste0("min.diff: Minimum of 0 and the smallest pairwise difference between samples of the two groups"),
+			paste0("diffmeth.p.adj.fdr: FDR adjusted p-value of all sites"),
+			paste0("combinedRank: mean.diff, mean.quot.log2 and diffmeth.p.val are ranked for all ",target,". This aggregates them using the maximum, i.e. worst rank of a site among the three measures"),
+			paste0("num.na.g1,num.na.g2: number of NA methylation values for groups 1 and 2 respectively")
+		))
+		if (includeCovg){
+			res <- c(res, list(
+				paste0("mean.covg.g1,mean.covg.g2: mean coverage of groups 1 and 2 respectively (In case of Infinium array methylation data, coverage is defined as combined beadcount.)"),
+				paste0("min.covg.g1,min.covg.g2: minimum coverage of groups 1 and 2 respectively"),
+				paste0("max.covg.g1,max.covg.g2: maximum coverage of groups 1 and 2 respectively"),
+				paste0("covg.thresh.nsamples.g1,covg.thresh.nsamples.g2: number of samples in group 1 and 2 respectively exceeding the coverage threshold (", covgThres, ") for this ", targ,".")
+			))
+		}
+	} else {
+		res <- c(res, list(
+			"[symbol]: associated gene symbol to the given region [only valid for gene associated regions]",
+			"[entrezID]: Entrez ID of the gene associated with the region [only valid for gene associated regions]",
+			"mean.mean.g1,mean.mean.g2: (where g1 and g2 is replaced by the respective group names in the table) mean of mean methylation levels for group 1 and 2 across all sites in a region",
+			"mean.mean.diff: Mean difference in means across all sites in a region",
+			"mean.mean.quot.log2: log2 of the mean quotient in means across all sites in a region",
+			c("comb.p.val: Combined p-value aggregating p-values of all sites in the region using a generalization of Fisher's method ", comb.p.ref.txt),
+			"comb.p.adj.fdr: FDR adjusted combined p-value",
+			c("combinedRank: mean.mean.diff, mean.mean.quot.log2 and comb.p.val are ranked for all regions. ",
+					"This column aggregates them using the maximum, i.e. worst rank of a site among the three measures"),
+			"num.sites: number of sites associated with the region",
+			"mean.num.na.g1,mean.num.na.g2: Mean number of NA methylation values accross all sites in group 1 and group 2 respectively"
+		))
+		if (includeCovg){
+			res <- c(res,list(
+			"mean.mean.covg.g1,mean.mean.covg.g2: Mean value of mean coverage values (across all samples in a group) across all sites in a region",
+			c("mean.nsamples.covg.thresh.g1,mean.nsamples.covg.thresh.g2: mean number of samples (accross all considered sites) that have a coverage larger than ", covgThres," for the site in group 1 and group 2 respectively")
+			))
+		}
+	}
+	return(res)
+
+	##region
+	sectionText <- list(
+		"id: region id",
+		"Chromosome: chromosome of the region",
+		"Start: Start coordinate of the region",
+		"End: End coordinate of the region",
+		"[symbol]: associated gene symbol to the given region [only valid for gene associated regions]",
+		"[entrezID]: Entrez ID of the gene associated with the region [only valid for gene associated regions]",
+		"mean.mean.g1,mean.mean.g2: (where g1 and g2 is replaced by the respective group names in the table) mean of mean methylation levels for group 1 and 2 across all sites in a region",
+		"mean.mean.diff: Mean difference in means across all sites in a region",
+		"mean.mean.quot.log2: log2 of the mean quotient in means across all sites in a region",
+		c("comb.p.val: Combined p-value aggregating p-values of all sites in the region using a generalization of Fisher's method ", rnb.get.reference(report, refText)),
+		"comb.p.adj.fdr: FDR adjusted combined p-value",
+		c("combinedRank: mean.mean.diff, mean.mean.quot.log2 and comb.p.val are ranked for all regions. ",
+				"This column aggregates them using the maximum, i.e. worst rank of a site among the three measures"),
+		"num.sites: number of sites associated with the region",
+		"mean.num.na.g1,mean.num.na.g2: Mean number of NA methylation values accross all sites in group 1 and group 2 respectively"
+		)
+	if (includeCovg){
+		sectionText <- c(sectionText,list(
+		"mean.mean.covg.g1,mean.mean.covg.g2: Mean value of mean coverage values (across all samples in a group) across all sites in a region",
+		c("mean.nsamples.covg.thresh.g1,mean.nsamples.covg.thresh.g2: mean number of samples (accross all considered sites) that have a coverage larger than ",
+		  get.covg.thres(diffmeth)," for the site in group 1 and group 2 respectively")
+		))
+	}
+}
+get.diffmeth.tab.annot.cols <- function(target, includeCovg, covgThres=-1L, skipSites=FALSE){
+	res <- c()
+	if (target=="sites" || skipSites) {
+		res <- c("mean.g1","mean.g2","mean.diff","mean.quot.log2",
+				"diffmeth.p.val","max.g1","min.g1","sd.g1",
+				"max.g2","min.g2","sd.g2",
+				"min.diff","diffmeth.p.adj.fdr","combinedRank",
+				"num.na.g1","num.na.g2")
+		if (includeCovg){
+			res <- c(res,c("mean.covg.g1","mean.covg.g2",
+							"min.covg.g1","min.covg.g2","max.covg.g1","max.covg.g2",
+							"covg.thresh.nsamples.g1","covg.thresh.nsamples.g2"))
+		}
+	} else {
+		res <- c("mean.mean.g1","mean.mean.g2",
+					"mean.mean.diff","mean.mean.quot.log2",
+					"comb.p.val","comb.p.adj.fdr","combinedRank",
+					"num.sites","mean.num.na.g1","mean.num.na.g2")
+		if (includeCovg){
+			res <- c(res,c("mean.mean.covg.g1","mean.mean.covg.g2",
+									   "mean.nsamples.covg.thresh.g1","mean.nsamples.covg.thresh.g2"))
+		}
+	}
+	return(res)
+}
+get.diffmeth.tab.annot.colnames.pretty <- function(target, name.g1, name.g2, includeCovg, covgThres=-1L, skipSites=FALSE){
+	if (target=="sites" || skipSites) {
+		res <- c(paste("mean",name.g1,sep="."),paste("mean",name.g2,sep="."),"mean.diff","mean.quot.log2",
+				"diffmeth.p.val",paste("max",name.g1,sep="."),paste("min",name.g1,sep="."),paste("sd",name.g1,sep="."),
+				paste("max",name.g2,sep="."),paste("min",name.g2,sep="."),paste("sd",name.g2,sep="."),
+				"min.diff","diffmeth.p.adj.fdr","combinedRank",
+				paste("num.na",name.g1,sep="."),paste("num.na",name.g2,sep="."))
+		if (includeCovg){
+			res <- c(res,c(paste("mean.covg",name.g1,sep="."),paste("mean.covg",name.g2,sep="."),
+										   paste("min.covg",name.g1,sep="."),paste("min.covg",name.g2,sep="."),
+										   paste("max.covg",name.g1,sep="."),paste("max.covg",name.g2,sep="."),
+										   paste("nsamples.covg",paste("thres",covgThres,sep=""),name.g1,sep="."),
+										   paste("nsamples.covg",paste("thres",covgThres,sep=""),name.g2,sep=".")))
+		}
+	} else {
+		res <- c(paste("mean.mean",name.g1,sep="."),paste("mean.mean",name.g2,sep="."),
+				"mean.mean.diff","mean.mean.quot.log2",
+				"comb.p.val","comb.p.adj.fdr","combinedRank",
+				"num.sites",paste("mean.num.na",name.g1,sep="."),paste("mean.num.na",name.g2,sep="."))
+		if (includeCovg){
+			res <- c(res,c(paste("mean.mean.covg",name.g1,sep="."),paste("mean.mean.covg",name.g2,sep="."),
+										   paste("mean.nsamples.covg",paste("thres",covgThres,sep=""),name.g1,sep="."),
+										   paste("mean.nsamples.covg",paste("thres",covgThres,sep=""),name.g2,sep=".")))
+		}
+	}
+	return(res)
+}
+
 ### rnb.section.diffMeth.site
 ###
 ### add information to the report for site level analysis
@@ -1618,7 +1794,7 @@ rnb.section.diffMeth.site <- function(rnbSet,diffmeth,report,gzTable=FALSE){
 	sectionText <- paste("Differential methylation on the site level was computed based on a variety of metrics. 
 						  Of particular interest for the following plots and analyses are the following quantities for each site:
 						  a) the difference in mean methylation levels of the two groups being compared, b) the quotient in mean methylation and
-						  c) a statistical test (t-test or limma depending on the settings) assessing whether the methylation values in the two groups originate from distinct distributions.
+						  c) a statistical test (limma or t-test depending on the settings) assessing whether the methylation values in the two groups originate from distinct distributions.
 						  Additionally each site was assigned a rank based on each of these three criteria. A combined rank is computed as the maximum (i.e. worst)
 						  rank among the three ranks. The smaller the combined rank for a site, the more evidence for differential methylation it exhibits.
 						  This section includes scatterplots of the site group means as well as volcano plots
@@ -1740,35 +1916,16 @@ rnb.section.diffMeth.site <- function(rnbSet,diffmeth,report,gzTable=FALSE){
 	logger.completed()
 	logger.start("Adding tables")
 	includeCovg <- !is.null(covg(rnbSet))
-	sectionText <- "A tabular overview of measures for differential methylation on the site level for the individual comparisons are provided in this section.
-					  Below, a brief explanation of the different columns can be found:
-					<ul>
-						<li>id: site id</li>
-						<li>Chromosome: chromosome of the site</li>
-						<li>Start: start coordinate of the site</li>
-						<li>Strand: strand of the site</li>
-						<li>mean.g1,mean.g2: (where g1 and g2 is replaced by the respective group names in the table) mean methylation in each of the two groups</li>
-						<li>mean.diff: difference in methylation means between the two groups: mean.g1-mean.g2. In case of paired analysis, it is the mean of the pairwise differences.</li>
-						<li>mean.quot.log2: log2 of the quotient in methylation: log2((mean.g1+epsilon)/(mean.g2+epsilon)), where epsilon:=0.01. In case of paired analysis, it is the mean of the pairwise quotients.</li>
-						<li>diffmeth.p.val: p-value obtained from a two-sided Welch t-test or alternatively from linear models employed in the limma package
-						(which type of p-value is computed is specified in the differential.site.test.method option). In case of paired analysis, the paired Student's t-test is applied.</li>
-						<li>max.g1,max.g2: maximum methylation level in group 1 and 2 respectively</li>
-						<li>min.g1,min.g2: minimum methylation level in group 1 and 2 respectively</li>
-						<li>sd.g1,sd.g2: standard deviation of methylation levels</li>
-						<li>min.diff: Minimum of 0 and the smallest pairwise difference between samples of the two groups</li>
-						<li>diffmeth.p.adj.fdr: FDR adjusted p-value of all sites</li>
-						<li>combinedRank: mean.diff, mean.quot.log2 and diffmeth.p.val are ranked for all sites. This aggregates them using the maximum, i.e. worst rank of a site among the three measures</li>
-						<li>num.na.g1,num.na.g2: number of NA methylation values for groups 1 and 2 respectively</li>"
 	
-	if (includeCovg){
-		ss <- paste("<li>mean.covg.g1,mean.covg.g2: mean coverage of groups 1 and 2 respectively. In case of Infinium array methylation data, coverage is defined as combined beadcount.</li>
-			   <li>min.covg.g1,min.covg.g2: minimum coverage of groups 1 and 2 respectively</li>
-			   <li>max.covg.g1,max.covg.g2: maximum coverage of groups 1 and 2 respectively</li>
-			   <li>covg.thresh.nsamples.g1,covg.thresh.nsamples.g2: number of samples in group 1 and 2 respectively exceeding the coverage threshold (",
-	   			get.covg.thres(diffmeth),") for this site.</li>",sep="")
-		sectionText <- paste(sectionText,ss,sep="")
-	}
-	sectionText <- paste(sectionText,"</ul>The tables for the individual comparisons can be found here:\n<ul>\n",sep="")
+	sectionText <- c("A tabular overview of measures for differential methylation on the site level for the individual comparisons are provided in this section.
+					  Below, a brief explanation of the different columns can be found:")
+	report <- rnb.add.section(report, "Differential Methylation Tables", sectionText, level = 2)
+
+	sectionColDescList <- get.diffmeth.tab.col.desc.list.txt("sites", includeCovg, covgThres=get.covg.thres(diffmeth), skipSites=FALSE)
+	rnb.add.list(report, sectionColDescList)
+	
+
+	sectionText <- "The tables for the individual comparisons can be found here:\n<ul>\n"
 	annot.cols <- c("Chromosome","Start","Strand")
 	sites.info <- annotation(rnbSet,type="sites",add.names=FALSE)[, annot.cols]
 	#add cg identifier for infinium datasets
@@ -1779,32 +1936,9 @@ rnb.section.diffMeth.site <- function(rnbSet,diffmeth,report,gzTable=FALSE){
 	for (i in 1:length(comps)){
 		cc <- comps[i]
 		
-		annot.vec <- c("mean.g1","mean.g2","mean.diff","mean.quot.log2",
-				"diffmeth.p.val","max.g1","min.g1","sd.g1",
-				"max.g2","min.g2","sd.g2",
-				"min.diff","diffmeth.p.adj.fdr","combinedRank",
-				"num.na.g1","num.na.g2")
-		if (includeCovg){
-			annot.vec <- c(annot.vec,c("mean.covg.g1","mean.covg.g2",
-							"min.covg.g1","min.covg.g2","max.covg.g1","max.covg.g2",
-							"covg.thresh.nsamples.g1","covg.thresh.nsamples.g2"))
-		}
-		dmt <- get.table(diffmeth,cc,"sites",return.data.frame=TRUE)[,annot.vec]
-		
-		g1n <- grp.names[i,1]
-		g2n <- grp.names[i,2]
-		colname.vec <- c(paste("mean",g1n,sep="."),paste("mean",g2n,sep="."),"mean.diff","mean.quot.log2",
-				"diffmeth.p.val",paste("max",g1n,sep="."),paste("min",g1n,sep="."),paste("sd",g1n,sep="."),
-				paste("max",g2n,sep="."),paste("min",g2n,sep="."),paste("sd",g2n,sep="."),
-				"min.diff","diffmeth.p.adj.fdr","combinedRank",
-				paste("num.na",g1n,sep="."),paste("num.na",g2n,sep="."))
-		if (includeCovg){
-			colname.vec <- c(colname.vec,c(paste("mean.covg",g1n,sep="."),paste("mean.covg",g2n,sep="."),
-										   paste("min.covg",g1n,sep="."),paste("min.covg",g2n,sep="."),
-										   paste("max.covg",g1n,sep="."),paste("max.covg",g2n,sep="."),
-										   paste("nsamples.covg",paste("thres",get.covg.thres(diffmeth),sep=""),g1n,sep="."),
-										   paste("nsamples.covg",paste("thres",get.covg.thres(diffmeth),sep=""),g2n,sep=".")))
-		}
+		annot.vec <- get.diffmeth.tab.annot.cols("sites", includeCovg)
+		colname.vec <- get.diffmeth.tab.annot.colnames.pretty("sites", grp.names[i,1], grp.names[i,2], includeCovg, covgThres=get.covg.thres(diffmeth), skipSites=FALSE)
+		dmt <- get.table(diffmeth,cc,"sites",return.data.frame=TRUE)[,annot.vec]		
 		colnames(dmt) <- colname.vec
 		dmt <- cbind(rownames(dmt),sites.info,dmt)
 		colnames(dmt)[1] <- "id"
@@ -1816,7 +1950,8 @@ rnb.section.diffMeth.site <- function(rnbSet,diffmeth,report,gzTable=FALSE){
 		sectionText <- paste(sectionText,"<li>",txt,"</li>\n",sep="")
 	}
 	sectionText <- paste(sectionText,"</ul>",sep="")
-	report <- rnb.add.section(report, "Differential Methylation Tables", sectionText, level = 2)
+	rnb.add.paragraph(report, sectionText)
+	
 	logger.completed()
 	
 	logger.completed()
@@ -1840,6 +1975,7 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 	if (length(get.region.types(diffmeth))<1){
 		stop("no valid region types")
 	}
+	skipSites <- !includes.sites(diffmeth)
 
 	diffRegionRankCut <- c(100,500,1000) #the cutoffs for determining a site as differentially methylated according to combined rank
 	logger.start("Adding Region Level Information")
@@ -1848,15 +1984,25 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 	report <- rnb.add.reference(report, refText)
 	
 	sectionText <- c("Differential methylation on the region level was computed based on a variety of metrics. ", 
-		"Of particular interest for the following plots and analyses are the following quantities for each region: ",
-		"the mean difference in means across all sites in a region of the two groups being compared and the mean of quotients ",
-		"in mean methylation as well as a combined p-value calculated from all site p-values in the region ",
-		rnb.get.reference(report, refText), ". ",
-		"Additionally each region was assigned a rank based on each of these three criteria. ",
+		"Of particular interest for the following plots and analyses are the following quantities for each region: ")
+
+	if (skipSites){
+		sectionText <- c(sectionText, c("the mean methylation difference in a region of the two groups being and of quotient of mean methylation levels",
+			"as well as a p-value obtained from statistical testing (limma or t-test; depending on parameter settings).")
+		)
+	} else {
+		sectionText <- c(sectionText, c("the mean difference in means across all sites in a region of the two groups being compared and the mean of quotients ",
+			"in mean methylation as well as a combined p-value calculated from all site p-values in the region ",
+			rnb.get.reference(report, refText), ". ")
+		)
+	}
+	sectionText <- c(sectionText,c(
+		" Additionally each region was assigned a rank based on each of these three criteria. ",
 		"A combined rank is computed as the maximum (i.e. worst) value among the three ranks. The smaller the combined rank for a region, the more evidence for differential methylation it exhibits. ",
 		"Regions were defined based on the region types specified in the analysis. ",
 		"This section includes scatterplots of the region group means as well as volcano plots of each pairwise comparison ",
 		"colored according to the combined rank of a given region.")
+	)
 	report <- rnb.add.section(report, "Region Level", sectionText)
 
 	comps <- get.comparisons(diffmeth)
@@ -1902,7 +2048,7 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 			auto.rank.cut <- rank.cuts.auto[[i]][[j]]
 			dmt <- get.table(diffmeth,ccc,rr,return.data.frame=TRUE)
 			res <- addReportPlots.diffMeth.bin.region.scatter(report,dmt,ccn,rrn,diffRegionRankCut=diffRegionRankCut,
-					autoRankCut=auto.rank.cut,grp1.name=grp.labels[ccc,1],grp2.name=grp.labels[ccc,2])
+					autoRankCut=auto.rank.cut,grp1.name=grp.labels[ccc,1],grp2.name=grp.labels[ccc,2], useSiteCols=skipSites)
 			rnb.cleanMem()
 			res
 		}
@@ -1918,7 +2064,7 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 				auto.rank.cut <- rank.cuts.auto[[i]][[j]]
 				dmt <- get.table(diffmeth,ccc,rr,return.data.frame=TRUE)
 				addedPlots <- c(addedPlots,addReportPlots.diffMeth.bin.region.scatter(report,dmt,ccn,rrn,diffRegionRankCut=diffRegionRankCut,
-								autoRankCut=auto.rank.cut,grp1.name=grp.labels[ccc,1],grp2.name=grp.labels[ccc,2]))
+								autoRankCut=auto.rank.cut,grp1.name=grp.labels[ccc,1],grp2.name=grp.labels[ccc,2], useSiteCols=skipSites))
 				rnb.cleanMem()
 			}
 		}
@@ -1961,7 +2107,7 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 			rrn <- ifelse(is.valid.fname(rr),rr,paste("reg",j,sep=""))
 			dmt <- get.table(diffmeth,ccc,rr,return.data.frame=TRUE)
 			res <- addReportPlots.diffMeth.bin.region.volcano(report,dmt,ccn,rrn,
-					grp1.name=grp.labels[ccc,1],grp2.name=grp.labels[ccc,2])
+					grp1.name=grp.labels[ccc,1],grp2.name=grp.labels[ccc,2], useSiteCols=skipSites)
 			rnb.cleanMem()
 			res
 		}
@@ -1975,7 +2121,7 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 				rrn <- ifelse(is.valid.fname(rr),rr,paste("reg",j,sep=""))
 				dmt <- get.table(diffmeth,ccc,rr,return.data.frame=TRUE)
 				addedPlots <- c(addedPlots,addReportPlots.diffMeth.bin.region.volcano(report,dmt,ccn,rrn,
-								grp1.name=grp.labels[ccc,1],grp2.name=grp.labels[ccc,2]))
+								grp1.name=grp.labels[ccc,1],grp2.name=grp.labels[ccc,2], useSiteCols=skipSites))
 				rnb.cleanMem()
 			}
 		}
@@ -1997,31 +2143,10 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 	sectionText <- c("A tabular overview of measures for differential methylation on the region level for the ",
 		"individual comparisons are provided in this section.")
 	report <- rnb.add.section(report, "Differential Methylation Tables", sectionText, level = 2)
-	sectionText <- list(
-		"id: region id",
-		"Chromosome: chromosome of the region",
-		"Start: Start coordinate of the region",
-		"End: End coordinate of the region",
-		"[symbol]: associated gene symbol to the given region [only valid for gene associated regions]",
-		"[entrezID]: Entrez ID of the gene associated with the region [only valid for gene associated regions]",
-		"mean.mean.g1,mean.mean.g2: (where g1 and g2 is replaced by the respective group names in the table) mean of mean methylation levels for group 1 and 2 across all sites in a region",
-		"mean.mean.diff: Mean difference in means across all sites in a region",
-		"mean.mean.quot.log2: log2 of the mean quotient in means across all sites in a region",
-		c("comb.p.val: Combined p-value aggregating p-values of all sites in the region using a generalization of Fisher's method ", rnb.get.reference(report, refText)),
-		"comb.p.adj.fdr: FDR adjusted combined p-value",
-		c("combinedRank: mean.mean.diff, mean.mean.quot.log2 and comb.p.val are ranked for all regions. ",
-				"This column aggregates them using the maximum, i.e. worst rank of a site among the three measures"),
-		"num.sites: number of sites associated with the region",
-		"mean.num.na.g1,mean.num.na.g2: Mean number of NA methylation values accross all sites in group 1 and group 2 respectively"
-		)
-	if (includeCovg){
-		sectionText <- c(sectionText,list(
-		"mean.mean.covg.g1,mean.mean.covg.g2: Mean value of mean coverage values (across all samples in a group) across all sites in a region",
-		c("mean.nsamples.covg.thresh.g1,mean.nsamples.covg.thresh.g2: mean number of samples (accross all considered sites) that have a coverage larger than ",
-		  get.covg.thres(diffmeth)," for the site in group 1 and group 2 respectively")
-		))
-	}
-	rnb.add.list(report, sectionText)
+	#TODO: change section text when sites are skipped
+	sectionColDescList <- get.diffmeth.tab.col.desc.list.txt("regions", includeCovg, covgThres=get.covg.thres(diffmeth), comb.p.ref.txt=rnb.get.reference(report, refText), skipSites=skipSites)
+	rnb.add.list(report, sectionColDescList)
+
 	sectionText <- "The tables for the individual comparisons can be found here:"
 	rnb.add.paragraph(report, sectionText)
 	#create data tables
@@ -2039,27 +2164,10 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 			region.info.cols.cur <- intersect(region.info.cols,colnames(reg.info))
 			reg.info <- reg.info[,region.info.cols.cur]
 			
-			annot.vec <- c("mean.mean.g1","mean.mean.g2",
-					"mean.mean.diff","mean.mean.quot.log2",
-					"comb.p.val","comb.p.adj.fdr","combinedRank",
-					"num.sites","mean.num.na.g1","mean.num.na.g2")
-			if (includeCovg){
-				annot.vec <- c(annot.vec,c("mean.mean.covg.g1","mean.mean.covg.g2",
-										   "mean.nsamples.covg.thresh.g1","mean.nsamples.covg.thresh.g2"))
-			}
+			annot.vec <- get.diffmeth.tab.annot.cols("regions", includeCovg, skipSites=skipSites)
+			colname.vec <- get.diffmeth.tab.annot.colnames.pretty("regions", grp.labels[ic,1], grp.labels[ic,2], includeCovg, covgThres=get.covg.thres(diffmeth), skipSites=skipSites)
 			
 			dmt <- get.table(diffmeth,cc,rr,return.data.frame=TRUE)[,annot.vec]
-			g1n <- grp.labels[ic,1]
-			g2n <- grp.labels[ic,2]
-			colname.vec <- c(paste("mean.mean",g1n,sep="."),paste("mean.mean",g2n,sep="."),
-					"mean.mean.diff","mean.mean.quot.log2",
-					"comb.p.val","comb.p.adj.fdr","combinedRank",
-					"num.sites",paste("mean.num.na",g1n,sep="."),paste("mean.num.na",g2n,sep="."))
-			if (includeCovg){
-				colname.vec <- c(colname.vec,c(paste("mean.mean.covg",g1n,sep="."),paste("mean.mean.covg",g2n,sep="."),
-											   paste("mean.nsamples.covg",paste("thres",get.covg.thres(diffmeth),sep=""),g1n,sep="."),
-											   paste("mean.nsamples.covg",paste("thres",get.covg.thres(diffmeth),sep=""),g2n,sep=".")))
-			}
 			colnames(dmt) <- colname.vec
 			dmt <- cbind("id"=rownames(reg.info),reg.info,dmt)
 			
@@ -2517,6 +2625,7 @@ get.comparison.info <- function(x, pheno.cols=rnb.getOption("differential.compar
 #' @param adjust.sva flag indicating whether the adjustment table should also contain surrogate variables (SVs) for the given target variable.
 #' @param adjust.celltype flag indicating whether the resulting table should also contain estimated celltype contributions.
 #' 				See \code{\link{rnb.execute.ct.estimation}} for details.
+#' @param skip.sites flag indicating whether differential methylation in regions should be computed directly and not from sites. This leads to skipping of site-specific differential methylation
 #' @param pheno.cols.adjust.sva Column names or indices in the table of phenotypic information to be used for SVA adjustment in the
 #'        differential methylation analysis.
 #' @param disk.dump Flag indicating whether the resulting differential methylation object should be file backed, ie.e the matrices dumped to disk
@@ -2538,6 +2647,7 @@ rnb.execute.computeDiffMeth <- function(x,pheno.cols,region.types=rnb.region.typ
 		columns.adj=rnb.getOption("covariate.adjustment.columns"),
 		adjust.sva=rnb.getOption("differential.adjustment.sva"), pheno.cols.adjust.sva=rnb.getOption("inference.targets.sva"),
 		adjust.celltype=rnb.getOption("differential.adjustment.celltype"),
+		skip.sites=!rnb.getOption("analyze.sites"),
 		disk.dump=rnb.getOption("disk.dump.big.matrices"),disk.dump.dir=tempfile(pattern="diffMethTables_"),
 		...){
 
@@ -2566,18 +2676,34 @@ rnb.execute.computeDiffMeth <- function(x,pheno.cols,region.types=rnb.region.typ
 			logger.status("Conducting PAIRED analysis")
 		}
 
-		dm <- computeDiffMeth.bin.site(
-				meth(x),inds.g1=cmp.info.cur$group.inds$group1,inds.g2=cmp.info.cur$group.inds$group2,
-				covg=covg(x),covg.thres=covg.thres,
-				paired=cmp.info.cur$paired, adjustment.table=cmp.info.cur$adjustment.table,
-				...
-		)
-		diffmeth <- addDiffMethTable(diffmeth,dm,cmp.info.cur$comparison,"sites",cmp.info.cur$group.names)
+		if (skip.sites){
+			logger.info("Skipping site-specific differential methylation calling")
+			dm <- NULL
+		} else {
+			dm <- computeDiffMeth.bin.site(
+					meth(x),inds.g1=cmp.info.cur$group.inds$group1,inds.g2=cmp.info.cur$group.inds$group2,
+					covg=covg(x),covg.thres=covg.thres,
+					paired=cmp.info.cur$paired, adjustment.table=cmp.info.cur$adjustment.table,
+					...
+			)
+			diffmeth <- addDiffMethTable(diffmeth,dm,cmp.info.cur$comparison,"sites",cmp.info.cur$group.names)
+		}
+		rnb.cleanMem()
 		if (length(cmp.info.cur$region.types)>0){
-			dmr <- computeDiffMeth.bin.region(x,dm,
-				cmp.info.cur$group.inds$group1,cmp.info.cur$group.inds$group2,
-				region.types=cmp.info.cur$region.types
-			)			
+			if (skip.sites){
+				dmr <- computeDiffMeth.bin.region(x,NULL,
+					cmp.info.cur$group.inds$group1,cmp.info.cur$group.inds$group2,
+					region.types=cmp.info.cur$region.types,
+					covg.thres=covg.thres,
+					paired=cmp.info.cur$paired, adjustment.table=cmp.info.cur$adjustment.table,
+					...
+				)
+			} else {
+				dmr <- computeDiffMeth.bin.region(x,dm,
+					cmp.info.cur$group.inds$group1,cmp.info.cur$group.inds$group2,
+					region.types=cmp.info.cur$region.types
+				)	
+			}		
 			for (rt in cmp.info.cur$region.types){
 				diffmeth <- addDiffMethTable(diffmeth,dmr[[rt]],cmp.info.cur$comparison, 
 					rt, cmp.info.cur$group.names

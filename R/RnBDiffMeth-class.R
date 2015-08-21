@@ -62,6 +62,7 @@ setClass("RnBDiffMeth",
 		region.types="character",
 		comparison.grouplabels="matrix",
 		comparison.info="list",
+		includesSites="logical",
 		site.test.method="characterOrNULL",
 		covg.thres="integer",
 		disk.dump="logical",
@@ -74,6 +75,7 @@ setClass("RnBDiffMeth",
 		region.types=character(),
 		comparison.grouplabels=matrix(ncol=2,nrow=0),
 		comparison.info=list(),
+		includesSites=FALSE,
 		site.test.method=NULL,
 		covg.thres=-1L,
 		disk.dump=FALSE,
@@ -114,6 +116,7 @@ setMethod("initialize", "RnBDiffMeth",
 			.Object@comparisons <- character()
 			.Object@region.types <- character()
 			.Object@comparison.grouplabels <- matrix(ncol=2,nrow=0)
+			.Object@includesSites <- FALSE
 			.Object@site.test.method <- site.test.method
 			.Object@covg.thres <- covg.thres
 			.Object@comparison.info <- list()
@@ -302,13 +305,13 @@ if (!isGeneric("get.site.test.method")) setGeneric("get.site.test.method", funct
 #' get.site.test.method(dm)
 #' }
 setMethod("get.site.test.method", signature(object="RnBDiffMeth"),
-		function(object){
-			if (.hasSlot(object,"site.test.method")) { #.hasSlot ensure backwards compatibility
-				return(object@site.test.method)
-			} else {
-				return(rnb.getOption("differential.site.test.method"))
-			}
+	function(object){
+		if (.hasSlot(object,"site.test.method")) { #.hasSlot ensure backwards compatibility
+			return(object@site.test.method)
+		} else {
+			return(rnb.getOption("differential.site.test.method"))
 		}
+	}
 )
 
 if (!isGeneric("get.covg.thres")) setGeneric("get.covg.thres", function(object) standardGeneric("get.covg.thres"))
@@ -334,9 +337,41 @@ if (!isGeneric("get.covg.thres")) setGeneric("get.covg.thres", function(object) 
 #' get.covg.thres(dm)
 #' }
 setMethod("get.covg.thres", signature(object="RnBDiffMeth"),
-		function(object){
-			return(object@covg.thres)
+	function(object){
+		return(object@covg.thres)
+	}
+)
+
+if (!isGeneric("includes.sites")) setGeneric("includes.sites", function(object) standardGeneric("includes.sites"))
+#' includes.sites-methods
+#'
+#' Returns \code{TRUE} if the differential methylation object contains site-level information
+#'
+#' @param object RnBDiffMeth object
+#' @return \code{TRUE} if the differential methylation object contains site-level information. \code{FALSE} otherwise
+#'
+#' @rdname includes.sites-RnBDiffMeth-methods
+#' @docType methods
+#' @author Fabian Mueller
+#' @aliases includes.sites
+#' @aliases includes.sites,RnBDiffMeth-method
+#' @export
+#' @examples
+#' \donttest{
+#' library(RnBeads.hg19)
+#' data(small.example.object)
+#' logger.start(fname=NA)
+#' dm <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Sample_Group","Treatment"))
+#' includes.sites(dm)
+#' }
+setMethod("includes.sites", signature(object="RnBDiffMeth"),
+	function(object){
+		if (.hasSlot(object,"includesSites")) { #.hasSlot ensure backwards compatibility
+			return(object@includesSites)
+		} else {
+			return(all(sapply(object@sites,is.null)))
 		}
+	}
 )
 
 if (!isGeneric("get.table")) setGeneric("get.table", function(object,...) standardGeneric("get.table"))
@@ -481,6 +516,7 @@ setMethod("addDiffMethTable", signature(object="RnBDiffMeth"),
 			}
 			object@sites[[comparison]] <- table.obj
 
+			object@includesSites <- TRUE
 		} else {
 			#check if the region type is already there
 			if(!is.element(region.type,object@region.types)){
@@ -540,8 +576,10 @@ setMethod("save.tables", signature(object="RnBDiffMeth"),
 			for (cci in 1:n.comps) {
 				cc <- object@comparisons[cci]
 				ccn <- paste0("cmp",cci)
-				if (!is.null(object@sites[[cci]])){
-					ee[[paste("sites",ccn,sep=".")]] <- object@sites[[cci]]
+				if (includes.sites(object)){
+					if (!is.null(object@sites[[cci]])){
+						ee[[paste("sites",ccn,sep=".")]] <- object@sites[[cci]]
+					}
 				}
 				for (rri in 1:n.region.types){
 					rr <- object@region.types[rri]
@@ -614,10 +652,14 @@ setMethod("reload", signature(object="RnBDiffMeth"),
 			cc <- object@comparisons[cci]
 			ccn <- paste0("cmp",cci)
 			site.obj.name <- paste("sites",ccn,sep=".")
-			if (exists(site.obj.name,ee)){
-				object@sites[[cci]] <- get(site.obj.name,ee)
+			if (includes.sites(object)){
+				if (exists(site.obj.name,ee)){
+					object@sites[[cci]] <- get(site.obj.name,ee)
+				} else {
+					logger.warning(c("Could not relink:","sites","--",cc))
+					object@sites[cci] <- list(NULL)
+				}
 			} else {
-				logger.warning(c("Could not relink:","sites","--",cc))
 				object@sites[cci] <- list(NULL)
 			}
 			for (rri in 1:n.region.types){
@@ -765,7 +807,8 @@ if (!isGeneric("join.diffMeth")) setGeneric("join.diffMeth", function(obj1,obj2,
 #' }
 setMethod("join.diffMeth", signature(obj1="RnBDiffMeth",obj2="RnBDiffMeth"),
 	function(obj1,obj2){
-		is.compatible <- (obj1@site.test.method == obj2@site.test.method) &&
+		is.compatible <- (includes.sites(obj1) == includes.sites(obj2)) && 
+						 (obj1@site.test.method == obj2@site.test.method) &&
 						 (obj1@covg.thres == obj2@covg.thres) && 
 						 (obj1@disk.dump == obj2@disk.dump)
 		if (!is.compatible){
@@ -825,7 +868,7 @@ setMethod("join.diffMeth", signature(obj1="RnBDiffMeth",obj2="RnBDiffMeth"),
 		#add empty lists for sites and regions
 		new.comp.list <- rep(list(NULL),n.new.comps)
 		names(new.comp.list) <- new.comps
-		res@sites <- c(res@sites,new.comp.list)
+		if (includes.sites(obj1)) res@sites <- c(res@sites,new.comp.list)
 		for (rr in obj1@region.types){
 			res@regions[[rr]] <- c(res@regions[[rr]],new.comp.list) 
 		}
@@ -913,15 +956,17 @@ setMethod("is.valid", signature(object="RnBDiffMeth"),
 		for (cci in 1:n.comps) {
 			cc <- object@comparisons[cci]
 			ccn <- paste0("cmp",cci)
-			if (is.null(object@sites[[cc]])){
-				if (verbose) logger.info(paste0("No table found for comparison '",cc,"' (sites)"))
-				return(FALSE)
-			}
-			if (object@disk.dump){
-				fileN <- file.path(object@disk.path,paste0(paste("sites",ccn,sep="_"),".ff"))
-				if (!file.exists(fileN)){
-					if (verbose) logger.info(paste0("Disk dump file ['",fileN,"'] not found for comparison '",cc,"' (sites)"))
+			if (includes.sites(object)){ #.hasSlot for backwards compatibility
+				if (is.null(object@sites[[cc]])){
+					if (verbose) logger.info(paste0("No table found for comparison '",cc,"' (sites)"))
 					return(FALSE)
+				}
+				if (object@disk.dump){
+					fileN <- file.path(object@disk.path,paste0(paste("sites",ccn,sep="_"),".ff"))
+					if (!file.exists(fileN)){
+						if (verbose) logger.info(paste0("Disk dump file ['",fileN,"'] not found for comparison '",cc,"' (sites)"))
+						return(FALSE)
+					}
 				}
 			}
 			for (rri in 1:n.region.types){

@@ -93,6 +93,7 @@ logger.start("Differential Methylation")
 	disk.dump <- rnb.getOption("disk.dump.big.matrices")
 	diffmeth <- rnb.execute.computeDiffMeth(rnb.set,cmp.cols,region.types=reg.types,n.perm=permutations,covg.thres=rnb.getOption("filtering.coverage.threshold"),
 			pheno.cols.all.pairwise=rnb.getOption("differential.comparison.columns.all.pairwise"),columns.pairs=rnb.getOption("columns.pairing"),
+			skip.sites=!rnb.getOption("analyze.sites"),
 			# disk.dump=disk.dump,disk.dump.dir=paste0(cmdArgs$output,"_diffMethTableDir"))
 			disk.dump=disk.dump,disk.dump.dir=paste0(tempfile(pattern=""),"_diffMethTableDir"))
 	if (rnb.getOption("differential.enrichment")){
@@ -115,7 +116,8 @@ logger.completed()
 logger.start("Check result")
 #check whether the output regions match the annotation regions
 comps <- get.comparisons(diffmeth)
-rts <- c("sites",reg.types)
+rts <- reg.types
+if (rnb.getOption("analyze.sites")) rts <- c("sites",rts)
 for (rr in rts){
 	aa <- annotation(rnb.set,rr)
 	n.regs <- nrow(aa)

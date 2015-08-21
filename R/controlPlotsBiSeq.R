@@ -161,6 +161,7 @@ rnb.plot.biseq.coverage.hist<-function(
 	covg.rnbs<-covg.rnbs[,sample.id]
 	covg.rnbs[is.na(covg.rnbs)]<-0
 	
+	rnb.cleanMem()
 	
 	if(writeToFile) {
 		plot.file<-createReportPlot(paste("CoverageHistogram", ifelse(numeric.names, sample.id, sample), sep="_"), ...)
