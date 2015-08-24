@@ -65,13 +65,13 @@ biocViews: DNAMethylation, MethylationArray, MethylSeq, Epigenetics,
     QualityControl, Preprocessing, BatchEffect, DifferentialMethylation,
     Sequencing, CpGIsland, TwoChannel, DataImport
 Collate:
-    'bigFf.R'
     'CNV.R'
     'Report-class.R'
     'Report-methods.R'
     'ReportPlot-class.R'
     'ReportPlot-methods.R'
     'RnBDiffMeth-class.R'
+    'bigFf.R'
     'RnBSet-class.R'
     'RnBeadSet-class.R'
     'RnBeadRawSet-class.R'
