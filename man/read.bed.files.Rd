@@ -10,7 +10,7 @@ read.bed.files(base.dir = NULL, file.names = NULL, sample.sheet = NULL,
   pos.coord.shift = 1L, skip.lines = 1,
   sep.samples = rnb.getOption("import.table.separator"),
   merge.bed.files = TRUE, useff = rnb.getOption("disk.dump.big.matrices"),
-  verbose = TRUE, ...)
+  usebigff = rnb.getOption("disk.dump.bigff"), verbose = TRUE, ...)
 }
 \arguments{
 \item{base.dir}{Directory with BED files contatining processed methylation data}
