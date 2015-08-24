@@ -13,6 +13,7 @@ rnb.execute.computeDiffMeth(x, pheno.cols,
   adjust.sva = rnb.getOption("differential.adjustment.sva"),
   pheno.cols.adjust.sva = rnb.getOption("inference.targets.sva"),
   adjust.celltype = rnb.getOption("differential.adjustment.celltype"),
+  skip.sites = !rnb.getOption("analyze.sites"),
   disk.dump = rnb.getOption("disk.dump.big.matrices"),
   disk.dump.dir = tempfile(pattern = "diffMethTables_"), ...)
 }
@@ -41,6 +42,8 @@ differential methylation analysis.}
 
 \item{adjust.celltype}{flag indicating whether the resulting table should also contain estimated celltype contributions.
 See \code{\link{rnb.execute.ct.estimation}} for details.}
+
+\item{skip.sites}{flag indicating whether differential methylation in regions should be computed directly and not from sites. This leads to skipping of site-specific differential methylation}
 
 \item{disk.dump}{Flag indicating whether the resulting differential methylation object should be file backed, ie.e the matrices dumped to disk}
 
