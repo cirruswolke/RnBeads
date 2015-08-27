@@ -921,6 +921,8 @@ setMethod("mergeSamples", signature(object = "RnBSet"),
 			# 		assembly=object@assembly)
 			aa <- annotation(object,"sites")
 			sites.obj <- data.frame(chrom=as.character(aa$Chromosome),start=aa$Start,strand=as.character(aa$Strand),stringsAsFactors=FALSE)
+			doBigFf <- !is.null(object@status$disk.dump.bigff)
+			if (doBigFf) doBigFf <- object@status$disk.dump.bigff
 			res <- RnBiseqSet(
 				pheno=data.frame(pheno.new),
 				sites=sites.obj,
@@ -928,7 +930,8 @@ setMethod("mergeSamples", signature(object = "RnBSet"),
 				covg=covg.site.new,
 				region.types=summarized.regions(object),
 				assembly=object@assembly,
-				useff=object@status$disk.dump
+				useff=object@status$disk.dump,
+				usebigff=doBigFf
 			)
 		} else if (is.element(class(object),c("RnBeadSet","RnBeadRawSet"))) {
 			meth.site.new <- mergeColumns(meth(object,type="sites",row.names=TRUE),replicate.list)
