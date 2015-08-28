@@ -872,22 +872,7 @@ setMethod("mergeSamples", signature(object = "RnBSet"),
 			stop("Could not merge samples: phenotype column does not exist")
 		}
 		res <- object
-		replicate.ids <- ph[,grp.col]
-		replicate.ids.unique <- unique(na.omit(replicate.ids))
-		#replace NAs by the sample names
-		if (any(is.na(replicate.ids))){
-			snames.na <- samples(object)[is.na(replicate.ids)]
-			#make sure the sample names do not also appear as group name
-			snames.na <- ifelse(snames.na %in% replicate.ids.unique,paste("X",snames.na),snames.na)
-			replicate.ids[is.na(replicate.ids)] <- snames.na
-			replicate.ids.unique <- unique(replicate.ids)
-		}
-		if (length(replicate.ids.unique)==nrow(ph)){
-			rnb.warning("Did not merge samples: phenotype column with unique entries selected")
-			return(res)
-		}
-		replicate.list <- lapply(replicate.ids.unique,FUN=function(x){which(replicate.ids==x)})
-		names(replicate.list) <- replicate.ids.unique
+		replicate.list <- getMergeList(object, grp.col)
 		num.replicates <- sapply(replicate.list,length)
 		phm <- sapply(ph, format, trim=TRUE, justify="none") #fomat to matrix, avoiding padded whitespaces
 		ph.t <- t(phm)
