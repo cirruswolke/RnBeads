@@ -207,6 +207,7 @@ rnb.step.filter.summary.internal <- function(dataset.class, mm, relm, removed.sa
 	}
 	logger.status("Constructed sequences of removed and retained methylation values")
 	rm(betas.removed, mm, i)
+	rnb.cleanMem()
 
 	## Compare removed vs. retained methylation beta values
 	if ((!is.null(beta.values)) && min(sapply(beta.values, length)) >= 501) {

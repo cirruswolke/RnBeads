@@ -231,6 +231,8 @@ rnb.section.quality<-function(report, rnb.set, qc.boxplots=rnb.getOption("qc.box
 			logger.status("Added sequencing coverage violin plots")
 		}
 
+		rnb.cleanMem()
+
 		if (length(qc.coverage.threshold.plot) != 0) {
 			rplot <- rnb.plot.coverage.thresholds(rnb.set, qc.coverage.threshold.plot, fname = "coverage_interrogated",
 				report = report)

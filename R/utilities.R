@@ -1217,6 +1217,38 @@ check.idat.subdirs <- function(base.dir) {
 
 ########################################################################################################################
 
+## getMergeList
+##
+## Given an RnBSet object and a column name of the sample annotation table, return a list with sample indices for each level
+## level that column the RnBSet
+## @param rnbs RnBSet object
+## @param pheno.col column name specifying the grouping
+## @return a list containing indices for each group
+##
+## @author Fabian Mueller
+getMergeList <- function(rnbs, pheno.col){
+	ph <- pheno(rnbs)
+	replicate.ids <- ph[,pheno.col]
+	replicate.ids.unique <- unique(na.omit(replicate.ids))
+	#replace NAs by the sample names
+	if (any(is.na(replicate.ids))){
+		snames.na <- samples(rnbs)[is.na(replicate.ids)]
+		#make sure the sample names do not also appear as group name
+		snames.na <- ifelse(snames.na %in% replicate.ids.unique,paste("X",snames.na),snames.na)
+		replicate.ids[is.na(replicate.ids)] <- snames.na
+		replicate.ids.unique <- unique(replicate.ids)
+	}
+	if (length(replicate.ids.unique)==nrow(ph)){
+		rnb.warning("Could not get merge list: phenotype column with unique entries selected")
+		return(res)
+	}
+	res <- lapply(replicate.ids.unique,FUN=function(x){which(replicate.ids==x)})
+	names(res) <- replicate.ids.unique
+	return(res)
+}
+
+########################################################################################################################
+
 ## mergeColumns
 ##
 ## Given a matrix X and a list containing column indices for each group in the matrix apply mergeFun to each submatrix
@@ -1228,10 +1260,10 @@ check.idat.subdirs <- function(base.dir) {
 ## @note Requires the packages \pkg{foreach} and \pkg{doParallel}.
 ##
 ## @author Fabian Mueller
-mergeColumns <- function(X,mergeList,mergeFun=function(X.sub){rowMeans(X.sub,na.rm=TRUE)}){
-	res <- sapply(mergeList,FUN=function(iis){
-		do.call(mergeFun,list(X.sub=as.matrix(X[,iis])))
-	})
+mergeColumns <- function(X, mergeList, mergeFun=function(X.sub){rowMeans(X.sub, na.rm=TRUE)}){
+	res <- do.call("cbind", lapply(mergeList,FUN=function(iis){
+		do.call(mergeFun, list(X.sub=X[,iis, drop=FALSE]))
+	}))
 	return(res)
 }
 
