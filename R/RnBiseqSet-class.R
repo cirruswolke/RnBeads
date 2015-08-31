@@ -81,6 +81,7 @@ setMethod("initialize", "RnBiseqSet",
 #' @param summarize.regions ...
 #' @param region.types	region annotations for which the methylation data should be summarized 
 #' @param useff			flag specifying whether the ff functionality should be used
+#' @param usebigff		flag specifying whether the extended ff functionality should be used (large matrix support for ff)
 #' @param verbose		flag specifying whether the diagnostic messages should be written to the 
 #' 						console or to the RnBeads logger, if the latter is initialized
 #' 

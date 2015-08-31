@@ -35,6 +35,8 @@ strand (\code{character}, one of \code{"+"}, \code{"-"} or \code{"*"}}
 
 \item{useff}{flag specifying whether the ff functionality should be used}
 
+\item{usebigff}{flag specifying whether the extended ff functionality should be used (large matrix support for ff)}
+
 \item{verbose}{flag specifying whether the diagnostic messages should be written to the
                         console or to the RnBeads logger, if the latter is initialized}
 }

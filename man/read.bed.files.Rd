@@ -48,6 +48,8 @@ methylation calls should be merged after reading}
 
 \item{useff}{If \code{TRUE}, functionality provided by the \code{ff} package will be used to read the data efficiently.}
 
+\item{usebigff}{flag specifying whether the extended ff functionality should be used (large matrix support for ff)}
+
 \item{verbose}{Flag indicating ifthe messages to the logger should be sent. Note that the logger
 must be initialized prior to calling this function. Logging is useful for keeping a
 record of the downloaded and processed samples. Also, informative messages are
