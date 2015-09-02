@@ -2013,6 +2013,7 @@ rnb.sample.summary.table <- function(rnbSet) {
 		}
 		cc <- covg(rnbSet,type=rr)
 		cc[cc==0] <- NA
+		cc[is.na(mm)] <- NA
 		# rnb.cleanMem()
 		tt.cur <- df.empty
 		tt.cur$num <- apply(mm,2,function(x){sum(!is.na(x))})
