@@ -263,7 +263,6 @@ rnb.RnBSet.to.bedGraph <- function(rnb.set,out.dir=".",reg.type="sites",paramete
 	filenames <- data.frame(
 		"Sample" = sample.ids,
 		"File" = sprintf(paste0("rnbeads_sample_%0", nd, "d.bedGraph"), 1:length(sample.ids)),
-		"Fileprefix" = sprintf(paste0("rnbeads_sample_%0", nd, "d"), 1:length(sample.ids)),
 		stringsAsFactors = FALSE)
 	for (i in 1:length(sample.ids)) {
 		fname <- file.path(out.dir, filenames[i, 2L])
@@ -590,7 +589,8 @@ rnb.export.to.trackhub <- function(rnb.set,out.dir,reg.type="sites",data.type="b
 		rnb.logger.completed()
 		#convert to binary
 		in.file.list <- file.path(bedgraph.dir,bedGraph.conv$filenames$File)
-		out.file.list <- file.path(track.hub.dir,assembly(rnb.set),paste(bedGraph.conv$filenames$Fileprefix,".bigWig",sep=""))
+		out.file.list <- gsub("bedGraph$","bigWig",bedGraph.conv$filenames$File)
+		out.file.list <- file.path(track.hub.dir,assembly(rnb.set),out.file.list)
 
 		res[["contains.overlapping.regions"]] <- bedGraph.conv[["contains.overlapping.regions"]]
 		res[["filenames.bedGraph"]] <- bedGraph.conv$filenames
