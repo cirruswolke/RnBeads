@@ -6,33 +6,33 @@ RnBeads 1.1.8
 RnBeads 1.1.7
 =============
 
- * improvements to mergeSamples function for RnBiseqSets
- * some more memory clean-up
+ * Improvements to mergeSamples function for RnBiseqSets
+ * Some more memory clean-up
 
 RnBeads 1.1.6
 =============
 
- * differential methylation based on region level ONLY (without computing site-level differential methylation) is now supported
- * minor updates to the differential methylation report generation
- * performance improvements and minor bugfixes for using disk.dump.bigff
- * performance improvements (more memory clean-up)
+ * Differential methylation based on region level only is now supported
+ * Minor updates to the differential methylation report generation
+ * Performance improvements and minor bugfixes for using disk.dump.bigff
+ * Performance improvements (more memory clean-up)
 
 
 RnBeads 1.1.5
 =============
 
- * new option: disk.dump.bigff for using a wrapper class of the ff package to avoid their INT_MAX issue
+ * New option: disk.dump.bigff for using a wrapper class of the ff package to avoid their INT_MAX issue
 
 RnBeads 1.1.4
 =============
 
- * fixes in parallel environment setup from bioconcuctor
+ * Fixes in parallel environment setup from bioconcuctor
 
 RnBeads 1.1.3
 =============
 
  * Some fixes in data loading
- * fixes in parallel environment setup
+ * Fixes in parallel environment setup
 
 RnBeads 1.1.2
 =============
