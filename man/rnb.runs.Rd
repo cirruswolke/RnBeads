@@ -27,15 +27,15 @@ rnb.run.inference(rnb.set, dir.reports,
   init.configuration = !file.exists(file.path(dir.reports, "configuration")),
   close.report = TRUE, show.report = FALSE)
 
+rnb.run.tnt(rnb.set, dir.reports,
+  init.configuration = !file.exists(file.path(dir.reports, "configuration")),
+  close.report = TRUE, show.report = FALSE)
+
 rnb.run.exploratory(rnb.set, dir.reports,
   init.configuration = !file.exists(file.path(dir.reports, "configuration")),
   close.report = TRUE, show.report = FALSE)
 
 rnb.run.differential(rnb.set, dir.reports,
-  init.configuration = !file.exists(file.path(dir.reports, "configuration")),
-  close.report = TRUE, show.report = FALSE)
-
-rnb.run.tnt(rnb.set, dir.reports,
   init.configuration = !file.exists(file.path(dir.reports, "configuration")),
   close.report = TRUE, show.report = FALSE)
 }
