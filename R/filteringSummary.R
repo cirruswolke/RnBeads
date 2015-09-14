@@ -41,6 +41,57 @@ rnb.get.filtered.sites.samples <- function(old.set, new.set) {
 
 ########################################################################################################################
 
+#' rnb.filter.dataset
+#' 
+#' Modifies the given methylation dataset after a sequence of filtering steps has been performed and summarized.
+#' 
+#' @param rnb.set   Methylation dataset as an object of type inheriting \code{\linkS4class{RnBSet}}.
+#' @param r.samples Indices of all samples to be removed as a result of performing filtering steps.
+#' @param r.sites   Indices of all sites/probes to be removed as a result of performing filtering steps.
+#' @param mask      Optionally, masking of low quality measures to be applied. If specified, this parameter must be a
+#'                  \code{matrix} of \code{logical} values with dimensions corresponding to the size of \code{rnb.set}.
+#' @return The possibly modified dataset.
+#' 
+#' @author Yassen Assenov
+#' @noRd
+rnb.filter.dataset <- function(rnb.set, r.samples, r.sites, mask = NULL) {
+	logger.start("Manipulating the object")
+	needs.summary <- (!is.null(mask))
+	if (needs.summary) {
+		rnb.set@meth.sites[,][mask] <- NA
+	}
+	if (length(r.samples) != 0) {
+		if(rnb.getOption("enforce.destroy.disk.dumps")){
+			rnb.set@status$discard.ff.matrices<-TRUE
+		}
+		rnb.set <- remove.samples(rnb.set, r.samples)
+		if(isTRUE(rnb.set@status$discard.ff.matrices)){
+			rnb.set@status$discard.ff.matrices<-NULL
+		}
+		needs.summary <- FALSE
+		logger.status(sprintf("Removed %d samples", length(r.samples)))
+	}
+	if (length(r.sites) != 0) {
+		if(rnb.getOption("enforce.destroy.disk.dumps")){
+			rnb.set@status$discard.ff.matrices<-TRUE
+		}
+		rnb.set <- remove.sites(rnb.set, r.sites)
+		if(isTRUE(rnb.set@status$discard.ff.matrices)){
+			rnb.set@status$discard.ff.matrices<-NULL
+		}
+		needs.summary <- FALSE
+		logger.status(sprintf("Removed %d sites (probes)", length(r.sites)))
+	}
+	if (needs.summary) {
+		rnb.set <- updateRegionSummaries(rnb.set)
+		logger.status("Updated region-level data")
+	}
+	logger.completed()
+	rnb.set
+}
+
+########################################################################################################################
+
 #' rnb.execute.filter.summary
 #'
 #' Calculates a table summarizing the effect of the applied filtering procedures.

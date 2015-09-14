@@ -983,7 +983,7 @@ rnb.run.qc <- function(rnb.set, dir.reports, init.configuration = !file.exists(f
 
 #' @rdname rnb.runs
 #' @export
-rnb.run.preprocessing<-function(rnb.set, dir.reports,
+rnb.run.preprocessing <- function(rnb.set, dir.reports,
 	init.configuration = !file.exists(file.path(dir.reports, "configuration")), close.report = TRUE,
 	show.report = FALSE) {
 
@@ -995,16 +995,13 @@ rnb.run.preprocessing<-function(rnb.set, dir.reports,
 	if (is.null(do.normalization)) {
 		do.normalization <- inherits(rnb.set, "RnBeadSet")
 	}
-
 	if (inherits(rnb.set, "RnBiseqSet")) {
 		logger.warning("Skipped normalization module for sequencing data.")
 		do.normalization <- FALSE
 	}
 
 	## Option list
-
 	report <- init.pipeline.report("preprocessing", dir.reports, init.configuration)
-
 	o.greedycut.threshold <- ifelse(inherits(rnb.set, "RnBeadSet"), "filtering.greedycut.pvalue.threshold",
 		"filtering.coverage.threshold")
 	optionlist <- rnb.options("filtering.whitelist", "filtering.blacklist", "filtering.snp",
@@ -1015,7 +1012,6 @@ rnb.run.preprocessing<-function(rnb.set, dir.reports,
 		optionlist <- optionlist[-4]
 		attr.vec <- attr.vec[-4]
 	}
-
 	if (is.null(optionlist[["filtering.whitelist"]])) {
 		optionlist[["filtering.whitelist"]] <- ""
 	}
@@ -1026,26 +1022,19 @@ rnb.run.preprocessing<-function(rnb.set, dir.reports,
 		optionlist <- c(optionlist, rnb.options("filtering.high.coverage.outliers", "filtering.low.coverage.masking"))
 		attr.vec <- c(attr.vec, TRUE, TRUE)
 	}
-
 	optionlist <- c(optionlist,
 			rnb.options("normalization.method", "normalization.background.method", "normalization.plot.shifts"))
 	attr.vec <- c(attr.vec, TRUE, TRUE, TRUE)
-
 	optionlist <- c(optionlist, rnb.options("filtering.context.removal", "filtering.missing.value.quantile",
 			"filtering.sex.chromosomes.removal", "filtering.deviation.threshold", "distribution.subsample"))
 	attr.vec <- c(attr.vec, TRUE, TRUE, TRUE, TRUE, TRUE)
-
 	attr(optionlist, "enabled") <- attr.vec
 	report <- rnb.add.optionlist(report, optionlist)
 
-	### Prefiltering
-	if(do.normalization){
-		logger.start("Filtering Procedures I")
-	}else{
-		logger.start("Filtering Procedures")
-	}
-	anno.table <- annotation(rnb.set, add.names = inherits(rnb.set, "RnBeadSet"))
+	## Prefiltering
+	logger.start(paste0("Filtering Procedures", ifelse(do.normalization, " I", "")))
 
+	anno.table <- annotation(rnb.set, add.names = inherits(rnb.set, "RnBeadSet"))
 	whitelist <- rnb.process.sitelist(rnb.getOption("filtering.whitelist"), anno.table)
 	blacklist <- rnb.process.sitelist(rnb.getOption("filtering.blacklist"), anno.table)
 	removed.sites <- sort(union(blacklist, whitelist))
@@ -1055,7 +1044,6 @@ rnb.run.preprocessing<-function(rnb.set, dir.reports,
 		## TODO: Add a section on whitelisted and/or blacklisted sites
 		# setdiff(blacklist, whitelist)
 	}
-
 	if (rnb.getOption("filtering.snp") != "no") {
 		result <- rnb.step.snp.removal.internal(class(rnb.set), removed.sites, report, anno.table)
 		report <- result$report
@@ -1077,6 +1065,7 @@ rnb.run.preprocessing<-function(rnb.set, dir.reports,
 		report <- result$report
 		removed.sites <- sort(c(removed.sites, result$filtered))
 	}
+	mask <- NULL
 	if (rnb.getOption("filtering.low.coverage.masking")) {
 		result <- rnb.step.low.coverage.masking.internal(rnb.set, removed.sites, report, anno.table,
 				covg.threshold = rnb.getOption("filtering.coverage.threshold"))
@@ -1087,85 +1076,42 @@ rnb.run.preprocessing<-function(rnb.set, dir.reports,
 	}
 	suppressWarnings(rm(result))
 
-	removed.sites <- setdiff(removed.sites, whitelist)
-
+	logger.completed.filtering <- function(mm, r.samples, r.sites) {
+		retained.p <- nrow(mm) - length(r.sites)
+		retained.s <- ncol(mm) - length(r.samples)
+		logger.status(c("Retained", retained.s, "samples and", retained.p, "sites"))
+		logger.completed()
+	}
+	
 	if (do.normalization) {
 		## Summary I
-		mm <- meth(rnb.set)
-		retained.p <- nrow(mm) - length(removed.sites)
-		retained.s <- ncol(mm) - length(removed.samples)
-		logger.status(c("Retained", retained.s, "samples and", retained.p, "sites"))
-		rm(mm, retained.p, retained.s)
-		logger.completed()
+		removed.sites <- setdiff(removed.sites, whitelist)
+		logger.completed.filtering(meth(rnb.set), removed.samples, removed.sites)
 
 		logger.start("Summary of Filtering Procedures I")
 		relm <- rnb.get.reliability.matrix(rnb.set)
 		report <- rnb.step.filter.summary.internal(class(rnb.set), meth(rnb.set), relm, removed.samples, removed.sites,
 				report, section.name="Filtering Summary I", section.order=1)
 		logger.completed()
-	}
 
-	logger.start("Manipulating the object")
-	needs.summary <- FALSE
-	if (base::exists("mask", inherits = FALSE)) {
-		rnb.set@meth.sites[,][mask] <- NA
-		rm(mask)
-		needs.summary <- TRUE
-	}
-	if (length(removed.samples) != 0) {
-		if(rnb.getOption("enforce.destroy.disk.dumps")){
-			rnb.set@status$discard.ff.matrices<-TRUE
-		}
-		rnb.set <- remove.samples(rnb.set, removed.samples)
-		if(isTRUE(rnb.set@status$discard.ff.matrices)){
-			rnb.set@status$discard.ff.matrices<-NULL
-		}
-		needs.summary <- FALSE
-		logger.status(sprintf("Removed %d samples", length(removed.samples)))
-	}
+		rnb.set <- rnb.filter.dataset(rnb.set, removed.samples, removed.sites, mask)
+		mask <- NULL
 
-	if (length(removed.sites)) {
-		if(rnb.getOption("enforce.destroy.disk.dumps")){
-			rnb.set@status$discard.ff.matrices<-TRUE
-		}
-		rnb.set <- remove.sites(rnb.set, removed.sites)
-		if(isTRUE(rnb.set@status$discard.ff.matrices)){
-			rnb.set@status$discard.ff.matrices<-NULL
-		}
-		needs.summary <- FALSE
-		logger.status(sprintf("Removed %d sites (probes)", length(removed.sites)))
-	}
-
-	if (needs.summary) {
-		rnb.set <- updateRegionSummaries(rnb.set)
-		logger.status(sprintf("Updated region-level data"))
-	}
-	logger.completed()
-
-	if (do.normalization) {
 		## Normalization
 		normalization.result <- rnb.step.normalization(rnb.set, report)
-		rnb.set<-normalization.result$dataset
-		report<-normalization.result$report
+		rnb.set <- normalization.result$dataset
+		report <- normalization.result$report
 		suppressWarnings(rm(normalization.result))
 		rnb.cleanMem()
+
+		logger.start("Filtering Procedures II")
+		anno.table <- annotation(rnb.set, add.names = inherits(rnb.set, "RnBeadSet"))
+		whitelist <- rnb.process.sitelist(rnb.getOption("filtering.whitelist"), anno.table)
+		removed.samples <- integer()
+		removed.sites <- whitelist
 	}
 
 	## Postfiltering
-	if(do.normalization){
-		logger.start("Filtering Procedures II")
-	}
-
-	anno.table <- annotation(rnb.set, add.names = inherits(rnb.set, "RnBeadSet"))
-	whitelist <- rnb.process.sitelist(rnb.getOption("filtering.whitelist"), anno.table)
-	blacklist <- rnb.process.sitelist(rnb.getOption("filtering.blacklist"), anno.table)
-	removed.sites <- sort(union(blacklist, whitelist))
-
-	if (length(whitelist) != 0 || length(blacklist) != 0) {
-		## TODO: Add a section on whitelisted and/or blacklisted sites
-		# setdiff(blacklist, whitelist)
-	}
-
 	mm <- meth(rnb.set)
 	if (length(rnb.getOption("filtering.context.removal")) != 0 && inherits(rnb.set, "RnBeadSet")) {
 		result <- rnb.step.context.removal.internal(removed.sites, report, anno.table)
@@ -1191,18 +1137,11 @@ rnb.run.preprocessing<-function(rnb.set, dir.reports,
 	}
 	suppressWarnings(rm(result, ttt))
 
-	## Summary II
-
+	## Summary (II)
 	removed.sites <- setdiff(removed.sites, whitelist)
-	logger.status(c("Retained", ncol(mm), "samples and", nrow(mm) - length(removed.sites), "sites"))
-	rm(mm)
-	logger.completed()
+	logger.completed.filtering(mm, removed.samples, removed.sites)
 
-	if(do.normalization){
-		logger.start("Summary of Filtering Procedures II")
-	}else{
-		logger.start("Summary of Filtering Procedures")
-	}
+	logger.start(paste0("Summary of Filtering Procedures", ifelse(do.normalization, " II", "")))
 	relm <- rnb.get.reliability.matrix(rnb.set)
 	if(do.normalization){
 		sn<-"Filtering Summary II"
@@ -1211,22 +1150,11 @@ rnb.run.preprocessing<-function(rnb.set, dir.reports,
 		sn<-"Filtering Summary"
 		so<-0L
 	}
-	report <- rnb.step.filter.summary.internal(class(rnb.set), meth(rnb.set), relm, integer(), removed.sites,
+	report <- rnb.step.filter.summary.internal(class(rnb.set), meth(rnb.set), relm, removed.samples, removed.sites,
 			report, section.name=sn, section.order=so)
 	logger.completed()
 
-	logger.start("Manipulating the object")
-	if (length(removed.sites)) {
-		if(rnb.getOption("enforce.destroy.disk.dumps")){
-			rnb.set@status$discard.ff.matrices<-TRUE
-		}
-		rnb.set <- remove.sites(rnb.set, removed.sites)
-		if(isTRUE(rnb.set@status$discard.ff.matrices)){
-			rnb.set@status$discard.ff.matrices<-NULL
-		}
-		logger.status(sprintf("Removed %d sites (probes)", length(removed.sites)))
-	}
-	logger.completed()
+	rnb.set <- rnb.filter.dataset(rnb.set, removed.samples, removed.sites, mask)
 
 	if (rnb.getOption("region.subsegments") > 1L) {
 		res <- rnb.step.region.subsegmentation(rnb.set, report, region.types=rnb.getOption("region.subsegments.types"))
@@ -1281,6 +1209,41 @@ rnb.run.inference <- function(rnb.set, dir.reports,
 
 	module.complete(report, close.report, show.report)
 	return(list(rnb.set = rnb.set, report = report))
+}
+
+########################################################################################################################
+
+#' @rdname rnb.runs
+#' @export
+rnb.run.tnt <- function(rnb.set, dir.reports,
+	init.configuration = !file.exists(file.path(dir.reports, "configuration")), close.report = TRUE,
+	show.report = FALSE) {
+	validate.module.parameters(rnb.set, dir.reports, close.report, show.report)
+	module.start.log("Tracks and Tables")
+	
+	report <- init.pipeline.report("tracks_and_tables", dir.reports, init.configuration)
+	optionlist <- rnb.options("export.to.csv", "export.to.bed", "export.to.trackhub", "export.types")
+	attr(optionlist, "enabled") <- c(TRUE, TRUE, TRUE,
+		(optionlist[["export.to.bed"]] | length(optionlist[["export.to.trackhub"]]) > 0 | optionlist[["export.to.csv"]]))
+	report <- rnb.add.optionlist(report, optionlist)
+	
+	if (rnb.getOption("export.to.csv")) {
+		result <- rnb.execute.export.csv(rnb.set, report)
+		logger.status("Exported data to CSV format")
+		report <- rnb.section.export.csv(report, result)
+		logger.status("Added \"CSV Export\" section to the report")
+	}
+	provided.email <- rnb.getOption("email")
+	if (is.null(provided.email)) provided.email <- "-@-.com"
+	res <- rnb.execute.tnt(rnb.set,rnb.get.directory(report, "data", absolute = TRUE),
+		exp.bed=rnb.getOption("export.to.bed"),exp.trackhub=rnb.getOption("export.to.trackhub"),
+		email=provided.email)
+	logger.start("Writing export report")
+	report <- rnb.section.tnt(res,rnb.set,report)
+	logger.completed()
+	
+	module.complete(report, close.report, show.report)
+	invisible(report)
 }
 
 ########################################################################################################################
@@ -1470,41 +1433,6 @@ rnb.run.differential <- function(rnb.set, dir.reports,
 
 	module.complete(report, close.report, show.report)
 	invisible(list(report=report,diffmeth=diffmeth,dm.enrich=dm.enrich))
-}
-
-########################################################################################################################
-
-#' @rdname rnb.runs
-#' @export
-rnb.run.tnt <- function(rnb.set, dir.reports,
-	init.configuration = !file.exists(file.path(dir.reports, "configuration")), close.report = TRUE,
-	show.report = FALSE) {
-	validate.module.parameters(rnb.set, dir.reports, close.report, show.report)
-	module.start.log("Tracks and Tables")
-
-	report <- init.pipeline.report("tracks_and_tables", dir.reports, init.configuration)
-	optionlist <- rnb.options("export.to.csv", "export.to.bed", "export.to.trackhub", "export.types")
-	attr(optionlist, "enabled") <- c(TRUE, TRUE, TRUE,
-		(optionlist[["export.to.bed"]] | length(optionlist[["export.to.trackhub"]]) > 0 | optionlist[["export.to.csv"]]))
-	report <- rnb.add.optionlist(report, optionlist)
-
-	if (rnb.getOption("export.to.csv")) {
-		result <- rnb.execute.export.csv(rnb.set, report)
-		logger.status("Exported data to CSV format")
-		report <- rnb.section.export.csv(report, result)
-		logger.status("Added \"CSV Export\" section to the report")
-	}
-	provided.email <- rnb.getOption("email")
-	if (is.null(provided.email)) provided.email <- "-@-.com"
-	res <- rnb.execute.tnt(rnb.set,rnb.get.directory(report, "data", absolute = TRUE),
-		exp.bed=rnb.getOption("export.to.bed"),exp.trackhub=rnb.getOption("export.to.trackhub"),
-		email=provided.email)
-	logger.start("Writing export report")
-	report <- rnb.section.tnt(res,rnb.set,report)
-	logger.completed()
-
-	module.complete(report, close.report, show.report)
-	invisible(report)
 }
 
 ########################################################################################################################
