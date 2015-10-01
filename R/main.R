@@ -937,12 +937,6 @@ rnb.run.import <- function(data.source, data.type = rnb.getOption("import.defaul
 	report <- rnb.add.optionlist(report, optionlist)
 
 	result <- rnb.step.import(data.source, data.type, report)
-	if (inherits(result$rnb.set, "RnBeadRawSet") && result$rnb.set@target == "probes450") {
-		result$rnb.set <- rnb.execute.gender.prediction(result$rnb.set)
-	}
-	if (is.null(result$rnb.set@inferred.covariates$gender)) {
-		result$rnb.set@inferred.covariates$gender <- FALSE
-	}
 
 	module.complete(result$report, close.report, show.report)
 	return(result)
@@ -994,8 +988,7 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 
 	if (is.null(do.normalization)) {
 		do.normalization <- inherits(rnb.set, "RnBeadSet")
-	}
-	if (inherits(rnb.set, "RnBiseqSet")) {
+	} else if (do.normalization && inherits(rnb.set, "RnBiseqSet")) {
 		logger.warning("Skipped normalization module for sequencing data.")
 		do.normalization <- FALSE
 	}
@@ -1082,7 +1075,7 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 		logger.status(c("Retained", retained.s, "samples and", retained.p, "sites"))
 		logger.completed()
 	}
-	
+
 	if (do.normalization) {
 		## Summary I
 		removed.sites <- setdiff(removed.sites, whitelist)
@@ -1220,13 +1213,13 @@ rnb.run.tnt <- function(rnb.set, dir.reports,
 	show.report = FALSE) {
 	validate.module.parameters(rnb.set, dir.reports, close.report, show.report)
 	module.start.log("Tracks and Tables")
-	
+
 	report <- init.pipeline.report("tracks_and_tables", dir.reports, init.configuration)
 	optionlist <- rnb.options("export.to.csv", "export.to.bed", "export.to.trackhub", "export.types")
 	attr(optionlist, "enabled") <- c(TRUE, TRUE, TRUE,
 		(optionlist[["export.to.bed"]] | length(optionlist[["export.to.trackhub"]]) > 0 | optionlist[["export.to.csv"]]))
 	report <- rnb.add.optionlist(report, optionlist)
-	
+
 	if (rnb.getOption("export.to.csv")) {
 		result <- rnb.execute.export.csv(rnb.set, report)
 		logger.status("Exported data to CSV format")
@@ -1241,7 +1234,7 @@ rnb.run.tnt <- function(rnb.set, dir.reports,
 	logger.start("Writing export report")
 	report <- rnb.section.tnt(res,rnb.set,report)
 	logger.completed()
-	
+
 	module.complete(report, close.report, show.report)
 	invisible(report)
 }

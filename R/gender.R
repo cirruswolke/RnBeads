@@ -11,6 +11,9 @@
 ## Columns added to the sample annotation table when gender is predicted
 RNB.COLUMNS.PREDICTED.GENDER <- c("Predicted Male Probability", "Predicted Gender")
 
+## Coefficients of a logistic regression model to predict gender based on signal increases of the sex chromosomes
+RNB.GENDER.COEFFICIENTS <- c(-3, 3, -1)
+
 ## F U N C T I O N S ###################################################################################################
 
 #' rnb.contains.sex
@@ -41,28 +44,36 @@ rnb.contains.sex <- function(rnb.set) {
 #' @noRd
 rnb.get.XY.shifts <- function(rnb.set, signal.type = "raw") {
 
-	## Identify the indices of sites on the sex chromosomes and autosomes
-	ci.X <- which(rnb.get.chromosomes(rnb.set@assembly) == "X")
-	ci.Y <- which(rnb.get.chromosomes(rnb.set@assembly) == "Y")
-	site.chroms <- rnb.set@sites[, 2]
-	chrom2probes <- list(
-		X = as.integer(which(site.chroms == ci.X)),
-		Y = as.integer(which(site.chroms == ci.Y)))
-	chrom2probes$autosome <- setdiff(1:length(site.chroms), unlist(chrom2probes, use.names = FALSE))
+	probes.bad <- rnb.get.annotation(rnb.set@target, rnb.set@assembly)
+	probes.max <- sapply(probes.bad, length)
+	probes.bad <- lapply(probes.bad, function(x) { which((mcols(x)[, "SNPs 3"] != 0) | (mcols(x)[, "Cross-reactive"] != 0)) })
+	probes.max <- probes.max - sapply(probes.bad, length)
 
-	## Validate that not too many sites are missing
-	probes.max <- rnb.annotation.size(rnb.set@target, assembly = rnb.set@assembly)
-	probes.max <- c(X = sum(probes.max[ci.X]), Y = sum(probes.max[ci.Y]), autosome = sum(probes.max[-c(ci.X, ci.Y)]))
-	fr.available <- sapply(chrom2probes, length) / probes.max
-	if (any(fr.available < 0.2)) {
+	## Identify the indices of sites on the sex chromosomes and autosomes
+	gender.chroms <- c("X" = "chrX", "Y" = "chrY")
+	tokeep <- tapply(rnb.set@sites[, 3], rnb.set@sites[, 2], unname)
+	names(tokeep) <- names(probes.bad)[as.integer(names(tokeep))]
+	if (!all(c(gender.chroms) %in% names(tokeep))) {
 		return(NULL)
 	}
-	rm(ci.X, ci.Y, site.chroms)
-	rm(probes.max, fr.available)
+	isgood <- function(x, y) match(x, y, nomatch = 0L) == 0L
+	tokeep <- mapply(isgood, x = tokeep, y = probes.bad[names(tokeep)], SIMPLIFY = FALSE)
+	inds <- cumsum(sapply(tokeep, length))
+	inds <- cbind("last" = inds, "first" = 1L + c(0L, unname(inds[-length(inds)])))
+	ii <- lapply(gender.chroms, function(cn) { (inds[cn, "first"]:inds[cn, "last"])[tokeep[[cn]]] })
+	ii$autosome <- setdiff((1:nrow(rnb.set@sites))[unlist(tokeep, use.names = FALSE)], unlist(ii, use.names = FALSE))
+	rm(tokeep, isgood, inds)
+
+	## Validate that not too many sites are missing
+	probes.max <- c(probes.max[gender.chroms], sum(probes.max) - sum(probes.max[gender.chroms]))
+	min.fraction <- 0.2
+	if (!all(sapply(ii, length) / probes.max >= min.fraction)) {
+		return(NULL)
+	}
 
 	## Calculate signal shifts
 	shifts <- t(apply(rnb.set@M[, , drop = FALSE] + rnb.set@U[, , drop = FALSE], 2, function(x) {
-			t.signals <- sapply(chrom2probes, function(i) { mean(x[i], na.rm = TRUE) })
+			t.signals <- sapply(ii, function(i) { mean(x[i], na.rm = TRUE) })
 			c(t.signals[1], t.signals[2]) - t.signals[3]
 		})
 	)
@@ -76,17 +87,18 @@ rnb.get.XY.shifts <- function(rnb.set, signal.type = "raw") {
 #' Adds two columns (RNB.COLUMNS.PREDICTED.GENDER) to the sample annotation of the given methylation dataset, based
 #' on the calculated methylation shifts. Also sets the gender inferred covariate to \code{TRUE}.
 #'
-#' @param rnb.set         Dataset of interest. Currently only RnBeadRawSet is supported.
+#' @param rnb.set         Dataset of interest. Currently only \code{\linkS4class{RnBeadRawSet}} is supported.
 #' @param shifts          Matrix of calculated mean signal increases, as returned by \code{\link{rnb.get.XY.shifts}}.
-#' @param pr.coefficients Coefficients of the logistic regression model used for the prediction of gender.
+#' @param pr.coefficients 3-element vector storing the coefficients of the logistic regression model used for the
+#'                        prediction of gender. The first element of this vector must denote the intercept.
 #' @return The possibly modified dataset with two columns added to its sample annotation table. If \code{shifts} is
 #'         \code{NULL}, the returned dataset is \code{rnb.set}.
 #'
 #' @author Yassen Assenov
 #' @noRd
-rnb.set.update.predicted.gender <- function(rnb.set, shifts, pr.coefficients = c(2, -1)) {
+rnb.set.update.predicted.gender <- function(rnb.set, shifts, pr.coefficients = RNB.GENDER.COEFFICIENTS) {
 	if (!is.null(shifts)) {
-		male.probabilities <- as.vector(1 / (1 + exp(shifts %*% pr.coefficients)))
+		male.probabilities <- as.vector(1 / (1 + exp(shifts %*% pr.coefficients[-1] + pr.coefficients[1])))
 		rnb.set@pheno[, RNB.COLUMNS.PREDICTED.GENDER[1]] <- male.probabilities
 		p.genders <- factor(ifelse(male.probabilities > 0.5, "male", "female"), levels = c("female", "male", "unknown"))
 		p.genders[is.na(p.genders)] <- "unknown"
@@ -137,7 +149,7 @@ rnb.execute.gender.prediction <- function(rnb.set) {
 #'
 #' Adds a dedicated section on gender prediction results to the given report.
 #'
-#' @param rnb.set Methylation dataset after running the gender prediction step, as an object of type 
+#' @param rnb.set Methylation dataset after running the gender prediction step, as an object of type
 #'                \code{\linkS4class{RnBSet}}.
 #' @param shifts  Matrix of calculated mean signal increases, as returned by \code{\link{rnb.get.XY.shifts}}.
 #' @param report  Report on annotation inferrence to contain the gender prediction section. This must be an object of
@@ -168,8 +180,8 @@ rnb.section.gender.prediction <- function(rnb.set, shifts, report) {
 			colors.gender <- c(muted("pink"), muted("blue"), "#808080")
 			names(colors.gender) <- levels(pred.genders)
 			pred.genders <- table(pred.genders)
-			txt <- c("RnBeads predicted the gender of the samples in the dataset using a logistic regression model. ",
-				"The results are summarized in the table below.")
+			txt <- c('RnBeads predicted the gender of the samples in the dataset using a logistic regression model. ',
+				'The results are summarized in the table below.')
 			pred.genders <- data.frame("Gender" = names(pred.genders), "Samples" = as.integer(pred.genders),
 				check.names = FALSE, stringsAsFactors = FALSE)
 		}
@@ -205,7 +217,8 @@ rnb.section.gender.prediction <- function(rnb.set, shifts, report) {
 			} else { # s.coloring == "gend"
 				pp <- pp + ggplot2::scale_color_manual(na.value = colors.gender[3], values = colors.gender)
 			}
-			pp <- pp + ggplot2::geom_abline(intercept = 0, slope = -(-2) / 1) +
+			xslope <- -RNB.GENDER.COEFFICIENTS[2] / RNB.GENDER.COEFFICIENTS[3]
+			pp <- pp + ggplot2::geom_abline(intercept = RNB.GENDER.COEFFICIENTS[1], slope = xslope) +
 				ggplot2::theme(plot.margin = unit(0.1 + c(0, 1, 0, 0), "in")) +
 				ggplot2::theme(legend.position = c(1, 0.5), legend.justification = c(0, 0.5))
 			fname <- paste0("gender_prediction_signals_", s.coloring)
@@ -226,7 +239,7 @@ rnb.section.gender.prediction <- function(rnb.set, shifts, report) {
 #' rnb.step.gender.prediction
 #'
 #' Executes the gender prediction step and adds a dedicated section to the report.
-#' 
+#'
 #' @param rnb.set Methylation dataset as an object of type \code{\linkS4class{RnBSet}}.
 #' @param report  Report on annotation inferrence to contain the gender prediction section. This must be an object of
 #'                type \code{\linkS4class{Report}}.

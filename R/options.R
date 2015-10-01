@@ -468,6 +468,9 @@ rnb.is.option <- function(txt) {
 #'        See \pkg{RnBeads} vignette and the FAQ section on the website for more details.}
 #'   \item{\bold{\code{import.bed.test.only}}\code{ = FALSE}}{
 #' 		  Perform only the small loading test, and skip loading all the data.}
+#'   \item{\bold{\code{import.gender.prediction}}\code{ = TRUE}}{
+#'        Flag indicating if gender prediction is to be performed. Gender prediction is only supported for Infinium 450k
+#'        datasets with signal intensity information. The value of this option is ignored for other datasets.}
 #'   \item{\bold{\code{preprocessing}}\code{ = TRUE}}{Flag controlling whether the data should be preprocessed
 #' 		  (whether quality filtering and in case of Infinium microarray data normalization should be applied).}
 #'   \item{\bold{\code{normalization}}\code{ = NULL}}{

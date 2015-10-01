@@ -16,10 +16,10 @@
 #'                    		expected format depends on the \code{data.type} that is given. See the \emph{Details} section.
 #' @param data.type   		type of the input data; must be one of \code{"idat.dir"}, \code{"data.dir"}, \code{"data.files"},
 #'                    		\code{"GS.report"}, \code{"GEO"} or \code{"rnb.set"}.
-#' @param dry.run			if \code{TRUE} and \code{data.type} is \code{"bs.bed.dir"}, only a test data import is performed and first 10,000 lines are read from each BED file   
-#' @param verbose			flag specifying whether diagnostic output should be written to the console or to the RnBeads logger 
+#' @param dry.run			if \code{TRUE} and \code{data.type} is \code{"bs.bed.dir"}, only a test data import is performed and first 10,000 lines are read from each BED file
+#' @param verbose			flag specifying whether diagnostic output should be written to the console or to the RnBeads logger
 #' 							in case the latter is initialized
-#'  
+#'
 #' @return Loaded data as an object of type \code{\linkS4class{RnBSet}} (when the input data type is
 #'         \code{"data.dir"}, \code{"data.files"} or \code{"GEO"}) or of type \code{\linkS4class{MethyLumiSet}} (when
 #'         the data type is \code{"idat.dir"} or \code{"GS.report"}).
@@ -32,31 +32,31 @@
 #'   \code{"infinium.idat.dir"}  \tab \code{list} or \code{character} \tab \code{2}       \tab
 #'     (1) Directory containing IDAT files; (2) a sample annotation table as a \code{data.frame} or the name of the corresponding file\cr
 #'   \code{"infinium.data.dir"}  \tab \code{character} \tab \code{1} \tab
-#'    Directory containing data tables in plain text format. The directory should contain one file with \code{Sample|sample} token in the filename 
-#' for the table of sample annotations, and one file with a token \code{beta} in the filename, with beta-values. It may also contain tables with p-values 
-#' (token \code{pval}) and bead counts (\code{bead}). In the latter case beta-value, p-value and bead count tables should have matching columns and rows. 
+#'    Directory containing data tables in plain text format. The directory should contain one file with \code{Sample|sample} token in the filename
+#' for the table of sample annotations, and one file with a token \code{beta} in the filename, with beta-values. It may also contain tables with p-values
+#' (token \code{pval}) and bead counts (\code{bead}). In the latter case beta-value, p-value and bead count tables should have matching columns and rows.
 #' The beta-value, p-value and bead-count tables should contain row names, i.e. the first column should contain the Infinium CG identifiers and not have
-#' a column header (for that the first row should have one entry less than all other rows). Sample annotation table should contain as many rows as there are 
-#' columns in other tables. The character used as value separator in the text tables can be set using the \code{import.table.separator} option 
+#' a column header (for that the first row should have one entry less than all other rows). Sample annotation table should contain as many rows as there are
+#' columns in other tables. The character used as value separator in the text tables can be set using the \code{import.table.separator} option
 #' (see \code{\link{rnb.options}} for details). \cr
 #' 	 \code{"infinium.data.files"} \tab \code{character} \tab \code{2..4} \tab
 #' 	The character vector should contain at least full paths to the sample annotation file and beta-value table. Detection p-values and bead counts table
-#'  can be added as the third and the fourth elements. The table format requirements are the same as for \code{"data.dir"} above.\cr 
+#'  can be added as the third and the fourth elements. The table format requirements are the same as for \code{"data.dir"} above.\cr
 #'   \code{"infinium.GS.report"} \tab \code{character}                \tab \code{1}       \tab
 #'     Genome Studio report file\cr
 #'   \code{"infinium.GEO"}       \tab \code{character}                \tab \code{1}       \tab
 #'     \href{http://www.ncbi.nlm.nih.gov/geo/}{GEO} identifier or downloaded series matrix file\cr
 #'   \code{"bs.bed.dir"}       \tab \code{list} or \code{character}                \tab \code{1..3}       \tab
-#'     (1) Directory with BED files each giving a DNA methylation profile of a sample; (2) a sample annotation table as a \code{data.frame} or the name of the corresponding file; 
-#' 		(3) number of the sample annotation sheet column containing the file names. One of the first two elements have to be present. In case only the directory is specified, 
+#'     (1) Directory with BED files each giving a DNA methylation profile of a sample; (2) a sample annotation table as a \code{data.frame} or the name of the corresponding file;
+#' 		(3) number of the sample annotation sheet column containing the file names. One of the first two elements have to be present. In case only the directory is specified,
 #' 		it should contain a sample annotation file with a token "sample" in the file name. In case only the sample sheet is specified, one column should be giving full absolute paths
 #' 		of the BED-like files with sequencing information. If both elements (1) and (2) are specified, the files should reside in the directory, specified as element (1).
-#' 		If the third element is absent, an attempt will be made to find the file name containing column automatically. For this reason the file names in the sample annotation sheet 
+#' 		If the third element is absent, an attempt will be made to find the file name containing column automatically. For this reason the file names in the sample annotation sheet
 #' 		should be given with extensions (".bed", ".cov" etc).\cr
 #'  \code{"rnb.set"}       \tab \code{\linkS4class{RnBSet}}                \tab \code{1}       \tab
 #'     object of class inheriting from \code{\linkS4class{RnBSet}}\cr
 #' }
-#' 
+#'
 #' @examples
 #' \donttest{
 #' # Directory where your data is located
@@ -68,7 +68,7 @@
 #' }
 #' @seealso \code{\link{read.data.dir}}, \code{\link{read.idat.files}}, \code{\link{read.GS.report}},
 #'          \code{\link{read.geo}}, \code{\link{read.bed.files}}
-#' #' 
+#' #'
 #' @author Pavlo Lutsik
 #' @export
 rnb.execute.import<-function(data.source, data.type=rnb.getOption("import.default.data.type"),
@@ -81,11 +81,11 @@ rnb.execute.import<-function(data.source, data.type=rnb.getOption("import.defaul
 		stop("invalid value for data.type; expected one-element character")
 	}
 	if (!(data.type %in% c("data.dir", "data.files", "idat.dir", "GS.report", "GEO", "bed.dir", "rnb.set", "rnb.set.dir",
-						"infinium.data.dir", "infinium.data.files", "infinium.idat.dir", "infinium.GS.report", "infinium.GEO", 
+						"infinium.data.dir", "infinium.data.files", "infinium.idat.dir", "infinium.GS.report", "infinium.GEO",
 						"bs.bed.dir","bs.data.dir","bs.data.files","rnb.set"))) {
 		stop("invalid value for data.type; expected one of data.dir, idat.dir, GS.report, GEO, bed.dir or rnb.set")
 	}
-	
+
 #	if(data.type %in% c("GS.report", "infinium.GS.report")){
 #		if(!suppressPackageStartupMessages(require("IlluminaHumanMethylation450k.db")))
 #			stop("Missing required package IlluminaHumanMethylation450k.db")
@@ -96,19 +96,19 @@ rnb.execute.import<-function(data.source, data.type=rnb.getOption("import.defaul
 		if (!(is.character(data.source) && length(data.source) == 1 && (!any(is.na(data.source))))) {
 			stop("invalid value for data.source; expected character of length 1")
 		}
-		
+
 		if(!file.exists(data.source) || !file.info(data.source)[1,"isdir"]){
 			rnb.error("invalid data.source parameter, data directory not found or is a file")
 		}
-		
+
 		result <- read.data.dir(dir=data.source, sep=rnb.getOption("import.table.separator"))
-	    
+
     }else if(data.type %in% c("data.files", "infinium.data.files", "bs.data.files")){
-		
+
 		if (!(is.character(data.source) && length(data.source) %in% 2L:4L && (!any(is.na(data.source))))) {
 			stop("invalid value for data.source; expected character of length from 2 to 4")
 		}
-		
+
 		sapply(data.source, function(dsf){
 			if(!file.exists(dsf) || file.info(dsf)[1,"isdir"]){
 				msg<-sprintf("invalid data.source parameter, file %s not found, or is a directory", dsf)
@@ -119,7 +119,7 @@ rnb.execute.import<-function(data.source, data.type=rnb.getOption("import.defaul
 		result <- do.call(read.data.dir, c(as.list(data.source), list(verbose=verbose)))
 
 	} else if(data.type %in% c("idat.dir", "infinium.idat.dir")){
-		
+
 		## TODO: Fix this once read.idat.files can also work with one parameter only
 	    if(!(is.character(data.source) || is.list(data.source)) && !length(data.source) %in% 1L:2L) {
 			stop("invalid value for data.source; expected list or character of length 1 to 2")
@@ -129,16 +129,16 @@ rnb.execute.import<-function(data.source, data.type=rnb.getOption("import.defaul
 		if(!file.exists(data.source[[1]]) || !file.info(data.source[[1]])[1,"isdir"]){
 			rnb.error("invalid data.source parameter, idat.dir is not found, or is not directory")
 		}
-		
+
 		if(length(data.source)==1L){
 			result <- read.idat.files(base.dir=data.source[[1]], useff=rnb.getOption("disk.dump.big.matrices"), verbose=verbose )
 		}else{
 			if (!is.data.frame(data.source[[2]])) {
 				if(!file.exists(data.source[[2]]) || file.info(data.source[[2]])[1,"isdir"]){
 					rnb.error("invalid data.source parameter, sample annotation file not found, or is a directory")
-				}			
+				}
 			}
-			result <- read.idat.files(base.dir=data.source[[1]], sample.sheet=data.source[[2]], 
+			result <- read.idat.files(base.dir=data.source[[1]], sample.sheet=data.source[[2]],
 					useff=rnb.getOption("disk.dump.big.matrices"), verbose=verbose)
 		}
 		gc()
@@ -151,7 +151,7 @@ rnb.execute.import<-function(data.source, data.type=rnb.getOption("import.defaul
 		}
 		if(!file.exists(data.source[[1]]) || file.info(data.source)[1,"isdir"]){
 			rnb.error("invalid data.source parameter, GS report file not found, or is a directory")
-		}		
+		}
 		if(is.character(data.source) && length(data.source)==2){
 			pd<-data.source[2]
 		}else if(is.list(data.source) && length(data.source)==2){
@@ -159,11 +159,11 @@ rnb.execute.import<-function(data.source, data.type=rnb.getOption("import.defaul
 		}else{
 			pd<-NULL
 		}
-		
+
 		if(rnb.getOption("import.table.separator")!="\t"){
-			rnb.warning("The table separator is not tab: this is unusual for Genome Studio reports ")			
+			rnb.warning("The table separator is not tab: this is unusual for Genome Studio reports ")
 		}
-		
+
 		result <- read.GS.report(data.source[1], pd=pd, verbose=verbose)
 
 	} else if(data.type %in% c("GEO", "infinium.GEO")) {
@@ -176,24 +176,24 @@ rnb.execute.import<-function(data.source, data.type=rnb.getOption("import.defaul
 		}else{
 			result <- read.geo(accession = data.source)
 		}
-		
+
 	} else if(data.type %in% c("bed.dir", "bs.bed.dir")){
-		
+
 		## TODO: Fix this once read.idat.files can also work with one parameter only
 		if(!(is.character(data.source) || is.list(data.source)) && !length(data.source) %in% 1L:3L) {
 			stop("invalid value for data.source; expected list or character of length 1 to 3")
 		}
 		data.source <- as.list(data.source)
-		
+
 		if(length(data.source)==1L && is.null(data.source[[1]])){
 			msg<-"invalid data.source parameter, data directory should be provided"
 			rnb.error(msg)
 		}
-		
+
 		if(!is.null(data.source[[1L]]) && (!file.exists(data.source[[1]]) || !file.info(data.source[[1]])[1,"isdir"])){
 			rnb.error("invalid data.source parameter, bed.dir is not found, or is not directory")
 		}
-		
+
 		if(length(data.source)==1L){
 			data.source<-c(data.source, list(NULL))
 		}else{
@@ -203,7 +203,7 @@ rnb.execute.import<-function(data.source, data.type=rnb.getOption("import.defaul
 				}
 			}
 		}
-		
+
 		msg<-"No column with file names specified: will try to find one"
 		if(length(data.source)<3L){
 			filename.column=NA
@@ -220,13 +220,13 @@ rnb.execute.import<-function(data.source, data.type=rnb.getOption("import.defaul
 			# 	}
 			# }
 		}
-		
+
 		if(dry.run){
 			nrows=10000L
 		}else{
 			nrows=-1L
 		}
-		
+
 		if (rnb.getOption("import.bed.style")=="EPP"){
 			result <- read.bed.files(base.dir=data.source[[1]], sample.sheet=data.source[[2]], file.names.col=filename.column,
 					verbose=verbose,
@@ -292,22 +292,22 @@ rnb.execute.import<-function(data.source, data.type=rnb.getOption("import.defaul
 					t.col=rnb.getOption("import.bed.columns")["t"],
 					nrows=nrows)
 		}
-		
+
 	} else if (data.type == "rnb.set") {
-		
+
 		if (!inherits(data.source, "RnBSet")) {
 			stop("invalid value for data.source: expected object of type RnBSet")
 		}
 		result <- data.source
-			
+
 	} else if (data.type == "rnb.set.dir") {
-		
+
 		data.source <- as.list(data.source)
 		if(length(data.source) != 1 || !file.exists(data.source[[1]])){
 			rnb.error("invalid data.source parameter, rnb.set.dir not found")
 		}
 		result <- load.rnb.set(data.source[[1L]])
-			
+
 	} else {
 		stop("invalid value for data.type; expected one of data.dir, idat.dir, GS.report, GEO or rnb.set")
 	}
@@ -356,7 +356,7 @@ rnb.section.import<-function(report, object, data.source, data.type=rnb.getOptio
 		stop("invalid value for data.type; expected one-element character")
 	}
 	if (!(data.type %in% c("data.dir", "data.files", "idat.dir", "GS.report", "GEO", "bed.dir", "rnb.set", "rnb.set.dir",
-						"infinium.data.dir", "infinium.data.files", "infinium.idat.dir", "infinium.GS.report", "infinium.GEO", 
+						"infinium.data.dir", "infinium.data.files", "infinium.idat.dir", "infinium.GS.report", "infinium.GEO",
 						"bs.bed.dir","bs.data.dir","bs.data.files","rnb.set"))) {
 		stop("invalid value for data.type; expected one of data.dir, idat.dir, GS.report, GEO, bed.dir or rnb.set")
 	}
@@ -369,7 +369,7 @@ rnb.section.import<-function(report, object, data.source, data.type=rnb.getOptio
 		num.samples<-ncol(meth(object))
 		num.probes<-nrow(meth(object))
 		if(inherits(object,"RnBeadSet"))
-			pvals.present<-!is.null(dpval(object)) else pvals.present<-FALSE 
+			pvals.present<-!is.null(dpval(object)) else pvals.present<-FALSE
 		bead.counts.present<-!is.null(covg(object))
 		pheno.table <- pheno(object)
 	} else { # class(object) == "MethyLumiSet"
@@ -486,21 +486,21 @@ rnb.step.import <- function(data.source, data.type = rnb.getOption("import.defau
 		stop("invalid value for data.type; expected one-element character")
 	}
 	if (!(data.type %in% c("data.dir", "idat.dir", "GS.report", "GEO", "bed.dir", "rnb.set", "rnb.set.dir",
-						"infinium.data.dir", "infinium.data.files","infinium.idat.dir", "infinium.GS.report", "infinium.GEO", 
+						"infinium.data.dir", "infinium.data.files","infinium.idat.dir", "infinium.GS.report", "infinium.GEO",
 						"bs.bed.dir","bs.data.dir","bs.data.files","rnb.set"))) {
-		
+
 		stop("invalid value for data.type; expected one of data.dir, idat.dir, GS.report, GEO, bed.dir or rnb.set")
 	}
 	if (!inherits(report, "Report")) {
 		stop("invalid value for report")
 	}
-	
+
 	if (rnb.getOption("logging") && logger.isinitialized() == FALSE) {
 		logger.start(fname = NA) # initialize console logger
 	}
-	
+
 	logger.info(sprintf("Loading data of type \"%s\"",data.type))
-	
+
 	## Load the data into an object
 	if(data.type %in% c("bed.dir", "bs.bed.dir") && rnb.getOption("import.bed.test")){
 		logger.start("Performing loading test")
@@ -518,7 +518,7 @@ rnb.step.import <- function(data.source, data.type = rnb.getOption("import.defau
 		rnb.cleanMem()
 		logger.completed()
 	}
-	
+
 	if(!data.type %in% c("bed.dir", "bs.bed.dir") || !rnb.getOption("import.bed.test.only")){
 		object <- rnb.execute.import(data.source, data.type)
 		rnb.cleanMem()
@@ -535,14 +535,24 @@ rnb.step.import <- function(data.source, data.type = rnb.getOption("import.defau
 			logger.completed()
 		}
 	}
-	
+
 	if (inherits(data.source, "RnBSet")) {
 		d.source <- paste("object of type", class(data.source))
 	} else { # inherits(object, "")
 		d.source <- as.character(data.source[1])
 	}
 	logger.status(c("Loaded data from", d.source))
-	
+
+	## Perform gender prediction
+	if (rnb.getOption("import.gender.prediction") && inherits(object, "RnBeadRawSet") && object@target == "probes450") {
+		object <- rnb.execute.gender.prediction(object)
+		if (is.null(object@inferred.covariates$gender)) {
+			object@inferred.covariates$gender <- FALSE
+		} else {
+			logger.status("Predicted gender for the loaded samples")
+		}
+	}
+
 	## Create a section in the report
 	report <- rnb.section.import(report, object, data.source, data.type)
 	logger.status("Added data loading section to the report")
@@ -556,6 +566,6 @@ rnb.step.import <- function(data.source, data.type = rnb.getOption("import.defau
 	}
 	logger.status(c("Loaded", nsamples, "samples and", nsites, "sites"))
 	logger.info(c("Output object is of type", class(object)))
-	
+
 	return(list(rnb.set=object, report=report))
 }

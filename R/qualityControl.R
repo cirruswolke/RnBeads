@@ -3,7 +3,7 @@
 ## created: 2012-05-31
 ## creator: Pavlo Lutsik
 ## ---------------------------------------------------------------------------------------------------------------------
-## 
+##
 ########################################################################################################################
 
 #' rnb.step.quality
@@ -16,9 +16,9 @@
 #' @return The modified report.
 #'
 #' @author Pavlo Lutsik
-#' @noRd 
+#' @noRd
 rnb.step.quality<-function(rnb.set, report){
-	
+
 	if (!inherits(rnb.set, "RnBSet")){
 		stop("invalid value for rnb.set")
 	}
@@ -50,16 +50,16 @@ rnb.step.quality<-function(rnb.set, report){
 #'                          parameter is considered only when \code{object} is of type \code{\linkS4class{RnBiseqSet}}.
 #' @param verbose	        Flag specifying whether diagnostic output should be written to the console or to the
 #'                          RnBeads logger in case the latter is initialized.
-#' 
+#'
 #' @details Currently, summarizing coverage for \code{\linkS4class{RnBiseqSet}} object is the only available function.
-#' 
+#'
 #' @return \code{\linkS4class{RnBeadSet}} object with imputed quality control information
 #'
 #' @author Pavlo Lutsik
 #' @export
 rnb.execute.quality<-function(
-		object, 
-		type="sites", 
+		object,
+		type="sites",
 		qc.coverage.plots=rnb.getOption("qc.coverage.plots"),
 		verbose=TRUE){
 
@@ -71,16 +71,16 @@ rnb.execute.quality<-function(
 	  if(qc.coverage.plots){
 		  covg.rnbs<-covg(object, type)
 		  covg.rnbs[is.na(covg.rnbs)]<-0
-		  
+
 		  if(type=="sites"){
 			  type<-"CpG"
 			  map<-sites(object)
 		  }else{
 			  map<-regions(object, type)
 		  }
-		  
+
 		  covg.lists<-lapply(samples(object), function(sample){
-		  
+
 		  sample.id<-match(sample, samples(object))
 		  assembly <- assembly(object)
 		  covg.list<-lapply(names(rnb.get.chromosomes(assembly=assembly)), function(chr) {
@@ -90,7 +90,7 @@ rnb.execute.quality<-function(
 					  covg.weight
 				  })
 	  	  })
-		  names(covg.lists)<-samples(object)  
+		  names(covg.lists)<-samples(object)
 		  result<-covg.lists
   	  }else{
 		  result<-NULL
@@ -124,7 +124,7 @@ rnb.execute.quality<-function(
 #' @return The modified report.
 #'
 #' @author Pavlo Lutsik
-#' @noRd 
+#' @noRd
 rnb.section.quality<-function(report, rnb.set, qc.boxplots=rnb.getOption("qc.boxplots"),
 	qc.barplots=rnb.getOption("qc.barplots"), qc.negative.boxplot=rnb.getOption("qc.negative.boxplot"),
 	qc.coverage.plots=rnb.getOption("qc.coverage.plots"), qc.coverage.histograms=rnb.getOption("qc.coverage.histograms"),
@@ -171,7 +171,7 @@ rnb.section.quality<-function(report, rnb.set, qc.boxplots=rnb.getOption("qc.box
 			logger.info("No quality information present in the dataset")
 
 		}else{
-		  
+
 			txt <- "This section contains quality control plots and statistics for the methylation data."
 			rnb.add.paragraph(report, txt)
 
@@ -223,7 +223,7 @@ rnb.section.quality<-function(report, rnb.set, qc.boxplots=rnb.getOption("qc.box
 		}
 		report <- add.seq.coverage.num.sites.covg.tabs(report, rnb.set)
 		logger.status("Added sample coverage section")
-		
+
 		if(qc.coverage.violins){
 			txt <- c("The plots below show an alternative approach to visualizing the coverage distribution.")
 			report <- rnb.add.section(report, "Sequencing Coverage Violin Plots", txt, level = 2)
@@ -265,7 +265,7 @@ rnb.section.quality<-function(report, rnb.set, qc.boxplots=rnb.getOption("qc.box
 
 #' rnb.step.mixups
 #'
-#' Cteates sample mixups section in the quality control report 
+#' Cteates sample mixups section in the quality control report
 #'
 #' @param object a \code{\linkS4class{RnBeadSet}} object
 #' @param report Report on methylation profiles to contain the dimension reduction section. This must be an object of
@@ -274,9 +274,9 @@ rnb.section.quality<-function(report, rnb.set, qc.boxplots=rnb.getOption("qc.box
 #' @return the modified report object
 #'
 #' @author Pavlo Lutsik
-#' @noRd 
+#' @noRd
 rnb.step.mixups<-function(object, report){
-	
+
 	if(!inherits(object,"RnBSet")){
 		stop("Supplied object is not of the class inheriting from RnBSet")
 	}
@@ -311,7 +311,7 @@ rnb.step.mixups<-function(object, report){
 #' @return The (possibly modified) report.
 #'
 #' @author Pavlo Lutsik
-#' @noRd 
+#' @noRd
 rnb.section.mixups<-function(report, object,
 	qc.snp.heatmap=rnb.getOption("qc.snp.heatmap"),
 	qc.snp.distances=rnb.getOption("qc.snp.distances"),
@@ -412,7 +412,7 @@ add.qc.boxplots<-function(report, object){
 add.qc.barplots<-function(report, object, sample.batch.size=50){
 
   descr="Quality control bar plots."
-  
+
   if(object@target=="probes450"){
   	cmd <- rnb.get.annotation("controls450")
   	ctypes<-unique(cmd$Target)[unique(cmd$Target) %in% rnb.infinium.control.targets("probes450")[c(13,4,14,3,1:2,11:12,6)]]
@@ -421,9 +421,9 @@ add.qc.barplots<-function(report, object, sample.batch.size=50){
 	ctypes<-unique(cmd$Type)[unique(cmd$Type) %in% rnb.infinium.control.targets("probes27")[c(10,3,2,11,1,9,6)]]
   }
   nsamp<-length(samples(object))
-  
+
   plot.names<-NULL
-  
+
   if(nsamp %% sample.batch.size==1){
 	  sample.batch.size<-sample.batch.size-5
   }
@@ -431,9 +431,9 @@ add.qc.barplots<-function(report, object, sample.batch.size=50){
   portion.ends<-portion.starts+sample.batch.size-1
   portion.ends[length(portion.ends)]<-nsamp
   portions<-paste(portion.starts, portion.ends, sep="-")
-  
+
   plots<-lapply(1:length(portions),function(portion.id){
-  	 
+
 	  cplots<-lapply(ctypes, function(type){
 
 		if(object@target=="probes450"){
@@ -443,24 +443,24 @@ add.qc.barplots<-function(report, object, sample.batch.size=50){
 			cmdt <- cmd[cmd[["Type"]] == type, ]
 			pn<-as.character(cmdt$Name)
 		}
-		
+
 		if(portion.id==1) plot.names<<-c(plot.names, pn)
-	    plots<-lapply(pn, rnb.plot.control.barplot, rnb.set=object, 
-				sample.subset=portion.starts[portion.id]:portion.ends[portion.id], 
+	    plots<-lapply(pn, rnb.plot.control.barplot, rnb.set=object,
+				sample.subset=portion.starts[portion.id]:portion.ends[portion.id],
 				report=report, writeToFile=TRUE, numeric.names=TRUE, width=8, height=6, low.png=100, high.png=300, verbose=TRUE,
 				name.prefix=portions[portion.id])
-	
+
 		if(object@target=="probes450"){
 			names(plots)<-paste(type, 1:(dim(cmdt)[1]))
 		}else if(object@target=="probes27"){
 			names(plots)<-as.character(cmdt$Name)
 		}
 	    plots
-		
+
 	  })
-	
+
 	  names(cplots)<-NULL
-	  
+
 	  cplots<-unlist(cplots)
 	  names(cplots)<-1:length(plot.names)
 	  cplots
@@ -469,15 +469,15 @@ add.qc.barplots<-function(report, object, sample.batch.size=50){
   plots<-unlist(plots)
 
   sn<-list("Samples #: " = portions, "Control probe ID" = plot.names)
-  
-    
+
+
   names(sn[[1]])<-portions
   if(object@target=="probes450"){
   	names(sn[[2]])<-1:length(plot.names)
   }else if(object@target=="probes27"){
 	names(sn[[2]])<-match(plot.names,cmd$Name)
   }
-    
+
   report<-rnb.add.figure(report, description=descr, report.plots=plots, setting.names=sn)
 
 }
@@ -485,12 +485,12 @@ add.qc.barplots<-function(report, object, sample.batch.size=50){
 #######################################################################################################################
 
 add.negative.control.boxplot<-function(report, object, sample.batch.size=50){
-	
+
 	descr<-"Box plots of the negative control probes."
-	
+
 #   cplots<-lapply(ctypes, control.boxplot, rnb.set=object, report=report, writeToFile=TRUE)
 #   names(cplots)<-gsub(" ", ".", ctypes)
-#   
+#
 #   sn<-list(tolower(ctypes))
 #   names(sn[[1]])<-gsub(" ", ".", ctypes)
 	nsamp<-length(samples(object))
@@ -501,74 +501,74 @@ add.negative.control.boxplot<-function(report, object, sample.batch.size=50){
 	portion.ends<-portion.starts+sample.batch.size-1
 	portion.ends[length(portion.ends)]<-nsamp
 	portions<-paste(portion.starts, portion.ends, sep="-")
-	
+
 	cplots<-lapply(1:length(portions), function(portion.id){
 				rnb.plot.negative.boxplot(object, sample.subset=portion.starts[portion.id]:portion.ends[portion.id],
 						name.prefix=portions[portion.id], writeToFile=TRUE, report=report, width=10, height=6, low.png=75, high.png=100)
 	})
 
 	sn<-list("Samples #: " = portions)
-	
+
 	names(sn[[1]])<-portions
-	
+
 	report<-rnb.add.figure(report, description=descr, report.plots=cplots, sn)
 	report
-	
+
 }
 
 #######################################################################################################################
 
 add.snp.boxplot<-function(report, object){
-  
+
   descr<-"Box plots of the SNP probes."
-  
+
 #   cplots<-lapply(ctypes, control.boxplot, rnb.set=object, report=report, writeToFile=TRUE)
 #   names(cplots)<-gsub(" ", ".", ctypes)
-#   
+#
 #   sn<-list(tolower(ctypes))
 #   names(sn[[1]])<-gsub(" ", ".", ctypes)
   cplots<-list(SNPBoxplot=rnb.plot.snp.boxplot(object, writeToFile=TRUE, report=report, width=9, height=6, low.png=100, high.png=300))
   report<-rnb.add.figure(report, description=descr, report.plots=cplots)
   report
-  
+
 }
 
 #######################################################################################################################
 
 add.snp.barplot<-function(report, object){
-	
+
 	descr<-"Bar plots of the SNP probes beta values. Genetically matched samples should show very similar profiles."
 
 	ids <- samples(object)
 
 	cplots<-lapply(ids, rnb.plot.snp.barplot, rnb.set=object, report=report, writeToFile=TRUE, numeric.names=TRUE, width=9, height=6, low.png=100, high.png=300)
 	names(cplots)<-1:length(ids)
-	
+
 	sn<-list("Sample labels"=tolower(ids))
 	names(sn[[1]])<-1:length(ids)
-	
-	
+
+
 	report<-rnb.add.figure(report, description=descr, report.plots=cplots, setting.names=sn)
-	
+
 	report
-	
+
 }
 
 #######################################################################################################################
 
 add.snp.heatmap<-function(report, object){
-	
+
 	descr<-"Heat map of the SNP probes. The samples with the same genetic background should cluster together."
-	
+
 #   cplots<-lapply(ctypes, control.boxplot, rnb.set=object, report=report, writeToFile=TRUE)
 #   names(cplots)<-gsub(" ", ".", ctypes)
-#   
+#
 #   sn<-list(tolower(ctypes))
 #   names(sn[[1]])<-gsub(" ", ".", ctypes)
 	cplots<-list(SNPHeatmap=rnb.plot.snp.heatmap(object, writeToFile=TRUE, report=report, width=8, height=9, low.png=100, high.png=300))
 	report<-rnb.add.figure(report, description=descr, report.plots=cplots)
 	report
-	
+
 }
 
 #######################################################################################################################
@@ -595,7 +595,7 @@ add.snp.distances <- function(report, object) {
 	}
 
 	## Calculate Manhattan distances between samples based on the SNP probe intensities
-	snp.distances <- as.matrix(dist(t(snp.betas), method = "manhattan"))
+	snp.distances <- as.matrix(stats::dist(t(snp.betas), method = "manhattan"))
 	rnb.status("Calculated Manhattan distances between samples based on SNP probes")
 
 	report.plots <- list()
@@ -625,9 +625,9 @@ add.snp.distances <- function(report, object) {
 		report.plots <- off(report.plots)
 		txt <- c("Distances between pairs of samples based on the SNP probes only.")
 		rm(tbl.melt, colors.g, i.height, i.width)
-		
+
 	} else {
-		
+
 		## Create PCA plots
 		pr.coords <- prcomp(t(snp.betas), center = TRUE, scale. = FALSE)$x[, 1:2]
 		labels.pc <- paste("Principal component", 1:ncol(pr.coords))
@@ -641,7 +641,7 @@ add.snp.distances <- function(report, object) {
 				pp <- pp + geom_text(angle = 45)
 			}
 			pp <- pp + labs(x = labels.pc[1], y = labels.pc[2]) +
-				theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.1), "in"))
+				theme(plot.margin = unit(0.1 + c(0, 0, 0, 0), "in"))
 			fname <- paste0("snp_low_dimensional_", ptype)
 			rplot <- createReportPlot(fname, report, width = 6.2, height = 6.2)
 			print(pp)
@@ -670,42 +670,42 @@ add.snp.distances <- function(report, object) {
 #######################################################################################################################
 
 add.seq.coverage.plot<-function(report, object, covg.lists=NULL){
-	
+
 	descr<-"Sequencing coverage plots visualize effective read coverage over all chromosomes of the genome."
-	
+
 	ids <- samples(object)
-	
+
 	cplots<-lapply(ids, function(id) rnb.plot.biseq.coverage(rnbs.set=object, sample=id, report=report, writeToFile=TRUE, numeric.names=TRUE,create.pdf=FALSE, width=8, height=16, low.png=100, high.png=200, covg.lists=covg.lists[[id]]))
-	
+
 	names(cplots)<-1:length(ids)
-	
+
 	sn<-list("Sample labels" = ids)
 	names(sn[[1]])<-1:length(ids)
-	
+
 	report<-rnb.add.figure(report, description=descr, report.plots=cplots, setting.names=sn)
 	report
-	
+
 }
 
 
 #######################################################################################################################
 
 add.seq.coverage.histograms <- function(report, object){
-	
+
 	descr<-"Sequencing coverage histogram visualize the bulk distribution of read coverage for each sample."
-	
+
 	ids <- samples(object)
-	
+
 	cplots<-lapply(ids, rnb.plot.biseq.coverage.hist, rnbs.set=object, report=report, writeToFile=TRUE, numeric.names=TRUE, covg.max.percentile=0.99, width=8, height=7, low.png=100, high.png=300)
-	
+
 	names(cplots)<-1:length(ids)
-	
+
 	sn<-list("Sample labels" = ids)
 	names(sn[[1]])<-1:length(ids)
-	
+
 	report<-rnb.add.figure(report, description=descr, report.plots=cplots, setting.names=sn)
 	report
-	
+
 }
 
 #######################################################################################################################
@@ -713,7 +713,7 @@ add.seq.coverage.histograms <- function(report, object){
 add.seq.coverage.num.sites.covg.tabs <- function(report, object){
 	selCols <- c("sampleName", "sites_num", "sites_covgMean", "sites_covgMedian", paste0("sites_covgPerc",c("25","75")), paste0("sites_numCovg",c("5","10","30","60")))
 	summary.tab <- rnb.sample.summary.table(object)[,selCols]
-	
+
 	fname <- paste("sample_covg_summary.csv",sep="")
 	fname <- rnb.write.table(summary.tab, fname,fpath=rnb.get.directory(report, "data", absolute = TRUE), format="csv", gz=FALSE, row.names = FALSE, quote=FALSE)
 	sectionText <- paste("This section contains summary metrics on the number of sites and coverage can be found in the table below.",
@@ -733,12 +733,12 @@ add.seq.coverage.num.sites.covg.tabs <- function(report, object){
 
 	report <- rnb.add.section(report, "Sample coverage summary", sectionText, level=2)
 	rnb.add.table(report, summary.tab)
-	
+
 	pp <- rnb.plot.num.sites.covg(object)
 	fname <- paste("num_site_vs_coverage",sep="_")
 	overviewPlot <- createReportGgPlot(pp, fname, report, width=12, height=7, create.pdf=TRUE, high.png=as.integer(300))
 	overviewPlot <- off(overviewPlot,handle.errors=TRUE)
-	
+
 	desc <- "Covered sites and median coverages for each sample. Vertical bars depict 0.05 and 0.95 percentiles."
 	report <- rnb.add.figure(report, desc, overviewPlot)
 	report
@@ -747,10 +747,10 @@ add.seq.coverage.num.sites.covg.tabs <- function(report, object){
 #######################################################################################################################
 
 add.seq.coverage.violins<-function(report, object, sample.chunk.size=20){
-	
+
 	descr<-paste("Sequencing coverage histogram visualized as violin plots. Distributions are based on",
 				 nrow(meth(object)),"methylation sites.")
-	
+
 	ids <- samples(object)
 	n <- length(ids)
 	num.intervals <- ceiling(n/sample.chunk.size)
@@ -761,19 +761,19 @@ add.seq.coverage.violins<-function(report, object, sample.chunk.size=20){
 	}
 	ssets.n <- length(unique(ssets))
 	max.covg.2plot<-quantile(covg(object),probs=c(0.99), na.rm=TRUE)[1]
-	
+
 	cplots <- list()
 	for (i in 1:ssets.n){
 		ssamples <- ids[ssets==i]
 		rep.plot <- rnb.plot.biseq.coverage.violin(rnbs.set=object,samples=ssamples,fname=paste("coverageViolin_chunk",i,sep=""),covg.range=c(0,max.covg.2plot),report=report, width=8, height=7, low.png=100, high.png=300)
 		cplots<-c(cplots,list(rep.plot))
 	}
-	
+
 	names(cplots)<-1:ssets.n
-	
+
 	sn<-list("Sample chunk" = 1:ssets.n)
 	names(sn[[1]])<-paste("chunk",1:ssets.n,sep="")
-	
+
 	report<-rnb.add.figure(report, description=descr, report.plots=cplots, setting.names=sn)
 	report
 }
