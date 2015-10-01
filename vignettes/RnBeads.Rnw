@@ -565,12 +565,18 @@ rnb.options(qc.snp.boxplot=TRUE)
 	\begin{figure}
 		\label{fig:increase-gen-infinium}
 		\noindent \begin{centering}
-			\includegraphics[width=0.8\textwidth]{"figures/increases_gen_theoretical"}
+			\includegraphics[width=0.6\textwidth]{"figures/increases_gender"}
 		\par \end{centering}
-		\caption{Mean signal increase in the X and Y chromosomes of 2870 female and 2539 male samples, represented by red and blue points, respectively. The presented dataset include tumor and normal samples in 16 tumor types, downloaded from The Cancer Genome Atlas (TCGA). The solid black line shows the decision boundary in the classifier applied by RnBeads. Training a logistic regression model on the presented data produces an almost identical decision boundary.}
+		\caption{Mean signal increase in the X and Y chromosomes of 4587 female and 4633 male samples, represented by red and blue points, respectively. The presented dataset includes tumor and normal samples from 30 tumor types, downloaded from The Cancer Genome Atlas (TCGA). The solid black line shows the decision boundary in the classifier applied by RnBeads. Training a logistic regression model on the presented data produces an almost identical decision boundary.}
 	\end{figure}
 
-	\cs{RnBeads} includes a method for inferring the gender of methylation samples. It is accessible using the function \cs{rnb.execute.gender.prediction}. Currently, the classifier is applicable only for Infinium 450k datasets with signal intensity information. The assumption made in RnBeads is that the quantity (number) of X and Y chromosomes in a sample is reflected in the signal intensities on the array. The measurements used in the prediction are $MI_X$: \emph{mean increase in X} and $MI_Y$: \emph{mean increaase in Y}. These metrics are defined as $\overline{I}_{X} - \overline{I}_{a}$ and $\overline{I}_{Y} - \overline{I}_{a}$, where $\overline{I}_X$, $\overline{I}_Y$ and $\overline{I}_a$ denote the average probe signal intensity on the X chromosome, the Y chromosome and all autosomes, respectively. RnBeads uses these values in a logistic regression classifier to predict the gender of a sample, $MI_Y > 2 MI_X$ indicates male gender. Figure~\ref{fig:increase-gen-infinium} shows the \emph{mean increase} values for over 5,400 samples with known gender, as well as the decision boundary of the classifier applied in \cs{RnBeads}.
+	\cs{RnBeads} includes a method for inferring the gender of methylation samples. It is accessible using the function \cs{rnb.execute.gender.prediction}. Currently, the classifier is applicable only for Infinium 450k datasets with signal intensity information. Gender prediction is automatically executed when loading Infinium 450k datasets from IDAT files; it can be disabled using the corresponding options, as shown below:
+
+<<eval=FALSE>>=
+rnb.options(import.gender.prediction = FALSE)
+@
+
+	The assumption made in RnBeads is that the quantity (number) of X and Y chromosomes in a sample is reflected in the signal intensities on the array. The measurements used in the prediction are $MI_X$: \emph{mean increase in X} and $MI_Y$: \emph{mean increaase in Y}. These metrics are defined as $\overline{I}_{X} - \overline{I}_{a}$ and $\overline{I}_{Y} - \overline{I}_{a}$, where $\overline{I}_X$, $\overline{I}_Y$ and $\overline{I}_a$ denote the average probe signal intensity on the X chromosome, the Y chromosome and all autosomes, respectively. Probes known to be cross-reactive, as well as those overlapping with known SNPs, are ignored in the calculations presented here. \cs{RnBeads} uses these metrics in a logistic regression classifier to predict the gender of a sample, $MI_Y > 3 MI_X + 3$ indicates male gender. Figure~\ref{fig:increase-gen-infinium} shows the \emph{mean increase} values for over 9,200 samples with known gender, as well as the decision boundary of the classifier applied in \cs{RnBeads}.
 
 
 \subsection{Preprocessing}

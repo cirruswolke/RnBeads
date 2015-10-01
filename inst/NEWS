@@ -2,6 +2,7 @@ RnBeads 1.1.8
 =============
 
  * Corrected coverage statistics in sample summary table: Sites with NA methylation values are no longer considered in the coverage statistics (makes a difference if some coverage threshold is applied)
+ * Improved method for gender prediction. Predicted genders are also included in the exported annotation table
 
 RnBeads 1.1.7
 =============
