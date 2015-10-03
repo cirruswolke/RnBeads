@@ -1,3 +1,9 @@
+RnBeads 1.1.9
+=============
+
+ * Filtering report fix when no normalization is conducted
+ * Bugfixes for combine(RnBSet, RnBSet) and BigFf matrices
+
 RnBeads 1.1.8
 =============
 
