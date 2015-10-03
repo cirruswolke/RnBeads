@@ -327,6 +327,13 @@ setMethod("delete", signature(x="BigFfMat"),
 		invisible(NULL)
 	}
 )
+# adapt vmode from ff package
+setMethod("vmode", signature(x="BigFfMat"),
+	function(x){
+		if (ncol(x)<1) return(NA)
+		return(vmode(x@cols[[1]]))
+	}
+)
 
 #' save.bigFfMat
 #'
