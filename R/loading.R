@@ -275,7 +275,21 @@ rnb.execute.import<-function(data.source, data.type=rnb.getOption("import.defaul
 					coverage.col=NA,
 					coord.shift = 0L,
 					nrows=nrows)
-		} else {
+		}else if(rnb.getOption("import.bed.style")=="BisSNP"){
+			rnb.set<-read.bed.files(base.dir=data.source[[1]], sample.sheet=data.source[[2]], file.names.col=filename.column,
+					verbose=verbose,
+					pos.coord.shift=1L,
+					skip.lines=1L,
+					chr.col=1L,
+					start.col=2L,
+					end.col=NA,
+					c.col=NA,
+					t.col=NA,
+					strand.col=6L,
+					mean.meth.col=4L,
+					coverage.col=5L,
+					coord.shift=0L)
+		}else {
 			skip.lines <- 1
 			pos.coord.shift <- 1
 			result <- read.bed.files(base.dir=data.source[[1]], sample.sheet=data.source[[2]], file.names.col=filename.column,
@@ -290,6 +304,7 @@ rnb.execute.import<-function(data.source, data.type=rnb.getOption("import.defaul
 					coverage.col=rnb.getOption("import.bed.columns")["coverage"],
 					c.col=rnb.getOption("import.bed.columns")["c"],
 					t.col=rnb.getOption("import.bed.columns")["t"],
+					coord.shift=rnb.getOption("import.bed.frame.shift"),
 					nrows=nrows)
 		}
 
@@ -399,7 +414,18 @@ rnb.section.import<-function(report, object, data.source, data.type=rnb.getOptio
            if(inherits(object, "RnBeadSet")) "Quality control information" else NULL)
 
 	vals<-c(dtype,
-		if(is.list(data.source)){data.source[[1]] }else if(is.character(data.source)){ data.source[1]} else if(is.null(data.source)) {NA_character_} else deparse(substitute(data.source)),
+		if(is.list(data.source)){ 
+					if(is.null(data.source[[1]])) {
+						NA_character_
+					} else{
+						as.character(data.source[[1]])} 
+				}else if(is.character(data.source)){ 
+					data.source[1]
+				} else if(is.null(data.source)) {
+					NA_character_
+				} else {
+					deparse(substitute(data.source))
+				},
 		if(class(object)=="RnBiseqSet") assembly(object) else NULL,
 		num.samples,
 		num.probes,
