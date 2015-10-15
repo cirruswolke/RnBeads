@@ -163,7 +163,7 @@ rnb.plot.control.boxplot <- function(
 	grb<-do.call(arrangeGrob, plots)
 	
 	if(writeToFile) {
-		print(grb)
+		grid.draw(grb)
 		off(plot.file)
 		return(plot.file)
 	}
@@ -284,7 +284,7 @@ rnb.plot.negative.boxplot<- function(
 	grb<-do.call(arrangeGrob, plots)
 	
 	if(writeToFile) {
-		print(grb)
+		grid.draw(grb)
 		off(plot.file)
 		return(plot.file)
 	}
@@ -449,7 +449,7 @@ rnb.plot.control.barplot<-function(
   grb<-arrangeGrob(green.plot, red.plot)
   
   if(writeToFile) {
-	print(grb)
+	grid.draw(grb)
   	off(plot.file)
   	return(plot.file)
    }
