@@ -633,7 +633,7 @@ rnb.plot.snp.barplot<-function(
 	
 	if(rnb.set@target=="probes450"){
 		snp.betas<-meth(rnb.set, row.names=TRUE)[,match(sample, ids),drop=FALSE]
-		snp.betas<-snp.betas[grep("rs", names(snp.betas)),,drop=FALSE]
+		snp.betas<-snp.betas[grep("rs", rownames(snp.betas)),,drop=FALSE]
 	}else if(rnb.set@target=="probes27"){
 		snp.betas<-HM27.snp.betas(qc(rnb.set))[,match(sample, ids)]
 	}
