@@ -68,7 +68,7 @@ rnb.filter.dataset <- function(rnb.set, r.samples, r.sites, mask = NULL) {
 		if(isTRUE(rnb.set@status$discard.ff.matrices)){
 			rnb.set@status$discard.ff.matrices<-NULL
 		}
-		needs.summary <- FALSE
+		# needs.summary <- FALSE
 		logger.status(sprintf("Removed %d samples", length(r.samples)))
 	}
 	if (length(r.sites) != 0) {

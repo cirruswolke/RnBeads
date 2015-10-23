@@ -1,3 +1,13 @@
+RnBeads 1.3.1
+=============
+
+ * added "remove.regions" function for RnBSet class
+ * summarize.regions now summarizes for each sample individually in order to reduce memory consumption for large WGBS datasets
+ * import.skip.object.check option for keeping the memory profile low while loading huge datasets
+ * fixed a bug that resulted in NOT removing NA sites (filtering.missing.value.quantile) when they were previously masked (filtering.low.coverage.masking)
+ * added "nsites" method for quickly extracting the number of sites for large RnBSet objects without having to retrieve the full methylation matrix
+ * added "hasCovg" method for quickly determining whether coverage information is present in large RnBSet objects without having to retrieve the full coverage matrix
+
 RnBeads 1.1.9
 =============
 

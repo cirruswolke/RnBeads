@@ -749,7 +749,7 @@ add.seq.coverage.num.sites.covg.tabs <- function(report, object){
 add.seq.coverage.violins<-function(report, object, sample.chunk.size=20){
 
 	descr<-paste("Sequencing coverage histogram visualized as violin plots. Distributions are based on",
-				 nrow(meth(object)),"methylation sites.")
+				 nsites(object),"methylation sites.")
 
 	ids <- samples(object)
 	n <- length(ids)

@@ -65,8 +65,8 @@ validate.stats <- function(stats) {
 	if (!identical(samples.after, samples.before)) {
 		stop("invalid value for stats; incompatible dataset.before and dataset")
 	}
-	site.count.before <- nrow(meth(stats$dataset.before))
-	site.count.after <- nrow(meth(stats$dataset))
+	site.count.before <- nsites(stats$dataset.before)
+	site.count.after <- nsites(stats$dataset)
 	if (!(site.count.after <= site.count.before)) {
 		stop("invalid value for stats; incompatible dataset.before and dataset")
 	}
@@ -1109,8 +1109,10 @@ rnb.execute.na.removal <- function(rnb.set, threshold = rnb.getOption("filtering
 		threshold = threshold)
 }
 
-rnb.execute.na.removal.internal <- function(mm, sites2ignore, threshold) {
-	setdiff(which(rowMeans(is.na(mm)) > threshold), sites2ignore)
+rnb.execute.na.removal.internal <- function(mm, sites2ignore, threshold, mask=NULL) {
+	isNaMat <- is.na(mm)
+	if (!is.null(mask)) isNaMat <- isNaMat | mask
+	setdiff(which(rowMeans(isNaMat) > threshold), sites2ignore)
 }
 
 ########################################################################################################################
@@ -1250,10 +1252,10 @@ rnb.step.na.removal <- function(rnb.set, report, threshold = 0) {
 	return(list(dataset = remove.sites(rnb.set, result$filtered), report = result$report))
 }
 
-rnb.step.na.removal.internal <- function(dataset.class, mm, sites2ignore, report, anno.table, threshold) {
+rnb.step.na.removal.internal <- function(dataset.class, mm, sites2ignore, report, anno.table, threshold, mask=NULL) {
 	logger.start("Missing Value Removal")
 	logger.status(c("Using a sample quantile threshold of", threshold))
-	filtered <- rnb.execute.na.removal.internal(mm, sites2ignore, threshold)
+	filtered <- rnb.execute.na.removal.internal(mm, sites2ignore, threshold, mask)
 	logger.status(c("Removed", length(filtered), "site(s) with too many missing values"))
 	report <- rnb.section.na.removal.internal(report, dataset.class, mm, filtered, threshold, anno.table)
 	logger.status("Added a corresponding section to the report")

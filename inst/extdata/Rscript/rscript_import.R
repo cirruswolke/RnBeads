@@ -68,7 +68,7 @@ if (rnb.getOption("import")) {
 		logger.close()
 	}
 }
-
+RnBeads:::rnb.cleanMem()
 logger.start("Saving")
 save.rnb.set(rnb.set, file.path(cmdArgs$output,paste0(module.name,"_RnBSet")), archive=FALSE)
 logger.completed()

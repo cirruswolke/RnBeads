@@ -696,7 +696,7 @@ rnb.run.analysis <- function(dir.reports, data.source=NULL, sample.sheet=NULL, d
 
 	sample.count <- nrow(pheno(rnb.set))
 
-	if (nrow(meth(rnb.set)) * sample.count != 0) {
+	if (nsites(rnb.set) * sample.count != 0) {
 		## Data export
 		if (rnb.export.enabled(rnb.set)) {
 			update.index(rnb.set, "tracks_and_tables")
@@ -1118,7 +1118,7 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 	}
 	ttt <- rnb.getOption("filtering.missing.value.quantile")
 	if (ttt != 1) {
-		result <- rnb.step.na.removal.internal(class(rnb.set), mm, removed.sites, report, anno.table, ttt)
+		result <- rnb.step.na.removal.internal(class(rnb.set), mm, removed.sites, report, anno.table, ttt, mask)
 		report <- result$report
 		removed.sites <- sort(c(removed.sites, result$filtered))
 	}
