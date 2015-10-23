@@ -381,11 +381,11 @@ rnb.section.import<-function(report, object, data.source, data.type=rnb.getOptio
 	pheno.table <- NULL
 
 	if (inherits(object,"RnBSet")){
-		num.samples<-ncol(meth(object))
-		num.probes<-nrow(meth(object))
+		num.samples <- length(samples(object))
+		num.probes <- nsites(object)
 		if(inherits(object,"RnBeadSet"))
-			pvals.present<-!is.null(dpval(object)) else pvals.present<-FALSE
-		bead.counts.present<-!is.null(covg(object))
+			pvals.present <- !is.null(dpval(object)) else pvals.present<-FALSE
+		bead.counts.present <- hasCovg(object)
 		pheno.table <- pheno(object)
 	} else { # class(object) == "MethyLumiSet"
 		num.samples<-dim(phenoData(object))[1]
@@ -548,9 +548,9 @@ rnb.step.import <- function(data.source, data.type = rnb.getOption("import.defau
 	if(!data.type %in% c("bed.dir", "bs.bed.dir") || !rnb.getOption("import.bed.test.only")){
 		object <- rnb.execute.import(data.source, data.type)
 		rnb.cleanMem()
-		if(data.type=="bed.dir"){
+		if(data.type=="bed.dir" && !rnb.getOption("import.skip.object.check")){
 			logger.start("Checking the loaded object")
-			valid<-check.rnb.biseq.set(object, verbose=TRUE)
+			valid <- check.rnb.biseq.set(object, verbose=TRUE)
 			if(valid){
 				logger.info("The loaded object is valid")
 			}else{
@@ -585,7 +585,7 @@ rnb.step.import <- function(data.source, data.type = rnb.getOption("import.defau
 	if (inherits(object, "RnBSet")) {
 		d.source <- paste("object of type", class(data.source))
 		nsamples <- length(samples(object))
-		nsites <- nrow(meth(object)) # FIXME: See if there is a faster way to get the number of sites
+		nsites <- nsites(object)
 	} else { # inherits(object, "MethyLumiSet")
 		nsamples <- dim(phenoData(object))[1]
 		nprobes <- dim(betas(object))[1]

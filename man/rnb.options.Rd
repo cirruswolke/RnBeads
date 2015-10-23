@@ -121,6 +121,8 @@ is available (see below). Attempting to get or set the value of a non-existing o
        See \pkg{RnBeads} vignette and the FAQ section on the website for more details.}
   \item{\bold{\code{import.bed.test.only}}\code{ = FALSE}}{
 		  Perform only the small loading test, and skip loading all the data.}
+  \item{\bold{\code{import.skip.object.check}}\code{ =  FALSE}}{
+		  Skip the check of the loaded RnBSet object after loading. Helps with keeping the memory profile down}
   \item{\bold{\code{import.gender.prediction}}\code{ = TRUE}}{
        Flag indicating if gender prediction is to be performed. Gender prediction is only supported for Infinium 450k
        datasets with signal intensity information. The value of this option is ignored for other datasets.}

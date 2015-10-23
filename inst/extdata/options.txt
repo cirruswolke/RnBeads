@@ -26,6 +26,7 @@ import.bed.columns	integer.vector	NULL	no	[1,	(chr=1,start=2,end=3,strand=6,meth
 import.bed.frame.shift	integer	no	no		1
 import.bed.test	logical	no	no		TRUE
 import.bed.test.only	logical	no	no		FALSE
+import.skip.object.check	logical	no	no		FALSE
 import.idat.chunk.size	integer	no	yes	(1,	NULL
 import.gender.prediction	logical	no	no		TRUE
 qc	logical	no	no		TRUE

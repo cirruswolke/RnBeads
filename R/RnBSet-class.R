@@ -406,7 +406,6 @@ get.dataset.matrix <- function(object, type, row.names, mm.sites, mm.regions) {
 ########################################################################################################################
 
 if(!isGeneric("mval")) setGeneric("mval", function(object, ...) standardGeneric("mval"))
-
 #' mval-methods
 #'
 #' Extracts DNA methylation information (M values) for a specified set of genomic features.
@@ -446,7 +445,6 @@ setMethod("mval", signature(object = "RnBSet"),
 )
 
 if(!isGeneric("meth")) setGeneric("meth", function(object, ...) standardGeneric("meth"))
-
 #' meth-methods
 #'
 #' Extracts DNA methylation information (beta values) for a specified set of genomic features.
@@ -482,8 +480,46 @@ setMethod("meth", signature(object = "RnBSet"),
 	}
 )
 
-if(!isGeneric("covg")) setGeneric("covg", function(object,...) standardGeneric("covg"))
+if(!isGeneric("hasCovg")) setGeneric("hasCovg", function(object,...) standardGeneric("hasCovg"))
+#' hasCovg-methods
+#'
+#' Returns \code{TRUE} if the \code{RnBSet} object contains coverage information for sites or the specified region type.
+#'
+#' @param object 		\code{RnBSet} of interest.
+#' @param type 			\code{character} singleton. If \code{sites} or a region type summarized in the object
+#' 
+#' @return \code{TRUE} if the \code{RnBSet} object contains coverage information for sites or the specified region type. \code{FALSE} otherwise
+#'
+#' @rdname hasCovg-methods
+#' @docType methods
+#' @export
+#' @aliases hasCovg
+#' @aliases hasCovg,RnBSet-method
+#' @examples
+#' \donttest{
+#' library(RnBeads.hg19)
+#' data(small.example.object)
+#' ## per-site beta-value matrix
+#' hasCovg(rnb.set.example)
+#' } 
+setMethod("hasCovg", signature(object="RnBSet"),
+	function (object, type="sites") {
+		if (!(is.character(type) && length(type) == 1 && (!is.na(type)))) {
+			stop("invalid value for type")
+		}
+		if (type %in% c("sites", object@target)) {
+			result <- !is.null(object@covg.sites)
+		} else if (!(type %in% names(object@regions))) {
+			stop("unsupported region type")
+		} else {
+			result <- !is.null(object@covg.regions[[type]])
+		}
+		return(result)
+	}
+)
 
+
+if(!isGeneric("covg")) setGeneric("covg", function(object,...) standardGeneric("covg"))
 #' covg-methods
 #'
 #' Extract coverage information from an object of \code{RnBSet} class.
@@ -513,6 +549,47 @@ setMethod("covg", signature(object="RnBSet"),
 	function (object, type="sites", row.names=FALSE) {
 		m<-get.dataset.matrix(object, type, row.names, object@covg.sites, object@covg.regions)
 		m
+	}
+)
+
+if(!isGeneric("nsites")) setGeneric("nsites", function(object, ...) standardGeneric("nsites"))
+#' nsites-methods
+#'
+#' Returns the number of sites/regions for a given \code{RnBSet} object
+#'
+#' @param object 	\code{RnBSet} of interest.
+#' @param type 		\code{character} singleton. If this is set to \code{"sites"} (default), the number of sites is returned.
+#'                  Otherwise, this should be one of region types for for which the number of regions is returned.
+#' 
+#' @return \code{integer} stating the number of sites/regions. \code{NA} if the regions have not been summarized yet.
+#'
+#' @seealso \code{\link[=meth,RnBSet-method]{meth}} Retrieving the matrix of methylation values
+#' @rdname nsites-methods
+#' @docType methods
+#' @aliases nsites
+#' @aliases nsites,RnBSet-method
+#' @examples
+#' \donttest{
+#' library(RnBeads.hg19)
+#' data(small.example.object)
+#' nsites(rnb.set.example)
+#' } 
+#' @export
+setMethod("nsites", signature(object = "RnBSet"),
+	function(object, type="sites") {
+		if (!(is.character(type) && length(type) == 1 && (!is.na(type)))) {
+			stop("invalid value for type")
+		}
+		if (type %in% c("sites", object@target)) {
+			result <- nrow(object@meth.sites)
+		} else if (!(type %in% names(object@regions))) {
+			stop("unsupported region type")
+		} else if (is.null(object@meth.regions[[type]])) {
+			result <- NA
+		} else {
+			result <- nrow(object@meth.regions[[type]])
+		}
+		return(result)
 	}
 )
 
@@ -1183,10 +1260,10 @@ setMethod("addPheno", signature(object="RnBSet"),
 )
 ########################################################################################################################
 
+
 if (!isGeneric("summarize.regions")) {
 	setGeneric("summarize.regions", function(object, ...) standardGeneric("summarize.regions"))
 }
-
 #' summarize.regions-methods
 #'
 #' Summarize DNA methylation information for which is present in the \code{RnBSet} object.
@@ -1209,7 +1286,7 @@ if (!isGeneric("summarize.regions")) {
 #' data(small.example.object)
 #' rnb.set.summarized<-summarize.regions(rnb.set.example, "genes", overwrite=TRUE)
 #' head(meth(rnb.set.summarized, type="genes", row.names=TRUE))
-#' } 
+#' }
 setMethod("summarize.regions", signature(object="RnBSet"), 
 		function(object, region.type, aggregation = rnb.getOption("region.aggregation"), overwrite = TRUE) {
 			if (!(is.character(region.type) && length(region.type) == 1 && (!is.na(region.type)))) {
@@ -1250,117 +1327,133 @@ setMethod("summarize.regions", signature(object="RnBSet"),
 			}
 			
 			if(region.type=="strands"){
-				annot.sizes<-rnb.annotation.size(assembly=object@assembly)	
-				mapping<-sapply(names(rnb.get.chromosomes(assembly=object@assembly)), function(chr){
-							num.sites<-annot.sizes[[chr]]
-							#TODO:this is not really robust
-							IRanges(start=(1:(num.sites/2))*2-1, width=2, names=(1:(num.sites/2))*2-1)
-						})
+				annot.sizes <- rnb.annotation.size(assembly=object@assembly)	
+				mapping <- sapply(names(rnb.get.chromosomes(assembly=object@assembly)), function(chr){
+					num.sites <- annot.sizes[[chr]]
+					#TODO:this is not really robust
+					IRanges(start=(1:(num.sites/2))*2-1, width=2, names=(1:(num.sites/2))*2-1)
+				})
 			}else{
-				mapping<-rnb.get.mapping(region.type, object@target, object@assembly)
-			}	
-			region.meth<-matrix(nrow=0, ncol=length(samples(object)), dimnames=list(NULL,samples(object)))
-			if(!is.null(object@covg.sites)){
-				region.covg<-matrix(nrow=0, ncol=length(samples(object)), dimnames=list(NULL,samples(object)))
+				mapping <- rnb.get.mapping(region.type, object@target, object@assembly)
 			}
 
-			region.indices<-lapply(unique(object@sites[,2]), function(chr.id){
-						chr.map<-object@sites[,2]==chr.id
-						site.ranges<-IRanges(start=object@sites[chr.map,3], width=1)
-						chr.name <- names(rnb.get.chromosomes(assembly=object@assembly))[chr.id]
-						mapping.contains.chrom <- chr.name %in% names(mapping)
-						if(!mapping.contains.chrom){
-							return(NULL)
-						}
-						chr.id.map <- match(chr.name,names(mapping))
-						olap<-IRanges::as.matrix(findOverlaps(mapping[[chr.id.map]], site.ranges))						
-											
-						if(nrow(olap)<1) return(NULL)
-						
-						region.inds<-unique(as.integer(names(mapping[[chr.id.map]][olap[,1]])))
-						
-						if(!is.null(object@covg.sites)){
-							
-							covg.val.chr <- object@covg.sites[chr.map,,drop=FALSE]
-							covg.chr<-tapply(olap[,2], olap[,1], function(subs) 
-									as.numeric(colSums(covg.val.chr[subs,,drop=FALSE], na.rm=TRUE)), simplify=FALSE)
-							covg.chr<-do.call(rbind, covg.chr)
-							region.covg<<-rbind(region.covg, covg.chr)	
-							
-						}
-						
-						meth.val.chr <- object@meth.sites[chr.map,,drop=FALSE]
-						if (aggregation %in% c("min", "max")){
-							aggregation.f <- function(subs) {
-								as.numeric(apply(meth.val.chr[subs,,drop=FALSE], 2, aggregation, na.rm=TRUE))
-							}
-						}else if(aggregation=="median"){
+			chromInds <- unique(object@sites[,2])
+			#construct the overlap data structure for retrieving other information
+			regMap.ov.str <- lapply(chromInds, function(chr.id){
+				chr.map <- object@sites[,2]==chr.id
+				names(chr.map) <- NULL
+				site.ranges <- IRanges(start=object@sites[chr.map,3], width=1)
+				chr.name <- names(rnb.get.chromosomes(assembly=object@assembly))[chr.id]
+				mapping.contains.chrom <- chr.name %in% names(mapping)
+				if(!mapping.contains.chrom){
+					return(NULL)
+				}
+				chr.mapping.ind <- match(chr.name,names(mapping))
+				olap <- IRanges::as.matrix(findOverlaps(mapping[[chr.mapping.ind]], site.ranges))						
+									
+				if(nrow(olap)<1) return(NULL)
+				return(list(
+					chr.id=chr.id,
+					chr.name=chr.name,
+					chr.mapping.ind=chr.mapping.ind,
+					chr.match.inds=which(chr.map),
+					olap=olap
+				))
+			})
+			# logger.info(c("DEBUG:","Generated mapping structure for all chromosomes"))
+			region.indices <- do.call("rbind", lapply(regMap.ov.str, function(x){
+				if (is.null(x)) return(NULL)
+				indOnChrom <- unique(x$olap[,1])
+				regInd <- as.integer(names(mapping[[x$chr.mapping.ind]][indOnChrom]))
+				cbind(rep(1, length(regInd)), rep(x$chr.id, length(regInd)), regInd)
+			}))
+			# logger.info(c("DEBUG:","Generated region index data frame"))
+			regions2sites <- unlist(lapply(regMap.ov.str, function(x){
+				if (is.null(x)) return(list())
+				tapply(x$chr.match.inds[x$olap[,2]], factor(x$olap[,1], levels=unique(x$olap[,1])), list)
+			}), recursive=FALSE)
+			names(regions2sites) <- NULL
+			# regions2sites.tab <- do.call("rbind",lapply(1:length(regions2sites), FUN=function(i){
+			# 	cbind(rep(i, length(regions2sites[[i]])), regions2sites[[i]])
+			# }))
+			# regions2sites.tab.fac <- factor(regions2sites.tab[,1], levels=unique(regions2sites.tab[,1]))
+			# logger.info(c("DEBUG:","Generated mapping of regions to sites"))
 
-							aggregation.f <- function(subs){ 
-								as.numeric(colMedians(meth.val.chr[subs,,drop=FALSE],na.rm=TRUE))
-							}
+			nSamples <- length(samples(object))
 
-						}else if(aggregation=="mean"){
-
-							aggregation.f <- function(subs){ 
-								as.numeric(colMeans(meth.val.chr[subs,,drop=FALSE],na.rm=TRUE))
-							}
-
-						}else if(aggregation=="coverage.weighted"){
-
-							aggregation.f <- function(subs){ 
-								as.numeric(colSums(meth.val.chr[subs,,drop=FALSE] * covg.val.chr[subs,,drop=FALSE], na.rm=TRUE))
-							}
-
-						}
-						meth.chr<-tapply(olap[,2], olap[,1], aggregation.f, simplify=FALSE)
-						meth.chr<-do.call(rbind, meth.chr)
-
-						if(aggregation=="coverage.weighted") meth.chr<-meth.chr/covg.chr
-						
-						region.meth<<-rbind(region.meth, meth.chr)
-						
-						cbind(rep(1, length(region.inds)), rep(chr.id, length(region.inds)), region.inds)			
-						
-					})
-			region.indices<-do.call("rbind", region.indices)
+			aggr.f <- NULL
+			if (aggregation=="mean"){
+				aggr.f <- function(siteInds, siteVec, covgVec=NULL){
+					mean(siteVec[siteInds], na.rm=TRUE)
+					# 0.666
+				}
+			} else if (is.element(aggregation, c("min", "max", "mean", "median", "sum"))){
+				aggr.f <- function(siteInds, siteVec, covgVec=NULL){
+					do.call(aggregation, list(siteVec[siteInds], na.rm=TRUE))
+				}
+			} else if (aggregation=="coverage.weighted"){
+				aggr.f <- function(siteInds, siteVec, covgVec){
+					cTotal <- sum(covgVec[siteInds], na.rm=TRUE)
+					sum(siteVec[siteInds]*covgVec[siteInds], na.rm=TRUE)/cTotal
+				}
+			}
+			site.meth <- object@meth.sites
+			site.covg <- object@covg.sites
+			aggr.meth.sample <- function(j){
+				siteVec <- site.meth[,j]
+				covgVec <- NULL
+				if (aggregation=="coverage.weighted") covgVec <- site.covg[,j]
+				vapply(regions2sites, aggr.f, numeric(1), siteVec=siteVec, covgVec=covgVec)
+			}
+			aggr.covg.sample <- function(j){
+				siteVec <- site.covg[,j]
+				vapply(regions2sites, function(siteInds, j){
+					sum(siteVec[siteInds], na.rm=TRUE)
+				}, numeric(1), j=j)
+			}
 			
 			## Assign the resulting matrices to the object
-			
-			if(region.type=="strands"){
-				
+			if (region.type=="strands"){
 				if(!is.null(object@status) && object@status$disk.dump){
 					doBigFf <- !is.null(object@status$disk.dump.bigff)
 					if (doBigFf) doBigFf <- object@status$disk.dump.bigff
 
 					# delete(object@meth.sites)
 					if (doBigFf) {
-						object@meth.sites <- BigFfMat(region.meth, finalizer="delete")
+						object@meth.sites <- BigFfMat(row.n=nrow(region.indices), col.n=nSamples, col.names=samples(object), finalizer="delete")
+						# logger.info(c("DEBUG:","Created BigFfMat for meth"))
 					} else {
-						object@meth.sites <- convert.to.ff.matrix.tmp(region.meth)
+						object@meth.sites <- convert.to.ff.matrix.tmp(matrix(numeric(0), nrow=nrow(region.indices), ncol=nSamples, dimnames=list(NULL,samples(object))))
 					}
-				}else{
-					object@meth.sites <- region.meth
+				} else{
+					object@meth.sites <- matrix(numeric(0), nrow=nrow(region.indices), ncol=nSamples, dimnames=list(NULL,samples(object)))
 				}
-				if(!is.null(object@covg.sites)) {
+				for (j in 1:nSamples){
+					# logger.info(c("DEBUG:","Aggregating methylation for sample",j))
+					object@meth.sites[,j] <- aggr.meth.sample(j)
+				}
+				if (!is.null(object@covg.sites)) {
 					if(!is.null(object@status) && object@status$disk.dump){
 						doBigFf <- !is.null(object@status$disk.dump.bigff)
 						if (doBigFf) doBigFf <- object@status$disk.dump.bigff
 
 						# delete(object@covg.sites)
 						if (doBigFf) {
-							object@covg.sites <- BigFfMat(region.covg, finalizer="delete")
+							object@covg.sites <- BigFfMat(row.n=nrow(region.indices), col.n=nSamples, col.names=samples(object), finalizer="delete")
 						} else {
-							object@covg.sites <- convert.to.ff.matrix.tmp(region.covg)
+							object@covg.sites <- convert.to.ff.matrix.tmp(matrix(integer(0), nrow=nrow(region.indices), ncol=nSamples, dimnames=list(NULL,samples(object))))
 						}
-					}else{
-						object@covg.sites <- region.covg
+					} else {
+						object@covg.sites <- matrix(integer(0), nrow=nrow(region.indices), ncol=nSamples, dimnames=list(NULL,samples(object)))
 					}
-				}else{
+					for (j in 1:nSamples){
+						object@covg.sites[,j] <- aggr.covg.sample(j)
+					}
+				} else {
 					object@covg.sites <- NULL
 				}
 				object@sites <- region.indices
-			}else if(!is.null(region.indices)){
+			} else if(!is.null(region.indices)){
 				if(!is.null(object@status) && object@status$disk.dump){
 					doBigFf <- !is.null(object@status$disk.dump.bigff)
 					if (doBigFf) doBigFf <- object@status$disk.dump.bigff
@@ -1371,12 +1464,17 @@ setMethod("summarize.regions", signature(object="RnBSet"),
 						delete(object@meth.regions[[region.type]])
 					}
 					if (doBigFf){
-						object@meth.regions[[region.type]] <- BigFfMat(region.meth, finalizer="delete")
+						object@meth.regions[[region.type]] <- BigFfMat(row.n=nrow(region.indices), col.n=nSamples, col.names=samples(object), finalizer="delete")
+						# logger.info(c("DEBUG:","Created BigFfMat for meth"))
 					} else {
-						object@meth.regions[[region.type]] <- convert.to.ff.matrix.tmp(region.meth)
+						object@meth.regions[[region.type]] <- convert.to.ff.matrix.tmp(matrix(numeric(0), nrow=nrow(region.indices), ncol=nSamples, dimnames=list(NULL,samples(object))))
 					}
 				} else {
-					object@meth.regions[[region.type]] <- region.meth
+					object@meth.regions[[region.type]] <- matrix(numeric(0), nrow=nrow(region.indices), ncol=nSamples, dimnames=list(NULL,samples(object)))
+				}
+				for (j in 1:nSamples){
+					# logger.info(c("DEBUG:","Aggregating methylation for sample",j))
+					object@meth.regions[[region.type]][,j] <- aggr.meth.sample(j)
 				}
 				if(!is.null(object@covg.sites)) {
 					if(!is.null(object@status) && object@status$disk.dump){
@@ -1390,27 +1488,68 @@ setMethod("summarize.regions", signature(object="RnBSet"),
 						}
 						if (doBigFf){
 							if (is.null(object@covg.regions)) object@covg.regions <- list()
-							object@covg.regions[[region.type]] <- BigFfMat(region.covg, finalizer="delete")
+							object@covg.regions[[region.type]] <- BigFfMat(row.n=nrow(region.indices), col.n=nSamples, col.names=samples(object), finalizer="delete")
 						} else {
-							object@covg.regions[[region.type]] <- convert.to.ff.matrix.tmp(region.covg)
+							object@covg.regions[[region.type]] <- convert.to.ff.matrix.tmp(matrix(integer(0), nrow=nrow(region.indices), ncol=nSamples, dimnames=list(NULL,samples(object))))
 						}
 					}else{
-						object@covg.regions[[region.type]] <- region.covg
+						object@covg.regions[[region.type]] <- matrix(integer(0), nrow=nrow(region.indices), ncol=nSamples, dimnames=list(NULL,samples(object)))
+					}
+					for (j in 1:nSamples){
+						object@covg.regions[[region.type]][,j] <- aggr.covg.sample(j)
 					}
 				}else{
 					object@covg.regions <- NULL
 				}
 				
-				attr(object@meth.regions[[region.type]], "aggregation")<-aggregation
+				attr(object@meth.regions[[region.type]], "aggregation") <- aggregation
 				object@regions[[region.type]] <- region.indices
 			}else{ #no valid regions found
 				object@meth.regions[[region.type]] <- matrix(0L, nrow=0, ncol=ncol(object@meth.sites))
 				if(!is.null(object@covg.sites)) object@covg.regions[[region.type]] <- matrix(0L, nrow=0, ncol=ncol(object@meth.sites))
-				attr(object@meth.regions[[region.type]], "aggregation")<-aggregation
+				attr(object@meth.regions[[region.type]], "aggregation") <- aggregation
 				object@regions[[region.type]] <- matrix(0L, nrow=0, ncol=3)
 			}
+			rm(site.meth) #for ff and BigFfMat, the finalizer should be "delete" and thus the objects should be deleted from disk when this function terminates
+			rm(site.covg)
 			object
 		}
+)
+########################################################################################################################
+
+if (!isGeneric("remove.regions")) {
+	setGeneric("remove.regions", function(object, ...) standardGeneric("remove.regions"))
+}
+
+#' remove.regions-methods
+#'
+#' Remove the summarized methylation information for a given region type from an \code{RnBSet} object.
+#'
+#' @param object Dataset of interest.
+#' @param region.type Type of the region annotation for which the summarization should be removed
+#' 
+#' @return object of the same class as the supplied one without the summarized methylation information for the specified region type
+#'
+#' @rdname remove.regions-methods
+#' @docType methods
+#' @aliases remove.regions
+#' @aliases remove.regions,RnBSet-method
+#' @export
+#' @examples
+#' \donttest{
+#' library(RnBeads.hg19)
+#' data(small.example.object)
+#' summarized.regions(rnb.set.example)
+#' rnb.set.reduced<-remove.regions(rnb.set.example, "genes")
+#' summarized.regions(rnb.set.reduced)
+#' } 
+setMethod("remove.regions", signature(object="RnBSet"), 
+	function(object, region.type) {
+		object@regions[[region.type]] <- NULL
+		object@meth.regions[[region.type]] <- NULL
+		if(!is.null(object@covg.sites)) object@covg.regions[[region.type]] <- NULL
+		return(object)
+	}
 )
 
 ########################################################################################################################
@@ -1462,7 +1601,7 @@ function(object, region.type) {
 			
 			chrom.integer2name <- names(rnb.get.chromosomes(assembly=object@assembly))
 			obj.sites <- data.frame(object@sites)
-			region.map<-object@regions[[region.type]]
+			region.map <- object@regions[[region.type]]
 			chr.inds.reg <- unique(region.map[,2])
 
 			obj.sites[,2] <- factor(chrom.integer2name[obj.sites[,2]],levels=chrom.integer2name[unique(obj.sites[,2])])
