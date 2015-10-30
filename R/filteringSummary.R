@@ -118,18 +118,16 @@ rnb.execute.filter.summary <- function(old.set, new.set) {
 	}
 
 	removed <- rnb.get.filtered.sites.samples(old.set, new.set)
-	relm <- rnb.get.reliability.matrix(old.set)
-	rnb.execute.filter.summary.internal(class(old.set), removed$mm, relm, removed$samples, removed$sites)
+	rnb.execute.filter.summary.internal(old.set, removed$samples, removed$sites)
 }
 
-rnb.execute.filter.summary.internal <- function(dataset.class, mm, relm, removed.samples, removed.sites) {
-
+rnb.execute.filter.summary.internal <- function(rnb.set, removed.samples, removed.sites) {
 	cont.matrix <- rbind(
-		"Sites" = as.double(c(nrow(mm) - length(removed.sites), length(removed.sites))),
-		"Samples" = as.double(c(ncol(mm) - length(removed.samples), length(removed.samples))))
-	rownames(cont.matrix)[1] <- capitalize(rnb.get.row.token(dataset.class, plural = TRUE))
+		"Sites" = as.double(c(nsites(rnb.set) - length(removed.sites), length(removed.sites))),
+		"Samples" = as.double(c(length(samples(rnb.set)) - length(removed.samples), length(removed.samples))))
+	rownames(cont.matrix)[1] <- capitalize(rnb.get.row.token(class(rnb.set), plural = TRUE))
 	colnames(cont.matrix) <- c("Retained", "Removed")
-
+	relm <- rnb.get.reliability.matrix(rnb.set)
 	if (!is.null(relm)) {
 		count.measurements <- function(x) {
 			result <- table(x)[c("TRUE", "FALSE")]
@@ -190,12 +188,11 @@ rnb.step.filter.summary <- function(old.set, new.set, report) {
 	}
 
 	removed <- rnb.get.filtered.sites.samples(old.set, new.set)
-	relm <- rnb.get.reliability.matrix(old.set)
-	rnb.step.filter.summary.internal(class(old.set), removed$mm, relm, removed$samples, removed$sites, report,
+	rnb.step.filter.summary.internal(old.set, removed$samples, removed$sites, report,
 		TRUE)
 }
 
-rnb.step.filter.summary.internal <- function(dataset.class, mm, relm, removed.samples, removed.sites, report,
+rnb.step.filter.summary.internal <- function(rnb.set, removed.samples, removed.sites, report,
 	log.section = FALSE, section.name="Filtering Summary", section.order=1) {
 
 	if (log.section) {
@@ -203,13 +200,15 @@ rnb.step.filter.summary.internal <- function(dataset.class, mm, relm, removed.sa
 	}
 
 	## Create a summary table of removed sites, samples and unreliable measurements
-	table.summary <- rnb.execute.filter.summary.internal(dataset.class, mm, relm, removed.samples, removed.sites)
+	logger.status("Creating summary table of removed sites, samples and unreliable measurements...")
+	table.summary <- rnb.execute.filter.summary.internal(rnb.set, removed.samples, removed.sites)
 	if (all(table.summary[, "Removed"] == 0)) {
 		if (log.section) logger.completed()
 		return(report)
 	}
 
 	## Save table and create figure
+	logger.status("Saving table and figures...")
 	fname <- sprintf("summary%d.csv", section.order)
 	utils::write.csv(table.summary, file = file.path(rnb.get.directory(report, "data", TRUE), fname))
 	dframe <- table.summary[, -3]
@@ -228,6 +227,7 @@ rnb.step.filter.summary.internal <- function(dataset.class, mm, relm, removed.sa
 	suppressWarnings(print(pp))
 	rplot <- off(rplot)
 	fname <- paste(rnb.get.directory(report, "data"), fname, sep = "/")
+	dataset.class <- class(rnb.set)
 	txt.site <- rnb.get.row.token(dataset.class)
 	txt.sites <- rnb.get.row.token(dataset.class, plural = TRUE)
 	rems <- table.summary[c(capitalize(txt.sites), "Samples"), "Removed"]
@@ -242,6 +242,7 @@ rnb.step.filter.summary.internal <- function(dataset.class, mm, relm, removed.sa
 	logger.status("Added summary table of removed and retained items")
 
 	## Construct vectors of removed and retained betas
+	mm <- meth(rnb.set)
 	if (length(removed.samples) != 0) {
 		betas.removed <- as.vector(mm[, removed.samples])
 		mm <- mm[, -removed.samples]

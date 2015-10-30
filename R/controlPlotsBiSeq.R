@@ -398,12 +398,13 @@ rnb.plot.coverage.thresholds <- function(rnb.set, min.coverages, fname = NA, ...
 #' @export
 rnb.plot.num.sites.covg <- function(rnbs, addSampleNames=(length(samples(rnbs))<100), bar.percentiles=c(0.25,0.75)){
 	require(scales)
-	cc <- covg(rnbs)
-	cc[cc<1] <- NA
 	perc.vec <- c(bar.percentiles[1],0.5,bar.percentiles[2])
-	df2p <- do.call("rbind",lapply(samples(rnbs),FUN=function(sn){
-		ns <- sum(!is.na(cc[,sn]))
-		quants <- quantile(cc[,sn], probs=perc.vec, na.rm=TRUE)
+	df2p <- do.call("rbind",lapply(1:length(samples(rnbs)),FUN=function(j){
+		sn <- samples(rnbs)[j]
+		cc <- as.vector(covg(rnbs,j=j))
+		cc[cc<1] <- NA
+		ns <- sum(!is.na(cc))
+		quants <- quantile(cc, probs=perc.vec, na.rm=TRUE)
 		res <- data.frame(
 			sample=sn,
 			numSites=ns,
@@ -414,6 +415,7 @@ rnb.plot.num.sites.covg <- function(rnbs, addSampleNames=(length(samples(rnbs))<
 		)
 		return(res)
 	}))
+	rownames(df2p) <- samples(rnbs)
 
 	pp <- ggplot(df2p) + aes(x=numSites, y=covgMedian, ymin=covgPercLow, ymax=covgPercUp) + geom_pointrange() +
 		  scale_x_continuous(labels = comma) +  ylab(paste("coverage (median,",bar.percentiles[1],"and",bar.percentiles[2],"percentiles)"))

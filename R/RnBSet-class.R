@@ -370,14 +370,28 @@ setMethod("summarized.regions", signature(object = "RnBSet"),
 ## @param row.names  Flag indicating if row names must be generated.
 ## @param mm.sites   Data matrix for the site level.
 ## @param mm.regions List of data matrices, one per supported region type.
+## @param i          indices of sites/regions to be retrieved (index or logical). retrieves all if \code{NULL} (default).
+## @param j          indices of samples to be retrieved (index or logical). retrieves all if \code{NULL} (default).
 ## @return Requested data matrix. Note that this might be \code{NULL}.
 ## @author Pavlo Lutsik
-get.dataset.matrix <- function(object, type, row.names, mm.sites, mm.regions) {
+get.dataset.matrix <- function(object, type, row.names, mm.sites, mm.regions, i=NULL, j=NULL) {
 	if (!(is.character(type) && length(type) == 1 && (!is.na(type)))) {
 		stop("invalid value for type")
 	}
 	if (!parameter.is.flag(row.names)) {
 		stop("invalid value for row.names; expected TRUE or FALSE")
+	}
+	if (!is.element(class(i), c("NULL", "integer", "numeric", "logical"))) {
+		stop("invalid value for i; expected NULL, index or logical")
+	}
+	if (!is.element(class(j), c("NULL", "integer", "numeric", "logical", "character"))) {
+		stop("invalid value for j; expected NULL, index, character or logical")
+	}
+	if (is.character(j)){
+		j <- match(j, samples(object))
+		if (any(is.na(j))){
+			stop("invalid sample names")
+		}
 	}
 	if (type %in% c("sites", object@target)) {
 		if (is.null(mm.sites)) {
@@ -386,17 +400,41 @@ get.dataset.matrix <- function(object, type, row.names, mm.sites, mm.regions) {
 		if("ff" %in% class(mm.sites)){
 			open(mm.sites)
 		}
-		result <- mm.sites[, , drop = FALSE]
+		if (is.null(i) && is.null(j)){
+			result <- mm.sites[, , drop = FALSE]
+		} else if(is.null(i)){
+			result <- mm.sites[, j, drop = FALSE]
+		} else if(is.null(j)){
+			result <- mm.sites[i, , drop = FALSE]
+		} else {
+			result <- mm.sites[i, j, drop = FALSE]
+		}
 	} else if (!(type %in% names(object@regions))) {
 		stop("unsupported region type")
 	} else if (is.null(mm.regions[[type]])) {
 		return(NULL)
 	} else {
-		result <- mm.regions[[type]][, , drop = FALSE]
+		if (is.null(i) && is.null(j)){
+			result <- mm.regions[[type]][, , drop = FALSE]
+		} else if(is.null(i)){
+			result <- mm.regions[[type]][, j, drop = FALSE]
+		} else if(is.null(j)){
+			result <- mm.regions[[type]][i, , drop = FALSE]
+		} else {
+			result <- mm.regions[[type]][i, j, drop = FALSE]
+		}
 	}
-	colnames(result) <- samples(object)
+	if (is.null(j)){
+		colnames(result) <- samples(object)
+	} else {
+		colnames(result) <- samples(object)[j]
+	}
 	if (row.names) {
-		rownames(result) <- get.row.names(object, type)
+		if (is.null(i)){
+			rownames(result) <- get.row.names(object, type)
+		} else {
+			rownames(result) <- get.row.names(object, type)[i]
+		}
 	} else {
 		rownames(result) <- NULL
 	}
@@ -454,6 +492,8 @@ if(!isGeneric("meth")) setGeneric("meth", function(object, ...) standardGeneric(
 #'                  for each available site is returned. Otherwise, this should be one of region types for for which
 #'                  summarized DNA methylation information is computed in the given dataset.
 #' @param row.names	flag indicating if row names are to be generated in the result.
+#' @param i     	indices of sites/regions to be retrieved. By default (\code{NULL}), all will be retrieved.
+#' @param j     	indices of samples to be retrieved. By default (\code{NULL}), all will be retrieved.
 #' 
 #' @return \code{matrix} with methylation beta values.
 #'
@@ -475,8 +515,8 @@ if(!isGeneric("meth")) setGeneric("meth", function(object, ...) standardGeneric(
 #' } 
 #' @export
 setMethod("meth", signature(object = "RnBSet"),
-	function(object, type="sites", row.names=FALSE) {
-		get.dataset.matrix(object, type, row.names, object@meth.sites, object@meth.regions)
+	function(object, type="sites", row.names=FALSE, i=NULL, j=NULL) {
+		get.dataset.matrix(object, type, row.names, object@meth.sites, object@meth.regions, i=i, j=j)
 	}
 )
 
@@ -529,6 +569,8 @@ if(!isGeneric("covg")) setGeneric("covg", function(object,...) standardGeneric("
 #' 						site is returned. Otherwise should be one of region types for for which the summarized 
 #' 						coverage information is available
 #' @param row.names	    Flag indicating of row names are to be generated in the result.
+#' @param i     	indices of sites/regions to be retrieved. By default (\code{NULL}), all will be retrieved.
+#' @param j     	indices of samples to be retrieved. By default (\code{NULL}), all will be retrieved.
 #' 
 #' @return coverage information available for the dataset in the form of a \code{matrix}.
 #'
@@ -546,8 +588,8 @@ if(!isGeneric("covg")) setGeneric("covg", function(object,...) standardGeneric("
 #' head(cvg)
 #' } 
 setMethod("covg", signature(object="RnBSet"),
-	function (object, type="sites", row.names=FALSE) {
-		m<-get.dataset.matrix(object, type, row.names, object@covg.sites, object@covg.regions)
+	function (object, type="sites", row.names=FALSE, i=NULL, j=NULL) {
+		m<-get.dataset.matrix(object, type, row.names, object@covg.sites, object@covg.regions, i=i, j=j)
 		m
 	}
 )
@@ -2017,7 +2059,8 @@ setMethod("destroy", signature(object="RnBSet"),
 ##         regions addressed in the option \code{"region.types"}.
 ## @author Yassen Assenov
 meth.matrices <- function(object, include.sites = rnb.getOption("analyze.sites")) {
-	result <- list("sites" = meth(object))
+	result <- list()
+	if (include.sites) result[["sites"]] <- meth(object)
 	for (rtype in rnb.region.types.for.analysis(object)) {
 		X <- tryCatch(meth(object, rtype), error = function(e) { NULL })
 		if (!is.null(X)) {
@@ -2107,6 +2150,63 @@ rnb.get.covg.token<-function(object, capital=FALSE){
 }
 
 ########################################################################################################################
+if(!isGeneric("sampleMethApply")) setGeneric("sampleMethApply", function(object, ...) standardGeneric("sampleMethApply"))
+#' sampleMethApply-methods
+#'
+#' Applies a function over the methylation values for all samples in an \code{RnBSet} using a low memory footprint.
+#' @param fn function to be applied
+#' @return Result analogous to \code{apply(meth(rnbSet, type), 2, FUN=FUN)}
+#'
+#' @seealso \code{\link[=meth,RnBSet-method]{meth}} Retrieving the matrix of methylation values
+#' @rdname sampleMethApply-methods
+#' @docType methods
+#' @aliases sampleMethApply
+#' @aliases sampleMethApply,RnBSet-method
+setMethod("sampleMethApply", signature(object = "RnBSet"),
+	function(object, fn, type="sites", ...) {
+		if (!(is.character(type) && length(type) == 1 && (!is.na(type)))) {
+			stop("invalid value for type")
+		}
+		if (type %in% c("sites", object@target)) {
+			result <- nrow(object@meth.sites)
+		} else if (!(type %in% names(object@regions))) {
+			stop("unsupported region type")
+		}
+		res <- sapply(1:length(samples(object)), FUN=function(j){
+			fn(meth(object, type=type, j=j), ...)
+		})
+		return(res)
+	}
+)
+if(!isGeneric("sampleCovgApply")) setGeneric("sampleCovgApply", function(object, ...) standardGeneric("sampleCovgApply"))
+#' sampleCovgApply-methods
+#'
+#' Applies a function over the coverage values for all samples in an \code{RnBSet} using a low memory footprint.
+#' @param fn function to be applied
+#' @return Result analogous to \code{apply(covg(rnbSet, type), 2, FUN=FUN)}
+#'
+#' @seealso \code{\link[=meth,RnBSet-method]{covg}} Retrieving the matrix of coverage values
+#' @rdname sampleCovgApply-methods
+#' @docType methods
+#' @aliases sampleCovgApply
+#' @aliases sampleCovgApply,RnBSet-method
+setMethod("sampleCovgApply", signature(object = "RnBSet"),
+	function(object, fn, type="sites", ...) {
+		if (!(is.character(type) && length(type) == 1 && (!is.na(type)))) {
+			stop("invalid value for type")
+		}
+		if (type %in% c("sites", object@target)) {
+			result <- nrow(object@meth.sites)
+		} else if (!(type %in% names(object@regions))) {
+			stop("unsupported region type")
+		}
+		res <- sapply(1:length(samples(object)), FUN=function(j){
+			fn(covg(object, type=type, j=j), ...)
+		})
+		return(res)
+	}
+)
+########################################################################################################################
 #' rnb.sample.summary.table
 #'
 #' Creates a sample summary table from an RnBSet object
@@ -2142,33 +2242,33 @@ rnb.sample.summary.table <- function(rnbSet) {
 	tt <- data.frame(df.empty,sampleName=samples(rnbSet),stringsAsFactors=FALSE)
 	reg.types.regions <- summarized.regions(rnbSet)
 	reg.types <- c("sites",reg.types.regions)
-	mm.s <- meth(rnbSet,type="sites")
-	# cc.s <- covg(rnbSet,type="sites")
 	for (rr in reg.types){
-		if (rr == "sites"){
-			mm <- mm.s
-		} else {
-			mm <- meth(rnbSet,type=rr)
-		}
-		cc <- covg(rnbSet,type=rr)
-		cc[cc==0] <- NA
-		cc[is.na(mm)] <- NA
+		# logger.status(c("Region type:",rr))
 		# rnb.cleanMem()
 		tt.cur <- df.empty
-		tt.cur$num <- apply(mm,2,function(x){sum(!is.na(x))})
+		tt.cur$num <- sampleMethApply(rnbSet, function(x){sum(!is.na(x))}, type=rr)
 		if (is.biseq){
-			tt.cur$covgMean   <- colMeans(cc, na.rm=TRUE)
-			tt.cur$covgMedian <- colMedians(cc, na.rm=TRUE)
-			qqs <- apply(cc,2,function(x){
-				quantile(x, probs = c(0.25,0.75),na.rm=TRUE)
-			})
-			tt.cur$covgPerc25 <- qqs["25%",]
-			tt.cur$covgPerc75 <- qqs["75%",]
-
-			tt.cur$numCovg5  <- apply(cc,2,function(x){sum(x>=5, na.rm=TRUE)})
-			tt.cur$numCovg10 <- apply(cc,2,function(x){sum(x>=10,na.rm=TRUE)})
-			tt.cur$numCovg30 <- apply(cc,2,function(x){sum(x>=30,na.rm=TRUE)})
-			tt.cur$numCovg60 <- apply(cc,2,function(x){sum(x>=60,na.rm=TRUE)})
+			covgStats <- do.call("rbind", lapply(1:length(samples(rnbSet)), FUN=function(j){
+				# logger.status(c("  Sample:",j))
+				mm <- as.vector(meth(rnbSet, rr, j=j))
+				cc <- as.vector(covg(rnbSet, rr, j=j))
+				cc[cc==0] <- NA
+				cc[is.na(mm)] <- NA
+				qq <- quantile(cc, probs = c(0.25,0.75), na.rm=TRUE)
+				res <- c(
+					mean(cc, na.rm=TRUE),
+					median(cc, na.rm=TRUE),
+					qq[1],
+					qq[2],
+					sum(cc>=5, na.rm=TRUE),
+					sum(cc>=10, na.rm=TRUE),
+					sum(cc>=30, na.rm=TRUE),
+					sum(cc>=60, na.rm=TRUE)
+				)
+				return(res)
+			}))
+			colnames(covgStats) <- c("covgMean", "covgMedian", "covgPerc25", "covgPerc75", "numCovg5", "numCovg10", "numCovg30", "numCovg60")
+			tt.cur <- cbind(tt.cur, covgStats)
 
 		}
 		if (is.beads){
@@ -2185,11 +2285,18 @@ rnb.sample.summary.table <- function(rnbSet) {
 		if (rr %in% reg.types.regions){
 			regions2sites <- regionMapping(rnbSet,region.type=rr)
 			#compute the number of sites per region and sample
-			num.sites <- sapply(1:ncol(mm),function(i){
-				sapply(1:nrow(mm),function(j){
-					sum(!is.na(mm.s[regions2sites[[j]],i]))
+			nsamples <- length(samples(rnbSet))
+			num.sites <- sapply(1:nsamples,function(i){
+				# logger.status(c("  Sample:",i))
+				mm.s.nna <- !is.na(as.vector(meth(rnbSet, j=i)))
+				sapply(1:nsites(rnbSet, rr),function(j){
+					sum(mm.s.nna[regions2sites[[j]]])
 				})
 			})
+			# num.sites2 <- t(sapply(1:nsites(rnbSet, rr),function(i){
+			# 	# logger.status(c("  Site/Region:",i))
+			# 	colSums(!is.na(meth(rnbSet, i=regions2sites[[i]])))
+			# })) # a bit slower, but more memory effective, if to include later, check the code again
 			tt.cur$numSitesMean   <- colMeans(num.sites, na.rm=TRUE)
 			tt.cur$numSitesMedian <- colMedians(num.sites, na.rm=TRUE)
 			tt.cur$numSites2  <- colSums(num.sites>=2, na.rm=TRUE)

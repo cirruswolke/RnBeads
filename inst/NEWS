@@ -1,3 +1,9 @@
+RnBeads 1.3.2
+=============
+
+ * Performance and memory improvements during loading, qc and preprocessing of large bisulfite-derived RnBSets
+ * added optional arguments to meth() and covg() allowing for partial retrieval of methylation and coverage information from RnBSets. Particularly makes sense for large, disk-based datasets.
+
 RnBeads 1.3.1
 =============
 

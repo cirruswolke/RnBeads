@@ -282,21 +282,24 @@ RnBiseqSet<-function(
 	}
 	
 	if(!is.null(covg)){
-		zero.covg.sites <- rowSums(covg[sites[,4L],,drop=FALSE], na.rm=TRUE)==0
+		if(verbose) logger.status(c("Checking site coverage")) #TODO: debug info: remove me
+		zero.covg.sites <- rowSums(covg[sites[,4L],,drop=FALSE], na.rm=TRUE)==0 #TODO: could this be too memory wasteful?
 		if(verbose && any(zero.covg.sites)) {
 			rnb.status(c("Removed",length(intersect(which(zero.covg.sites), which(valid))),"of",
 							sum(valid),"methylation sites because they were not covered in any sample"))
 		}
 		valid<-which(valid | zero.covg.sites)
-		
+		rnb.cleanMem()
 		if(!useff){
 			covg[is.na(covg)]<-0L
 		}else{
+			if(verbose) logger.status(c("Setting zero coverages")) #TODO: debug info: remove me
 			for(ci in 1:ncol(covg)){
 				covg[is.na(covg[,ci]),ci]<-0L
 			}
 		}
 	}
+	rnb.cleanMem()
 	
 	sites <- sites[valid,]
 	if(!useff){
@@ -306,22 +309,28 @@ RnBiseqSet<-function(
 		}
 	}else{
 		meth.old <- meth
+		if(verbose) logger.status(c("Creating methylation matrix")) #TODO: debug info: remove me
 		if (usebigff) {
 			meth <- BigFfMat(row.n=nrow(sites), col.n=ncol(meth.old), row.names=NULL, col.names=sample.names, finalizer="delete")
 		} else {
 			meth <- ff(NA, dim=c(nrow(sites), ncol(meth.old)), dimnames=list(NULL, sample.names), vmode="double")
 		}
+		if(verbose) logger.status(c("Filling methylation matrix")) #TODO: debug info: remove me
 		meth[,] <- meth.old[which(legal.sites)[sites[,4L]],]
-		rm(meth.old); rnb.cleanMem()
+		rm(meth.old)
+		rnb.cleanMem()
 		if(!is.null(covg)){
 			covg.old <- covg
+			if(verbose) logger.status(c("Creating coverage matrix")) #TODO: debug info: remove me
 			if (usebigff) {
 				covg <- BigFfMat(row.n=nrow(sites), col.n=ncol(covg.old), row.names=NULL, col.names=sample.names, na.prototype=as.integer(NA), finalizer="delete")
 			} else {
 				covg <- ff(NA_integer_, dim=c(nrow(sites), ncol(covg.old)), dimnames=list(NULL, sample.names))
 			}
+			if(verbose) logger.status(c("Filling coverage matrix")) #TODO: debug info: remove me
 			covg[,] <- covg.old[which(legal.sites)[sites[,4L]],]
-			rm(covg.old); rnb.cleanMem()
+			rm(covg.old)
+			rnb.cleanMem()
 		}
 	}
 	sites <- sites[,-4L]
@@ -399,6 +408,7 @@ RnBiseqSet<-function(
 		status <- list(disk.dump=TRUE, disk.dump.bigff=usebigff)
 	}
 
+	if(verbose) logger.status(c("Creating object")) #TODO: debug info: remove me
 	object<-new("RnBiseqSet",
 			pheno=pheno,
 			sites=sites,
