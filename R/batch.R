@@ -1261,7 +1261,7 @@ rnb.section.batcheffects <- function(report, batcheffects) {
 	## -----------------------------------------------------------------------------------------------------------------
 	## Summarize the results of association between principal components and traits
 
-	if ("pc" %in% names(batcheffects)) {
+	if ("pc" %in% names(batcheffects) && length(batcheffects[["pc"]])>0) {
 		
 		targets <- names(batcheffects[["pc"]])
 		names(targets) <- 1:length(targets)

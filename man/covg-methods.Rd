@@ -6,7 +6,8 @@
 \alias{covg,RnBSet-method}
 \title{covg-methods}
 \usage{
-\S4method{covg}{RnBSet}(object, type = "sites", row.names = FALSE)
+\S4method{covg}{RnBSet}(object, type = "sites", row.names = FALSE,
+  i = NULL, j = NULL)
 }
 \arguments{
 \item{object}{Dataset of interest.}
@@ -16,6 +17,10 @@ site is returned. Otherwise should be one of region types for for which the summ
 coverage information is available}
 
 \item{row.names}{Flag indicating of row names are to be generated in the result.}
+
+\item{i}{indices of sites/regions to be retrieved. By default (\code{NULL}), all will be retrieved.}
+
+\item{j}{indices of samples to be retrieved. By default (\code{NULL}), all will be retrieved.}
 }
 \value{
 coverage information available for the dataset in the form of a \code{matrix}.

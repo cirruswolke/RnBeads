@@ -1069,9 +1069,9 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 	}
 	suppressWarnings(rm(result))
 
-	logger.completed.filtering <- function(mm, r.samples, r.sites) {
-		retained.p <- nrow(mm) - length(r.sites)
-		retained.s <- ncol(mm) - length(r.samples)
+	logger.completed.filtering <- function(rnb.set, r.samples, r.sites) {
+		retained.p <- nsites(rnb.set) - length(r.sites)
+		retained.s <- length(samples(rnb.set)) - length(r.samples)
 		logger.status(c("Retained", retained.s, "samples and", retained.p, "sites"))
 		logger.completed()
 	}
@@ -1079,11 +1079,10 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 	if (do.normalization) {
 		## Summary I
 		removed.sites <- setdiff(removed.sites, whitelist)
-		logger.completed.filtering(meth(rnb.set), removed.samples, removed.sites)
+		logger.completed.filtering(rnb.set, removed.samples, removed.sites)
 
 		logger.start("Summary of Filtering Procedures I")
-		relm <- rnb.get.reliability.matrix(rnb.set)
-		report <- rnb.step.filter.summary.internal(class(rnb.set), meth(rnb.set), relm, removed.samples, removed.sites,
+		report <- rnb.step.filter.summary.internal(rnb.set, removed.samples, removed.sites,
 				report, section.name="Filtering Summary I", section.order=1)
 		logger.completed()
 
@@ -1105,7 +1104,7 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 	}
 
 	## Postfiltering
-	mm <- meth(rnb.set)
+	mm <- NULL
 	if (length(rnb.getOption("filtering.context.removal")) != 0 && inherits(rnb.set, "RnBeadSet")) {
 		result <- rnb.step.context.removal.internal(removed.sites, report, anno.table)
 		report <- result$report
@@ -1118,12 +1117,14 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 	}
 	ttt <- rnb.getOption("filtering.missing.value.quantile")
 	if (ttt != 1) {
+		if (is.null(mm)) mm <- meth(rnb.set)
 		result <- rnb.step.na.removal.internal(class(rnb.set), mm, removed.sites, report, anno.table, ttt, mask)
 		report <- result$report
 		removed.sites <- sort(c(removed.sites, result$filtered))
 	}
 	ttt <- rnb.getOption("filtering.deviation.threshold")
 	if (ttt > 0) {
+		if (is.null(mm)) mm <- meth(rnb.set)
 		result <- rnb.step.variability.removal.internal(class(rnb.set), mm, removed.sites, report, anno.table, ttt)
 		report <- result$report
 		removed.sites <- sort(c(removed.sites, result$filtered))
@@ -1132,10 +1133,12 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 
 	## Summary (II)
 	removed.sites <- setdiff(removed.sites, whitelist)
-	logger.completed.filtering(mm, removed.samples, removed.sites)
+	logger.completed.filtering(rnb.set, removed.samples, removed.sites)
+	
+	rnb.cleanMem()
 
 	logger.start(paste0("Summary of Filtering Procedures", ifelse(do.normalization, " II", "")))
-	relm <- rnb.get.reliability.matrix(rnb.set)
+	
 	if(do.normalization){
 		sn<-"Filtering Summary II"
 		so<-2L
@@ -1143,7 +1146,7 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 		sn<-"Filtering Summary"
 		so<-0L
 	}
-	report <- rnb.step.filter.summary.internal(class(rnb.set), meth(rnb.set), relm, removed.samples, removed.sites,
+	report <- rnb.step.filter.summary.internal(rnb.set, removed.samples, removed.sites,
 			report, section.name=sn, section.order=so)
 	logger.completed()
 

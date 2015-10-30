@@ -6,7 +6,8 @@
 \alias{meth,RnBSet-method}
 \title{meth-methods}
 \usage{
-\S4method{meth}{RnBSet}(object, type = "sites", row.names = FALSE)
+\S4method{meth}{RnBSet}(object, type = "sites", row.names = FALSE,
+  i = NULL, j = NULL)
 }
 \arguments{
 \item{object}{dataset of interest.}
@@ -16,6 +17,10 @@ for each available site is returned. Otherwise, this should be one of region typ
 summarized DNA methylation information is computed in the given dataset.}
 
 \item{row.names}{flag indicating if row names are to be generated in the result.}
+
+\item{i}{indices of sites/regions to be retrieved. By default (\code{NULL}), all will be retrieved.}
+
+\item{j}{indices of samples to be retrieved. By default (\code{NULL}), all will be retrieved.}
 }
 \value{
 \code{matrix} with methylation beta values.
