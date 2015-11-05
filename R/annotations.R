@@ -365,7 +365,6 @@ data.frame2GRanges <- function(dframe, ids = rownames(dframe), chrom.column = "c
 		i.valid <- (chroms %in% CHROMOSOMES)
 		param.list <- lapply(param.list, function(x) { x[i.valid] })
 	}
-	param.list[["check.names"]] <- FALSE
 	result <- do.call(GRanges, param.list)
 	if (!is.null(assembly)) {
 		seqlevels(result) <- CHROMOSOMES
