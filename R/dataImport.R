@@ -978,6 +978,9 @@ read.bed.files<-function(base.dir=NULL,
 	if(!(is.character(region.types) && (!any(is.na(region.types))))) {
 		rnb.error("Invalid value for region.types")
 	}
+	if(usebigff){
+		bff.finalizer <- rnb.getOption("disk.dump.bigff.finalizer")
+	}
 	
 	if(is.null(file.names) && is.null(sample.sheet)) {
 		## Attempt to locate sample annotation file
@@ -1173,13 +1176,13 @@ read.bed.files<-function(base.dir=NULL,
 	}else{
 		#sites<-ff(NA_integer_, dim=c(length(all.sites), 3), dimnames=list(NULL, c("chr", "coord", "strand")))
 		if (usebigff){
-			meth <- BigFfMat(row.n=length(all.sites), col.n=length(data.matrices), row.names=NULL, col.names=sample.names, finalizer="delete")
+			meth <- BigFfMat(row.n=length(all.sites), col.n=length(data.matrices), row.names=NULL, col.names=sample.names, finalizer=bff.finalizer)
 		} else {
 			meth <- ff(NA, dim=c(length(all.sites), length(data.matrices)), dimnames=list(NULL, sample.names), vmode="double")
 		}
 		if(all(covg.present)){
 			if (usebigff){
-				covg <- BigFfMat(row.n=length(all.sites), col.n=length(data.matrices), row.names=NULL, col.names=sample.names, na.prototype=as.integer(NA), finalizer="delete")
+				covg <- BigFfMat(row.n=length(all.sites), col.n=length(data.matrices), row.names=NULL, col.names=sample.names, na.prototype=as.integer(NA), finalizer=bff.finalizer)
 			} else {
 				covg <- ff(NA_integer_, dim=c(length(all.sites), length(data.matrices)), dimnames=list(NULL, sample.names))
 			}
