@@ -127,23 +127,41 @@ rnb.execute.filter.summary.internal <- function(rnb.set, removed.samples, remove
 		"Samples" = as.double(c(length(samples(rnb.set)) - length(removed.samples), length(removed.samples))))
 	rownames(cont.matrix)[1] <- capitalize(rnb.get.row.token(class(rnb.set), plural = TRUE))
 	colnames(cont.matrix) <- c("Retained", "Removed")
-	relm <- rnb.get.reliability.matrix(rnb.set)
-	if (!is.null(relm)) {
-		count.measurements <- function(x) {
-			result <- table(x)[c("TRUE", "FALSE")]
-			result[is.na(result)] <- 0L
-			return(as.double(result))
-		}
+	if (rnb.has.reliability.info(rnb.set)) {
 		cmatrix <- matrix(0, nrow = 2, ncol = 2)
 		rownames(cmatrix) <- paste(c("Reliable", "Unreliable"), "measurements")
-		for (i in 1:ncol(relm)) {
-			if (i %in% removed.samples) {
-				cmatrix[, 2] <- cmatrix[, 2] + count.measurements(relm[, i])
-			} else if (length(removed.sites) != 0) {
-				cmatrix[, 2] <- cmatrix[, 2] + count.measurements(relm[removed.sites, i])
-				cmatrix[, 1] <- cmatrix[, 1] + count.measurements(relm[-removed.sites, i])
+
+		hasRemovedSites <- length(removed.sites) > 0
+		hasRemovedSamples <- length(removed.samples) > 0
+		if (hasRemovedSites){
+			relCounts.remSites <- rnb.get.reliability.counts.per.sample(rnb.set, siteIndices=removed.sites)
+			notRelCounts.remSites <- length(removed.sites) - relCounts.remSites
+			relCounts.retSites <- rnb.get.reliability.counts.per.sample(rnb.set, siteIndices=-removed.sites)
+			notRelCounts.retSites <- nsites(rnb.set) - length(removed.sites) - relCounts.retSites
+			if (hasRemovedSamples){
+				cmatrix[1,1] <- sum(as.numeric(relCounts.retSites[-removed.samples]))
+				cmatrix[1,2] <- sum(as.numeric(relCounts.remSites[-removed.samples])) + sum(as.numeric(relCounts.retSites[removed.samples]) + as.numeric(relCounts.remSites[removed.samples]))
+				cmatrix[2,1] <- sum(as.numeric(notRelCounts.retSites[-removed.samples]))
+				cmatrix[2,2] <- sum(as.numeric(notRelCounts.remSites[-removed.samples])) + sum(as.numeric(notRelCounts.retSites[removed.samples]) + as.numeric(notRelCounts.remSites[removed.samples]))
 			} else {
-				cmatrix[, 1] <- cmatrix[, 1] + count.measurements(relm[, i])
+				cmatrix[1,1] <- sum(as.numeric(relCounts.retSites))
+				cmatrix[1,2] <- sum(as.numeric(relCounts.remSites))
+				cmatrix[2,1] <- sum(as.numeric(notRelCounts.retSites))
+				cmatrix[2,2] <- sum(as.numeric(notRelCounts.remSites))
+			}
+		} else {
+			relCounts <- rnb.get.reliability.counts.per.sample(rnb.set, siteIndices=NULL)
+			notRelCounts <- nsites(rnb.set) - relCounts
+			if (hasRemovedSamples){
+				cmatrix[1,1] <- sum(as.numeric(relCounts[-removed.samples]))
+				cmatrix[1,2] <- sum(as.numeric(relCounts[ removed.samples]))
+				cmatrix[2,1] <- sum(as.numeric(notRelCounts[-removed.samples]))
+				cmatrix[2,2] <- sum(as.numeric(notRelCounts[ removed.samples]))
+			} else {
+				cmatrix[1,1] <- sum(as.numeric(relCounts))
+				cmatrix[1,2] <- as.numeric(0)
+				cmatrix[2,1] <- sum(as.numeric(notRelCounts))
+				cmatrix[2,2] <- as.numeric(0)
 			}
 		}
 		cont.matrix <- rbind(cont.matrix, cmatrix)

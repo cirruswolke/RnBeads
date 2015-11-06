@@ -755,7 +755,8 @@ setMethod("remove.sites", signature(object = "RnBSet"),
 						if (doBigFf) doBigFf <- object@status$disk.dump.bigff
 
 						if (doBigFf){
-							object@meth.sites <- BigFfMat(new.matrix, finalizer="delete")
+							bff.finalizer <- rnb.getOption("disk.dump.bigff.finalizer")
+							object@meth.sites <- BigFfMat(new.matrix, finalizer=bff.finalizer)
 						} else {
 							object@meth.sites <- convert.to.ff.matrix.tmp(new.matrix)
 						}
@@ -767,7 +768,7 @@ setMethod("remove.sites", signature(object = "RnBSet"),
 								delete(object@covg.sites)
 						 	}
 						 	if (doBigFf){
-						 		object@covg.sites <- BigFfMat(new.matrix, finalizer="delete")
+						 		object@covg.sites <- BigFfMat(new.matrix, finalizer=bff.finalizer)
 						 	} else {
 								object@covg.sites <- convert.to.ff.matrix.tmp(new.matrix)
 							}
@@ -850,6 +851,7 @@ setMethod("remove.samples", signature(object = "RnBSet"),
 		function(object, samplelist) {
 			object.old <- object
 			inds <- get.i.vector(samplelist, samples(object))
+			bff.finalizer <- rnb.getOption("disk.dump.bigff.finalizer")
 			if (length(inds) != 0) {
 				if(object@status$disk.dump){
 					doBigFf <- !is.null(object@status$disk.dump.bigff)
@@ -862,7 +864,7 @@ setMethod("remove.samples", signature(object = "RnBSet"),
 						delete(object@meth.sites)
 					}
 					if (doBigFf){
-						object@meth.sites <- BigFfMat(new.matrix, finalizer="delete")
+						object@meth.sites <- BigFfMat(new.matrix, finalizer=bff.finalizer)
 					} else {
 						object@meth.sites <- convert.to.ff.matrix.tmp(new.matrix)
 					}
@@ -885,7 +887,7 @@ setMethod("remove.samples", signature(object = "RnBSet"),
 							delete(object@covg.sites)
 						}
 						if (doBigFf){
-							object@covg.sites <- BigFfMat(new.matrix, finalizer="delete")
+							object@covg.sites <- BigFfMat(new.matrix, finalizer=bff.finalizer)
 						} else {
 							object@covg.sites <- convert.to.ff.matrix.tmp(new.matrix)
 						}
@@ -904,7 +906,7 @@ setMethod("remove.samples", signature(object = "RnBSet"),
 							delete(object@meth.regions[[region]])
 						}
 						if (doBigFf){
-							object@meth.regions[[region]] <- BigFfMat(meth.matrix, finalizer="delete")
+							object@meth.regions[[region]] <- BigFfMat(meth.matrix, finalizer=bff.finalizer)
 						} else {
 							object@meth.regions[[region]] <- convert.to.ff.matrix.tmp(meth.matrix)
 						}
@@ -915,7 +917,7 @@ setMethod("remove.samples", signature(object = "RnBSet"),
 								delete(object@covg.regions[[region]])
 							}
 							if (doBigFf){
-								object@covg.regions[[region]] <- BigFfMat(covg.matrix, finalizer="delete")
+								object@covg.regions[[region]] <- BigFfMat(covg.matrix, finalizer=bff.finalizer)
 							} else {
 								object@covg.regions[[region]] <- convert.to.ff.matrix.tmp(covg.matrix)
 							}
@@ -1132,7 +1134,9 @@ setMethod("combine", signature(x="RnBSet",y="RnBSet"),
 			usebigff <- useff
 			if (usebigff) usebigff <- !is.null(x@status$disk.dump.bigff)
 			if (usebigff) usebigff <- x@status$disk.dump.bigff
-			
+			if(usebigff){
+				bff.finalizer <- rnb.getOption("disk.dump.bigff.finalizer")
+			}
 			# prepare a new object
 			if(nrow(pheno(x))>=nrow(pheno(y))){
 				new.set<-y
@@ -1189,7 +1193,7 @@ setMethod("combine", signature(x="RnBSet",y="RnBSet"),
 					if(useff){
 						#new.matrix<-ff(vmode=vmode(slot(x,sl)), dim=c(total.sites,nrow(pheno(new.set))))
 						if (usebigff){
-							new.matrix <- BigFfMat(row.n=total.sites, col.n=nrow(pheno(new.set)), vmode=vmode(slot(x,sl)), finalizer="delete")
+							new.matrix <- BigFfMat(row.n=total.sites, col.n=nrow(pheno(new.set)), vmode=vmode(slot(x,sl)), finalizer=bff.finalizer)
 						} else {
 							new.matrix <- create.empty.ff.matrix.tmp(vm=vmode(slot(x,sl)), dim=c(total.sites,nrow(pheno(new.set))))
 						}
@@ -1367,6 +1371,7 @@ setMethod("summarize.regions", signature(object="RnBSet"),
 				stop("cannot apply coverage.weighted aggregation method to an RnBiseqSet object with 
 						missing coverage information")
 			}
+			bff.finalizer <- rnb.getOption("disk.dump.bigff.finalizer")
 			
 			if(region.type=="strands"){
 				annot.sizes <- rnb.annotation.size(assembly=object@assembly)	
@@ -1449,9 +1454,9 @@ setMethod("summarize.regions", signature(object="RnBSet"),
 			}
 			aggr.covg.sample <- function(j){
 				siteVec <- site.covg[,j]
-				vapply(regions2sites, function(siteInds, j){
+				vapply(regions2sites, function(siteInds){
 					sum(siteVec[siteInds], na.rm=TRUE)
-				}, numeric(1), j=j)
+				}, numeric(1))
 			}
 			
 			## Assign the resulting matrices to the object
@@ -1462,7 +1467,7 @@ setMethod("summarize.regions", signature(object="RnBSet"),
 
 					# delete(object@meth.sites)
 					if (doBigFf) {
-						object@meth.sites <- BigFfMat(row.n=nrow(region.indices), col.n=nSamples, col.names=samples(object), finalizer="delete")
+						object@meth.sites <- BigFfMat(row.n=nrow(region.indices), col.n=nSamples, col.names=samples(object), finalizer=bff.finalizer)
 						# logger.info(c("DEBUG:","Created BigFfMat for meth"))
 					} else {
 						object@meth.sites <- convert.to.ff.matrix.tmp(matrix(numeric(0), nrow=nrow(region.indices), ncol=nSamples, dimnames=list(NULL,samples(object))))
@@ -1481,7 +1486,7 @@ setMethod("summarize.regions", signature(object="RnBSet"),
 
 						# delete(object@covg.sites)
 						if (doBigFf) {
-							object@covg.sites <- BigFfMat(row.n=nrow(region.indices), col.n=nSamples, col.names=samples(object), finalizer="delete")
+							object@covg.sites <- BigFfMat(row.n=nrow(region.indices), col.n=nSamples, col.names=samples(object), finalizer=bff.finalizer)
 						} else {
 							object@covg.sites <- convert.to.ff.matrix.tmp(matrix(integer(0), nrow=nrow(region.indices), ncol=nSamples, dimnames=list(NULL,samples(object))))
 						}
@@ -1489,6 +1494,7 @@ setMethod("summarize.regions", signature(object="RnBSet"),
 						object@covg.sites <- matrix(integer(0), nrow=nrow(region.indices), ncol=nSamples, dimnames=list(NULL,samples(object)))
 					}
 					for (j in 1:nSamples){
+						# logger.info(c("DEBUG:","Aggregating coverage for sample",j))
 						object@covg.sites[,j] <- aggr.covg.sample(j)
 					}
 				} else {
@@ -1506,7 +1512,7 @@ setMethod("summarize.regions", signature(object="RnBSet"),
 						delete(object@meth.regions[[region.type]])
 					}
 					if (doBigFf){
-						object@meth.regions[[region.type]] <- BigFfMat(row.n=nrow(region.indices), col.n=nSamples, col.names=samples(object), finalizer="delete")
+						object@meth.regions[[region.type]] <- BigFfMat(row.n=nrow(region.indices), col.n=nSamples, col.names=samples(object), finalizer=bff.finalizer)
 						# logger.info(c("DEBUG:","Created BigFfMat for meth"))
 					} else {
 						object@meth.regions[[region.type]] <- convert.to.ff.matrix.tmp(matrix(numeric(0), nrow=nrow(region.indices), ncol=nSamples, dimnames=list(NULL,samples(object))))
@@ -1530,7 +1536,7 @@ setMethod("summarize.regions", signature(object="RnBSet"),
 						}
 						if (doBigFf){
 							if (is.null(object@covg.regions)) object@covg.regions <- list()
-							object@covg.regions[[region.type]] <- BigFfMat(row.n=nrow(region.indices), col.n=nSamples, col.names=samples(object), finalizer="delete")
+							object@covg.regions[[region.type]] <- BigFfMat(row.n=nrow(region.indices), col.n=nSamples, col.names=samples(object), finalizer=bff.finalizer)
 						} else {
 							object@covg.regions[[region.type]] <- convert.to.ff.matrix.tmp(matrix(integer(0), nrow=nrow(region.indices), ncol=nSamples, dimnames=list(NULL,samples(object))))
 						}
@@ -1538,6 +1544,7 @@ setMethod("summarize.regions", signature(object="RnBSet"),
 						object@covg.regions[[region.type]] <- matrix(integer(0), nrow=nrow(region.indices), ncol=nSamples, dimnames=list(NULL,samples(object)))
 					}
 					for (j in 1:nSamples){
+						# logger.info(c("DEBUG:","Aggregating coverage for sample",j))
 						object@covg.regions[[region.type]][,j] <- aggr.covg.sample(j)
 					}
 				}else{
