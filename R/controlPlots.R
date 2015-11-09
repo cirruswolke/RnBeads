@@ -9,7 +9,7 @@
 ## G L O B A L S #######################################################################################################
 
 .control.plot.theme.samples<-ggplot2::theme(
-					plot.margin=grid::unit(c(0.1,1,0.1,0.1), "cm"), 
+					plot.margin=grid::unit(c(0.1,1,0.1,0.1), "cm"),
 					axis.title.x = ggplot2::element_blank(),
 					axis.text.x=ggplot2::element_text(size=7, angle=-45, hjust=0))
 
@@ -18,12 +18,12 @@ HM450.SAMPLE.DEPENDENT<-c("BISULFITE CONVERSION I","BISULFITE CONVERSION II",
 		"SPECIFICITY I","SPECIFICITY II", "NON-POLYMORPHIC" )
 
 ## F U N C T I O N S ###################################################################################################
-#'
+
 #' rnb.plot.control.boxplot
 #'
 #' Box plots of various control probes
 #'
-#' @param rnb.set \code{\linkS4class{RnBeadRawSet}} or \code{\linkS4class{RnBeadSet}} object with valid quality 
+#' @param rnb.set \code{\linkS4class{RnBeadRawSet}} or \code{\linkS4class{RnBeadSet}} object with valid quality
 #' 				  control information.
 #' @param type    type of the control probe; must be one of the \code{"BISULFITE CONVERSION I"},
 #'                \code{"BISULFITE CONVERSION II"}, \code{"EXTENSION"}, \code{"HYBRIDIZATION"}, \code{"NEGATIVE"},
@@ -32,25 +32,24 @@ HM450.SAMPLE.DEPENDENT<-c("BISULFITE CONVERSION I","BISULFITE CONVERSION II",
 #' @param writeToFile flag specifying whether the output should be saved as \code{\linkS4class{ReportPlot}}
 #' @param numeric.names if \code{TRUE} and \code{writeToFile} is \code{TRUE}substitute the plot options in the plot file name with digits
 #' @param ... other arguments to \code{\link{createReportPlot}}
-#' 
-#' @return plot as an object of type \code{\linkS4class{ReportPlot}} if \code{writeToFile} is \code{TRUE} and of class 
+#'
+#' @return plot as an object of type \code{\linkS4class{ReportPlot}} if \code{writeToFile} is \code{TRUE} and of class
 #' 			\code{\link{ggplot}} otherwise.
 #'
-#' @author Pavlo Lutsik
-#' 
-#' @export
-#' 
-#' @examples 
+#' @examples
 #' \donttest{
 #' library(RnBeads.hg19)
 #' data(small.example.object)
 #' rnb.plot.control.boxplot(rnb.set.example)
 #' }
+#'
+#' @author Pavlo Lutsik
+#' @export
 rnb.plot.control.boxplot <- function(
-		rnb.set, 
-		type = rnb.infinium.control.targets(rnb.set@target)[1], 
-		writeToFile = FALSE, 
-		numeric.names = FALSE, 
+		rnb.set,
+		type = rnb.infinium.control.targets(rnb.set@target)[1],
+		writeToFile = FALSE,
+		numeric.names = FALSE,
 		...) {
 
 	if(!type %in% rnb.infinium.control.targets(rnb.set@target)) {
@@ -63,17 +62,17 @@ rnb.plot.control.boxplot <- function(
 	}else if(rnb.set@target=="probes27"){
 		meta <- rnb.get.annotation("controls27")
 	}
-	
+
 	if(rnb.set@target=="probes450"){
 		types<-rnb.infinium.control.targets(rnb.set@target)[c(13,4,3,14,1:2,11:12,6)]
 	}else if(rnb.set@target=="probes27"){
 		types<-rnb.infinium.control.targets(rnb.set@target)[c(10,3,2,11,1,9,6)]
 	}
-	
+
 	if(!type %in% types){
 		warning("Unoptimized probe type, plotting performance may be decreased")
 	}
-	
+
 	if(rnb.set@target=="probes450"){
 		meta <- meta[type == meta[["Target"]], ]
 		ids<-as.character(meta[["ID"]])
@@ -98,7 +97,7 @@ rnb.plot.control.boxplot <- function(
 		}
 		return(plot.obj)
 	}
-	
+
 	intensities <- lapply(c("green" = "Cy3", "red" = "Cy5"), function(channel) {
 		result <- qc(rnb.set)[[channel]][ids, ]
 		if (is.vector(result)) {
@@ -108,21 +107,21 @@ rnb.plot.control.boxplot <- function(
 	})
 
 	scales<-lapply(qc(rnb.set), get.unified.scale)
-	
+
 	if(rnb.set@target=="probes450"){
 		## Shorten the words describing probe's expected intensity
 		INTENSITIES <- c("Background" = "Bgnd", "High" = "High", "Low" = "Low", "Medium" = "Med")
 		levels(meta[, "Expected Intensity"]) <- INTENSITIES[levels(meta[, "Expected Intensity"])]
 		meta[, "Expected Intensity"] <- as.character(meta[, "Expected Intensity"])
-	
+
 		## Define bar labels in the plot
 		plot.names<-sapply(1:length(ids), sprintf, fmt="Probe%2g")
-		
+
 		exp.intensity <- lapply(c("green" = "Green", "red" = "Red"), function(channel) {
 			ifelse(meta[[paste("Evaluate", channel)]] == "+", meta[["Expected Intensity"]], "Bgnd")
 		})
 		plot.names <- lapply(exp.intensity, function(exps) { paste(plot.names, exps, sep = ":\n") })
-	
+
 		plot.data <- lapply(names(intensities), function(channel) {
 			channel.data <- intensities[[channel]]
 			data.frame(
@@ -140,7 +139,7 @@ rnb.plot.control.boxplot <- function(
 							"Probe" = as.factor(sapply(plot.names[[channel]], rep, times=nrow(channel.data))))
 				})
 	}
-	
+
 	if(writeToFile){
 		plot.file<-createReportPlot(paste("ControlBoxPlot", ifelse(numeric.names, match(type, types), gsub(" ", ".", type)) , sep="_"), ...)
 	}
@@ -161,7 +160,7 @@ rnb.plot.control.boxplot <- function(
 	}
 
 	grb<-do.call(arrangeGrob, plots)
-	
+
 	if(writeToFile) {
 		grid.draw(grb)
 		off(plot.file)
@@ -179,27 +178,27 @@ rnb.plot.control.boxplot <- function(
 #' @param rnb.set 		\code{\linkS4class{RnBeadSet}} object with valid quality control information
 #' @param sample.subset an integer vector specifying the subset of samples for which the plotting should be performed
 #' @param writeToFile 	flag specifying whether the output should be saved as \code{\linkS4class{ReportPlot}}
-#' @param name.prefix	in case \code{writeToFile} is \code{TRUE}, a \code{character} singleton specifying a prefix to the variable part of the image file names 
+#' @param name.prefix	in case \code{writeToFile} is \code{TRUE}, a \code{character} singleton specifying a prefix to the variable part of the image file names
 #' @param ... 			other arguments to \code{\link{createReportPlot}}
-#' 
-#' @return plot as an object of type \code{\linkS4class{ReportPlot}} if \code{writeToFile} is \code{TRUE} and of class 
+#'
+#' @return plot as an object of type \code{\linkS4class{ReportPlot}} if \code{writeToFile} is \code{TRUE} and of class
 #' 			\code{\link{ggplot}} otherwise.
-#' 
+#'
 #' @author Pavlo Lutsik
 #' @export
-#' @examples 
+#' @examples
 #' \donttest{
 #' library(RnBeads.hg19)
 #' data(small.example.object)
 #' rnb.plot.negative.boxplot(rnb.set.example)
 #' }
 rnb.plot.negative.boxplot<- function(
-		rnb.set,  
-		sample.subset=1:length(samples(rnb.set)), 
-		writeToFile = FALSE, 
-		name.prefix=NULL, 
+		rnb.set,
+		sample.subset=1:length(samples(rnb.set)),
+		writeToFile = FALSE,
+		name.prefix=NULL,
 		...) {
-		
+
 	## Extract intensities of the control probes
 	if(rnb.set@target=="probes450"){
 		meta <- rnb.get.annotation("controls450")
@@ -223,7 +222,7 @@ rnb.plot.negative.boxplot<- function(
 		}
 		return(invisible())
 	}
-	
+
 	intensities <- lapply(c("green" = "Cy3", "red" = "Cy5"), function(channel) {
 				result <- qc(rnb.set)[[channel]][ids,sample.subset]
 				if (is.vector(result)) {
@@ -231,25 +230,25 @@ rnb.plot.negative.boxplot<- function(
 				}
 				return(result)
 			})
-	
+
 	## Shorten the words describing probe's expected intensity
 #	INTENSITIES <- c("Background" = "Bgnd", "High" = "High", "Low" = "Low", "Medium" = "Med")
 #	levels(meta[, "Expected Intensity"]) <- INTENSITIES[levels(meta[, "Expected Intensity"])]
 #	meta[, "Expected Intensity"] <- as.character(meta[, "Expected Intensity"])
-	
+
 	## Define bar labels in the plot
 #	plot.names<-sapply(1:length(ids), sprintf, fmt="Probe%2g")
 	sample.ids<-samples(rnb.set)[sample.subset]
-	
-	## FIXME: This might leads to duplicated identifiers and/or reordering of samples 
+
+	## FIXME: This might leads to duplicated identifiers and/or reordering of samples
 	sample.labels<-abbreviate.names(sample.ids)
-	
+
 #	exp.intensity <- lapply(c("green" = "Green", "red" = "Red"), function(channel) {
 #				ifelse(meta[[paste("Evaluate", channel)]] == "+", meta[["Expected Intensity"]], "Bgnd")
 #			})
-	
+
 #	plot.names <- lapply(exp.intensity, function(exps) { paste(plot.names, exps, sep = ":\n") })
-	
+
 	plot.data <- lapply(names(intensities), function(channel) {
 				channel.data <- intensities[[channel]]
 				data.frame(
@@ -264,13 +263,13 @@ rnb.plot.negative.boxplot<- function(
 	if(writeToFile) {
 		plot.file<-createReportPlot(plot.name, ...)
 	}
-	
+
 	## Define viewports and assign it to grid layout
 	#grid.newpage()
 	#pushViewport(viewport(layout = grid.layout(2,1)))
 
 	plots<-list()
-	
+
 	for (i in 1:length(intensities)) {
 		channel <- names(intensities)[i]
 		plots[[i]]<-qplot(Sample, Intensity, data=na.omit(plot.data[[i]]), geom = "boxplot",
@@ -280,9 +279,9 @@ rnb.plot.negative.boxplot<- function(
 						.control.plot.theme.samples
 						#,vp=viewport(layout.pos.row=i, layout.pos.col=1))
 	}
-	
+
 	grb<-do.call(arrangeGrob, plots)
-	
+
 	if(writeToFile) {
 		grid.draw(grb)
 		off(plot.file)
@@ -294,24 +293,20 @@ rnb.plot.negative.boxplot<- function(
 #' rnb.plot.control.barplot
 #'
 #' Per-sample bar plots of Illumina HumanMethylation control probes
-#' 
-#' @param rnb.set 		\code{\linkS4class{RnBeadRawSet}} or \code{\linkS4class{RnBeadSet}} object with valid 
+#'
+#' @param rnb.set 		\code{\linkS4class{RnBeadRawSet}} or \code{\linkS4class{RnBeadSet}} object with valid
 #' 						quality control information
 #' @param probe 		exact id of the control probe consisting of the control probe type (see \code{\link{rnb.plot.control.boxplot}})
 #' @param sample.subset an integer vector specifying the subset of samples for which the plotting should be performed
 #' @param writeToFile 	flag specifying whether the output should be saved as \code{\linkS4class{ReportPlot}}
 #' @param numeric.names if \code{TRUE} and \code{writeToFile} is \code{TRUE}substitute the plot options in the plot file name with digits
-#' @param name.prefix	in case \code{writeToFile} is \code{TRUE}, a \code{character} singleton specifying a prefix to the variable part of the image file names 
-#' @param verbose		if \code{TRUE} additional diagnostic output is generated 
+#' @param name.prefix	in case \code{writeToFile} is \code{TRUE}, a \code{character} singleton specifying a prefix to the variable part of the image file names
+#' @param verbose		if \code{TRUE} additional diagnostic output is generated
 #' @param ... 			other arguments to \code{\link{createReportPlot}}
-#' 
-#' @return plot as an object of type \code{\linkS4class{ReportPlot}} if \code{writeToFile} is \code{TRUE} and of class 
+#'
+#' @return plot as an object of type \code{\linkS4class{ReportPlot}} if \code{writeToFile} is \code{TRUE} and of class
 #' 			\code{\link{ggplot}} otherwise.
-#' 
-#' @author Pavlo Lutsik
-#' 
-#' @export
-#' 
+#'
 #' @examples
 #' \donttest{
 #' library(RnBeads.hg19)
@@ -321,17 +316,20 @@ rnb.plot.negative.boxplot<- function(
 #' print(ctrl.probe) # EXTENSION.5
 #' rnb.control.barplot(rnb.set.example, ctrl.probe)
 #' }
+#'
+#' @author Pavlo Lutsik
+#' @export
 rnb.plot.control.barplot<-function(
-		rnb.set, 
-		probe, 
-		sample.subset=1:length(samples(rnb.set)), 
-		writeToFile=FALSE, 
-		numeric.names=FALSE, 
-		name.prefix=NULL, 
+		rnb.set,
+		probe,
+		sample.subset=1:length(samples(rnb.set)),
+		writeToFile=FALSE,
+		numeric.names=FALSE,
+		name.prefix=NULL,
 		verbose=FALSE,
 		...)
 {
-	
+
 	if(rnb.set@target=="probes450"){
 		control.meta.data <- rnb.get.annotation("controls450")
 		type=strsplit(probe,".", fixed=TRUE)[[1]][1]
@@ -342,18 +340,18 @@ rnb.plot.control.barplot<-function(
 		id<-subset(control.meta.data, Target==type & Index==index)$ID
 		id.col<-"ID"
 	}else if(rnb.set@target=="probes27"){
-		control.meta.data <- rnb.get.annotation("controls27")		
+		control.meta.data <- rnb.get.annotation("controls27")
 		if(!probe %in% control.meta.data$Name){
 			rnb.error(c("Unrecognized control probe:", probe))
 		}
 		id<-control.meta.data[probe==control.meta.data[["Name"]],"Address"]
 		id.col<-"Address"
 	}
-	
+
 	#get intensities
 	green<-qc(rnb.set)$Cy3[,sample.subset, drop=FALSE]
 	red<-qc(rnb.set)$Cy5[,sample.subset, drop=FALSE]
-	
+
 	if(! id %in% rownames(green)){
 		if(writeToFile){
 			if(is.null(name.prefix)){
@@ -371,7 +369,7 @@ rnb.plot.control.barplot<-function(
 		}
 		return(plot.obj)
 	}
-		
+
 	green<-green[as.character(id),]
 	red<-red[as.character(id),]
 
@@ -379,7 +377,7 @@ rnb.plot.control.barplot<-function(
 #   if(is.null(dim(red))) red<-t(as.matrix(red))
 
 	## get meta information
-	
+
 	if(rnb.set@target=="probes450"){
 		meta<-subset(control.meta.data, ID==id)
 	}else if(rnb.set@target=="probes27"){
@@ -397,17 +395,17 @@ rnb.plot.control.barplot<-function(
 	}
 
 	Samples<-factor(samples(rnb.set)[sample.subset], as.character(samples(rnb.set)[sample.subset]))
-	## shorten sample names 
-	
-	## FIXME: This might leads to duplicated identifiers and/or reordering of samples 
+	## shorten sample names
+
+	## FIXME: This might leads to duplicated identifiers and/or reordering of samples
 	sample.labels<-abbreviate.names(samples(rnb.set)[sample.subset])
-	
+
 	#grid.newpage()
 	# define viewports and assign it to grid layout
 	#pushViewport(viewport(layout = grid.layout(2,1)))
-	
+
 	### plot green channel
-	
+
 	if(rnb.set@target=="probes450"){
 		main_txt_grn<-paste(probe, meta[,"Description"], "green channel", if(meta[, "Evaluate Green"]=="+") meta[, "Expected Intensity"] else "Background", sep=": ")
 		main_txt_red<-paste(probe, meta[,"Description"], "red channel",if(meta[, "Evaluate Red"]=="+") meta[, "Expected Intensity"] else "Background", sep=": ")
@@ -415,67 +413,67 @@ rnb.plot.control.barplot<-function(
 		main_txt_grn<-paste(probe, sep="")
 		main_txt_red<-paste(probe, sep="")
 	}
-	
-	empty.probe<-sum(sapply(green, is.na))==length(green) 
-	
+
+	empty.probe<-sum(sapply(green, is.na))==length(green)
+
     if(empty.probe) {
 		green<-rep(0, length(green))
 	}
-	green.plot<-qplot(Samples, green, stat="identity", geom="bar",fill=I("green"), 
+	green.plot<-qplot(Samples, green, stat="identity", geom="bar",fill=I("green"),
 					main=main_txt_grn)+
 					scale_x_discrete(labels=sample.labels)+ylab("Intensity")+
 					.control.plot.theme.samples
-			
+
 	if(empty.probe) {
 		green.plot<-green.plot+annotate("text", label="No intensities found for this quality control probe", x=length(green)%/%2, y=0.5, size=5)
 	}
 	#print(green.plot, vp=viewport(layout.pos.row=1, layout.pos.col=1))
-	
+
 	### plot red channel
 	if(sum(sapply(red, is.na))==length(red)) empty.probe<-TRUE else empty.probe<-FALSE
 	if(empty.probe) {
 		red<-rep(0, length(red));
 	}
-		red.plot<-qplot(Samples, red, stat="identity", geom="bar",fill=I("red"), 
-						main=main_txt_red)+ 
+		red.plot<-qplot(Samples, red, stat="identity", geom="bar",fill=I("red"),
+						main=main_txt_red)+
 					scale_x_discrete(labels=sample.labels)+ylab("Intensity")+
 					.control.plot.theme.samples
-					
+
 	if(empty.probe){
 		red.plot<-red.plot+annotate("text", label="No intensities found for this quality control probe", x=length(red)%/%2, y=0.5, size=5)
 	}
 	#print(red.plot, vp=viewport(layout.pos.row=2, layout.pos.col=1))
-		
+
   grb<-arrangeGrob(green.plot, red.plot)
-  
+
   if(writeToFile) {
 	grid.draw(grb)
   	off(plot.file)
   	return(plot.file)
    }
-  
+
   return(grb)
-  
+
 }
 #######################################################################################################################
 
 ## control.probe.PCA
 ##
 ## Correlation plots of the principal components of the data set and the quality control information
-## 
+##
 ## @param qc.set Quality control information of an \code{\linkS4class{RnBeadSet}} object.
 ## @param pca ...
-## @param type Desired type of the control probe, one of the c("BISULFITE CONVERSION I", "BISULFITE CONVERSION II", 
-## "EXTENSION","HYBRIDIZATION", "NEGATIVE", "NON-POLYMORPHIC", "NORM_A", "NORM_C","NORM_G", "NORM_T", "SPECIFICITY I", 
+## @param type Desired type of the control probe, one of the c("BISULFITE CONVERSION I", "BISULFITE CONVERSION II",
+## "EXTENSION","HYBRIDIZATION", "NEGATIVE", "NON-POLYMORPHIC", "NORM_A", "NORM_C","NORM_G", "NORM_T", "SPECIFICITY I",
 ## "SPECIFICITY II", "STAINING","TARGET REMOVAL")
 ## @param ... other arguments to \code{\link{createReportPlot}}
 ##
 ## @export
 ## @author Pavlo Lutsik
 control.probe.PCA <- function(
-		qc.set, 
-		pca, 
-		type, 
+		qc.set,
+		pca,
+		type,
 		...) {
 
 	if (!(type %in% rnb.infinium.control.targets())){
@@ -532,10 +530,10 @@ control.probe.PCA <- function(
 #' @param rnb.set \code{\linkS4class{RnBeadSet}} object
 #' @param writeToFile a flag specifying whether the output should be saved as \code{\linkS4class{ReportPlot}}
 #' @param ... other arguments to \code{\link{createReportPlot}}
-#' 
-#'  @return plot as an object of type \code{\linkS4class{ReportPlot}} if \code{writeToFile} is \code{TRUE} and of class 
+#'
+#'  @return plot as an object of type \code{\linkS4class{ReportPlot}} if \code{writeToFile} is \code{TRUE} and of class
 #' 			\code{\link{ggplot}} otherwise.
-#' 
+#'
 #' @export
 #' @author Pavlo Lutsik
 #' @examples
@@ -545,17 +543,17 @@ control.probe.PCA <- function(
 #' rnb.plot.snp.boxplot(rnb.set.example)
 #' }
 rnb.plot.snp.boxplot<-function(
-		rnb.set, 
-		writeToFile=FALSE, 
+		rnb.set,
+		writeToFile=FALSE,
 		...){
-	
+
 	if (!inherits(rnb.set, "RnBeadSet")) {
 		stop("invalid value for rnb.set")
 	}
 	if (!parameter.is.flag(writeToFile)) {
 		stop("invalid value for writeToFile; expected TRUE or FALSE")
 	}
-	
+
 	if(rnb.set@target=="probes450"){
 		snp.betas<-meth(rnb.set, row.names=TRUE)
 		snp.betas<-t(snp.betas[grep("rs", rownames(snp.betas)),,drop=FALSE])
@@ -563,7 +561,7 @@ rnb.plot.snp.boxplot<-function(
 		snp.betas<-t(HM27.snp.betas(qc(rnb.set)))
 	}
 	rownames(snp.betas) <- samples(rnb.set)
-	
+
 	if (ncol(snp.betas) == 0) {
 		stop("invalid value for rnb.set; no SNP probes found")
 	}
@@ -577,13 +575,13 @@ rnb.plot.snp.boxplot<-function(
 	plot.obj<-qplot(SNP, Beta.values, data=snp.data, geom = "boxplot", main="",
 				  ylab="Beta value")+theme(axis.text.x=element_text(angle=90, vjust=0))
   	#, vp=viewport(layout.pos.row=1, layout.pos.col=1))
-  
+
 	if(writeToFile){
 		print(plot.obj)
 		off(plot.file)
 		return(plot.file)
 	}
-      
+
 	return(plot.obj)
 }
 
@@ -594,16 +592,16 @@ rnb.plot.snp.boxplot<-function(
 #' Bar plots of beta-values from the genotyping probes
 #'
 #' @param rnb.set 	\code{\linkS4class{RnBeadRawSet}} or \code{\linkS4class{RnBeadSet}} object
-#' @param sample 	unique sample identifier. In case \code{rnb.getOption("identifiers.column")} is not \code{NULL}, 
+#' @param sample 	unique sample identifier. In case \code{rnb.getOption("identifiers.column")} is not \code{NULL},
 #' 					\code{sample} should attain values from the corresponding column, or \code{colnames(meth(rnb.set))}
 #' 					otherwise.
 #' @param writeToFile flag specifying whether the output should be saved as \code{\linkS4class{ReportPlot}}
 #' @param numeric.names if \code{TRUE} and \code{writeToFile} is \code{TRUE}substitute the plot options in the plot file name with digits
 #' @param ... other arguments to \code{\link{createReportPlot}}
 #'
-#' @return plot as an object of type \code{\linkS4class{ReportPlot}} if \code{writeToFile} is \code{TRUE} and of class 
+#' @return plot as an object of type \code{\linkS4class{ReportPlot}} if \code{writeToFile} is \code{TRUE} and of class
 #' 			\code{\link{ggplot}} otherwise.
-#' 
+#'
 #' @export
 #' @author Pavlo Lutsik
 #' @examples
@@ -614,12 +612,12 @@ rnb.plot.snp.boxplot<-function(
 #' rnb.plot.snp.barplot(rnb.set.example, samp)
 #' }
 rnb.plot.snp.barplot<-function(
-		rnb.set, 
-		sample, 
-		writeToFile=FALSE, 
-		numeric.names=FALSE, 
+		rnb.set,
+		sample,
+		writeToFile=FALSE,
+		numeric.names=FALSE,
 		...){
-	
+
 	if (!inherits(rnb.set, "RnBeadSet")) {
 		stop("invalid value for rnb.set")
 	}
@@ -630,14 +628,14 @@ rnb.plot.snp.barplot<-function(
 	if (!(sample %in% ids)) {
 		stop("invalid value for sample")
 	}
-	
+
 	if(rnb.set@target=="probes450"){
 		snp.betas<-meth(rnb.set, row.names=TRUE)[,match(sample, ids),drop=FALSE]
 		snp.betas<-snp.betas[grep("rs", rownames(snp.betas)),,drop=FALSE]
 	}else if(rnb.set@target=="probes27"){
 		snp.betas<-HM27.snp.betas(qc(rnb.set))[,match(sample, ids)]
 	}
-	
+
 	if (length(snp.betas) == 0) {
 		stop("invalid value for rnb.set; no SNP probes found")
 	}
@@ -645,20 +643,20 @@ rnb.plot.snp.barplot<-function(
 	if(writeToFile) {
 		plot.file<-createReportPlot(paste('SNPBarPlot',  ifelse(numeric.names, match(sample, samples(rnb.set)), gsub("[ |_]", ".", sample)) , sep="_"), ...)
 	}
-	
+
 	Beta.values<-as.numeric(snp.betas)
 	SNP<-names(snp.betas)
 
 	plot.obj<-qplot(SNP, Beta.values, geom = "bar", stat="identity", main=sample,
 					ylab="Beta value")+scale_y_continuous(limits=c(0,1))+
 			.control.plot.theme.samples#, vp=viewport(layout.pos.row=1, layout.pos.col=1))
-	
+
 	if(writeToFile) {
 		print(plot.obj)
 		off(plot.file)
 		return(plot.file)
 	}
-	
+
 	return(plot.obj)
 }
 
@@ -671,10 +669,10 @@ rnb.plot.snp.barplot<-function(
 #' @param rnb.set 		\code{\linkS4class{RnBeadRawSet}} or \code{\linkS4class{RnBeadSet}} object
 #' @param writeToFile 	flag specifying whether the output should be saved as \code{\linkS4class{ReportPlot}}
 #' @param ... 			other arguments to \code{\link{createReportPlot}}
-#' 
-#' @return plot as an object of type \code{\linkS4class{ReportPlot}} if \code{writeToFile} is \code{TRUE} and of class 
+#'
+#' @return plot as an object of type \code{\linkS4class{ReportPlot}} if \code{writeToFile} is \code{TRUE} and of class
 #' 			\code{\link{ggplot}} otherwise.
-#' 
+#'
 #' @export
 #' @author Pavlo Lutsik
 #' @examples
@@ -684,17 +682,17 @@ rnb.plot.snp.barplot<-function(
 #' rnb.plot.snp.heatmap(rnb.set.example)
 #' }
 rnb.plot.snp.heatmap<-function(
-		rnb.set, 
-		writeToFile=FALSE, 
+		rnb.set,
+		writeToFile=FALSE,
 		...){
-	
+
 	if (!inherits(rnb.set, "RnBeadSet")) {
 		stop("invalid value for rnb.set")
 	}
 	if (!parameter.is.flag(writeToFile)) {
 		stop("invalid value for writeToFile; expected TRUE or FALSE")
 	}
-	
+
 	sample.ids<-abbreviate.names(samples(rnb.set))
 	if(rnb.set@target=="probes450"){
 		snp.betas<-meth(rnb.set, row.names=TRUE)
@@ -702,17 +700,17 @@ rnb.plot.snp.heatmap<-function(
 	}else if(rnb.set@target=="probes27"){
 		snp.betas<-HM27.snp.betas(qc(rnb.set))
 	}
-		
+
 	if (length(snp.betas) == 0) {
 		stop("invalid value for rnb.set; no SNP probes found")
 	}
 	#threshold for removing rows and columns. If more than this percentage of NAs are present
 	#in a row or column, this row or column is removed prior to drawing the heatmap
 	thresh.perc.na <- 0.5
-	
+
 	rnas<-colMeans(is.na(snp.betas))
 	cnas<-rowMeans(is.na(snp.betas))
-	
+
 	if(all(rnas>thresh.perc.na)){
 		stop("No SNP information present for any of the samples [ERROR_ID: snp_heatmap_rnas]")
 	}
@@ -730,21 +728,21 @@ rnb.plot.snp.heatmap<-function(
 		num.rem <- sum(cnas>thresh.perc.na)
 		rnb.warning(c(num.rem,"SNP probes were removed when generating SNP heatmap"))
 	}
-	
+
 	if(writeToFile) {
 		plot.file<-createReportPlot('SNPHeatmap', ...)
 	}
-	
+
 	if(nrow(snp.betas)<2 || ncol(snp.betas)<2){
-		
+
 		rnb.message.plot(sprintf("Heatmap is not available due to insufficient data. Try the SNP bar plot."))
-		
+
 	}else{
-	
-		heatmap.2(snp.betas, 
+
+		heatmap.2(snp.betas,
 				scale = "none", trace = "none", margins = c(8,8), #ColSideColors = pheno.colors$colors[,si],
 				labRow = rownames(snp.betas), labCol = sample.ids, col = get.methylation.color.panel())
-		 
+
 				#lmat=matrix(c(3,4,1,2), ncol=2, byrow=TRUE), lwid=c(0.75, 0.25), lhei=c(0.2,0.8))
 	}
 	if(writeToFile) {
@@ -787,7 +785,7 @@ point.whisker.ggplot <- function(dframe, yrange, xlab = "Position on the slide",
 #'         given slide. If the provided dataset does not contain valid Sentrix ID and position information (or is an
 #'         empty dataset), this method returns \code{NULL}.
 #'
-#' 
+#'
 #' @author Yassen Assenov
 #' @export
 #' @examples
@@ -850,9 +848,9 @@ rnb.plot.sentrix.distribution <- function(rnb.set, sentrix.id) {
 #' @details
 #' If no additional parameters are specified, this function creates one PDF and one low-resolution PNG file for every
 #' generated plot.
-#' 
+#'
 #' @seealso \code{\link{rnb.plot.sentrix.distribution}} for creating a single plot for a specified slide number
-#' 
+#'
 #' @author Yassen Assenov
 #' @export
 rnb.plot.sentrix.distributions <- function(rnb.set, fprefix = "sentrix_whisker", ...) {
@@ -903,11 +901,11 @@ rnb.plot.sentrix.distributions <- function(rnb.set, fprefix = "sentrix_whisker",
 #######################################################################################################################
 
 get.unified.scale<-function(intensities){
-	
+
 	ir<-range(as.numeric(intensities), na.rm=TRUE)
-	
-	return(c(0,ir[2]+1000))	
-	
+
+	return(c(0,ir[2]+1000))
+
 }
 #######################################################################################################################
 HM27.snp.betas<-function(qc.int){
@@ -916,19 +914,19 @@ HM27.snp.betas<-function(qc.int){
 	snp.ids<-cmd.snp[["Address"]]
 	cy3.snp<-qc.int[["Cy3"]][rownames(qc.int[["Cy3"]]) %in% snp.ids,]
 	cy5.snp<-qc.int[["Cy5"]][rownames(qc.int[["Cy5"]]) %in% snp.ids,]
-	
+
 	rownames(cy3.snp)<-cmd.snp$Name
 	rownames(cy5.snp)<-cmd.snp$Name
-	
+
 	meth.cy3<-cy3.snp[paste(HM27.CY3.SNP.PROBES, "B", sep="_"),]
 	umeth.cy3<-cy3.snp[paste(HM27.CY3.SNP.PROBES, "A", sep="_"),]
-	
+
 	meth.cy5<-cy5.snp[paste(HM27.CY5.SNP.PROBES, "B", sep="_"),]
 	umeth.cy5<-cy5.snp[paste(HM27.CY5.SNP.PROBES, "A", sep="_"),]
-	
+
 	snp.betas.cy3<-meth.cy3/(meth.cy3+umeth.cy3+1)
 	snp.betas.cy5<-meth.cy5/(meth.cy5+umeth.cy5+1)
-	
+
 	snp.betas<-rbind(snp.betas.cy3, snp.betas.cy5)
 	rownames(snp.betas)<-gsub("_B", "", rownames(snp.betas))
 	return(snp.betas)

@@ -71,12 +71,12 @@ check.barcode <- function(dframe){
 #' @author Pavlo Lutsik
 #' @examples
 #' \donttest{
-#'  
+#'
 #'   annotation.file<-system.file("")
 #'   sa<-read.sample.annotation(annotation.file)
 #'   sa
 #' }
-#' @export 
+#' @export
 read.sample.annotation <- function(fname, sep = rnb.getOption("import.table.separator")) {
 	if(!(is.character(fname) && length(fname) == 1 && (!is.na(fname)))) {
 		stop("invalid value for fname")
@@ -117,7 +117,7 @@ read.sample.annotation <- function(fname, sep = rnb.getOption("import.table.sepa
 	if(ncol(result) < 2) {
 		rnb.warning("The sample sheet table has only one column. Please check import.table.separator option")
 	}
-	
+
 	i <- which(colnames(result) == "")
 	if (length(i) != 0) {
 		colnames(result)[i] <- paste("Unknown Column", 1:length(i))
@@ -139,7 +139,7 @@ read.sample.annotation <- function(fname, sep = rnb.getOption("import.table.sepa
 #' @param p.values a file containing the detection p values. If not supplied, the routine will look in dir for a file containing "pval" token in the filename
 #' @param bead.counts a file containing the bead counts (optional). If not supplied, the routine will look in dir for a file containing "bead" token in the filename
 #' @param sep character used as field separator in the tables files. Default value is taken by the call to \code{rnb.getOption("import.table.separator")}
-#' @param verbose Flag indicating ifthe messages to the logger should be sent. Note that the logger must be initialized prior to calling this function. 
+#' @param verbose Flag indicating ifthe messages to the logger should be sent. Note that the logger must be initialized prior to calling this function.
 #' 				  Logging is useful for keeping a record of the downloaded and processed samples. Also, informative messages are stored in case of an error.
 #' @details Colnames in all files should match. They will be returned as the samples element of the list.
 #' @return Object of type \code{\linkS4class{RnBeadSet}}.
@@ -150,24 +150,24 @@ read.data.dir<-function(dir,
 				pheno,
 				betas,
 				p.values,
-				bead.counts, 
+				bead.counts,
 				sep=rnb.getOption("import.table.separator"),
 				verbose=TRUE){
-			
+
 			if(verbose){
 				rnb.logger.start("Loading Data from Table Files")
 			}
-			
+
 			if(!missingArg(dir)){
 				files<-list.files(dir, full.names=TRUE)
 			}else{
 				files<-character()
 			}
-			
+
 			if(length(files)>10){
 				stop(paste("Too many files in directory:", dir), length(files))
 			}
-			
+
 			if(missingArg(pheno)){
 				pheno<-grep("Sample|sample", files, value=TRUE)
 				if(length(pheno)==0){
@@ -176,15 +176,15 @@ read.data.dir<-function(dir,
 					stop("More than one file with sample information:", files)
 				}
 			}
-			
+
 			if(missingArg(betas)){
 				if(length(grep("beta", files))==1){
-					betas<-files[grep("beta", files)] 
-				}else{ 
+					betas<-files[grep("beta", files)]
+				}else{
 					stop("Missing or more than one file with betas:", files)
 				}
 			}
-			
+
 			if(missingArg(p.values)){
 				if(length(grep("pval", files))==1){
 					p.values<-files[grep("pval", files)]
@@ -193,7 +193,7 @@ read.data.dir<-function(dir,
 				}
 				#else stop("Missing or more than one file with p values:", files)
 			}
-			
+
 			if(missingArg(bead.counts)){
 				if(length(grep("bead", files)==1)){
 					bead.counts<-files[grep("bead", files)]
@@ -202,12 +202,12 @@ read.data.dir<-function(dir,
 				}
 				#else stop("Missing or more than one file with bead counts:", files)
 			}
-			
+
 			pheno.table<-read.sample.annotation(pheno, sep=sep)
 			if(verbose){
 				rnb.info("Read table with sample information")
 			}
-			
+
 			beta.table<-read.table(betas, sep=sep, header=TRUE, check.names=FALSE)
 			if(verbose){
 				rnb.info("Read table with betas")
@@ -218,7 +218,7 @@ read.data.dir<-function(dir,
 			if(is.null(rownames(beta.table))){
 				rnb.error("Beta-value table has no row names: cannot match probes to the annotation")
 			}
-			
+
 			if(!is.null(p.values)){
 				p.value.table<-read.table(p.values, sep=sep, header=TRUE, check.names=FALSE)
 				if(verbose){
@@ -227,8 +227,8 @@ read.data.dir<-function(dir,
 				if(ncol(p.value.table)<2){
 					rnb.warning("P-value table has less than two columns: check the value of sep")
 				}
-			}else p.value.table<-NULL  
-			
+			}else p.value.table<-NULL
+
 			if(!is.null(bead.counts)){
 				bead.count.table<-read.table(bead.counts, sep=sep, header=TRUE, check.names=FALSE)
 				if(verbose){
@@ -240,7 +240,7 @@ read.data.dir<-function(dir,
 			}else {
 				bead.count.table<-NULL
 			}
-			
+
 			if(!is.null(p.value.table)){
 				if(sum(colnames(beta.table) != colnames(p.value.table))>0){
 					stop("The columns of p-value table do not match the columns of the beta value table ", "")
@@ -251,7 +251,7 @@ read.data.dir<-function(dir,
 					stop("The columns of bead counts table do not match the columns of the beta value table ", "")
 				}
 			}
-			
+
 			data.set<-RnBeadSet(
 					pheno=pheno.table,
 					probes=rownames(beta.table),
@@ -259,12 +259,12 @@ read.data.dir<-function(dir,
 					p.values=if(is.null(p.value.table)) p.value.table else as.matrix(p.value.table),
 					bead.counts=if(is.null(bead.count.table)) bead.count.table else as.matrix(bead.count.table),
 					platform=if(nrow(beta.table)>30000L) "450k" else "27k")
-			
+
 			if(verbose) {
 				rnb.logger.completed()
 			}
 			return(data.set)
-			
+
 }
 ########################################################################################################################
 
@@ -282,10 +282,10 @@ read.data.dir<-function(dir,
 #'                       lists the samples' Sentrix  barcodes. If such a column is not present, this function searches
 #'                       for columns \code{"Sentrix_ID"} and \code{"Sentrix_Position"} (or similar) that build a
 #'                       barcode.
-#' @param sep.samples	 character used as field separator in the sample sheet file. 
+#' @param sep.samples	 character used as field separator in the sample sheet file.
 #' 						 Default value is taken by the call to \code{rnb.getOption("import.table.separator")}
-#' @param load.chunk	 \code{integer} of size one, giving the number of IDAT files which should be loaded in 
-#' 						 one loading cycle or \code{NULL}, in which case an attempt will be made to load all files 
+#' @param load.chunk	 \code{integer} of size one, giving the number of IDAT files which should be loaded in
+#' 						 one loading cycle or \code{NULL}, in which case an attempt will be made to load all files
 #' 						 in one go. Should be assigned in case the number of IDATs is more than one thousand.
 #' @param keep.methylumi a flag indicating whether the a \code{MethyLumiSet}
 #'						 object should be returned instead of a \code{RnBeadRawSet}.
@@ -304,14 +304,14 @@ read.data.dir<-function(dir,
 #' @seealso \code{\link{methylumIDAT}} in package \pkg{methylumi}
 #'
 #' @author Pavlo Lutsik
-read.idat.files2 <- function(base.dir, 
-		barcodes = NULL, 
+read.idat.files2 <- function(base.dir,
+		barcodes = NULL,
 		sample.sheet = NULL,
 		sep.samples=rnb.getOption("import.table.separator"),
 		load.chunk=NULL,
 		keep.methylumi=FALSE,
 		verbose = TRUE){
-	
+
 	if(!(is.character(base.dir) && length(base.dir) == 1 && (!is.na(base.dir)))) {
 		stop("invalid value for base.dir")
 	}
@@ -384,23 +384,23 @@ read.idat.files2 <- function(base.dir,
 		}
 		rm(fn)
 	}
-	
+
 	## Check whether all files a present
-	
+
 	if(!is.null(sample.sheet)){
 		fn.base<-sample.sheet[,"barcode"]
 	}else{
 		fn.base<-barcodes
 	}
-	
+
 	fn.expected<-paste(fn.base, c("Red.idat", "Grn.idat"), sep="_")
 	fn.available<-list.files(base.dir, pattern="idat")
 	fn.missing<-setdiff(fn.expected, fn.available)
 	if(length(fn.missing)>0){
-		rnb.error(sprintf("Some IDAT files are not present in the supplied base directory, for instance %s", 
+		rnb.error(sprintf("Some IDAT files are not present in the supplied base directory, for instance %s",
 				paste(fn.missing[1:min(6,length(fn.missing))], collapse=", ")))
 	}
-	
+
 	## Read the data using the methylumi package
 	methylumi.params <- list(idatPath = base.dir, n = TRUE)
 	if(is.null(sample.sheet)){
@@ -416,7 +416,7 @@ read.idat.files2 <- function(base.dir,
 			nsamp<-nrow(sample.sheet)
 		}
 	}
-		
+
 	if(is.null(load.chunk)){
 		if(is.null(sample.sheet)){
 			methylumi.params$barcodes <- barcodes
@@ -428,9 +428,9 @@ read.idat.files2 <- function(base.dir,
 			mls<-as(mls, "RnBeadRawSet")
 		}
 	}else{
-		# load the data chunk-by-chunk, converting to RnBeadRawSet 
-        # and combining them after every step	
-		
+		# load the data chunk-by-chunk, converting to RnBeadRawSet
+        # and combining them after every step
+
 		mls <- NULL
 		if(is.null(sample.sheet)) {
 			nsamp<-length(barcodes)
@@ -438,30 +438,30 @@ read.idat.files2 <- function(base.dir,
 			nsamp<-nrow(sample.sheet)
 		}
 		nch <- nsamp %/% load.chunk
-		
+
 		## TODO: remove this strange thing
 		# temporarily disable region summarization
 		rt<-rnb.getOption("region.types")
 		rnb.options(region.types=character())
 		####
-		
+
 		for(ch in 1:(nch+(nsamp %% load.chunk > 0))){
 			if(verbose){
 				rnb.info(sprintf("Loading sample chunk %d", ch))
 			}
-			
+
 			ixxs <- (load.chunk*(ch-1L)+1L):min((load.chunk*ch), nsamp)
-			
+
 			if(is.null(sample.sheet)){
 				methylumi.params$barcodes <- barcodes[ixxs]
 			} else { # is.data.frame(sample.sheet)
 				methylumi.params$pdat <- sample.sheet[ixxs,]
 			}
-			
+
 			mlsch <- suppressWarnings(suppressMessages(do.call(methylumIDAT, methylumi.params)))
-			
+
 			rnbch <- as(mlsch, "RnBeadRawSet")
-			
+
 			if(is.null(mls)){
 				mls<-rnbch
 			}else{
@@ -484,25 +484,25 @@ read.idat.files2 <- function(base.dir,
 				rnb.call.destructor(mls.old)
 				rnb.call.destructor(rnbch)
 			}
-			
+
 			rm(rnbch)
 			rnb.cleanMem()
 		}
 		#gc()
-		
+
 		rnb.options(region.types=rt)
-		
+
 		for (region.type in rnb.region.types.for.analysis("hg19")) {
 			mls <- summarize.regions(mls, region.type)
 		}
 		rnb.cleanMem()
-		
+
 	}
-	
+
 	if(verbose){
 		rnb.logger.completed()
 	}
-	
+
 	return(mls)
 
 }
@@ -523,7 +523,7 @@ read.idat.files2 <- function(base.dir,
 #'                       lists the samples' Sentrix  barcodes. If such a column is not present, this function searches
 #'                       for columns \code{"Sentrix_ID"} and \code{"Sentrix_Position"} (or similar) that build a
 #'                       barcode.
-#' @param sep.samples	 \code{character} string used as field separator in the sample sheet file. 
+#' @param sep.samples	 \code{character} string used as field separator in the sample sheet file.
 #' 						 Default value is taken by the call to \code{rnb.getOption("import.table.separator")}
 #' @param useff			 If \code{TRUE} \code{ff} package is used to store large matrices on the hard disk
 #' @param verbose        Flag specifying whether the messages to the logger should be sent. Note that the logger
@@ -542,13 +542,13 @@ read.idat.files2 <- function(base.dir,
 #'
 #' @author Pavlo Lutsik
 #' @export
-read.idat.files <- function(base.dir, 
-		barcodes = NULL, 
+read.idat.files <- function(base.dir,
+		barcodes = NULL,
 		sample.sheet = NULL,
 		sep.samples=rnb.getOption("import.table.separator"),
 		useff = FALSE,
 		verbose = TRUE){
-	
+
 	if(!(is.character(base.dir) && length(base.dir) == 1 && (!is.na(base.dir)))) {
 		stop("invalid value for base.dir")
 	}
@@ -560,11 +560,11 @@ read.idat.files <- function(base.dir,
 	if(!parameter.is.flag(verbose)){
 		stop("invalid value for verbose; expected TRUE or FALSE")
 	}
-	
+
 	if(verbose){
 		rnb.logger.start("Loading Data from IDAT Files")
 	}
-	
+
 	if(is.null(barcodes) && is.null(sample.sheet)){
 		## Attempt to locate sample annotation file
 		sample.sheet <- list.files(base.dir, pattern = "[Ss]ample", full.names = TRUE)
@@ -607,7 +607,7 @@ read.idat.files <- function(base.dir,
 	if(ncol(sample.sheet) < 2){
 		rnb.error("The sample annotation table has less than two columns. Check the \"default.table.separator\" option")
 	}
-	
+
 	## Check subdirectories
 	if(check.idat.subdirs(base.dir)){
 		## Found subdirectories that contain .idat files
@@ -624,9 +624,9 @@ read.idat.files <- function(base.dir,
 		}
 		rm(fn)
 	}
-	
+
 	## Check whether all files a present
-	
+
 	if(!is.null(sample.sheet)){
 		fn.base<-sample.sheet[,"barcode"]
 		nsamp<-nrow(sample.sheet)
@@ -634,27 +634,27 @@ read.idat.files <- function(base.dir,
 		fn.base<-barcodes
 		nsamp<-length(barcodes)
 	}
-	
+
 	fn.expected<-unlist(lapply(fn.base, paste, c("Red.idat", "Grn.idat"), sep="_"))
 	fn.available<-list.files(base.dir, pattern="idat", recursive=TRUE, full.names=TRUE)
 	fn.available.short<-sapply(strsplit(fn.available, split=.Platform$file.sep), function(x) x[length(x)])
 	fn.map<-match(fn.expected, fn.available.short)
 	fn.missing<-which(is.na(fn.map))
 	if(length(fn.missing)>0){
-		rnb.error(sprintf("Some IDAT files are not present in the supplied base directory, for instance %s", 
+		rnb.error(sprintf("Some IDAT files are not present in the supplied base directory, for instance %s",
 						paste(fn.expected[fn.missing[1:min(6,length(fn.missing))]], collapse=", ")))
 	}
 	idat.fnames<-fn.available[fn.map]
 	idat.red.fnames<-idat.fnames[2*(1:nsamp)-1]
 	idat.grn.fnames<-idat.fnames[2*(1:nsamp)]
-	
+
 	platform<-detect.infinium.platform(fn.base)
-	
+
 	annot<-rnb.annotation2data.frame(rnb.get.annotation(platform))
 	annot.ctrls<-rnb.get.annotation(gsub("probes","controls",platform))
 	nprobes<-sum(rnb.annotation.size(platform))
 	ncprobes<-nrow(annot.ctrls)
-	
+
 	if(platform=="probes450"){
 		ctrls.address.col<-"ID"
 		ctrls.target.col<-"Target"
@@ -664,13 +664,13 @@ read.idat.files <- function(base.dir,
 		ctrls.target.col<-"Type"
 		neg.ctrl.indexes<-which(annot.ctrls[["Type"]]=="Negative")
 	}
-	
+
 	tIred<-which(annot$Color=="Red")
 	tIgrn<-which(annot$Color=="Grn")
 	tII<-which(annot$Design=="II")
-	
+
 	probes<-character(length=nprobes)
-	
+
 	if(useff){
 		dpvals<-ff(NA_real_, dim=c(nprobes, nsamp), dimnames=list(NULL, NULL), vmode="double")
 		M<-ff(NA_real_, dim=c(nprobes, nsamp), dimnames=list(NULL, NULL), vmode="double")
@@ -688,11 +688,11 @@ read.idat.files <- function(base.dir,
 		beadsM<-matrix(NA_integer_, nrow=nprobes, ncol=nsamp)
 		beadsU<-matrix(NA_integer_, nrow=nprobes, ncol=nsamp)
 	}
-	
+
 	qc.int<-list()
 	qc.int$Cy3<-matrix(NA_real_, nrow=ncprobes, ncol=nsamp, dimnames = list(annot.ctrls[[ctrls.address.col]], NULL))
 	qc.int$Cy5<-matrix(NA_real_, nrow=ncprobes, ncol=nsamp, dimnames = list(annot.ctrls[[ctrls.address.col]], NULL))
-	
+
 	INTENSITY.SUMMARIZATION.INFO<-list(
 			probes450=list(
 				"typeIred"=list(Design="I", Color="Red", Msource="Red", Usource="Red"),
@@ -702,9 +702,9 @@ read.idat.files <- function(base.dir,
 				"typeIred"=list(Design="I", Color="red", Msource="Red", Usource="Red"),
 				"typeIgrn"=list(Design="I", Color="green", Msource="Grn", Usource="Grn"))
 	)
-	
+
 	probe.categories<-INTENSITY.SUMMARIZATION.INFO[[platform]]
-	
+
 	get.OOB.channel<-function(channel){
 		if(channel=="Red"){
 			return("Grn")
@@ -714,9 +714,9 @@ read.idat.files <- function(base.dir,
 			stop("Wrong input for channel")
 		}
 	}
-	
+
 	translate.channel.name<-function(channel){
-		
+
 		if(channel=="Red"){
 			return("Cy5")
 		}else if(channel=="Cy5"){
@@ -729,77 +729,77 @@ read.idat.files <- function(base.dir,
 			stop("Unrecognized channel")
 		}
 	}
-	
+
 	probes<-annot[["ID"]]
 	for(pcind in 1:length(probe.categories)){
-		probe.categories[[pcind]]$Indices<-which(annot$Design==probe.categories[[pcind]]$Design & 
+		probe.categories[[pcind]]$Indices<-which(annot$Design==probe.categories[[pcind]]$Design &
 						annot$Color==probe.categories[[pcind]]$Color)
 		probe.categories[[pcind]]$Maddress<-annot[probe.categories[[pcind]]$Indices,"AddressB"]
 		probe.categories[[pcind]]$Uaddress<-annot[probe.categories[[pcind]]$Indices,"AddressA"]
 		#probes[probe.categories[[pcind]]$Indices]<-annot[probe.categories[[pcind]]$Indices,"ID"]
 	}
-		
+
 	for(sid in 1:nsamp){
-		
+
 		#barcode<-sample.sheet$barcode[sid]
 		idatfile.red<-idat.red.fnames[sid]#file.path(base.dir, sprintf("%s_Red.idat",barcode))
 		idatfile.grn<-idat.grn.fnames[sid]#file.path(base.dir, sprintf("%s_Grn.idat",barcode))
-		
+
 		if(!file.exists(idatfile.red)){
 			rnb.error(sprintf("IDAT file not found: %s", idatfile.red))
 		}
 		if(!file.exists(idatfile.grn)){
 			rnb.error(sprintf("IDAT file not found: %s", idatfile.grn))
 		}
-		
+
 		int.files<-list()
 		int.files[["Red"]]<-readIDAT(idatfile.red)
 		int.files[["Grn"]]<-readIDAT(idatfile.grn)
-		
+
 		ctrls.indexes<-match(annot.ctrls[[ctrls.address.col]], int.files[["Red"]]$MidBlock)
-		
+
 		qc.int$Cy5[!is.na(ctrls.indexes),sid]<-int.files[["Red"]]$Quant[na.omit(ctrls.indexes),1L]
 		qc.int$Cy3[!is.na(ctrls.indexes),sid]<-int.files[["Grn"]]$Quant[na.omit(ctrls.indexes),1L]
-				
+
 		for(pc in probe.categories){
-					
+
 			Mmap<-match(pc$Maddress, int.files[[pc$Msource]]$MidBlock)
 			Umap<-match(pc$Uaddress, int.files[[pc$Usource]]$MidBlock)
-						
+
 			M[pc$Indices,sid]<-int.files[[pc$Msource]]$Quant[Mmap,1L]
 			U[pc$Indices,sid]<-int.files[[pc$Usource]]$Quant[Umap,1L]
-			
+
 			if(pc$Design=="I"){
 				M0[pc$Indices,sid]<-int.files[[get.OOB.channel(pc$Msource)]]$Quant[Mmap,1L]
 				U0[pc$Indices,sid]<-int.files[[get.OOB.channel(pc$Usource)]]$Quant[Umap,1L]
 			}
-			
+
 			beadsM[pc$Indices,sid]<-int.files[[pc$Msource]]$Quant[Mmap,3L]
 			beadsU[pc$Indices,sid]<-int.files[[pc$Usource]]$Quant[Umap,3L]
-			
+
 			Mdist.fun<-ecdf(qc.int[[translate.channel.name(pc$Msource)]][neg.ctrl.indexes,sid])
 			Udist.fun<-ecdf(qc.int[[translate.channel.name(pc$Usource)]][neg.ctrl.indexes,sid])
-					
+
 			mpval<-1-Mdist.fun(M[pc$Indices,sid])
 			upval<-1-Udist.fun(U[pc$Indices,sid])
-			
+
 			dpvals[pc$Indices,sid]<-rowMins(cbind(
 							mpval,
 							upval
 			))
-		}				
+		}
 	}
-		
+
 	if(verbose){
 		rnb.logger.completed()
 	}
-	
+
 	rnb.platform<-paste0(gsub("probes", "", platform), "k")
-	
+
 	if(is.null(sample.sheet)){
 		sample.sheet<-data.frame(barcodes=barcode)
 	}
-	
+
 	object<-RnBeadRawSet(
 			pheno = sample.sheet,
 			probes = probes,
@@ -808,16 +808,16 @@ read.idat.files <- function(base.dir,
 			U = U,
 			M0 = M0,
 			U0 = U0,
-			bead.counts.M = beadsM, 
+			bead.counts.M = beadsM,
 			bead.counts.U = beadsU,
 			p.values=dpvals,
 			qc=qc.int,
 			region.types = rnb.region.types.for.analysis("hg19"),
 			useff=useff,
-			summarize.bead.counts=TRUE, 
+			summarize.bead.counts=TRUE,
 			ffcleanup = rnb.getOption("enforce.destroy.disk.dumps")
 			)
-	
+
 	return(object)
 }
 
@@ -826,48 +826,48 @@ read.idat.files <- function(base.dir,
 #' read.GS.report
 #'
 #' Reads in a Genome Studio report, exported as a single file.
-#' 
+#'
 #' @param gsReportFile  location of the GS report file
-#' @param pd			alternative sample annotation, if the \code{gsReporFile} is missing the sample section as 
+#' @param pd			alternative sample annotation, if the \code{gsReporFile} is missing the sample section as
 #' 						\code{data.frame} of \code{character} singleton with the file name
 #' @param sep       	character used as field separator in the sample sheet file and in the GS report file
 #' 						 (should be identical).
 #' 						Default value is taken by the call to \code{rnb.getOption("import.table.separator")}
 #' @param keep.methylumi a flag indicating whether the a \code{MethyLumiSet}
 #'						 object should be returned instead of a \code{RnBeadRawSet}.
-#' @param verbose Flag indicating ifthe messages to the logger should be sent. Note that the logger must be initialized prior to calling this function. 
+#' @param verbose Flag indicating ifthe messages to the logger should be sent. Note that the logger must be initialized prior to calling this function.
 #' 			     Logging is useful for keeping a record of the downloaded and processed samples. Also, informative messages are stored in case of an error.
-#' 
+#'
 #' @return  MethylumiSet object with the data from the report
 #'
 #' @export
 read.GS.report<-function(
-		gsReportFile, 
+		gsReportFile,
 		pd=NULL,
 		sep=rnb.getOption("import.table.separator"),
 		keep.methylumi=FALSE,
 		verbose=TRUE){
-	
+
 	if(verbose && logger.isinitialized()){
 		rnb.error <- logger.error
 	} else {
 		rnb.error <- function(msg) { stop(paste(msg)) }
 	}
-	
+
 	if(verbose){
 		rnb.logger.start("Loading Data from a GenomeStudio Report File")
 	}
-	
+
 	if(!(is.null(pd) || is.character(pd) || is.data.frame(pd))){
 		rnb.error("Invalid value for sample descriptions")
 	}
-	
+
 	if(is.character(pd)){
 		pd<-read.sample.annotation(pd, sep=sep)
 	}
-	
+
 	methylumiSet<-methylumiR(gsReportFile, sampleDescriptions=pd, sep=sep)
-	
+
 	if(is.null(annotation(methylumiSet)) || length(annotation(methylumiSet))==0){
 		if(length(featureNames(methylumiSet))<30000L){
 			annotation(methylumiSet)<-"IlluminaHumanMethylation27k"
@@ -875,28 +875,28 @@ read.GS.report<-function(
 			annotation(methylumiSet)<-"IlluminaHumanMethylation450k"
 		}
 	}
-	
+
 	if(verbose){
 		rnb.logger.completed()
 	}
-	
+
 	if(keep.methylumi){
-		return(methylumiSet)	
+		return(methylumiSet)
 	}else{
 		return(as(methylumiSet, "RnBeadRawSet"))
 	}
-	
+
 }
 
 ###########################################################################################################################
 
 #' read.bed.files
-#' 
-#' Reads a reduced-representation/whole-genome bisulfite sequencing data set from a set of BED files 
-#' 
+#'
+#' Reads a reduced-representation/whole-genome bisulfite sequencing data set from a set of BED files
+#'
 #' @param base.dir 		Directory with BED files contatining processed methylation data
 #' @param file.names    Optional non-empty \code{character} vector listing the names of the files that should be
-#'                      loaded relative to \code{base.dir}. If supplied, this vector must not contain \code{NA} 
+#'                      loaded relative to \code{base.dir}. If supplied, this vector must not contain \code{NA}
 #' 						among its elements.
 #' @param sample.sheet  Optional file name containing a table of sample annotation data, or the table itself in the form
 #'                      of a \code{\link{data.frame}} or \code{matrix}. Only (and all) samples defined in this table
@@ -904,18 +904,18 @@ read.GS.report<-function(
 #'                      samples' Sentrix  barcodes. If such a column is not present, this function searches for columns
 #'                      \code{"Sentrix_ID"} and \code{"Sentrix_Position"} (or similar) that build a barcode.
 #' @param file.names.col Column of the sample sheet which contains the file names (integer singleton). If \code{NA}
-#' 						an attempt will be made to find a suiting column automatically. 
+#' 						an attempt will be made to find a suiting column automatically.
 #' @param assembly		Genome assembly. Defaults to human (\code{"hg19"})
 #' @param region.types	\code{character} vector storing the types of regions for which the methylation information is to
 #'                      be summarized. The function \code{\link{rnb.region.types}} provides the list of all supported
 #'                      regions. Setting this to \code{NULL} or an empty vector restricts the dataset to site
 #'                      methylation only.
-#' @param pos.coord.shift	The frame shift between the the CpG annotation (1-based) and the coordinates in the loaded BEDs. 
+#' @param pos.coord.shift	The frame shift between the the CpG annotation (1-based) and the coordinates in the loaded BEDs.
 #' 						If BEDs have 0-based coordinates, \code{pos.coord.shift=1} (default).
-#' @param skip.lines	The number of top lines to skip while reading the BED files 
-#' @param sep.samples	\code{character} singleton used as field separator in the sample sheet file. 
+#' @param skip.lines	The number of top lines to skip while reading the BED files
+#' @param sep.samples	\code{character} singleton used as field separator in the sample sheet file.
 #' 						Default value is taken by the call to \code{rnb.getOption("import.table.separator")}
-#' @param merge.bed.files In case multiple BED files are specified for each sample, the flag indicates whether the 
+#' @param merge.bed.files In case multiple BED files are specified for each sample, the flag indicates whether the
 #' 						methylation calls should be merged after reading
 #' @param useff			If \code{TRUE}, functionality provided by the \code{ff} package will be used to read the data efficiently.
 #' @param usebigff		flag specifying whether the extended ff functionality should be used (large matrix support for ff)
@@ -924,54 +924,53 @@ read.GS.report<-function(
 #'                      record of the downloaded and processed samples. Also, informative messages are
 #'                      stored in case of an error.
 #' @param ...			Further arguments which are passed to the internal function \code{read.single.bed} and to \code{read.table}
-#' 
+#'
 #' @return an object of class \code{\linkS4class{RnBiseqSet}}
-#' 
-#' @details 			To control the BED column assignment, one should also supply arguments to \code{read.single.bed}
-#' 
+#'
+#' @details To control the BED column assignment, one should also supply arguments to \code{read.single.bed}.
+#'
 #' @author Pavlo Lutsik
-#' @export 
-#' 
-read.bed.files<-function(base.dir=NULL, 
-		file.names = NULL, 
-		sample.sheet = NULL, 
-		file.names.col=0, 
-		assembly=rnb.getOption("assembly"), 
+#' @export
+read.bed.files<-function(base.dir=NULL,
+		file.names = NULL,
+		sample.sheet = NULL,
+		file.names.col=0,
+		assembly=rnb.getOption("assembly"),
 		region.types=rnb.region.types.for.analysis(assembly),
-		pos.coord.shift=1L, 
-		skip.lines=1, 
+		pos.coord.shift=1L,
+		skip.lines=1,
 		sep.samples=rnb.getOption("import.table.separator"),
 		merge.bed.files=TRUE,
 		useff=rnb.getOption("disk.dump.big.matrices"),
 		usebigff=rnb.getOption("disk.dump.bigff"),
 		verbose = TRUE,
 		...){
-	
+
 	if(!parameter.is.flag(verbose)) {
 		stop("Invalid value for verbose; expected TRUE or FALSE")
 	}
 	if(!(is.character(assembly) && length(assembly) == 1 && (!is.na(assembly)))) {
 		stop("invalid value for assembly")
 	}
-	
+
 	if(verbose){
 		rnb.logger.start("Loading Data From BED Files")
 	}
-	
+
 	if(all(is.null(base.dir), is.null(file.names), is.null(sample.sheet))){
 		rnb.error("one of base.dir, file.names, sample.sheet should be supplied")
 	}
-	
+
 	if(!is.null(base.dir) && (!is.character(base.dir) || length(base.dir)!=1)){
 		rnb.error("Invalide value for parameter base.dir")
 	}
-	
+
 	if(!is.null(file.names)) {
 		if(!is.character(file.names) && length(file.names) != 0 && (!any(is.na(file.names)))) {
 			rnb.error("Invalid value for file.names; expected non-empty character vector or NULL")
 		}
 	}
-	
+
 	if(!(assembly %in% rnb.get.assemblies())) {
 		rnb.error("unsupported assembly")
 	}
@@ -981,7 +980,7 @@ read.bed.files<-function(base.dir=NULL,
 	if(usebigff){
 		bff.finalizer <- rnb.getOption("disk.dump.bigff.finalizer")
 	}
-	
+
 	if(is.null(file.names) && is.null(sample.sheet)) {
 		## Attempt to locate sample annotation file
 		sample.sheet <- list.files(base.dir, pattern = "[Ss]ample", full.names = TRUE)
@@ -993,12 +992,12 @@ read.bed.files<-function(base.dir=NULL,
 			rnb.error(c("No candidate for sample information found in", base.dir))
 		}
 	}
-	
+
 	if(!is.null(sample.sheet)){
 #		if(verbose){
 #			rnb.status(c("Supplied a sample annotation, parsing ..."))
 #		}
-#		
+#
 		if(is.character(sample.sheet) && (!is.matrix(sample.sheet))) {
 			if(length(sample.sheet) != 1) {
 				rnb.error("invalid value for sample.sheet")
@@ -1010,16 +1009,16 @@ read.bed.files<-function(base.dir=NULL,
 		if(!is.data.frame(sample.sheet)) {
 			rnb.error("invalid value for sample.sheet")
 		}
-		
-		if(!is.null(rnb.getOption("identifiers.column"))) 
+
+		if(!is.null(rnb.getOption("identifiers.column")))
 			sample.names<-sample.sheet[,rnb.getOption("identifiers.column")] else
 			sample.names<-sample.sheet[,1]
 	}else{
 		sample.names<-sub("\\.bed", "", file.names)
 	}
-	
+
 	if(is.null(file.names)){
-		
+
 		if(is.na(file.names.col)){
 			bed.col<-find.bed.column(sample.sheet)
 			file.names.col <- bed.col[[1]]
@@ -1036,16 +1035,16 @@ read.bed.files<-function(base.dir=NULL,
 		if(length(file.names)!=nrow(sample.sheet)){
 			rnb.error("Could not find a sample annotation column with valid BED file names. Exiting...")
 		}
-		### manage the multiple file names 
-		
+		### manage the multiple file names
+
 		fn.lists<-strsplit(file.names, split=";")
 		if(any(sapply(fn.lists, length)>1)){
 			multiple.files<-TRUE
 			n.files<-sapply(fn.lists, length)
-			new.sample.sheet<-do.call("rbind", 
-					lapply(1:nrow(sample.sheet), function(index) 
+			new.sample.sheet<-do.call("rbind",
+					lapply(1:nrow(sample.sheet), function(index)
 								sample.sheet[rep(index, n.files[index]),]))
-			
+
 			if(merge.bed.files){
 				new.sample.sheet$AutomaticUniqueSampleID<-do.call("c", lapply(1:length(n.files),function(index) rep(index, n.files[index])))
 			}
@@ -1056,7 +1055,7 @@ read.bed.files<-function(base.dir=NULL,
 		}else{
 			multiple.files<-FALSE
 		}
-		
+
 		if(!is.null(base.dir)){
 			present.files <- list.files(base.dir, pattern="*", full.names=FALSE)
 			if(length(setdiff(file.names, present.files))){
@@ -1070,9 +1069,9 @@ read.bed.files<-function(base.dir=NULL,
 			}
 		}
 	}
-	
+
 	#skip.lines <- 1
-	data.matrices <- lapply(file.names, read.single.bed, context="cg", 
+	data.matrices <- lapply(file.names, read.single.bed, context="cg",
 			...,
 #			chr.col=1L,
 #			start.col=2L,
@@ -1085,19 +1084,19 @@ read.bed.files<-function(base.dir=NULL,
 #			coord.shift=0L,
 #			nrows=10000L,
 			skip=skip.lines, ffread=useff)
-	
+
 	if(verbose){
 		rnb.status(sprintf("Read %d BED files", length(data.matrices)))
 	}
-	
+
 	found.chroms<-character()
 	found.strands<-character()
 	site.ints<-NULL
 	site.indices<-list()
-	
+
 	chr.offset<-100e9
 	strand.offset<-1e9
-	
+
 	for(dmi in 1:length(data.matrices)){
 		if(useff){
 			open(data.matrices[[dmi]])
@@ -1105,7 +1104,7 @@ read.bed.files<-function(base.dir=NULL,
 		chrs.dm <- as.character(unique(data.matrices[[dmi]][,1L]))
 		found.chroms <- c(found.chroms, unique(chrs.dm[!(chrs.dm %in% found.chroms)]))
 		chr.match <- match(data.matrices[[dmi]][,1L], found.chroms)
-		
+
 		strands.dm <- as.character(unique(data.matrices[[dmi]][,3L]))
 		found.strands <- c(found.strands, strands.dm[!(strands.dm %in% found.strands)])
 		strand.match <- match(data.matrices[[dmi]][,3L], found.strands)
@@ -1122,7 +1121,7 @@ read.bed.files<-function(base.dir=NULL,
 			close(data.matrices[[dmi]])
 		}
 	}
-	
+
 	dm.subsample<-list()
 	if(useff && (prod(length(site.ints), length(data.matrices))>.Machine$integer.max) && !usebigff){
 		sites.allowed <- as.integer(.Machine$integer.max/length(data.matrices))
@@ -1148,7 +1147,7 @@ read.bed.files<-function(base.dir=NULL,
 			dm.subsample[[dmi]]<-1:dim(data.matrices[[dmi]])[1]
 		}
 	}
-	
+
 	covg.present <- sapply(1:length(data.matrices), function(indx){
 		if(useff){
 			open(data.matrices[[indx]])
@@ -1159,12 +1158,12 @@ read.bed.files<-function(base.dir=NULL,
 		}
 		return(present)
 	})
-	
+
 	if(!all(covg.present)){
 		rnb.warning(c("Coverage information is not present for the following BED files: ", paste(file.names[which(!covg.present)], sep=", ")))
 		rnb.warning(c("Discarded coverage information"))
 	}
-	
+
 	sites <- matrix(nrow=length(all.sites), ncol=3, dimnames=list(NULL, c("chr", "coord", "strand")))
 	if(!useff){
 		meth <- matrix(nrow=length(all.sites), ncol=length(data.matrices), dimnames=list(NULL, sample.names))
@@ -1190,7 +1189,7 @@ read.bed.files<-function(base.dir=NULL,
 			covg <- NULL
 		}
 	}
-	
+
 	## A workaround for chromosome names, not starting with "chr"
 	chroms <- names(rnb.get.chromosomes(assembly=assembly))
 	if(!any(grepl("^chr", found.chroms))){
@@ -1217,7 +1216,7 @@ read.bed.files<-function(base.dir=NULL,
 		if(useff){
 			delete(dm)
 		}
-		return(NULL)		
+		return(NULL)
 	})
 	rm(dump)
 	#clean the memory of big objects
@@ -1226,25 +1225,25 @@ read.bed.files<-function(base.dir=NULL,
 	rm(site.ints)
 	rm(dm.subsample)
 	rnb.cleanMem()
-	
+
 	if(verbose){
 		rnb.status(sprintf("Combined a data matrix with %d sites and %d samples", dim(sites)[1], dim(meth)[2]))
 	}
-	
+
 	if(verbose){
 		rnb.status("Processed all BED files")
 	}
-	
+
 	if(is.null(sample.sheet)){
 		sample.sheet<-data.frame(Sample_Label=sample.names, rownames=sample.names)
 	}
-	
+
 	rnb.cleanMem()
-	
+
 	if(verbose){
 		rnb.logger.start("Creating RnBiseqSet object")
 	}
-	
+
 	object<-RnBiseqSet(
 			pheno=sample.sheet,
 			sites=sites,
@@ -1256,22 +1255,22 @@ read.bed.files<-function(base.dir=NULL,
 			usebigff=usebigff,
 			verbose=verbose
 			)
-	
+
 	if(verbose){
 		rnb.logger.completed()
 	}
 	if(verbose){
 		rnb.logger.completed()
 	}
-	
+
 	return(object)
 }
 
 ########################################################################################################################
 #'	read.single.bed
-#' 
+#'
 #'	reads a BED file with methylation information
-#' 
+#'
 #'	@param file				the input BED file
 #'  @param chr.col			chromosome column index
 #'  @param start.col		start column index
@@ -1289,68 +1288,68 @@ read.bed.files<-function(base.dir=NULL,
 #'  @param ffread			Use \code{ff} package functionality
 #'  @param context			prefix for the output rownames
 #'  @param ...				further arguments to \code{read.table} or \code{read.table.ffdf}
-#' 
-#'  @details Missing columns should be assigned with \code{NA}. In case \code{mean.meth.col} is absent at least \code{coverage.col} 
+#'
+#'  @details Missing columns should be assigned with \code{NA}. In case \code{mean.meth.col} is absent at least \code{coverage.col}
 #' 			and one of \code{c.col} or \code{t.col} should be specified.
-#' 
-#'  @return a \code{data.frame} or \code{ff.data.frame} object with DNA methylation and coverage information. The row names are formed by the following convension: 
+#'
+#'  @return a \code{data.frame} or \code{ff.data.frame} object with DNA methylation and coverage information. The row names are formed by the following convension:
 #'  		\code{context\\.read.delim(file,...)[,chr.col]\\.read.delim(file,...)[,start.col]\\.read.delim(file,...)[,strand.col]}.
-#' 
+#'
 #'  @author Pavlo Lutsik
 #'  @export
-read.single.bed<-function(file, 
-		chr.col=1L, 
-		start.col=2L, 
-		end.col=3L, 
-		strand.col=6L, 
-		mean.meth.col=7L, 
-		coverage.col=8L, 
-		c.col=NA, 
-		t.col=NA, 
-		is.epp.style=FALSE, 
+read.single.bed<-function(file,
+		chr.col=1L,
+		start.col=2L,
+		end.col=3L,
+		strand.col=6L,
+		mean.meth.col=7L,
+		coverage.col=8L,
+		c.col=NA,
+		t.col=NA,
+		is.epp.style=FALSE,
 		coord.shift=0L,
 		ffread=FALSE,
 		context="cg",
 		...){
-	
+
 	if(all(is.na(mean.meth.col), any(is.na(c(c.col, t.col)))) && !is.epp.style){
 		stop("No methylation information columns supplied")
 	}
-	
+
 	if((is.null(mean.meth.col) || is.na(mean.meth.col)) && all(is.na(coverage.col), any(is.na(c(c.col, t.col)))) && !is.epp.style){
 		stop("If the mean methylation column is absent,
 			either coverage column and one of C- or T-count column, or both C- and T-count columns should be specified.")
 	}
-	
+
 	if(any(!is.integer(c(chr.col, start.col, coverage.col, coord.shift, c(end.col, mean.meth.col, c.col,t.col)[!is.na(c(end.col, mean.meth.col, c.col,t.col))])))){
 		stop("Invalid parameter values supplied, column indices should be integer")
 	}
-	
+
 	if(min(na.omit(c(chr.col, start.col, end.col, strand.col, mean.meth.col, coverage.col, c.col, t.col)))<1){
 		stop("Invalid parameter values supplied, column indices should not be negative or zero")
 	}
-	
-	if(!is.character(file) || length(file)!=1) 
+
+	if(!is.character(file) || length(file)!=1)
 		stop("Invalid file name")
-	
+
 	## read top of the file to determine the column classes
 	if(ffread){
 		mc<-list(...)
 		meth.tab.init <- read.table(file, skip=mc$skip, nrows=1000, header=FALSE, sep="\t", stringsAsFactors=FALSE)
-		columnClasses <- get.bed.column.classes(meth.tab.init, 
-				chr.col=chr.col, 
-				start.col=start.col, 
-				end.col=end.col, 
-				strand.col=strand.col, 
-				mean.meth.col=mean.meth.col, 
-				coverage.col=coverage.col, 
-				c.col=c.col, 
+		columnClasses <- get.bed.column.classes(meth.tab.init,
+				chr.col=chr.col,
+				start.col=start.col,
+				end.col=end.col,
+				strand.col=strand.col,
+				mean.meth.col=mean.meth.col,
+				coverage.col=coverage.col,
+				c.col=c.col,
 				t.col=t.col,
 				useff=TRUE)
 	}
-	
+
 	if(is.epp.style){
-		
+
 		if(!ffread){
 			meth.tab <- read.table(file,...,header=FALSE, sep="\t",stringsAsFactors=FALSE)
 			mm <- strsplit(meth.tab[,4],split="/")
@@ -1371,12 +1370,12 @@ read.single.bed<-function(file,
 			rm(mm);rnb.cleanMem()
 		}
 		#rownames(data.set)<-paste(rep(context, dim(data.set)[1]), data.set[,1], data.set[,2], data.set[,3], sep=".")
-		if(ffread){	
+		if(ffread){
 			close(data.set)
 		}
 		return(data.set)
 	} else {
-		
+
 		if(!ffread){
 			data.set<-read.delim(file, ..., stringsAsFactors=FALSE, header=FALSE)
 		}else{
@@ -1386,13 +1385,13 @@ read.single.bed<-function(file,
 					file=file, next.rows=10000L, ..., colClasses=columnClasses, header=FALSE)
 			options(stringsAsFactors=csf)
 		}
-		
+
 		#checking the validity
-		
+
 		if(max(chr.col, start.col, end.col, strand.col, mean.meth.col, coverage.col, c.col, t.col, na.rm=TRUE)>ncol(data.set)){
 			stop(sprintf("The loaded bed file %s has less columns than expected, check the correctness of column assignment (or the BED style option)", file))
 		}
-		
+
 		#TODO: strand information
 		if(is.na(strand.col)){
 			if(!ffread){
@@ -1424,9 +1423,9 @@ read.single.bed<-function(file,
 #		}
 #		rm(rn)
 		rnb.cleanMem()
-		
+
 		if(!is.null(mean.meth.col) && !is.na(mean.meth.col)){
-			
+
 			columns<-c(chr.col, start.col, strand.col, mean.meth.col)
 			if(!is.na(coverage.col)){
 				columns<-c(columns, coverage.col)
@@ -1438,9 +1437,9 @@ read.single.bed<-function(file,
 				close(res); close(data.set)
 				return(res)
 			}
-			
+
 		}else if((is.na(coverage.col) && all(!is.na(c(c.col,t.col)))) || (!is.na(coverage.col) && any(!is.na(c(c.col, t.col))))){
-			
+
 			if(is.na(coverage.col)){
 				cvg <- data.set[,t.col]+data.set[,c.col]
 			}else{
@@ -1482,79 +1481,79 @@ read.single.bed<-function(file,
 ##
 ##	@author Pavlo Lutsik
 ##
-find.bed.column<-function(annotation, 
+find.bed.column<-function(annotation,
 		verbose=TRUE){
-	
-	
+
+
 	if(verbose){
 		rnb.logger.start("Automatically parsing the provided sample annotation file")
 	}
-	
+
 	# find a column with file names
-	
+
 	classes<-sapply(annotation, class)
-	
+
 	potential.fnames<-which(classes%in%c("character","factor"))
-	
+
 	candidate.fname<-sapply(potential.fnames, function(cix){
-				
-				extensions<-sapply(strsplit(as.character(annotation[,cix]),"\\."), 
+
+				extensions<-sapply(strsplit(as.character(annotation[,cix]),"\\."),
 						function(spl) spl[length(spl)] %in% c("bed", "BED", "cov", "COV")
 				)
-				
+
 				all(extensions)
 			})
-	
+
 	if(!any(candidate.fname)){
 		msg<-"Could not identify a column with file names in the supplied sample annotations file"
 		if(verbose){
 			rnb.error(msg)
 		}
 	}else if(length(which(candidate.fname))==1){
-		msg<-sprintf("Potential file names found in column %s of the supplied annotation table", 
-				potential.fnames[which(candidate.fname)]) 
-		
+		msg<-sprintf("Potential file names found in column %s of the supplied annotation table",
+				potential.fnames[which(candidate.fname)])
+
 		if(verbose){
 			rnb.status(msg)
 		}
 	}else{
 		msg<-paste("Multiple columns containing file names detected (", potential.fnames[which(candidate.fname)],
-				"). Please disable automatic parsing and specify the column containing the file names explicitly") 
+				"). Please disable automatic parsing and specify the column containing the file names explicitly")
 		if(verbose){
 			rnb.error(msg)
 		}
 	}
-	
+
 	absolute<-sapply(potential.fnames[candidate.fname], function(cix){
 				paths<-sapply(annotation[,cix], grepl, pattern="/|\\\\" )
 				all(paths)
 			})
-	
+
 	if(verbose){
 		rnb.logger.completed()
 	}
-	
+
 	return(list(potential.fnames[candidate.fname], absolute))
 }
 ########################################################################################################################
 ##
 ##	get.bed.column.classes
 ##
-##	Tries to infer classes of the BED columns based on several top lines of the file 
+##	Tries to infer classes of the BED columns based on several top lines of the file
 ##
 ##	@author Pavlo Lutsik
 ##
 get.bed.column.classes<-function(bed.top,
-		chr.col=1L, 
-		start.col=2L, 
-		end.col=3L, 
-		strand.col=6L, 
-		mean.meth.col=7L, 
-		coverage.col=8L, 
-		c.col=NA, 
+		chr.col=1L,
+		start.col=2L,
+		end.col=3L,
+		strand.col=6L,
+		mean.meth.col=7L,
+		coverage.col=8L,
+		c.col=NA,
 		t.col=NA,
 		useff=FALSE){
-	
+
 	classes<-sapply(bed.top, class)
 	if(useff){
 		classes[grep("logical", classes)]<-"numeric"
@@ -1579,7 +1578,7 @@ get.bed.column.classes<-function(bed.top,
 	}
 	if(!is.na(c.col)){
 		classes[c.col]<-"integer"
-	}	
+	}
 	if(!is.na(t.col)){
 		classes[t.col]<-"integer"
 	}
@@ -1595,7 +1594,7 @@ get.bed.column.classes<-function(bed.top,
 ##	@author Pavlo Lutsik
 ##
 detect.infinium.platform<-function(barcodes){
-	
+
 	inf27k.idats.present<-any(grepl("_[ABCDEFGHIJKL]$", barcodes))
 	inf450k.idats.present<-any(grepl("_R0[1-6]C0[1-2]$", barcodes))
 
