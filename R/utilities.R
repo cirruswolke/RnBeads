@@ -931,13 +931,13 @@ rnb.get.reliability.counts.per.sample <- function(rnb.set, siteIndices=NULL) {
 	if (!inherits(rnb.set, "RnBSet")) {
 		stop("invalid value for rnb.set")
 	}
+	result <- NULL
 	if (inherits(rnb.set, "RnBeadSet")) {
 		relmat <- dpval(rnb.set)
-		if (!is.null(result)) {
+		if (!is.null(relmat)) {
 			result <- colSums(relmat < rnb.getOption("filtering.greedycut.pvalue.threshold"), na.rm=TRUE)
 		}
 	} else { # inherits(rnb.set, "RnBiseqSet")
-		result <- NULL
 		if (hasCovg(rnb.set)) {
 			result <- sapply(1:length(samples(rnb.set)), FUN=function(j){
 				sum(as.vector(covg(rnb.set, i=siteIndices, j=j)) >= rnb.getOption("filtering.coverage.threshold"), na.rm=TRUE)
