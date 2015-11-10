@@ -49,7 +49,7 @@ refFreeEWASP <- function(
 	}
 	## TODO: Validate parameter values
 	if(rescale.residual){
-		ranges<-apply(X,1,range)
+		ranges<-apply(X,1,range,na.rm=TRUE)
 		range.diff<-apply(ranges, 2, function(rng) rng[2]-rng[1])
 		if(any(range.diff==0)){
 			rescale.residual<-FALSE
