@@ -1915,7 +1915,7 @@ rnb.section.diffMeth.site <- function(rnbSet,diffmeth,report,gzTable=FALSE){
 	report <- rnb.add.figure(report, description, addedPlots, setting.names)
 	logger.completed()
 	logger.start("Adding tables")
-	includeCovg <- !is.null(covg(rnbSet))
+	includeCovg <- hasCovg(rnbSet)
 	
 	sectionText <- c("A tabular overview of measures for differential methylation on the site level for the individual comparisons are provided in this section.
 					  Below, a brief explanation of the different columns can be found:")
@@ -2139,7 +2139,7 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 	logger.completed()
 
 	logger.start("Adding tables")
-	includeCovg <- !is.null(covg(rnbSet))
+	includeCovg <- hasCovg(rnbSet)
 	sectionText <- c("A tabular overview of measures for differential methylation on the region level for the ",
 		"individual comparisons are provided in this section.")
 	report <- rnb.add.section(report, "Differential Methylation Tables", sectionText, level = 2)

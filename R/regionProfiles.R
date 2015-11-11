@@ -538,7 +538,7 @@ locus.profile.get.methylation.track.heatmap <- function(chrom,start,end,
 ## @return a list of \code{Gviz} tracks to be plotted
 ##
 locus.profile.get.methylation.track.smooth <- function(chrom,start,end,
-		assembly=NULL,rnbSet=NULL,annot=NULL,meth=NULL,grps=NULL,region.type="sites",cvals.grps=rnb.getOption("colors.category")){
+		assembly=NULL,rnbSet=NULL,annot=NULL,meth=NULL,grps=NULL,region.type="sites",cvals.grps=rnb.getOption("colors.category"),smooth.profile="wide"){
 	
 	if (!(class(grps) %in% c("list","array","NULL"))) {
 		stop("invalid value for grps")
@@ -557,8 +557,18 @@ locus.profile.get.methylation.track.smooth <- function(chrom,start,end,
 		}
 		grouping <- factor(grouping, levels=names(grps))
 	}
+	smooth.span <- 0.9
+	smooth.degree <- 1
+	smooth.family <- "gaussian"
+	if (smooth.profile=="wide"){
+		smooth.span <- 0.9
+	} else if (smooth.profile=="narrow"){
+		smooth.span <- 0.2
+	} else {
+		stop("invalid value for smooth.profile")
+	}
 	cvals.grps <- rep(cvals.grps, length.out = length(grps)) #adjust the length of the color vector. Recycle colors if necassary
-	mtrack.smooth <- DataTrack(range=mm.gr,groups=grouping,name=paste("methylation"),type=c("smooth","p"),span=0.9,degree=1,family="gaussian",jitter.x=FALSE,col=cvals.grps,
+	mtrack.smooth <- DataTrack(range=mm.gr,groups=grouping,name=paste("methylation"),type=c("smooth","p"),span=smooth.span,degree=smooth.degree,family=smooth.family,jitter.x=FALSE,col=cvals.grps,
 			col.title="white",col.axis="white",background.title="lightsteelblue4")
 	
 	return(list(mtrack.smooth))
@@ -582,6 +592,8 @@ locus.profile.get.methylation.track.smooth <- function(chrom,start,end,
 #' 		  the colors will be used to separate sample groups.
 #' @param cvals.grps colors to be used for the different groups
 #' @param cvals.meth colors to be used for methylation values and heatmaps
+#' @param smooth.profile profile to be used for the smoothing curves. Allowed values include 
+#'        \code{wide} (default) which yields smoother curvers and \code{narrow} which yields more "wiggly" curves
 #' @return a \code{ggplot2} plot object containing the plot
 #'
 #' @author Fabian Mueller
@@ -592,7 +604,7 @@ locus.profile.get.methylation.track.smooth <- function(chrom,start,end,
 #' }
 rnb.plot.locus.profile <- function(rnbSet,chrom,start,end,grps=NULL,
 		plot.m.regions=NULL,plot.m.heatmap=TRUE,plot.m.smooth=TRUE,
-		cvals.grps=rnb.getOption("colors.category"),cvals.meth=rnb.getOption("colors.meth")){	
+		cvals.grps=rnb.getOption("colors.category"),cvals.meth=rnb.getOption("colors.meth"), smooth.profile="wide"){	
 	if (!inherits(rnbSet, "RnBSet")) {
 		stop("invalid value for rnbSet")
 	}
@@ -607,6 +619,9 @@ rnb.plot.locus.profile <- function(rnbSet,chrom,start,end,grps=NULL,
 	}
 	if (start < 0 || end < 0 || start > end){
 		stop("invalid values for start and end coordinates")
+	}
+	if (!is.element(smooth.profile, c("wide", "narrow"))){
+		stop("invalid value for smooth.profile")
 	}
 	require(Gviz)	
 	
@@ -633,7 +648,7 @@ rnb.plot.locus.profile <- function(rnbSet,chrom,start,end,grps=NULL,
 	}
 	if (plot.m.smooth){
 		tts <- locus.profile.get.methylation.track.smooth(chrom,start,end,
-				assembly=assembly(rnbSet),annot=site.annot,meth=mm,grps=grps,region.type="sites",cvals.grps=cvals.grps)
+				assembly=assembly(rnbSet),annot=site.annot,meth=mm,grps=grps,region.type="sites",cvals.grps=cvals.grps, smooth.profile=smooth.profile)
 		tracklist <- c(tracklist,tts)
 	}
 	
