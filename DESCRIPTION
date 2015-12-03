@@ -112,3 +112,4 @@ Collate:
     'sva.R'
     'utilities.R'
     'wbcInference.R'
+RoxygenNote: 5.0.1
