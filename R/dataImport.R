@@ -1190,34 +1190,47 @@ read.bed.files<-function(base.dir=NULL,
 		}
 	}
 
+	## Detect the scale of the mean methylation data
+	## A very naive method to guess whether the methylation is  
+	## given as a fraction of 1, percentage or on 0 to 1000 scale
+	test.set<-dm[[1]][sample.int(1:nrow(dm[[1]]), 10000),4L]
+	perc.meth<-sum(test.set[!is.na(test.set)]>10.0)>5
+	prom.meth<-sum(test.set[!is.na(test.set)]>110.0)>5
+	
 	## A workaround for chromosome names, not starting with "chr"
-	chroms <- names(rnb.get.chromosomes(assembly=assembly))
+	chroms<-names(rnb.get.chromosomes(assembly=assembly))
 	if(!any(grepl("^chr", found.chroms))){
-		chroms <- gsub("chr", "", chroms)
+		chroms<-gsub("chr", "", chroms)
 	}
 	dump<-sapply(1:length(data.matrices), function(indx){
-		if(useff){
-			open(data.matrices[[indx]])
-		}
-		dm <- data.matrices[[indx]]
-		#dm.rows2<-intersect(all.sites, rownames(dm))
-		#dm.rows<-match(all.sites, rownames(dm))
-		#dm<-dm[dm.rows[!is.na(dm.rows)],]
-		#rows<-which(all.sites %in% rownames(dm))
-		rows <- site.indices[[indx]]
-		rows.dm <- dm.subsample[[indx]]
-		sites[rows,1] <<- as.integer(match(dm[rows.dm,1L], chroms))
-		sites[rows,3] <<- as.integer(factor(dm[rows.dm,3L], levels=c("+","-","*")))
-		sites[rows,2] <<- as.integer(dm[rows.dm,2L]) + c(pos.coord.shift, 0L, 0L)[sites[rows,3]]
-		meth[rows,indx] <<- as.numeric(dm[rows.dm,4L])/100
-		if(!is.null(covg)){
-			covg[rows,indx] <<- as.integer(dm[rows.dm,5L])
-		}
-		if(useff){
-			delete(dm)
-		}
-		return(NULL)
-	})
+				if(useff){
+					open(data.matrices[[indx]])
+				}
+				dm<-data.matrices[[indx]]
+				#dm.rows2<-intersect(all.sites, rownames(dm))
+				#dm.rows<-match(all.sites, rownames(dm))
+				#dm<-dm[dm.rows[!is.na(dm.rows)],]
+				#rows<-which(all.sites %in% rownames(dm))
+				rows<-site.indices[[indx]]
+				rows.dm<-dm.subsample[[indx]]
+				sites[rows,1] <<- as.integer(match(dm[rows.dm,1L], chroms))
+				sites[rows,3] <<- as.integer(factor(dm[rows.dm,3L], levels=c("+","-","*")))
+				sites[rows,2] <<- as.integer(dm[rows.dm,2L]) + c(pos.coord.shift, 0L, 0L)[sites[rows,3]]
+				if(prom.meth){
+					meth[rows,indx] <<- as.numeric(dm[rows.dm,4L])/1000.0
+				}else if(perc.meth){
+					meth[rows,indx] <<- as.numeric(dm[rows.dm,4L])/100.0
+				}else{
+					meth[rows,indx] <<- as.numeric(dm[rows.dm,4L])
+				}
+				if(!is.null(covg)){
+					covg[rows,indx] <<- as.integer(dm[rows.dm,5L])
+				}
+				if(useff){
+					delete(dm)
+				}
+				return(NULL)		
+			})
 	rm(dump)
 	#clean the memory of big objects
 	rm(data.matrices)
