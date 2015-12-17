@@ -736,7 +736,7 @@ rnb.run.analysis <- function(dir.reports, data.source=NULL, sample.sheet=NULL, d
 		logger.start("Saving RData")
 		# analysis.options <- rnb.options()
 		if (exists("result.diffmeth")) {
-			if (!is.null(result.diffmeth)){
+			if (!is.null(result.diffmeth) && !is.null(result.diffmeth$diffmeth)){
 				diffmeth.path <- file.path(dir.reports, "differential_rnbDiffMeth")
 				save.rnb.diffmeth(result.diffmeth$diffmeth, diffmeth.path)
 				diffmeth.enrichment <- result.diffmeth$dm.enrich
