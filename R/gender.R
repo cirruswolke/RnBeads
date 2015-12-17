@@ -132,7 +132,7 @@ rnb.execute.gender.prediction <- function(rnb.set) {
 	if (!inherits(rnb.set, "RnBeadRawSet")) {
 		stop("invalid value for rnb.set")
 	}
-	if (rnb.set@target != "probes450") {
+	if (rnb.set@target != "probes450" && rnb.set@target != "probesEPIC") {
 		stop("unsupported platform")
 	}
 

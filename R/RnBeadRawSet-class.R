@@ -245,7 +245,10 @@ RnBeadRawSet<-function(
 			stop("invalid value for useff: should be a logical of length one")
 		}
 		
-		if (platform =="450k") {
+		if (platform =="EPIC") {
+			target <- "probesEPIC"
+			assembly <- "hg19"
+		}else if (platform =="450k") {
 			target <- "probes450"
 			assembly <- "hg19"
 		} else if(platform == "27k"){
@@ -394,7 +397,9 @@ setAs("MethyLumiSet", "RnBeadRawSet",
 				umeth.oob.element<-NULL
 			}
 			
-			if(annotation(from)=="IlluminaHumanMethylation450k"){
+			if(annotation(from)=="IlluminaMethylationEPIC"){
+				platform="EPIC"
+			}else if(annotation(from)=="IlluminaHumanMethylation450k"){
 				platform="450k"
 			}else if(annotation(from)=="IlluminaHumanMethylation27k"){
 				platform="27k"
@@ -475,8 +480,13 @@ setAs("RnBeadRawSet","MethyLumiSet",
 				assign("unmethylated", qc(from)$Cy5,  envir=assd)
 				
 				mset@QC<-new("MethyLumiQC", assd)
-						
-				if(from@target == "probes450"){
+					
+				if(from@target == "probesEPIC"){
+					probeIDs<-rnb.get.annotation("controlsEPIC")[,"Target"]
+					## TODO remove this after annotation has been fixed
+					index<-rnb.update.controlsEPIC.enrich(rnb.get.annotation("controlsEPIC"))[,"Index"]
+					probeIDs<-paste(probeIDs, index, sep=".")
+				}else if(from@target == "probes450"){
 					probeIDs<-rnb.get.annotation("controls450")[,"Target"]
 					probeIDs<-paste(probeIDs, unlist(sapply(table(probeIDs)[unique(probeIDs)], seq, from=1 )), sep=".")
 				}else if(from@target == "probes27"){
@@ -486,14 +496,18 @@ setAs("RnBeadRawSet","MethyLumiSet",
 				featureData(mset@QC)<-as(data.frame(Address=rownames(qc(from)$Cy3), rownames=probeIDs), "AnnotatedDataFrame")
 				featureNames(mset@QC)<-probeIDs
 								
-				if(from@target == "probes450"){
+				if(from@target == "probesEPIC"){
+					annotation(mset@QC) <- "IlluminaMethylationEPIC"
+				}else if(from@target == "probes450"){
 					annotation(mset@QC) <- "IlluminaHumanMethylation450k"
 				}else if(from@target == "probes27"){
 					annotation(mset) <- "IlluminaHumanMethylation27k"
 				}
-				
 			}
-			if(from@target == "probes450"){
+			
+			if(from@target == "probesEPIC"){
+				annotation(mset) <- "IlluminaMethylationEPIC"
+			}else if(from@target == "probes450"){
 				annotation(mset) <- "IlluminaHumanMethylation450k"
 			}else if(from@target == "probes27"){
 				annotation(mset) <- "IlluminaHumanMethylation27k"

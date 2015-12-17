@@ -654,8 +654,12 @@ read.idat.files <- function(base.dir,
 	annot.ctrls<-rnb.get.annotation(gsub("probes","controls",platform))
 	nprobes<-sum(rnb.annotation.size(platform))
 	ncprobes<-nrow(annot.ctrls)
-
-	if(platform=="probes450"){
+	
+	if(platform=="probesEPIC"){
+		ctrls.address.col<-"ID"
+		ctrls.target.col<-"Target"
+		neg.ctrl.indexes<-which(annot.ctrls[["Target"]]=="NEGATIVE")
+	}else if(platform=="probes450"){
 		ctrls.address.col<-"ID"
 		ctrls.target.col<-"Target"
 		neg.ctrl.indexes<-which(annot.ctrls[["Target"]]=="NEGATIVE")
@@ -694,13 +698,17 @@ read.idat.files <- function(base.dir,
 	qc.int$Cy5<-matrix(NA_real_, nrow=ncprobes, ncol=nsamp, dimnames = list(annot.ctrls[[ctrls.address.col]], NULL))
 
 	INTENSITY.SUMMARIZATION.INFO<-list(
+			probesEPIC=list(
+				"typeIred"=list(Design="I", Color="Red", Msource="Red", Usource="Red", Maddress="AddressB", Uaddress="AddressA"),
+				"typeIgrn"=list(Design="I", Color="Grn", Msource="Grn", Usource="Grn", Maddress="AddressB", Uaddress="AddressA"),
+				"typeII"=list(Design="II", Color="Both", Msource="Grn", Usource="Red", Maddress="AddressA", Uaddress="AddressA")),
 			probes450=list(
-				"typeIred"=list(Design="I", Color="Red", Msource="Red", Usource="Red"),
-				"typeIgrn"=list(Design="I", Color="Grn", Msource="Grn", Usource="Grn"),
-				"typeII"=list(Design="II", Color="Both", Msource="Grn", Usource="Red")),
+				"typeIred"=list(Design="I", Color="Red", Msource="Red", Usource="Red", Maddress="AddressB", Uaddress="AddressA"),
+				"typeIgrn"=list(Design="I", Color="Grn", Msource="Grn", Usource="Grn", Maddress="AddressB", Uaddress="AddressA"),
+				"typeII"=list(Design="II", Color="Both", Msource="Grn", Usource="Red", Maddress="AddressB", Uaddress="AddressA")),
 			probes27=list(
-				"typeIred"=list(Design="I", Color="red", Msource="Red", Usource="Red"),
-				"typeIgrn"=list(Design="I", Color="green", Msource="Grn", Usource="Grn"))
+				"typeIred"=list(Design="I", Color="red", Msource="Red", Usource="Red", Maddress="AddressB", Uaddress="AddressA"),
+				"typeIgrn"=list(Design="I", Color="green", Msource="Grn", Usource="Grn", Maddress="AddressB", Uaddress="AddressA"))
 	)
 
 	probe.categories<-INTENSITY.SUMMARIZATION.INFO[[platform]]
@@ -734,8 +742,8 @@ read.idat.files <- function(base.dir,
 	for(pcind in 1:length(probe.categories)){
 		probe.categories[[pcind]]$Indices<-which(annot$Design==probe.categories[[pcind]]$Design &
 						annot$Color==probe.categories[[pcind]]$Color)
-		probe.categories[[pcind]]$Maddress<-annot[probe.categories[[pcind]]$Indices,"AddressB"]
-		probe.categories[[pcind]]$Uaddress<-annot[probe.categories[[pcind]]$Indices,"AddressA"]
+		probe.categories[[pcind]]$Maddress<-annot[probe.categories[[pcind]]$Indices,probe.categories[[pcind]]$Maddress]
+		probe.categories[[pcind]]$Uaddress<-annot[probe.categories[[pcind]]$Indices,probe.categories[[pcind]]$Uaddress]
 		#probes[probe.categories[[pcind]]$Indices]<-annot[probe.categories[[pcind]]$Indices,"ID"]
 	}
 
@@ -794,7 +802,11 @@ read.idat.files <- function(base.dir,
 		rnb.logger.completed()
 	}
 
-	rnb.platform<-paste0(gsub("probes", "", platform), "k")
+	if(platform %in% c("probes27", "probes450")){
+		rnb.platform<-paste0(gsub("probes", "", platform), "k")
+	}else{
+		rnb.platform<-"EPIC"
+	}
 
 	if(is.null(sample.sheet)){
 		sample.sheet<-data.frame(barcodes=barcode)
@@ -1608,16 +1620,22 @@ get.bed.column.classes<-function(bed.top,
 ##
 detect.infinium.platform<-function(barcodes){
 
-	inf27k.idats.present<-any(grepl("_[ABCDEFGHIJKL]$", barcodes))
-	inf450k.idats.present<-any(grepl("_R0[1-6]C0[1-2]$", barcodes))
-
-	if(inf27k.idats.present) {
-		if (inf450k.idats.present) {
-			rnb.error("Undefined platform; both 450k and 27k IDATs are present")
+	plate_id<-as.numeric(strsplit(barcodes[1], split="_")[[1]][1])
+	if(plate_id>200000000000){# EPIC platform
+		return("probesEPIC")
+	}else{
+			
+		inf27k.idats.present<-any(grepl("_[ABCDEFGHIJKL]$", barcodes))
+		inf450k.idats.present<-any(grepl("_R0[1-6]C0[1-2]$", barcodes))
+	
+		if(inf27k.idats.present) {
+			if (inf450k.idats.present) {
+				rnb.error("Undefined platform; both 450k and 27k IDATs are present")
+			}
+			return("probes27")
+		} else if (inf450k.idats.present) {
+			return("probes450")
 		}
-		return("probes27")
-	} else if (inf450k.idats.present) {
-		return("probes450")
 	}
 	rnb.error("Undefined platform; please check Sentrix ID and Sentrix Position columns in the sample sheet")
 }

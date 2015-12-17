@@ -28,9 +28,9 @@ getGLADProfiles<-function(rnb.set, cgs){
 		stop("RnBeadRawSet object expected")
 	}
 	
-	cnv.reference.data<-rnb.get.cnv.annotations("probes450")
+	cnv.reference.data<-rnb.get.cnv.annotations(rnb.set@target)
 	
-	annot<-rnb.annotation2data.frame(rnb.get.annotation("probes450"), add.names=TRUE)
+	annot<-rnb.annotation2data.frame(rnb.get.annotation(rnb.set@target), add.names=TRUE)
 	annot<-annot[rownames(annot) %in% cgs,]
 	
 	I<-M(rnb.set)+unmethylated(rnb.set)

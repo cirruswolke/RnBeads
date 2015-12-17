@@ -1242,8 +1242,8 @@ rnb.get.chromosomes <- function(assembly = "hg19") {
 #' Extracts all control probe types in the HumanMethylation450 assay.
 #'
 #' @param target  A singleton of type \code{character}, specifying the microarray platform.
-#' 				  \code{"probes450"} and \code{"probes27"} correspond to HumanMethylation450
-#' 				 respectively HumanMethylation27 microarrays
+#' 				 \code{"probesEPIC"},\code{"probes450"} and \code{"probes27"} correspond to MethylationEPIC, 
+#' 				 HumanMethylation450, and HumanMethylation27 microarrays respectively.
 #'
 #' @return \code{character} vector of control targets.
 #'
@@ -1254,7 +1254,9 @@ rnb.get.chromosomes <- function(assembly = "hg19") {
 #' @author Pavlo Lutsik
 #' @export
 rnb.infinium.control.targets <- function(target="probes450") {
-	if(target=="probes450"){
+	if(target=="probesEPIC"){
+		return(EPIC.CONTROL.TARGETS)
+	}else if(target=="probes450"){
 		return(HM450.CONTROL.TARGETS)
 	}else if(target=="probes27"){
 		return(HM27.CONTROL.TARGETS)

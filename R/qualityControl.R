@@ -338,7 +338,7 @@ rnb.section.mixups<-function(report, object,
 	}
 
 	section.title <- "Visualization of Sample Mixups"
-	if(object@target=="probes450"){
+	if(object@target=="probes450" || object@target=="probesEPIC"){
 		snp.probes.present <- any(grepl("^rs", annotation(object, add.names = TRUE)[, "ID"]))
 	}else if(object@target=="probes27"){
 		snp.probes.present <- !is.null(qc(object))
@@ -390,7 +390,9 @@ add.qc.boxplots<-function(report, object){
 
   descr<-"Quality control box plots."
 
-  if(object@target=="probes450"){
+  if(object@target=="probesEPIC"){
+	  ctypes<-rnb.infinium.control.targets(object@target)[c(14,4,3,15,1:2,12:13,6,11)]
+  }else if(object@target=="probes450"){
   	ctypes<-rnb.infinium.control.targets(object@target)[c(13,4,3,14,1:2,11:12,6)]
   }else if(object@target=="probes27"){
 	ctypes<-rnb.infinium.control.targets(object@target)[c(10,3,2,11,1,9,6)]
@@ -413,7 +415,10 @@ add.qc.barplots<-function(report, object, sample.batch.size=50){
 
   descr="Quality control bar plots."
 
-  if(object@target=="probes450"){
+  if(object@target=="probesEPIC"){
+	  cmd <- rnb.get.annotation("controlsEPIC")
+	  ctypes<-unique(cmd$Target)[unique(cmd$Target) %in% rnb.infinium.control.targets("probesEPIC")[c(14,4,3,15,1:2,12:13,6,11)]]
+  }else if(object@target=="probes450"){
   	cmd <- rnb.get.annotation("controls450")
   	ctypes<-unique(cmd$Target)[unique(cmd$Target) %in% rnb.infinium.control.targets("probes450")[c(13,4,14,3,1:2,11:12,6)]]
   }else if(object@target=="probes27"){
@@ -436,7 +441,7 @@ add.qc.barplots<-function(report, object, sample.batch.size=50){
 
 	  cplots<-lapply(ctypes, function(type){
 
-		if(object@target=="probes450"){
+		if(object@target=="probes450" || object@target=="probesEPIC"){
 			cmdt <- cmd[cmd[["Target"]] == type, ]
 			pn<-paste(type, 1:(dim(cmdt)[1]),  sep=".")
 		}else if(object@target=="probes27"){
@@ -450,7 +455,7 @@ add.qc.barplots<-function(report, object, sample.batch.size=50){
 				report=report, writeToFile=TRUE, numeric.names=TRUE, width=8, height=6, low.png=100, high.png=300, verbose=TRUE,
 				name.prefix=portions[portion.id])
 
-		if(object@target=="probes450"){
+		if(object@target=="probes450" || object@target=="probesEPIC"){
 			names(plots)<-paste(type, 1:(dim(cmdt)[1]))
 		}else if(object@target=="probes27"){
 			names(plots)<-as.character(cmdt$Name)
@@ -472,7 +477,7 @@ add.qc.barplots<-function(report, object, sample.batch.size=50){
 
 
   names(sn[[1]])<-portions
-  if(object@target=="probes450"){
+  if(object@target=="probes450" || object@target=="probesEPIC"){
   	names(sn[[2]])<-1:length(plot.names)
   }else if(object@target=="probes27"){
 	names(sn[[2]])<-match(plot.names,cmd$Name)
@@ -584,7 +589,7 @@ add.snp.heatmap<-function(report, object){
 add.snp.distances <- function(report, object) {
 
 	## Extract the matrix of beta values on the SNP probes
-	if(object@target=="probes450"){
+	if(object@target=="probes450" || object@target=="probesEPIC"){
 		snp.betas <- meth(object, row.names = TRUE)
 		snp.betas <- snp.betas[grep("^rs", rownames(snp.betas)), ]
 	}else if(object@target=="probes27"){

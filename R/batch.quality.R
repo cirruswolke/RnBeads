@@ -49,7 +49,12 @@ rnb.execute.batch.qc <- function(rnb.set, pcoordinates, permutations = NULL) {
 	}
 
 	## Initialize data points, control probe types and control probe information
-	if(rnb.set@target=="probes450"){
+	if(rnb.set@target=="probesEPIC"){
+		CONTROL.TYPES <- rnb.infinium.control.targets("probesEPIC")[c(1:4, 6, 11:14)]
+		id.col<-"ID"
+		type.col<-"Target"
+		ctrls<-"controlsEPIC"
+	}else if(rnb.set@target=="probes450"){
 		CONTROL.TYPES <- rnb.infinium.control.targets("probes450")[c(1:4, 6, 11:14)]
 		id.col<-"ID"
 		type.col<-"Target"

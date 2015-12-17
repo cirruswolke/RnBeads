@@ -97,7 +97,13 @@ rnb.execute.normalization<-function(
 	}
 
 	if(inherits(object, "RnBeadSet") && object@target=="probes27" && !method %in% c("illumina")){
-		rnb.warning(c("Incompatible values for object and method: \"",method,"\" cannot be applied to HumanMethylation27 data . Changed the normalization method to \"none\""))
+		rnb.warning(c("Incompatible values for object and method: \"",method,"\" cannot be applied to HumanMethylation27 data. Changed the normalization method to \"none\""))
+		rnb.options(normalization.method="none")
+		method<-"none"
+	}
+	
+	if(inherits(object, "RnBeadSet") && object@target=="probesEPIC" && method %in% c("swan", "minfi.funnorm")){
+		rnb.warning(sprintf("Incompatible methods for object and method: normalization with method %s cannot be applied to MethylationEPIC data at the moment. Changed the normalization method to \"none\"", method))
 		rnb.options(normalization.method="none")
 		method<-"none"
 	}
@@ -139,13 +145,18 @@ rnb.execute.normalization<-function(
 		}
 		rnb.cleanMem()
 	}
-
-
+	
 	if(inherits(object, "RnBeadRawSet") && bgcorr.method!="none"){
 
 		if(bgcorr.method=="methylumi.noob" && object@target=="probes27"){
 			rnb.warning("Incompatible methods for object and background correction method: ]
 						no background correction on the Infinium 27k data possible")
+			bgcorr.method<-"none"
+		}
+		
+		if(bgcorr.method=="methylumi.noob" && object@target=="probesEPIC"){
+			rnb.warning("Incompatible methods for object and background correction method: ]
+							no background correction on the MethylationEPIC data possible at the moment")
 			bgcorr.method<-"none"
 		}
 
@@ -156,7 +167,7 @@ rnb.execute.normalization<-function(
 		}
 
 		if(object@status$normalized=="swan"){
-			rnb.warning(c("This RnBeadRawSet object was normalized with method SWAN: no background correction possible"))
+			rnb.warning(c("This RnBeadRawSet object was normalized with method SWAN: no background correction possible."))
 			bgcorr.method<-"none"
 		}
 
@@ -190,7 +201,7 @@ rnb.execute.normalization<-function(
 	}
 
 	if(method=="illumina"){
-
+		
 		if(inherits(object, "RnBeadRawSet")){
 			inferred.covariates <- object@inferred.covariates
 			object<-as(object,"MethyLumiSet")
@@ -212,7 +223,7 @@ rnb.execute.normalization<-function(
 		if(inherits(object,"MethyLumiSet") && (is.null(methylated(object))||is.null(unmethylated(object)))) {
 			rnb.error("Invalid value for object; missing intensity information")
 		}
-
+		
 		if(inherits(object,"MethyLumiSet")){
 			intensities.by.channel<-methylumi.intensities.by.color(object)
 		}else if(inherits(object,"RnBeadRawSet")){
