@@ -1050,7 +1050,13 @@ setMethod("mergeSamples", signature(object = "RnBSet"),
 				)
 			}
 			b.counts <- NULL
-			platform <- ifelse(object@target=="probes450","450k",ifelse(object@target=="probes27","27k",""))
+			if(object@target=="probesEPIC"){
+				platform<-"EPIC"
+			}else if (object@target=="probes450"){
+				platform<-"450k"
+			}else if(object@target=="probes27"){
+				platform<-"27k"
+			}
 			# res <- new("RnBeadSet",
 			# 	data.frame(pheno.new),
 			# 	meth.site.new,

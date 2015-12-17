@@ -237,7 +237,10 @@ RnBeadSet<-function(
 			stop("invalid value for useff: should be a logical of length one")
 		}
 		
-		if (platform == "450k") {
+		if (platform == "EPIC") {
+			target <- "probesEPIC"
+			assembly <- "hg19"
+		}else if (platform == "450k") {
 			target <- "probes450"
 			assembly <- "hg19"
 		} else if(platform == "27k"){ 
