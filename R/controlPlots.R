@@ -57,13 +57,17 @@ rnb.plot.control.boxplot <- function(
 	}
 
 	## Extract intensities of the control probes
-	if(rnb.set@target=="probes450"){
+	if(rnb.set@target=="probesEPIC"){
+		meta <- rnb.get.annotation("controlsEPIC")
+	}else if(rnb.set@target=="probes450"){
 		meta <- rnb.get.annotation("controls450")
 	}else if(rnb.set@target=="probes27"){
 		meta <- rnb.get.annotation("controls27")
 	}
 
-	if(rnb.set@target=="probes450"){
+	if(rnb.set@target=="probesEPIC"){
+		types<-rnb.infinium.control.targets(rnb.set@target)[c(14,4,3,15,1:2,12:13,6,11)]
+	}else if(rnb.set@target=="probes450"){
 		types<-rnb.infinium.control.targets(rnb.set@target)[c(13,4,3,14,1:2,11:12,6)]
 	}else if(rnb.set@target=="probes27"){
 		types<-rnb.infinium.control.targets(rnb.set@target)[c(10,3,2,11,1,9,6)]
@@ -73,7 +77,13 @@ rnb.plot.control.boxplot <- function(
 		warning("Unoptimized probe type, plotting performance may be decreased")
 	}
 
-	if(rnb.set@target=="probes450"){
+	if(rnb.set@target=="probes450" || rnb.set@target=="probesEPIC"){
+		rownames(meta)<-meta[["ID"]]
+		### TODO: Remove the following passage
+		### for testing purposes only!
+		if(rnb.set@target=="probesEPIC"){
+			meta<-rnb.update.controlsEPIC.enrich(meta)
+		}
 		meta <- meta[type == meta[["Target"]], ]
 		ids<-as.character(meta[["ID"]])
 		ids<-intersect(rownames(qc(rnb.set)[[1]]), ids)
@@ -108,7 +118,7 @@ rnb.plot.control.boxplot <- function(
 
 	scales<-lapply(qc(rnb.set), get.unified.scale)
 
-	if(rnb.set@target=="probes450"){
+	if(rnb.set@target=="probes450" || rnb.set@target=="probesEPIC"){
 		## Shorten the words describing probe's expected intensity
 		INTENSITIES <- c("Background" = "Bgnd", "High" = "High", "Low" = "Low", "Medium" = "Med")
 		levels(meta[, "Expected Intensity"]) <- INTENSITIES[levels(meta[, "Expected Intensity"])]
@@ -199,8 +209,20 @@ rnb.plot.negative.boxplot<- function(
 		name.prefix=NULL,
 		...) {
 
-	## Extract intensities of the control probes
-	if(rnb.set@target=="probes450"){
+	
+	if(rnb.set@target=="probesEPIC"){
+		meta <- rnb.get.annotation("controlsEPIC")
+		## Extract intensities of the control probes
+		### TODO: Remove the following passage
+		### for testing purposes only!
+		if(rnb.set@target=="probesEPIC"){
+			meta<-rnb.update.controlsEPIC.enrich(meta)
+		}
+		meta <- meta["NEGATIVE" == meta[["Target"]], ]
+		ids<-as.character(meta[["ID"]])
+		ids<-intersect(rownames(qc(rnb.set)[[1]]), ids)
+		meta<-meta[ids,]
+	}else if(rnb.set@target=="probes450"){
 		meta <- rnb.get.annotation("controls450")
 		meta <- meta["NEGATIVE" == meta[["Target"]], ]
 		ids<-as.character(meta[["ID"]])
@@ -329,12 +351,28 @@ rnb.plot.control.barplot<-function(
 		verbose=FALSE,
 		...)
 {
-
-	if(rnb.set@target=="probes450"){
+	
+	
+	if(rnb.set@target=="probesEPIC"){
+		control.meta.data <- rnb.get.annotation("controlsEPIC")
+		### TODO: Remove the following passage
+		### for testing purposes only!
+		if(rnb.set@target=="probesEPIC"){
+			control.meta.data<-rnb.update.controlsEPIC.enrich(control.meta.data)
+		}
+		type=strsplit(probe,".", fixed=TRUE)[[1]][1]
+		index=strsplit(probe,".", fixed=TRUE)[[1]][2]
+		if(!(type %in% rnb.infinium.control.targets(rnb.set@target))){
+			rnb.error(c("Unrecognized control probe:", probe))
+		}
+		id<-subset(control.meta.data, Target==type & Index==index)$ID
+		id.col<-"ID"
+	
+	}else if(rnb.set@target=="probes450"){
 		control.meta.data <- rnb.get.annotation("controls450")
 		type=strsplit(probe,".", fixed=TRUE)[[1]][1]
 		index=strsplit(probe,".", fixed=TRUE)[[1]][2]
-		if(!(type %in% rnb.infinium.control.targets())){
+		if(!(type %in% rnb.infinium.control.targets(rnb.set@target))){
 			rnb.error(c("Unrecognized control probe:", probe))
 		}
 		id<-subset(control.meta.data, Target==type & Index==index)$ID
@@ -352,12 +390,25 @@ rnb.plot.control.barplot<-function(
 	green<-qc(rnb.set)$Cy3[,sample.subset, drop=FALSE]
 	red<-qc(rnb.set)$Cy5[,sample.subset, drop=FALSE]
 
+	#get full set of probes
+	if(rnb.set@target=="probesEPIC"){
+		full.probe.set<-control.meta.data[[id.col]][control.meta.data[["Target"]] %in% rnb.infinium.control.targets(rnb.set@target)[c(14,4,3,15,1:2,12:13,6,11)]]
+	}else if(rnb.set@target=="probes450"){
+		full.probe.set<-control.meta.data[[id.col]][control.meta.data[["Target"]] %in% rnb.infinium.control.targets(rnb.set@target)[c(13,4,3,14,1:2,11:12,6)]]
+	}else{
+		full.probe.set<-control.meta.data[[id.col]][control.meta.data[["Target"]] %in% rnb.infinium.control.targets(rnb.set@target)[c(10,3,2,11,1,9,6)]]
+	}
+	
 	if(! id %in% rownames(green)){
 		if(writeToFile){
 			if(is.null(name.prefix)){
-				plot.name<-paste('ControlBarPlot', ifelse(numeric.names, match(id, control.meta.data[[id.col]] ), probe.name) , sep="_")
+				plot.name<-paste('ControlBarPlot', ifelse(numeric.names, 
+								match(id, full.probe.set), 
+								probe.name) , sep="_")
 			}else{
-				plot.name<-paste('ControlBarPlot', name.prefix, ifelse(numeric.names, match(id, control.meta.data[[id.col]] ), probe.name) , sep="_")
+				plot.name<-paste('ControlBarPlot', name.prefix, ifelse(numeric.names, 
+								match(id, full.probe.set), 
+								probe.name) , sep="_")
 			}
 			plot.file<-createReportPlot(plot.name, ...)
 		}
@@ -378,7 +429,7 @@ rnb.plot.control.barplot<-function(
 
 	## get meta information
 
-	if(rnb.set@target=="probes450"){
+	if(rnb.set@target=="probes450" || rnb.set@target=="probesEPIC"){
 		meta<-subset(control.meta.data, ID==id)
 	}else if(rnb.set@target=="probes27"){
 		meta<-subset(control.meta.data, Address==id)
@@ -386,9 +437,13 @@ rnb.plot.control.barplot<-function(
 
 	probe.name<-gsub(" ", ".", probe)
 	if(is.null(name.prefix)){
-		plot.name<-paste('ControlBarPlot', ifelse(numeric.names, match(id, control.meta.data[[id.col]] ), probe.name) , sep="_")
+		plot.name<-paste('ControlBarPlot', ifelse(numeric.names, 
+						match(id, full.probe.set), 
+						probe.name) , sep="_")
 	}else{
-		plot.name<-paste('ControlBarPlot', name.prefix, ifelse(numeric.names, match(id, control.meta.data[[id.col]] ), probe.name) , sep="_")
+		plot.name<-paste('ControlBarPlot', name.prefix, ifelse(numeric.names, 
+						match(id, full.probe.set), 
+						probe.name) , sep="_")
 	}
 	if(writeToFile){
 		plot.file<-createReportPlot(plot.name, ...)
@@ -406,7 +461,7 @@ rnb.plot.control.barplot<-function(
 
 	### plot green channel
 
-	if(rnb.set@target=="probes450"){
+	if(rnb.set@target=="probes450" || rnb.set@target=="probesEPIC"){
 		main_txt_grn<-paste(probe, meta[,"Description"], "green channel", if(meta[, "Evaluate Green"]=="+") meta[, "Expected Intensity"] else "Background", sep=": ")
 		main_txt_red<-paste(probe, meta[,"Description"], "red channel",if(meta[, "Evaluate Red"]=="+") meta[, "Expected Intensity"] else "Background", sep=": ")
 	}else{
@@ -554,7 +609,7 @@ rnb.plot.snp.boxplot<-function(
 		stop("invalid value for writeToFile; expected TRUE or FALSE")
 	}
 
-	if(rnb.set@target=="probes450"){
+	if(rnb.set@target=="probes450" || rnb.set@target=="probesEPIC"){
 		snp.betas<-meth(rnb.set, row.names=TRUE)
 		snp.betas<-t(snp.betas[grep("rs", rownames(snp.betas)),,drop=FALSE])
 	}else if(rnb.set@target=="probes27"){
@@ -629,7 +684,7 @@ rnb.plot.snp.barplot<-function(
 		stop("invalid value for sample")
 	}
 
-	if(rnb.set@target=="probes450"){
+	if(rnb.set@target=="probes450" || rnb.set@target=="probesEPIC"){
 		snp.betas<-meth(rnb.set, row.names=TRUE)[,match(sample, ids),drop=FALSE]
 		snp.betas<-snp.betas[grep("rs", rownames(snp.betas)),,drop=FALSE]
 	}else if(rnb.set@target=="probes27"){
@@ -694,7 +749,7 @@ rnb.plot.snp.heatmap<-function(
 	}
 
 	sample.ids<-abbreviate.names(samples(rnb.set))
-	if(rnb.set@target=="probes450"){
+	if(rnb.set@target=="probes450" || rnb.set@target=="probesEPIC"){
 		snp.betas<-meth(rnb.set, row.names=TRUE)
 		snp.betas<-snp.betas[grep("rs", rownames(snp.betas)),,drop=FALSE]
 	}else if(rnb.set@target=="probes27"){
@@ -932,3 +987,69 @@ HM27.snp.betas<-function(qc.int){
 	return(snp.betas)
 }
 #######################################################################################################################
+rnb.update.controlsEPIC.enrich <- function(control.probe.infos) {
+	
+	## Control probe colors associated with the evaluation of the Red channel
+	CONTROL.COLORS.GREEN <- c("Black", "Blue", "Cyan", "Green", "Lime", "Limegreen", "Skyblue")
+	
+	## Control probe colors associated with the evaluation of the Red channel
+	CONTROL.COLORS.RED <- c("Gold", "Orange", "Purple", "Red", "Tomato", "Yellow")
+	
+	## Add columns Evaluate Green and Evaluate Red
+	control.probe.infos[["Evaluate Green"]] <- "-"
+	control.probe.infos[["Evaluate Red"]] <- "-"
+	i <- grep("^DNP", control.probe.infos[, "Description"])
+	control.probe.infos[i, "Evaluate Green"] <- "-"
+	control.probe.infos[i, "Evaluate Red"] <- "+"
+	i <- grep("^Biotin", control.probe.infos[, "Description"])
+	control.probe.infos[i, "Evaluate Green"] <- "+"
+	control.probe.infos[i, "Evaluate Red"] <- "-"
+	i <- (control.probe.infos[["Color"]] %in% CONTROL.COLORS.GREEN)
+	control.probe.infos[i, "Evaluate Green"] <- "+"
+	control.probe.infos[i, "Evaluate Red"] <- "-"
+	i <- (control.probe.infos[["Color"]] %in% CONTROL.COLORS.RED)
+	control.probe.infos[i, "Evaluate Green"] <- "-"
+	control.probe.infos[i, "Evaluate Red"] <- "+"
+	i <- grep("^NEGATIVE", control.probe.infos[, "Target"])
+	control.probe.infos[i, "Evaluate Green"] <- "+"
+	control.probe.infos[i, "Evaluate Red"] <- "+"
+	control.probe.infos[["Evaluate Green"]] <- factor(control.probe.infos[["Evaluate Green"]], levels = c("-", "+"))
+	control.probe.infos[["Evaluate Red"]] <- factor(control.probe.infos[["Evaluate Red"]], levels = c("-", "+"))
+	
+	## Add column Expected Intensity
+	control.probe.infos[["Expected Intensity"]] <- as.character(NA)
+	i <- control.probe.infos[, "Target"] %in% c("NEGATIVE", "TARGET REMOVAL", "RESTORATION")
+	control.probe.infos[i, "Expected Intensity"] <- "Background"
+	i <- c("BISULFITE CONVERSION II", "SPECIFICITY II", "EXTENSION", "NON-POLYMORPHIC")
+	i <- control.probe.infos[, "Target"] %in% i
+	control.probe.infos[i, "Expected Intensity"] <- "High"
+	i <- control.probe.infos[, "Target"] %in% paste("NORM", c("A", "C", "G", "T"), sep = "_")
+	control.probe.infos[i, "Expected Intensity"] <- "High"
+	i <- grep("\\((High)|(20K)\\)$", control.probe.infos[, "Description"])
+	control.probe.infos[i, "Expected Intensity"] <- "High"
+	i <- grep("\\((Medium)|(5K)\\)$", control.probe.infos[, "Description"])
+	control.probe.infos[i, "Expected Intensity"] <- "Medium"
+	i <- grep("\\(Low\\)$", control.probe.infos[, "Description"])
+	control.probe.infos[i, "Expected Intensity"] <- "Low"
+
+	#i <- grep("\\((Bkg)|(5K)\\)$", control.probe.infos[, "Description"])
+	i <- grep("\\(Bkg\\)$", control.probe.infos[, "Description"])
+	control.probe.infos[i, "Expected Intensity"] <- "Background"
+	i <- grep("^BS Conversion I[- ]C", control.probe.infos[, "Description"])
+	control.probe.infos[i, "Expected Intensity"] <- "High"
+	i <- grep("^BS Conversion I[- ]U", control.probe.infos[, "Description"])
+	control.probe.infos[i, "Expected Intensity"] <- "Background"
+	i <- grep("^GT Mismatch.+\\(PM\\)$", control.probe.infos[, "Description"])
+	control.probe.infos[i, "Expected Intensity"] <- "High"
+	i <- grep("^GT Mismatch.+\\(MM\\)$", control.probe.infos[, "Description"])
+	control.probe.infos[i, "Expected Intensity"] <- "Background"
+	control.probe.infos[["Expected Intensity"]] <- factor(control.probe.infos[["Expected Intensity"]])
+	
+	## Add column Sample-dependent
+	control.probe.infos[["Sample-dependent"]] <-
+			!(control.probe.infos[["Target"]] %in% RnBeads:::CONTROL.TARGETS.SAMPLE.INDEPENDENT)
+	
+	control.probe.infos[["Index"]][order(control.probe.infos$Target)]<-unlist(sapply(sort(unique(control.probe.infos$Target)), function(target) 1:length(which(control.probe.infos$Target==target))))
+	
+	return(control.probe.infos)
+}
