@@ -1205,9 +1205,14 @@ read.bed.files<-function(base.dir=NULL,
 	## Detect the scale of the mean methylation data
 	## A very naive method to guess whether the methylation is  
 	## given as a fraction of 1, percentage or on 0 to 1000 scale
-	test.set<-dm[[1]][sample.int(1:nrow(dm[[1]]), 10000),4L]
-	perc.meth<-sum(test.set[!is.na(test.set)]>10.0)>5
-	prom.meth<-sum(test.set[!is.na(test.set)]>110.0)>5
+	nSites <- nrow(data.matrices[[1]])
+	test.set  <- data.matrices[[1]][,4L]
+	if (nSites > 10000){
+		sampleInds <- sample.int(nSites, 10000)
+		test.set <- test.set[sampleInds]
+	}
+	perc.meth <- sum(test.set[!is.na(test.set)]>10.0)>5
+	prom.meth <- sum(test.set[!is.na(test.set)]>110.0)>5
 	
 	## A workaround for chromosome names, not starting with "chr"
 	chroms<-names(rnb.get.chromosomes(assembly=assembly))
