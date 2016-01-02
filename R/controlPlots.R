@@ -171,12 +171,13 @@ rnb.plot.control.boxplot <- function(
 
 	grb<-do.call(arrangeGrob, plots)
 
+	grid.draw(grb)
 	if(writeToFile) {
-		grid.draw(grb)
 		off(plot.file)
 		return(plot.file)
+	}else{
+		return(invisible(grb))
 	}
-	return(grb)
 }
 
 #######################################################################################################################
@@ -304,12 +305,13 @@ rnb.plot.negative.boxplot<- function(
 
 	grb<-do.call(arrangeGrob, plots)
 
+	grid.draw(grb)
 	if(writeToFile) {
-		grid.draw(grb)
 		off(plot.file)
 		return(plot.file)
+	}else{
+		return(invisible(grb))
 	}
-	return(grb)
 }
 #######################################################################################################################
 #' rnb.plot.control.barplot
@@ -501,13 +503,13 @@ rnb.plot.control.barplot<-function(
 
   grb<-arrangeGrob(green.plot, red.plot)
 
+  grid.draw(grb)
   if(writeToFile) {
-	grid.draw(grb)
-  	off(plot.file)
-  	return(plot.file)
-   }
-
-  return(grb)
+	  off(plot.file)
+	  return(plot.file)
+  }else{
+	  return(invisible(grb))
+  }
 
 }
 #######################################################################################################################
@@ -631,13 +633,14 @@ rnb.plot.snp.boxplot<-function(
 				  ylab="Beta value")+theme(axis.text.x=element_text(angle=90, vjust=0))
   	#, vp=viewport(layout.pos.row=1, layout.pos.col=1))
 
+	print(plot.obj)
 	if(writeToFile){
-		print(plot.obj)
 		off(plot.file)
 		return(plot.file)
+	}else{
+		return(invisible(plot.obj))
 	}
 
-	return(plot.obj)
 }
 
 #######################################################################################################################
@@ -700,19 +703,19 @@ rnb.plot.snp.barplot<-function(
 	}
 
 	Beta.values<-as.numeric(snp.betas)
-	SNP<-names(snp.betas)
+	SNP<-rownames(snp.betas)
 
 	plot.obj<-qplot(SNP, Beta.values, geom = "bar", stat="identity", main=sample,
 					ylab="Beta value")+scale_y_continuous(limits=c(0,1))+
 			.control.plot.theme.samples#, vp=viewport(layout.pos.row=1, layout.pos.col=1))
 
-	if(writeToFile) {
-		print(plot.obj)
+	print(plot.obj)
+	if(writeToFile){
 		off(plot.file)
 		return(plot.file)
+	}else{
+		return(invisible(plot.obj))
 	}
-
-	return(plot.obj)
 }
 
 #######################################################################################################################
