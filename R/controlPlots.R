@@ -476,8 +476,9 @@ rnb.plot.control.barplot<-function(
     if(empty.probe) {
 		green<-rep(0, length(green))
 	}
-	green.plot<-qplot(Samples, green, stat="identity", geom="bar",fill=I("green"),
-					main=main_txt_grn)+
+	
+	green.plot<-ggplot(data = data.frame(Samples=as.character(Samples), Intensity=green), aes(x = Samples, y = Intensity)) +
+			geom_bar(stat = "identity", position = "stack",fill = "green") + ggtitle(main_txt_grn) +
 					scale_x_discrete(labels=sample.labels)+ylab("Intensity")+
 					.control.plot.theme.samples
 
@@ -491,10 +492,10 @@ rnb.plot.control.barplot<-function(
 	if(empty.probe) {
 		red<-rep(0, length(red));
 	}
-		red.plot<-qplot(Samples, red, stat="identity", geom="bar",fill=I("red"),
-						main=main_txt_red)+
-					scale_x_discrete(labels=sample.labels)+ylab("Intensity")+
-					.control.plot.theme.samples
+	red.plot<-ggplot(data = data.frame(Samples=as.character(Samples), Intensity=red), aes(x = Samples, y = Intensity)) +
+			geom_bar(stat = "identity", position = "stack",fill = "red") + ggtitle(main_txt_grn) +
+			scale_x_discrete(labels=sample.labels)+ylab("Intensity")+
+			.control.plot.theme.samples
 
 	if(empty.probe){
 		red.plot<-red.plot+annotate("text", label="No intensities found for this quality control probe", x=length(red)%/%2, y=0.5, size=5)
@@ -705,9 +706,16 @@ rnb.plot.snp.barplot<-function(
 	Beta.values<-as.numeric(snp.betas)
 	SNP<-rownames(snp.betas)
 
-	plot.obj<-qplot(SNP, Beta.values, geom = "bar", stat="identity", main=sample,
-					ylab="Beta value")+scale_y_continuous(limits=c(0,1))+
-			.control.plot.theme.samples#, vp=viewport(layout.pos.row=1, layout.pos.col=1))
+#	plot.obj<-qplot(SNP, Beta.values, geom = "bar", stat="identity", main=sample,
+#					ylab="Beta value")+scale_y_continuous(limits=c(0,1))+
+#			.control.plot.theme.samples#, vp=viewport(layout.pos.row=1, layout.pos.col=1))
+	
+	plot.obj<-ggplot(data = data.frame(SNP=SNP, Beta.values=Beta.values), aes(x = SNP, y = Beta.values)) +
+			geom_bar(stat = "identity", position = "stack") + 
+			scale_y_continuous(limits=c(0,1)) +
+			ylab("Beta value") + ggtitle(sample) + 
+			.control.plot.theme.samples
+	
 
 	print(plot.obj)
 	if(writeToFile){
