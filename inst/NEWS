@@ -1,3 +1,10 @@
+RnBeads 1.3.5
+=============
+
+ * Fixes with ggplot in 450K array QC plotting
+ * added an option 'differential.report.sites' to decrease runtime by skipping
+ the differential site methylation section in the report
+
 RnBeads 1.3.4
 =============
 
