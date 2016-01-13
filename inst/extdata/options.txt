@@ -92,6 +92,7 @@ covariate.adjustment.columns	integer.vector	no	yes		NULL
 differential.adjustment.sva	logical	no	no		TRUE
 differential.adjustment.celltype	logical	no	no		TRUE
 differential.enrichment	logical	no	no		FALSE
+differential.report.sites	logical	no	no		TRUE
 export.to.bed	logical	no	no		TRUE
 export.to.trackhub	character.vector	no	yes	(bigBed,bigWig)	(bigBed,bigWig)
 export.to.csv	logical	no	no		FALSE

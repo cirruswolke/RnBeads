@@ -720,6 +720,10 @@ rnb.is.option <- function(txt) {
 #'   \item{\bold{\code{differential.enrichment}}\code{ = FALSE}}{
 #'        Flag indicating whether \href{http://www.geneontology.org/}{Gene Ontology} (GO)-enrichment analysis is to be
 #'        conducted on the identified differentially methylated regions.}
+#'   \item{\bold{\code{differential.report.sites}}\code{ = TRUE}}{
+#'        Flag indicating whether a section corresponding to differential site methylation should be added to the report.
+#'        Has no effect on the actual analysis, just the report. To disable differential site methylation analysis entirely
+#'        use the \code{analyze.sites} option.}
 #'   \item{\bold{\code{export.to.bed}}\code{ = TRUE}}{
 #'        Flag indicating whether the data should be exported to bed files.}
 #'   \item{\bold{\code{export.to.trackhub}}\code{ = c("bigBed","bigWig")}}{

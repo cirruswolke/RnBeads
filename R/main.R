@@ -1360,7 +1360,7 @@ rnb.run.differential <- function(rnb.set, dir.reports,
 	module.start.log("Differential Methylation")
 
 	report <- init.pipeline.report("differential_methylation", dir.reports, init.configuration)
-	optionlist <- rnb.options("analyze.sites","region.types", "differential.permutations", "differential.comparison.columns",
+	optionlist <- rnb.options("analyze.sites", "differential.report.sites", "region.types", "differential.permutations", "differential.comparison.columns",
 		"differential.comparison.columns.all.pairwise","columns.pairing","differential.site.test.method","covariate.adjustment.columns",
 		"differential.adjustment.sva","differential.adjustment.celltype","differential.enrichment")
 	report <- rnb.add.optionlist(report, optionlist)
@@ -1416,7 +1416,7 @@ rnb.run.differential <- function(rnb.set, dir.reports,
 		report <- rnb.add.section(report, "Differential Methylation Analysis", txt)
 	} else {
 		gz <- rnb.getOption("gz.large.files")
-		includeSites <- rnb.getOption("analyze.sites")
+		includeSites <- rnb.getOption("differential.report.sites")
 		report <- rnb.section.diffMeth.introduction(diffmeth,report)
 		if (includeSites){
 			report <- rnb.section.diffMeth.site(rnb.set,diffmeth,report,gzTable=gz)

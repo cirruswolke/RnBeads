@@ -93,7 +93,7 @@
 
 \author{Fabian M\"uller, Yassen Assenov, Pavlo Lutsik \\
 	\small{Contact: \cs{rnbeads@mpi-inf.mpg.de}} \\
-	\small{Package version: \cs{1.1.2}}}
+	\small{Package version: \cs{1.2.0}}}
 
 \thispagestyle{empty}
 \maketitle
