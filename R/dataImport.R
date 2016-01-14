@@ -655,7 +655,7 @@ read.idat.files <- function(base.dir,
 		rnb.info(sprintf("Detected %s platform",
 						c("probes27"="HumanMethylation27",
 								"probes450"="HumanMethylation450",
-								"probeeEPI"="EPIC"
+								"probeeEPIC"="EPIC"
 								)[platform]))
 	}
 	

@@ -480,7 +480,7 @@ add.qc.barplots<-function(report, object, sample.batch.size=50){
   if(object@target=="probes450" || object@target=="probesEPIC"){
   	names(sn[[2]])<-1:length(plot.names)
   }else if(object@target=="probes27"){
-	names(sn[[2]])<-match(plot.names,cmd$Name)
+	names(sn[[2]])<-match(plot.names,cmd$Name[cmd$Type %in% rnb.infinium.control.targets("probes27")[c(10,3,2,11,1,9,6)]])
   }
 
   report<-rnb.add.figure(report, description=descr, report.plots=plots, setting.names=sn)
