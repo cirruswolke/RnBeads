@@ -369,7 +369,8 @@ rnb.plot.control.barplot<-function(
 		}
 		id<-subset(control.meta.data, Target==type & Index==index)$ID
 		id.col<-"ID"
-	
+		target.col<-"Target"
+		targets<-c(14,4,3,15,1:2,12:13,6,11)
 	}else if(rnb.set@target=="probes450"){
 		control.meta.data <- rnb.get.annotation("controls450")
 		type=strsplit(probe,".", fixed=TRUE)[[1]][1]
@@ -379,6 +380,8 @@ rnb.plot.control.barplot<-function(
 		}
 		id<-subset(control.meta.data, Target==type & Index==index)$ID
 		id.col<-"ID"
+		target.col<-"Target"
+		targets<-c(13,4,3,14,1:2,11:12,6)
 	}else if(rnb.set@target=="probes27"){
 		control.meta.data <- rnb.get.annotation("controls27")
 		if(!probe %in% control.meta.data$Name){
@@ -386,6 +389,8 @@ rnb.plot.control.barplot<-function(
 		}
 		id<-control.meta.data[probe==control.meta.data[["Name"]],"Address"]
 		id.col<-"Address"
+		target.col<-"Type"
+		targets<-c(10,3,2,11,1,9,6)
 	}
 
 	#get intensities
@@ -393,13 +398,7 @@ rnb.plot.control.barplot<-function(
 	red<-qc(rnb.set)$Cy5[,sample.subset, drop=FALSE]
 
 	#get full set of probes
-	if(rnb.set@target=="probesEPIC"){
-		full.probe.set<-control.meta.data[[id.col]][control.meta.data[["Target"]] %in% rnb.infinium.control.targets(rnb.set@target)[c(14,4,3,15,1:2,12:13,6,11)]]
-	}else if(rnb.set@target=="probes450"){
-		full.probe.set<-control.meta.data[[id.col]][control.meta.data[["Target"]] %in% rnb.infinium.control.targets(rnb.set@target)[c(13,4,3,14,1:2,11:12,6)]]
-	}else{
-		full.probe.set<-control.meta.data[[id.col]][control.meta.data[["Target"]] %in% rnb.infinium.control.targets(rnb.set@target)[c(10,3,2,11,1,9,6)]]
-	}
+	full.probe.set<-control.meta.data[[id.col]][control.meta.data[[target.col]] %in% rnb.infinium.control.targets(rnb.set@target)[targets]]
 	
 	if(! id %in% rownames(green)){
 		if(writeToFile){
