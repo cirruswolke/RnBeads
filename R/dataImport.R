@@ -648,8 +648,17 @@ read.idat.files <- function(base.dir,
 	idat.red.fnames<-idat.fnames[2*(1:nsamp)-1]
 	idat.grn.fnames<-idat.fnames[2*(1:nsamp)]
 
-	platform<-detect.infinium.platform(fn.base)
+	#platform<-detect.infinium.platform(fn.base)
+	platform<-detect.infinium.platform(idat.fnames)
 
+	if(verbose) {
+		rnb.info(sprintf("Detected %s platform",
+						c("probes27"="HumanMethylation27",
+								"probes450"="HumanMethylation450",
+								"probeeEPI"="EPIC"
+								)[platform]))
+	}
+	
 	annot<-rnb.annotation2data.frame(rnb.get.annotation(platform))
 	annot.ctrls<-rnb.get.annotation(gsub("probes","controls",platform))
 	nprobes<-sum(rnb.annotation.size(platform))
@@ -1623,23 +1632,31 @@ get.bed.column.classes<-function(bed.top,
 ##
 ##	@author Pavlo Lutsik
 ##
-detect.infinium.platform<-function(barcodes){
+detect.infinium.platform<-function(idat.fnames){
 
-	plate_id<-as.numeric(strsplit(barcodes[1], split="_")[[1]][1])
-	if(plate_id>200000000000){# EPIC platform
-		return("probesEPIC")
-	}else{
-			
-		inf27k.idats.present<-any(grepl("_[ABCDEFGHIJKL]$", barcodes))
-		inf450k.idats.present<-any(grepl("_R0[1-6]C0[1-2]$", barcodes))
 	
-		if(inf27k.idats.present) {
-			if (inf450k.idats.present) {
-				rnb.error("Undefined platform; both 450k and 27k IDATs are present")
+	inf27k.idats.present<-any(grepl("_[ABCDEFGHIJKL]_", idat.fnames))
+	inf450kEPIC.idats.present<-any(grepl("_R0[1-6]C0[1-2]_", idat.fnames))
+
+	if(inf27k.idats.present) {
+		if (inf450kEPIC.idats.present) {
+			rnb.error("Undefined platform; both 450k and 27k IDATs are present")
+		}
+		return("probes27")
+	} else if (inf450kEPIC.idats.present) {
+		
+		sizes<-c()
+		for(fn in idat.fnames){
+			if(file.exists(fn)){
+				sizes<-c(sizes, file.info(fn)$size)
 			}
-			return("probes27")
-		} else if (inf450k.idats.present) {
+		}
+		if(all(sizes>10000000)){
+			return("probesEPIC")
+		}else if(all(sizes<10000000)){
 			return("probes450")
+		}else{
+			rnb.error("Undefined platform; detected HumanMethylation450 and EPIC IDAT files")
 		}
 	}
 	rnb.error("Undefined platform; please check Sentrix ID and Sentrix Position columns in the sample sheet")
