@@ -1652,10 +1652,10 @@ rnb.detect.infinium.platform <- function(idat.fnames){
 		if (length(file.sizes) == 0) {
 			rnb.error("Undefined platform; cannot read the specified IDAT files")
 		}
-		if (all(sizes>10000000)) {
+		if (all(file.sizes>10000000)) {
 			return("probesEPIC")
 		}
-		if (all(sizes<10000000)) {
+		if (all(file.sizes<10000000)) {
 			return("probes450")
 		}
 		rnb.error("Undefined platform; detected HumanMethylation450 and MethylationEPIC")
