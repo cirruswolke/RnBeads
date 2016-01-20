@@ -930,7 +930,7 @@ rnb.section.tnt <- function(res.exp,rnbSet,report){
 		}
 
 		report <- rnb.add.section(report, "Sample summary", sectionText, level=2)
-		rnb.add.table(report,summary.tab)
+		rnb.add.table(report,summary.tab,row.names=FALSE)
 
 		if (length(export.ucsc.types)>0){
 
