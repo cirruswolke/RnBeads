@@ -495,7 +495,7 @@ rnb.execute.normalization<-function(
 
 		if(inherits(object,"MethyLumiSet")){
 
-			if(nrow(methylated(object))<sum(elementLengths(rnb.get.annotation("probes450"))) ||
+			if(nrow(methylated(object))<sum(elementNROWS(rnb.get.annotation("probes450"))) ||
 					sum(is.na(methylated(object)))>0 || sum(is.na(unmethylated(object)))>0){
 				rnb.warning("Funtional normalization is only supported for unfiltered data sets where intensity values are present for all probes. Skipping normalization")
 				object<-as(object, "RnBeadRawSet")
@@ -508,7 +508,7 @@ rnb.execute.normalization<-function(
 
 		}else if(inherits(object,"RnBeadRawSet")){
 
-			if(nrow(sites(object))<sum(elementLengths(rnb.get.annotation("probes450"))) ||
+			if(nrow(sites(object))<sum(elementNROWS(rnb.get.annotation("probes450"))) ||
 					sum(is.na(M(object)))>0 || sum(is.na(U(object)))>0){
 				rnb.warning("Funtional normalization is only supported for unfiltered data sets where intensity values are present for all probes. Skipping normalization")
 				object@status$normalized<-"none"
@@ -823,7 +823,7 @@ rnb.section.normalization <- function(report, rnb.set, betas.raw = NULL) {
 		txt <- c(txt, "The measurements in this dataset were not normalized after ",
 			ifelse(txt == "", "loading", "background subtraction"), ".")
 		if(rnb.getOption("normalization.method")=="minfi.funnorm"){
-			if(nrow(sites(rnb.set))<sum(elementLengths(rnb.get.annotation("probes450")))){
+			if(nrow(sites(rnb.set))<sum(elementNROWS(rnb.get.annotation("probes450")))){
 				txt<-c(txt, "The desired normalization method \"minfi.funnorm\" was not applied since the data set did not
 					contain information for all probes. This is most likely because of the preceding quality filtering steps.",
 					"In order to apply minfi.funnorm in the full RnBeads analysis you should disable SNP filtering and Greedycut.",

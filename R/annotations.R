@@ -484,9 +484,9 @@ load.annotations <- function(assembly = NULL, sites = NULL) {
 			for (a.name in updated) {
 				.rnb.annotations[[assembly]][["lengths"]][, a.name] <- 0L
 				if (a.name %in% names(genome.info$regions)) {
-					a.lengths <- elementLengths(genome.info$regions[[a.name]])
+					a.lengths <- elementNROWS(genome.info$regions[[a.name]])
 				} else { # a.name %in% names(genome.info$sites)
-					a.lengths <- elementLengths(genome.info$sites[[a.name]])
+					a.lengths <- elementNROWS(genome.info$sites[[a.name]])
 				}
 				.rnb.annotations[[assembly]][["lengths"]][names(a.lengths), a.name] <- a.lengths
 			}
@@ -535,7 +535,7 @@ rnb.update.annotation.infos <- function(type, assembly) {
 	CHROMOSOMES <- names(.rnb.annotations[[assembly]][['CHROMOSOMES']])
 	a.lengths.full <- rep.int(0L, length(CHROMOSOMES))
 	names(a.lengths.full) <- CHROMOSOMES
-	a.lengths <- elementLengths(.rnb.annotations[[assembly]][["regions"]][[type]])
+	a.lengths <- elementNROWS(.rnb.annotations[[assembly]][["regions"]][[type]])
 	a.lengths.full[names(a.lengths)] <- a.lengths
 	i.type <- which(colnames(.rnb.annotations[[assembly]][["lengths"]]) == type)
 	if (length(i.type) == 0) {
