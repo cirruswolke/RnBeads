@@ -10,7 +10,7 @@ Authors@R: c(
     person("Fabian", "Mueller", email = "rnbeads@mpi-inf.mpg.de",
     role = c("aut", "cre")))
 Date: 2016-01-13
-Version: 1.3.5
+Version: 1.3.6
 Suggests:
     Category,
     GEOquery,
@@ -43,6 +43,7 @@ Suggests:
 Depends:
     R (>= 3.0.0),
     BiocGenerics,
+    S4Vectors (>= 0.9.25),
     GenomicRanges,
     MASS,
     RColorBrewer,
