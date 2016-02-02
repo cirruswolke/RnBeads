@@ -1027,16 +1027,53 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 	## Prefiltering
 	logger.start(paste0("Filtering Procedures", ifelse(do.normalization, " I", "")))
 
+	## Load whitelist and blacklist
 	anno.table <- annotation(rnb.set, add.names = inherits(rnb.set, "RnBeadSet"))
 	whitelist <- rnb.process.sitelist(rnb.getOption("filtering.whitelist"), anno.table)
 	blacklist <- rnb.process.sitelist(rnb.getOption("filtering.blacklist"), anno.table)
+	if (is.null(whitelist) && is.null(blacklist)) {
+		removed.sites <- integer()
+		whitelist <- integer()
+		blacklist <- integer()
+	} else {
+		## Add a section on whitelisted and/or blacklisted sites
+		txt <- character()
+		if (is.null(whitelist)) {
+			txt <- "A blacklist was"
+			tbl <- rnb.sitelist.info(blacklist, "black")
+			whitelist <- integer()
+		} else if (is.null(blacklist)) {
+			txt <- "A whitelist was"
+			tbl <- rnb.sitelist.info(whitelist, "white")
+			blacklist <- integer()
+		} else {
+			txt <- blacklist
+			blacklist <- setdiff(blacklist, whitelist)
+			attr(blacklist, "ignored") <- attr(txt, "ignored") + length(txt) - length(blacklist)
+			attr(blacklist, "note") <- attr(txt, "note")
+			tbl <- rbind(rnb.sitelist.info(whitelist, "white"), rnb.sitelist.info(blacklist, "black"))
+			txt <- "A whitelist and a blacklist were"
+		}
+		txt <- c(txt, " constructed based on the specified file", ifelse(grepl("were$", txt), "s", ""), ". The table ",
+			"below summarizes the number of identified records.")
+		report <- rnb.add.section(report, "Whitelist and Blacklist", txt)
+		rnb.add.table(report, tbl, FALSE)
+		txt <- "A record in a site list file is ignored when one of the following conditions are met:"
+		rnb.add.paragraph(report, txt)
+		tbl <- inherits(rnb.set, "RnBeadSet")
+		txt <- list(
+			paste0("it does not define a valid genomic position", ifelse(tbl, " or probe identifier", ""), ";"),
+			paste0("the position ", ifelse(tbl, "or probe ", ""), "it defines is not covered by the analyzed dataset;"),
+			"it is a duplicate of another record within the same list;",
+			"it is a record in the blacklist which is also present in the whitelist.")
+		rnb.add.list(report, txt)
+		txt <- "As described in the last condition above, the whitelist has a precedence over the blacklist."
+		rnb.add.paragraph(report, txt)
+		rm(txt, tbl)
+	}
 	removed.sites <- sort(union(blacklist, whitelist))
 	removed.samples <- integer()
 
-	if (length(whitelist) != 0 || length(blacklist) != 0) {
-		## TODO: Add a section on whitelisted and/or blacklisted sites
-		# setdiff(blacklist, whitelist)
-	}
 	if (rnb.getOption("filtering.snp") != "no") {
 		result <- rnb.step.snp.removal.internal(class(rnb.set), removed.sites, report, anno.table)
 		report <- result$report

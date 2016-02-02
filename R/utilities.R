@@ -360,6 +360,16 @@ rnb.show.report <- function(report) {
 #' @author Yassen Assenov
 #' @export
 rnb.load.sitelist <- function(fname, verbose = FALSE) {
+	if (length(fname) == 0) {
+		return(NULL)
+	}
+	if (!(is.character(fname) && length(fname) == 1 && nchar(fname) != 0)) {
+		stop("invalid value for fname; expected file name")
+	}
+	if (!parameter.is.flag(verbose)) {
+		stop("invalid value for verbose; expected TRUE or FALSE")
+	}
+
 	result <- tryCatch(scan(fname, "", sep = "\n", quiet = TRUE), error = function(er) { NULL })
 	if (verbose) {
 		if (is.null(result)) {
@@ -370,7 +380,7 @@ rnb.load.sitelist <- function(fname, verbose = FALSE) {
 				message(msg)
 			}
 		} else {
-			msg <- paste("Loaded", length(result), "sites from", fname)
+			msg <- paste("Loaded", length(result), "site(s) from", fname)
 			if (logger.isinitialized()) {
 				rnb.status(msg)
 			} else {
@@ -383,24 +393,75 @@ rnb.load.sitelist <- function(fname, verbose = FALSE) {
 
 ########################################################################################################################
 
-## rnb.process.sitelist
-##
-## Loads and processes a list of probe or site identifiers.
-##
-## @param fname      File containing the list of identifiers to be processed.
-## @param anno.table Probe or site annotation table.
-## @return \code{integer} vector containing the indices in the annotation table that are targeted by the loaded list.
-##
-## @author Yassen Assenov
+#' rnb.process.sitelist
+#'
+#' Loads and processes a list of probe or site identifiers.
+#'
+#' @param fname      File containing the list of identifiers to be processed.
+#' @param anno.table Probe or site annotation table.
+#' @return \code{integer} vector containing the indices in the annotation table that are targeted by the loaded list.
+#'
+#' @author Yassen Assenov
+#' @noRd
 rnb.process.sitelist <- function(fname, anno.table) {
-	if (length(fname) == 0) {
-		return(integer())
+	if (length(fname) == 0 || nchar(fname) == 0) {
+		return(NULL)
 	}
 	id.list <- rnb.load.sitelist(fname, TRUE)
 	if (is.null(id.list)) {
-		return(integer())
+		result <- integer()
+		attr(result, "ignored") <- 0L
+		attr(result, "note") <- "Could not open the specified file."
+	} else {
+		id.list <- unique(id.list)
+		result <- integer()
+		## Parse and match IDs given as [chromosome]:[location]
+		for (chrom in levels(anno.table$Chromosome)) {
+			regex <- paste0("^", chrom, ":(\\d+)$")
+			i <- grep(regex, id.list)
+			if (length(i) != 0) {
+				j <- which(anno.table$Chromosome == chrom)
+				if (length(j) != 0) {
+					i <- which(anno.table[j, "Start"] %in% as.integer(gsub(regex, "\\1", id.list[i])))
+					result <- c(result, j[i])
+				}
+			}
+		}
+		## Parse and match IDs given as Illumina probe identifiers
+		regex <- "^(c.\\d+)|(ch\\.(\\d+|X)\\.\\d+([FR]?))|(rs\\d+)$"
+		if (any(grepl(regex, rownames(anno.table)))) {
+			i <- grep(regex, id.list, value = TRUE)
+			if (length(i) != 0) {
+				result <- c(result, which(rownames(anno.table) %in% i))
+			}
+		}
+		result <- unique(sort(result))
+		attr(result, "ignored") <- length(id.list) - length(result)
+		attr(result, "note") <- ""
 	}
-	which(rownames(anno.table) %in% id.list)
+	result
+}
+
+########################################################################################################################
+
+#' rnb.sitelist.info
+#' 
+#' Constructs a table summarizing the loaded and identified sites to be included in a white- or blacklist.
+#' 
+#' @param sitelist List of loaded site indices in the form of an \code{integer} vector, as returned by
+#'                 \code{\link{rnb.process.sitelist}}.
+#' @param listtype One of \code{"white"} or \code{"black"}.
+#' @return Table (\code{data.frame}) with four columns and a single row, summarizing the loaded and identified sites to
+#'         be included in a white- or blacklist.
+#' @author Yassen Assenov
+#' @noRd
+rnb.sitelist.info <- function(sitelist, listtype) {
+	data.frame(
+		"List" = ifelse(listtype == "white", "whitelist", "blacklist"),
+		"Records used" = length(sitelist),
+		"Records ignored" = attr(sitelist, "ignored"),
+		"Note" = attr(sitelist, "note"),
+		check.names = FALSE, stringsAsFactors = FALSE)
 }
 
 ########################################################################################################################
