@@ -1,6 +1,7 @@
 RnBeads 1.3.6
 =============
 
+ * Support for Illumina EPIC array and related bugfixes
  * Added a section on whitelist and blacklist in the Preprocessing module
 
 RnBeads 1.3.5

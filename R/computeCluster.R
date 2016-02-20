@@ -189,12 +189,12 @@ setMethod("getModuleNumCores",
 	}
 )
 
-if (!isGeneric("run")) setGeneric("run", function(rnb.cr,...) standardGeneric("run"))
+if (!isGeneric("run")) setGeneric("run", function(object,...) standardGeneric("run"))
 #' run-methods
 #'
 #' Runs the analysis by submitting jobs for each module to the compute cluster
 #'
-#' @param rnb.cr \code{\linkS4class{RnBClusterRun}} object
+#' @param object \code{\linkS4class{RnBClusterRun}} object
 #' @param analysis.id analysis id. used for naming submitted jobs and log files
 #' @param config.xml XML file specifying the analysis options and parameter settings
 #' @param split.differential flag indicating whether to split the differnetial methylation module
@@ -228,16 +228,17 @@ if (!isGeneric("run")) setGeneric("run", function(rnb.cr,...) standardGeneric("r
 #' }
 setMethod("run",
 	signature(
-		rnb.cr="RnBClusterRun"
+		object="RnBClusterRun"
 	),
 	function(
-		rnb.cr,
+		object,
 		analysis.id,
 		config.xml,
 		split.differential=TRUE,
 		dry.run=FALSE,
 		long.cmd.thres=1024L
 	) {
+		rnb.cr <- object
 		arch = rnb.cr@architecture
 		r.exec <- getExecutable(arch,"Rscript")
 
