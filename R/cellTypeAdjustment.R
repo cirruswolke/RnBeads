@@ -204,7 +204,12 @@ estimateProportionsCP<-function(
 	if(is.character(cell.type.column) && 
 			(length(cell.type.column)!=1 || !cell.type.column %in% colnames(pheno(rnb.set)))){
 		rnb.error("invalid value for cell.type.column: integer index is out of bounds")		
-	}	
+	}
+	
+	if(length(which(is.na(pheno(rnb.set)[[cell.type.column]])))==0){
+		stop("invalid value for cell.type.column: should contain some missing values to define the target samples")
+	}
+	
 	if(full.output){
 		result<-list()
 	}
