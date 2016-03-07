@@ -8,17 +8,17 @@
 
 ## F U N C T I O N S ###################################################################################################
 
-## rnb.export.enabled
-##
-## Checks if the data export module is enabled for the given dataset.
-##
-## @param rnb.set Methylation dataset currently being analyzed.
-## @return \code{TRUE} if the data export module can and should be executed on this dataset, \code{FALSE} otherwise.
-##
-## @author Yassen Assenov
-rnb.export.enabled <- function(rnb.set) {
-	## FIXME: The second part of this condition (and therefore this function's parameter) must be dropped;
-	## rnb.run.export now crashes with certain parameter values, but it should create a report describing the problem
+#' rnb.tracks.to.export
+#'
+#' Checks if BED files or other tracks should be exported from the given dataset.
+#'
+#' @param rnb.set Methylation dataset currently being analyzed.
+#' @return \code{TRUE} if the data export module can and should be executed on the dataset and should include track
+#'         files; \code{FALSE} otherwise.
+#'
+#' @author Yassen Assenov
+#' @noRd
+rnb.tracks.to.export <- function(rnb.set) {
 	any(rnb.getOption("export.to.bed"), length(rnb.getOption("export.to.trackhub")) > 0) &&
 		(length(intersect(rnb.getOption("export.types"), c(rnb.region.types(assembly(rnb.set)), "sites"))) > 0)
 }
@@ -102,7 +102,7 @@ rnb.build.index.internal <- function(dir.reports, fname = "index.html", dir.conf
 		names(reports.skipped) <- rownames(tbl)[c(1:3, 5:7)]
 		reports.skipped <- sapply(reports.skipped, function(x) { rnb.getOption(x) == FALSE })
 		reports.skipped <- names(reports.skipped)[reports.skipped]
-		if (!export.enabled) { # !rnb.export.enabled() {
+		if (!export.enabled) {
 			reports.skipped <- c(reports.skipped, "tracks_and_tables")
 		}
 		tbl <- tbl[setdiff(rownames(tbl), reports.skipped), ]
@@ -622,7 +622,7 @@ rnb.run.analysis <- function(dir.reports, data.source=NULL, sample.sheet=NULL, d
 			if (is.null(dset)) {
 				export.enabled <- TRUE
 			} else {
-				export.enabled <- rnb.export.enabled(dset)
+				export.enabled <- rnb.getOption("export.to.csv") || rnb.tracks.to.export(dset)
 			}
 			rnb.build.index.internal(dir.reports, log.file = log.file, export.enabled = export.enabled,
 				current.report = rname, open.index = (rname == ""))
@@ -698,7 +698,7 @@ rnb.run.analysis <- function(dir.reports, data.source=NULL, sample.sheet=NULL, d
 
 	if (nsites(rnb.set) * sample.count != 0) {
 		## Data export
-		if (rnb.export.enabled(rnb.set)) {
+		if (rnb.getOption("export.to.csv") || rnb.tracks.to.export(rnb.set)) {
 			update.index(rnb.set, "tracks_and_tables")
 			rnb.cleanMem()
 			rnb.run.tnt(rnb.set, dir.reports)
@@ -1171,11 +1171,11 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 	## Summary (II)
 	removed.sites <- setdiff(removed.sites, whitelist)
 	logger.completed.filtering(rnb.set, removed.samples, removed.sites)
-	
+
 	rnb.cleanMem()
 
 	logger.start(paste0("Summary of Filtering Procedures", ifelse(do.normalization, " II", "")))
-	
+
 	if(do.normalization){
 		sn<-"Filtering Summary II"
 		so<-2L
@@ -1266,14 +1266,14 @@ rnb.run.tnt <- function(rnb.set, dir.reports,
 		report <- rnb.section.export.csv(report, result)
 		logger.status("Added \"CSV Export\" section to the report")
 	}
-	provided.email <- rnb.getOption("email")
-	if (is.null(provided.email)) provided.email <- "-@-.com"
-	res <- rnb.execute.tnt(rnb.set,rnb.get.directory(report, "data", absolute = TRUE),
-		exp.bed=rnb.getOption("export.to.bed"),exp.trackhub=rnb.getOption("export.to.trackhub"),
-		email=provided.email)
-	logger.start("Writing export report")
-	report <- rnb.section.tnt(res,rnb.set,report)
-	logger.completed()
+	if (rnb.tracks.to.export(rnb.set)) {
+		provided.email <- rnb.getOption("email")
+		if (is.null(provided.email)) provided.email <- "-@-.com"
+		res <- rnb.execute.tnt(rnb.set, rnb.get.directory(report, "data", absolute = TRUE), email = provided.email)
+		logger.start("Writing export report")
+		report <- rnb.section.tnt(res,rnb.set,report)
+		logger.completed()
+	}
 
 	module.complete(report, close.report, show.report)
 	invisible(report)
