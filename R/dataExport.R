@@ -1033,8 +1033,8 @@ rnb.section.tnt <- function(res.exp,rnbSet,report){
 #' logger.start(fname=NA)
 #' rnb.execute.tnt(rnb.set.example,tempdir())
 #' }
-rnb.execute.tnt <- function(rnb.set,out.dir,exp.bed=rnb.getOption("export.to.bed"),exp.trackhub=rnb.getOption("export.to.trackhub"),
-		                       region.types=rnb.getOption("export.types"),...){
+rnb.execute.tnt <- function(rnb.set,out.dir,exp.bed=rnb.getOption("export.to.bed"),
+		exp.trackhub=rnb.getOption("export.to.trackhub"),region.types=rnb.getOption("export.types"),...){
 	logger.start("Generating Tracks and Tables")
 	reg.types <- intersect(region.types,c(rnb.region.types(assembly(rnb.set)),"sites"))
 	if (length(reg.types)<1){
