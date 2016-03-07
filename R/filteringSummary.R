@@ -260,7 +260,35 @@ rnb.step.filter.summary.internal <- function(rnb.set, removed.samples, removed.s
 	logger.status("Added summary table of removed and retained items")
 
 	## Construct vectors of removed and retained betas
-	mm <- meth(rnb.set)
+	siteInds <- NULL
+	# subsample sites from removed and retained sites in order to reduce memory footprint 
+	if (rnb.getOption("distribution.subsample") > 1){
+		numSites <- rnb.getOption("distribution.subsample")
+		if (length(removed.sites) != 0) {
+			if (length(removed.sites) > numSites){
+				siteInds <- sort(sample(removed.sites, size=numSites))
+			} else {
+				siteInds <- removed.sites
+			}
+			retained.sites <- setdiff(1:nsites(rnb.set), removed.sites)
+			if (length(retained.sites) > numSites){
+				siteInds <- sort(c(siteInds, sample(retained.sites, size=numSites)))
+			} else {
+				siteInds <- sort(c(siteInds, retained.sites))
+			}
+		} else {
+			siteInds <- sort(sample.int(nsites(rnb.set), size=numSites))
+		}
+	}
+	if (!is.null(siteInds)){
+		logger.info(c("Subsampling", length(siteInds), "sites for plotting density distributions"))
+		# new site indices in subsampled set
+		indexMap <- rep(NA, nsites(rnb.set))
+		indexMap[siteInds] <- 1:length(siteInds)
+		removed.sites <- na.omit(indexMap[removed.sites])
+	}
+	
+	mm <- meth(rnb.set, i=siteInds)
 	if (length(removed.samples) != 0) {
 		betas.removed <- as.vector(mm[, removed.samples])
 		mm <- mm[, -removed.samples]
