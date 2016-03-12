@@ -385,7 +385,7 @@ rnb.plot.coverage.thresholds <- function(rnb.set, min.coverages, fname = NA, ...
 
 #' rnb.plot.num.sites.covg
 #'
-#' plot the number of sites vs the 0.05, 0.5 (median) and 0.95 percentiles of coverage
+#' plot the number of sites vs median and other percentiles of coverage
 #'   
 #' @param rnbs			RnBiseqSet object
 #' @param addSampleNames	should the sample names be added to the plot

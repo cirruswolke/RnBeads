@@ -744,7 +744,7 @@ add.seq.coverage.num.sites.covg.tabs <- function(report, object){
 	overviewPlot <- createReportGgPlot(pp, fname, report, width=12, height=7, create.pdf=TRUE, high.png=as.integer(300))
 	overviewPlot <- off(overviewPlot,handle.errors=TRUE)
 
-	desc <- "Covered sites and median coverages for each sample. Vertical bars depict 0.05 and 0.95 percentiles."
+	desc <- "Covered sites and median coverages for each sample. Vertical bars depict the inter-quartile range."
 	report <- rnb.add.figure(report, desc, overviewPlot)
 	report
 }
