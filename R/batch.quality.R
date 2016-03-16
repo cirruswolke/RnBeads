@@ -71,17 +71,17 @@ rnb.execute.batch.qc <- function(rnb.set, pcoordinates, permutations = NULL) {
 	targets <- names(pcoordinates)
 	names(targets) <- 1:length(targets)
 	results<-lapply(1:length(targets), function(target.id){
-		
+
 		dpoints <- pcoordinates[[target.id]]$pca$x
 		if (ncol(dpoints) > pc.association.count) {
 			dpoints <- dpoints[, 1:pc.association.count]
 		}
-		
+
 		result <- list("correlations" = list())
 		if (!is.null(permutations)) {
 			result[["pvalues"]] <- list()
 		}
-	
+
 		get.probes.channel <- function(channel, ids) {
 			i <- intersect(ids, rownames(channel))
 			if (length(i) == 0) {
@@ -98,7 +98,7 @@ rnb.execute.batch.qc <- function(rnb.set, pcoordinates, permutations = NULL) {
 			matrix(as.double(NA), nrow = N, ncol = ncol(dpoints),
 				dimnames = list("Probe" = 1:N, "Principal component" = 1:ncol(dpoints)))
 		}
-	
+
 		## Compute correlations between QC probe values and principal components
 		target2ids <- tapply(control.probe.infos[[id.col]], control.probe.infos[[type.col]], as.character)
 		for (ci in 1:length(CONTROL.TYPES)) {
@@ -119,7 +119,7 @@ rnb.execute.batch.qc <- function(rnb.set, pcoordinates, permutations = NULL) {
 				}
 				table.correlations <- init.matrix(nrow(matrix.channel))
 				table.pvalues <- init.matrix(nrow(matrix.channel))
-	
+
 				for (i in 1:nrow(matrix.channel)) {
 					for (j in 1:ncol(dpoints)) {
 						t.result <- test.traits(matrix.channel[i, ], dpoints[, j], permutations)
@@ -161,17 +161,17 @@ rnb.section.batch.qc <- function(report, qccorrelations) {
 		stop("invalid value for report")
 	}
 	## TODO: Validate qccorrelations
-	
+
 	targets<-sapply(qccorrelations, attr, "Target")
 	report.descriptions <- c("correlations" = as.character(NA), "pvalues" = as.character(NA))
-	
+
 	channels<-NULL
 	ctypes<-NULL
 	pvals.present<-NULL
 	table.pvalue.links<-list()
-	
+
 	all.plots<-lapply(1:length(targets), function(target.id){
-	
+
 		## Create heatmaps of correlations and p-values
 		pvals.present <<- ("pvalues" %in% names(qccorrelations[[target.id]]))
 		ctypes <<- names(qccorrelations[[target.id]][["correlations"]])
@@ -185,7 +185,7 @@ rnb.section.batch.qc <- function(report, qccorrelations) {
 			table.pvalue.links[[target.id]] <<- matrix(as.character(NA), nrow = length(ctypes), ncol = length(channels),
 				dimnames = list(ctypes, channels))
 		}
-	
+
 		heatmap.functions <- list("correlations" = plot.heatmap.pc.correlations, "pvalues" = plot.heatmap.pc.pvalues)
 		for (tblname in names(qccorrelations[[target.id]])) {
 			heatmap.function <- heatmap.functions[[tblname]]
@@ -203,7 +203,7 @@ rnb.section.batch.qc <- function(report, qccorrelations) {
 							report.descriptions[tblname] <<- rplot$description
 						}
 						rplot <- rplot$plot
-	
+
 						## Save the table of p-values to a file
 						if (tblname == "pvalues") {
 							fname <- paste("pvalues_pc_", target.id, "_", cchannel, "_", i, ".csv", sep = "")
@@ -213,7 +213,7 @@ rnb.section.batch.qc <- function(report, qccorrelations) {
 							utils::write.csv(tbl, file = fname.full, row.names = FALSE)
 							table.pvalue.links[[target.id]][i,grep(cchannel, colnames(table.pvalue.links[[target.id]]))] <<- paste("<a href=\"", rnb.get.directory(report, "data"), "/",
 								fname, "\">csv</a>", sep = "")
-							
+
 							rm(fname.full, tbl)
 						}
 					} else {
@@ -230,7 +230,7 @@ rnb.section.batch.qc <- function(report, qccorrelations) {
 	names(setting.names[["Location type"]]) <- 1:length(targets)
 	names(setting.names[["Channel"]]) <- channels
 	names(setting.names[["Probe group"]]) <- 1:length(ctypes)
-	
+
 	txt <- c("The heatmaps below visualize the Pearson correlation coefficients between the principal ",
 		"components and the signal levels of selected quality control probes.")
 	rnb.add.paragraph(report, txt)
@@ -275,7 +275,7 @@ rnb.section.batch.qc <- function(report, qccorrelations) {
 #' @param rnb.set      HumanMethylation450K dataset as an object of type \code{\linkS4class{RnBeadSet}}.
 #' @param report       Report to contain the quality-associated section. This must be an object of type
 #'                     \code{\linkS4class{Report}}.
-#' @param pcoordinates Coordinates of the samples of \code{rnbSet} in the principal components space, as returned by
+#' @param pcoordinates Coordinates of the samples of \code{rnb.set} in the principal components space, as returned by
 #'                     \code{\link{rnb.execute.dreduction}}.
 #' @param permutations Matrix of sample index permutations, as returned by \code{\link{rnb.execute.batcheffects}}.
 #' @return The modified report.

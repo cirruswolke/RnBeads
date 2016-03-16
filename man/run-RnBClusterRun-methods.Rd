@@ -6,11 +6,11 @@
 \alias{run,RnBClusterRun-method}
 \title{run-methods}
 \usage{
-\S4method{run}{RnBClusterRun}(rnb.cr, analysis.id, config.xml,
+\S4method{run}{RnBClusterRun}(object, analysis.id, config.xml,
   split.differential = TRUE, dry.run = FALSE, long.cmd.thres = 1024L)
 }
 \arguments{
-\item{rnb.cr}{\code{\linkS4class{RnBClusterRun}} object}
+\item{object}{\code{\linkS4class{RnBClusterRun}} object}
 
 \item{analysis.id}{analysis id. used for naming submitted jobs and log files}
 
