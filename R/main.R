@@ -1346,7 +1346,8 @@ rnb.run.exploratory <- function(rnb.set, dir.reports,
 		report <- result$report
 
 		## Quality-associated batch effects
-		if (rnb.getOption("exploratory.correlation.qc") && inherits(rnb.set, "RnBeadSet")) {
+		if (rnb.getOption("exploratory.principal.components") != 0 && rnb.getOption("exploratory.correlation.qc") &&
+				inherits(rnb.set, "RnBeadSet")) {
 			report <- rnb.step.batch.qc(rnb.set, report, pcoordinates, permutations = result$permutations)
 		}
 	}
