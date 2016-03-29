@@ -727,7 +727,7 @@ if (!isGeneric("remove.sites")) {
 #' @export
 setMethod("remove.sites", signature(object = "RnBeadRawSet"),
 		function(object, probelist, verbose = TRUE) {
-			inds <- get.i.vector(probelist, rownames(object@meth.sites))
+			inds <- get.i.vector(probelist, rownames(object@sites))
 			if (length(inds) != 0) {
 				for(sl in RNBRAWSET.SLOTNAMES){
 					if(!is.null(slot(object,sl))){
