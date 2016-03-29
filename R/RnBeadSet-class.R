@@ -510,7 +510,7 @@ if (!isGeneric("remove.sites")) {
 #' @export
 setMethod("remove.sites", signature(object = "RnBeadSet"),
 	function(object, probelist, verbose = TRUE) {
-		inds <- get.i.vector(probelist, rownames(object@meth.sites))
+		inds <- get.i.vector(probelist, rownames(object@sites))
 		if (length(inds) != 0) {
 			if (!is.null(object@pval.sites)) {
 				if(object@status$disk.dump){
