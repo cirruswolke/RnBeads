@@ -492,7 +492,7 @@ rnb.plot.control.barplot<-function(
 		red<-rep(0, length(red));
 	}
 	red.plot<-ggplot(data = data.frame(Samples=as.character(Samples), Intensity=red), aes(x = Samples, y = Intensity)) +
-			geom_bar(stat = "identity", position = "stack",fill = "red") + ggtitle(main_txt_grn) +
+			geom_bar(stat = "identity", position = "stack",fill = "red") + ggtitle(main_txt_red) +
 			scale_x_discrete(labels=sample.labels)+ylab("Intensity")+
 			.control.plot.theme.samples
 
