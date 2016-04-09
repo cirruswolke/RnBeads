@@ -96,11 +96,10 @@ rnb.plot.control.boxplot <- function(
 	}
 
 	if(nrow(meta)==0){
-		if(writeToFile) {
-			plot.file<-createReportPlot(paste("ControlBoxPlot", ifelse(numeric.names, match(type, types), gsub(" ", ".", type)) , sep="_"), ...)
-		}
 		plot.obj<-rnb.message.plot(sprintf("Box plot for control type %s not available", type))
 		if(writeToFile){
+			plot.file<-createReportGgPlot(plot.obj, paste("ControlBoxPlot", ifelse(numeric.names, match(type, types), gsub(" ", ".", type)) , sep="_"), ...)
+			
 			print(plot.obj)
 			off(plot.file)
 			return(plot.file)
@@ -152,6 +151,7 @@ rnb.plot.control.boxplot <- function(
 
 	if(writeToFile){
 		plot.file<-createReportPlot(paste("ControlBoxPlot", ifelse(numeric.names, match(type, types), gsub(" ", ".", type)) , sep="_"), ...)
+		grid.newpage()
 	}
 
 	## Define viewports and assign it to grid layout
@@ -285,6 +285,7 @@ rnb.plot.negative.boxplot<- function(
 	}
 	if(writeToFile) {
 		plot.file<-createReportPlot(plot.name, ...)
+		grid.newpage()
 	}
 
 	## Define viewports and assign it to grid layout
@@ -359,9 +360,9 @@ rnb.plot.control.barplot<-function(
 		control.meta.data <- rnb.get.annotation("controlsEPIC")
 		### TODO: Remove the following passage
 		### for testing purposes only!
-		if(rnb.set@target=="probesEPIC"){
-			control.meta.data<-rnb.update.controlsEPIC.enrich(control.meta.data)
-		}
+		#if(rnb.set@target=="probesEPIC"){
+		#	control.meta.data<-rnb.update.controlsEPIC.enrich(control.meta.data)
+		#}
 		type=strsplit(probe,".", fixed=TRUE)[[1]][1]
 		index=strsplit(probe,".", fixed=TRUE)[[1]][2]
 		if(!(type %in% rnb.infinium.control.targets(rnb.set@target))){
@@ -401,20 +402,13 @@ rnb.plot.control.barplot<-function(
 	full.probe.set<-control.meta.data[[id.col]][control.meta.data[[target.col]] %in% rnb.infinium.control.targets(rnb.set@target)[targets]]
 	
 	if(! id %in% rownames(green)){
-		if(writeToFile){
-			if(is.null(name.prefix)){
-				plot.name<-paste('ControlBarPlot', ifelse(numeric.names, 
-								match(id, full.probe.set), 
-								probe.name) , sep="_")
-			}else{
-				plot.name<-paste('ControlBarPlot', name.prefix, ifelse(numeric.names, 
-								match(id, full.probe.set), 
-								probe.name) , sep="_")
-			}
-			plot.file<-createReportPlot(plot.name, ...)
-		}
+		
 		plot.obj<-rnb.message.plot(sprintf("Box plot for control type %s not available", type))
 		if(writeToFile){
+			plot.name<-paste('ControlBarPlot', name.prefix, ifelse(numeric.names, 
+							match(id, full.probe.set), 
+							probe.name) , sep="_")
+			plot.file<-createReportGgPlot(plot.obj, plot.name, ...)
 			print(plot.obj)
 			off(plot.file)
 			return(plot.file)
@@ -437,17 +431,13 @@ rnb.plot.control.barplot<-function(
 	}
 
 	probe.name<-gsub(" ", ".", probe)
-	if(is.null(name.prefix)){
-		plot.name<-paste('ControlBarPlot', ifelse(numeric.names, 
-						match(id, full.probe.set), 
-						probe.name) , sep="_")
-	}else{
-		plot.name<-paste('ControlBarPlot', name.prefix, ifelse(numeric.names, 
-						match(id, full.probe.set), 
-						probe.name) , sep="_")
-	}
+
+	plot.name<-paste('ControlBarPlot', name.prefix, ifelse(numeric.names, 
+					match(id, full.probe.set), 
+					probe.name) , sep="_")
 	if(writeToFile){
 		plot.file<-createReportPlot(plot.name, ...)
+		grid.newpage()
 	}
 
 	Samples<-factor(samples(rnb.set)[sample.subset], as.character(samples(rnb.set)[sample.subset]))
@@ -502,8 +492,8 @@ rnb.plot.control.barplot<-function(
 	#print(red.plot, vp=viewport(layout.pos.row=2, layout.pos.col=1))
 
   grb<-arrangeGrob(green.plot, red.plot)
-
   grid.draw(grb)
+  
   if(writeToFile) {
 	  off(plot.file)
 	  return(plot.file)
@@ -624,7 +614,7 @@ rnb.plot.snp.boxplot<-function(
 	}
 
 	if(writeToFile) {
-		plot.file<-createReportPlot("SNPBoxplot", ...)
+		
 	}
 	snp.data<-data.frame(
 		Beta.values=as.numeric(snp.betas),
@@ -635,6 +625,7 @@ rnb.plot.snp.boxplot<-function(
 
 	print(plot.obj)
 	if(writeToFile){
+		plot.file<-createReportGgPlot(plot.obj, "SNPBoxplot", ...)
 		off(plot.file)
 		return(plot.file)
 	}else{
@@ -698,10 +689,6 @@ rnb.plot.snp.barplot<-function(
 		stop("invalid value for rnb.set; no SNP probes found")
 	}
 
-	if(writeToFile) {
-		plot.file<-createReportPlot(paste('SNPBarPlot',  ifelse(numeric.names, match(sample, samples(rnb.set)), gsub("[ |_]", ".", sample)) , sep="_"), ...)
-	}
-
 	Beta.values<-as.numeric(snp.betas)
 	SNP<-rownames(snp.betas)
 
@@ -718,6 +705,7 @@ rnb.plot.snp.barplot<-function(
 
 	print(plot.obj)
 	if(writeToFile){
+		plot.file<-createReportGgPlot(plot.obj, paste('SNPBarPlot',  ifelse(numeric.names, match(sample, samples(rnb.set)), gsub("[ |_]", ".", sample)) , sep="_"), ...)
 		off(plot.file)
 		return(plot.file)
 	}else{

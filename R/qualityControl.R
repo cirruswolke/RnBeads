@@ -623,6 +623,7 @@ add.snp.distances <- function(report, object) {
 		i.height <- 2.2 + nrow(snp.distances) * 0.3
 		i.width <- 4 + nrow(snp.distances) * 0.3
 		report.plots <- createReportPlot("snp_low_dimensional", report, width = i.width, height = i.height)
+		grid.newpage()
 		pp <- suppressWarnings(ggplot_gtable(ggplot_build(pp)))
 		pp$widths[[3]] <- unit(2, "in")
 		pp$heights[[length(pp$heights) - 2L]] <- unit(2, "in")
