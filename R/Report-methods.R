@@ -488,7 +488,7 @@ rnb.add.section <- function(report, title, description, level = 1L, collapsed = 
 #' @examples
 #' \donttest{
 #' report <- createReport("example.html", "Example", init.configuration = TRUE)
-#' recipe <- c("A pessimist is a person who has had to listen to too many optimists. ", "<i>Don Marquis</i>")
+#' txt <- c("A pessimist is a person who has had to listen to too many optimists. ", "<i>Don Marquis</i>")
 #' rnb.add.paragraph(report, txt)
 #' }
 #' @seealso \code{\linkS4class{Report}} for other functions adding contents to an HTML report
