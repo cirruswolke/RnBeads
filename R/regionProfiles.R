@@ -326,7 +326,7 @@ rnb.step.region.profiles <- function(rnb.set, report, region.types, columns=rnb.
 ## @param chrom chromosome of window to plot
 ## @param start start coordinate of window to plot
 ## @param end end coordinate of window to plot
-## @param assembly genome assembly. currently only \code{'hg19'} and \code{'mm9'} are supported.
+## @param assembly genome assembly. currently only \code{'hg19'}, \code{'mm10'} and \code{'mm9'} are supported.
 ## @return a list of \code{Gviz} tracks to be plotted
 ##
 locus.profile.get.base.tracks <- function(chrom,start,end,assembly="hg19"){
@@ -356,6 +356,15 @@ locus.profile.get.base.tracks <- function(chrom,start,end,assembly="hg19"){
 			}
 		)
 		featMap["symbol"] <- "external_gene_id"
+	} else if (assembly == "hg38"){
+		mart <- tryCatch(
+			useMart("ENSEMBL_MART_ENSEMBL", dataset = "hsapiens_gene_ensembl",host="may2015.archive.ensembl.org"),
+			error = function(ee) {
+				logger.warning(c("could not retrieve Ensembl genes from biomart: ",ee$message))
+				NULL
+			}
+		)
+		featMap["symbol"] <- "external_gene_name"
 	} else if (assembly == "mm9"){
 		mart <- tryCatch(useMart("ENSEMBL_MART_ENSEMBL", dataset = "mmusculus_gene_ensembl",host="may2012.archive.ensembl.org"),
 			error = function(ee) {

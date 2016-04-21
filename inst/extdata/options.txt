@@ -67,6 +67,10 @@ inference.reference.methylome.column	character	no	yes		NULL
 inference.max.cell.type.markers	integer	no	no	[1,	10000
 inference.top.cell.type.markers	integer	no	no	[1,	500
 inference.sva.num.method	character	no	no	(be,leek)	leek
+inference.age.prediction	logical	no	no		TRUE
+inference.age.prediction.training	logical	no	no		FALSE
+inference.age.prediction.predictor	character	no	no		NULL
+inference.age.prediction.biseq	logical	no	no		FALSE
 exploratory	logical	no	no		TRUE
 exploratory.columns	integer.vector	no	yes		NULL
 exploratory.top.dimensions	integer	no	no	[0,	0

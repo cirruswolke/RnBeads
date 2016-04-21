@@ -9,8 +9,8 @@ Authors@R: c(
     role = c("aut")),
     person("Fabian", "Mueller", email = "rnbeads@mpi-inf.mpg.de",
     role = c("aut", "cre")))
-Date: 2016-03-07
-Version: 1.3.7
+Date: 2016-03-20
+Version: 1.3.8
 Suggests:
     Category,
     GEOquery,
@@ -39,7 +39,9 @@ Suggests:
     sva,
     wateRmelon,
     wordcloud,
-    argparse
+    argparse,
+    glmnet,
+    impute
 Depends:
     R (>= 3.0.0),
     BiocGenerics,
@@ -113,4 +115,5 @@ Collate:
     'sva.R'
     'utilities.R'
     'wbcInference.R'
+    'agePrediction.R'
 RoxygenNote: 5.0.1
