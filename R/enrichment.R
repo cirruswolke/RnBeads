@@ -56,14 +56,19 @@ performGOenrichment.diffMeth.entrez <- function(gids,uids,ontology,assembly="hg1
 	}
 	params <- new("GOHyperGParams",annotation=ass,geneIds = gids, universeGeneIds = uids, 
 			ontology = ontology,conditional = TRUE, testDirection = "over",...)
+	nonMatchIdErrorMsg <- c(
+		"The genes you are testing do not have any corresponding GO terms for the ontology you are searching.",
+		"genes being tested do not have corresponding GO terms"
+	)
 	hgOver <- tryCatch({
 			GOstats::hyperGTest(params)
 		}, error = function(ee) {
-			if (ee$message=="The genes you are testing do not have any corresponding GO terms for the ontology you are searching."){
+			if (is.element(ee$message, nonMatchIdErrorMsg)){
 				logger.info("Could not conduct enrichment analysis as associated genes are not in GO database.")
 				NULL
 			} else {
-				stop(ee)
+				logger.warning(c("Could not conduct enrichment analysis:", ee$message))
+				NULL
 			}
 		}
 	)
