@@ -466,7 +466,7 @@ rnb.plot.control.barplot<-function(
 		green<-rep(0, length(green))
 	}
 	
-	green.plot<-ggplot(data = data.frame(Samples=as.character(Samples), Intensity=green), aes(x = Samples, y = Intensity)) +
+	green.plot<-ggplot(data = data.frame(Samples=factor(Samples, levels=Samples), Intensity=green), aes(x = Samples, y = Intensity)) +
 			geom_bar(stat = "identity", position = "stack",fill = "green") + ggtitle(main_txt_grn) +
 					scale_x_discrete(labels=sample.labels)+ylab("Intensity")+
 					.control.plot.theme.samples
@@ -481,7 +481,7 @@ rnb.plot.control.barplot<-function(
 	if(empty.probe) {
 		red<-rep(0, length(red));
 	}
-	red.plot<-ggplot(data = data.frame(Samples=as.character(Samples), Intensity=red), aes(x = Samples, y = Intensity)) +
+	red.plot<-ggplot(data = data.frame(Samples=factor(Samples, levels=Samples), Intensity=red), aes(x = Samples, y = Intensity)) +
 			geom_bar(stat = "identity", position = "stack",fill = "red") + ggtitle(main_txt_red) +
 			scale_x_discrete(labels=sample.labels)+ylab("Intensity")+
 			.control.plot.theme.samples
@@ -696,7 +696,7 @@ rnb.plot.snp.barplot<-function(
 #					ylab="Beta value")+scale_y_continuous(limits=c(0,1))+
 #			.control.plot.theme.samples#, vp=viewport(layout.pos.row=1, layout.pos.col=1))
 	
-	plot.obj<-ggplot(data = data.frame(SNP=SNP, Beta.values=Beta.values), aes(x = SNP, y = Beta.values)) +
+	plot.obj<-ggplot(data = data.frame(SNP=factor(SNP, levels=SNP), Beta.values=Beta.values), aes(x = SNP, y = Beta.values)) +
 			geom_bar(stat = "identity", position = "stack") + 
 			scale_y_continuous(limits=c(0,1)) +
 			ylab("Beta value") + ggtitle(sample) + 
