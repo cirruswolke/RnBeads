@@ -1144,11 +1144,12 @@ setMethod("combine", signature(x="RnBSet",y="RnBSet"),
 				bff.finalizer <- rnb.getOption("disk.dump.bigff.finalizer")
 			}
 			# prepare a new object
-			if(nrow(pheno(x))>=nrow(pheno(y))){
-				new.set<-y
-			}else{
-				new.set<-x
-			}
+			new.set<-x
+			# if(nrow(pheno(x))>=nrow(pheno(y))){
+			# 	new.set<-y
+			# }else{
+			# 	new.set<-x
+			# }
 
 			new.set@pheno <- plyr::rbind.fill(pheno(x),pheno(y))
 
@@ -1248,6 +1249,7 @@ setMethod("combine", signature(x="RnBSet",y="RnBSet"),
 				new.set@status$background<-"none"
 			}
 			new.set@status$disk.dump<-useff
+			new.set@status$disk.dump.bigff<-usebigff
 
 			for (region.type in union(summarized.regions(x), summarized.regions(y))) {
 				if (region.type %in% rnb.region.types(assembly(new.set))) {
