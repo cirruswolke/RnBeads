@@ -1228,7 +1228,7 @@ rnb.run.inference <- function(rnb.set, dir.reports,
 			prediction_path <- rnb.getOption("inference.age.prediction.predictor")
 			if(inherits(rnb.set,"RnBeadSet")){
 				if(!is.null(prediction_path)&&prediction_path!=""){
-					logger.start("Age Prediction on specified perdictor")
+					logger.start("Age Prediction using specified predictor")
 					rnb.set <- agePredictor(rnb.set,prediction_path)
 					logger.completed()
 				}else{
@@ -1240,7 +1240,7 @@ rnb.run.inference <- function(rnb.set, dir.reports,
 				}
 			}else if(inherits(rnb.set,"RnBiseqSet") && rnb.getOption("inference.age.prediction.biseq")){
 				if(!is.null(prediction_path)&&prediction_path!=""){
-					logger.start("Age Prediction on specified perdictor")
+					logger.start("Age Prediction using specified predictor")
 					rnb.set <- agePredictorRRBS(rnb.set,prediction_path)
 					logger.completed()
 				}else{
