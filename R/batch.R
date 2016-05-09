@@ -295,11 +295,11 @@ plot.heatmap.pc.correlations <- function(report, tbl, fname, width = NULL, heigh
 		scale_x_discrete(expand = c(0, 0)) + scale_y_discrete(expand = c(0, 0)) +
 		theme(axis.ticks = element_blank(), legend.justification = c(0, 0.5), legend.position = c(1, 0.5)) +
 		theme(panel.border = element_blank(), plot.margin = unit(c(0.1, 1.5, 0.1, 0.1), "in"))
-
-	rplot <- createReportPlot(fname, report, width = width, height = height)
 	pp <- suppressWarnings(ggplot_gtable(ggplot_build(pp)))
 	pp$widths[[3]] <- unit(ysize, "in")
 	pp$heights[[length(pp$heights) - 2L]] <- unit(xsize, "in")
+	rplot <- createReportPlot(fname, report, width = width, height = height)
+	grid.newpage()
 	grid.draw(pp)
 	rplot <- off(rplot)
 	txt <- "Heatmap presenting a table of correlations. Grey cells, if present, denote missing values."
@@ -328,7 +328,6 @@ plot.heatmap.pc.pvalues <- function(report, tbl, fname, width = NULL, height = N
 	if (is.null(height)) {
 		height <- ifelse(is.null(xlab), 2, 1) + nrow(tbl) * 0.25
 	}
-	rplot <- createReportPlot(fname, report, width = width, height = height)
 	pp <- ggplot(tbl.melt, aes_string("y", "x", label = "pvaltext")) + labs(x = xlab, y = ylab) +
 		coord_fixed(ratio = 0.25 / 0.62) + geom_tile(aes_string(fill = "significant"), color = "white") +
 		scale_fill_manual(values = c("NA" = "#D0D0D0", "FALSE" = "#9C9CCC", "TRUE" = "#F1B1B1")) +
@@ -344,6 +343,8 @@ plot.heatmap.pc.pvalues <- function(report, tbl, fname, width = NULL, height = N
 	if (is.null(xlab)) {
 		pp$heights[[length(pp$heights) - 2L]] <- unit(2, "in")
 	}
+	rplot <- createReportPlot(fname, report, width = width, height = height)
+	grid.newpage()
 	grid.draw(pp)
 	txt <- paste0("Heatmap presenting a table of p-values. Significant p-values (less than ",
 		rnb.getOption("exploratory.correlation.pvalue.threshold"), ") are printed in pink boxes. Non-significant ",
@@ -434,13 +435,13 @@ plot.heatmap.symm <- function(report, tbl.symm, tbl.failures = NULL, fname) {
 	pp <- pp + theme(axis.ticks = element_blank(), axis.text.x = element_text(angle = 90, hjust = 1)) +
 		theme(panel.grid.major = element_blank(), panel.background = element_blank()) +
 		theme(panel.border = element_blank(), plot.margin = unit(c(0.1, 1.9, 0.1, 0.1), "in"))
-	rplot <- createReportPlot(fname, report, width = width, height = height)
 	## Fix the areas for x and y axis labels
 	pp <- suppressWarnings(ggplot_gtable(ggplot_build(pp)))
 	pp$widths[[3]] <- unit(2, "in")
 	pp$heights[[length(pp$heights) - 2L]] <- unit(2, "in")
+	rplot <- createReportPlot(fname, report, width = width, height = height)
+	grid.newpage()
 	grid.draw(pp)
-
 	return(off(rplot))
 }
 
