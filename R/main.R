@@ -1212,7 +1212,7 @@ rnb.run.inference <- function(rnb.set, dir.reports,
 	module.start.log("Covariate Inference")
 
 	report <- init.pipeline.report("covariate_inference", dir.reports, init.configuration)
-	optionlist <- rnb.options("inference.targets.sva","inference.sva.num.method","covariate.adjustment.columns", "export.to.ewasher","inference.age.prediction","inference.age.prediction.training","inference.age.prediction.predictor","inference.age.prediction.biseq")
+	optionlist <- rnb.options("inference.targets.sva","inference.sva.num.method","covariate.adjustment.columns", "export.to.ewasher","inference.age.prediction","inference.age.prediction.training","inference.age.prediction.predictor","inference.age.prediction.biseq","inference.age.column","inference.age.prediction.cv")
 	report <- rnb.add.optionlist(report, optionlist)
 
 	if (inherits(rnb.set,"RnBSet") && rnb.getOption("inference.age.prediction")){
