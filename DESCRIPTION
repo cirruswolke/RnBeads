@@ -80,6 +80,7 @@ Collate:
     'RnBeadRawSet-class.R'
     'RnBeads-package.R'
     'RnBiseqSet-class.R'
+    'agePrediction.R'
     'annotations.R'
     'batch.R'
     'batch.quality.R'
@@ -115,5 +116,4 @@ Collate:
     'sva.R'
     'utilities.R'
     'wbcInference.R'
-    'agePrediction.R'
 RoxygenNote: 5.0.1
