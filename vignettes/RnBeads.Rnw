@@ -776,6 +776,29 @@ ct.obj$contributions.constr
 to get constrained (non-negative) coefficients which resemble cell
 type counts and sum up to a small value $<1$ .
 
+\subsubsection{Age Prediction}
+
+In addition to the inference possibilities mentioned before, \cs{RnBeads} is capable of predicting human age from DNA methylation data. The prediction was initially performed by building an elastic net regression model on the methylation values of the CpG sites. Performance was evaluated by testing the prediction on several independent test data sets.
+
+	In principal, the age prediction section of \cs{RnBeads} is activated by setting:
+<<eval=FALSE>>=
+rnb.options(inference.age.prediction=TRUE)
+@
+	Or by performing the command
+<<eval=FALSE>>=
+rnb.exectue.age.prediction(rnb.set)
+@
+	The difference between the first and the second option is that the first one creates a report, whereas the second modifies the \cs{rnb.set} object by adding additional columns \cs{predicted\_ages} and \cs{age\_increase}. The first one corresponds to the predicted age by the prediction algorithm and the second to the difference between predicted and annotated age.
+	
+	Then, the age prediction section is able to run in two different modes. The default mode runs the prediction by loading a predefined predictor in the form of a CSV-file, which then is used to predict human age from DNA methylation data. More specifically, the predefined predictor consists of coefficients of an elastic net regression run for 761 CpG sites used in the final age prediction. As a second possibility, the user can set the option \cs{inference.age.prediction.predictor} to a path of a predictor that was previously trained in some \cs{RnBeads} run. For instance, this predictor could be trained by running the second mode of the age prediction, which is the training mode. Training is performed by either one of these commands:
+<<eval=FALSE>>=
+rnb.execute.training(rnb.set,predictor.path)
+rnb.options(inference.age.prediction.training=TRUE)
+@
+	In the first case, a new predictor is trained based on the methylation information in the \cs{rnb.set} object and written as a CSV-file at the given \cs{predictor.path}, which has to be a full path. The second option requires running \cs{rnb.run.inference} to create a new predictor that then is written into the \cs{RnBeads} data folder and sets the option \cs{inference.age.prediction.predictor} to the corresponding one.
+	 
+	Additionally, by setting the option \cs{inference.age.prediction.cv}, a 10-fold cross-validation is performed to serve as an accuracy measure for the training functionality. Setting the option \cs{inference.age.column} enables \cs{RnBeads} to read the corresponding age annotation column of the data set, which enables the creation of a bunch of evalutaion plots. These include scatterplots of the deviation between annotated and predicted age as well as density plots for the differences between predicted and annotated ages. On default, \cs{inference.age.column} is set to \cs{age}.
+
 \subsection{Exploratory Analysis}
 \label{sec:exploratory}
 
