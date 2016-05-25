@@ -87,39 +87,43 @@ rnb.section.ageprediction <- function(object,report){
 	}
 
 	ph <- pheno(object)
-	actualAges <- ph$age
-	if(!is.null(actualAges)){
-		options(warn=-1)
-		actualAgesNumeric <- as.numeric(actualAges)
-		if(sum(is.na(actualAgesNumeric)) != length(actualAges)){
-			predictedAges <- ph$predicted_ages
-			txt <- "Plotting annotated ages versus predicted ages and indicating different traits with different colors."
-			report <- add.info("Comparison Plot",add.agecomparison.plot,txt,actualAgesNumeric,predictedAges)
-			txt <- "Plotting differences between predicted ages for each sample."
-			report <- add.info("Error Plot",add.combination.plot,txt,actualAgesNumeric,predictedAges)
-			#txt <- "Plotting quantiles for the difference between predicted and annotated ages."
-			#report <- add.info("Quantile Plot",add.quantile.plot,txt,actualAgesNumeric,predictedAges)
-		}else{
-			if(is.character(actualAges)){
-				fun <- function(s){
-					temp <- strsplit(s,"[.]")
-					temp <- temp[[1]][1]
- 					unique(na.omit(as.numeric(unlist(strsplit(temp,"[^0-9]+")))))
-				}
-				actualAges <- unlist(lapply(actualAges,fun))
+	age <- rnb.getOption("inference.age.column")
+	if(age %in% colnames(ph)){
+		actualAges <- ph[,age]
+		if(!is.null(actualAges)){
+			options(warn=-1)
+			actualAgesNumeric <- as.numeric(actualAges)
+			if(sum(is.na(actualAgesNumeric)) != length(actualAges)){
 				predictedAges <- ph$predicted_ages
-				txt <- "Plotting annotated ages versus predicted ages and indicating different tissues with different colors."
-				report <- add.info("Comparison Plot",add.agecomparison.plot,txt,actualAges,predictedAges)
+				txt <- "Plotting annotated ages versus predicted ages and indicating different traits with different colors."
+				report <- add.info("Comparison Plot",add.agecomparison.plot,txt,actualAgesNumeric,predictedAges)
 				txt <- "Plotting differences between predicted ages for each sample."
-				report <- add.info("Error Plot",add.error.plot,txt,actualAges,predictedAges)
+				report <- add.info("Error Plot",add.combination.plot,txt,actualAgesNumeric,predictedAges)
+				#txt <- "Plotting quantiles for the difference between predicted and annotated ages."
+				#report <- add.info("Quantile Plot",add.quantile.plot,txt,actualAgesNumeric,predictedAges)
 			}else{
-				txt <- "The age annotation column of the dataset has a format that can not be read."
-				report <- rnb.add.paragraph(report,txt)
+				if(is.character(actualAges)){
+					fun <- function(s){
+						temp <- strsplit(s,"[.]")
+						temp <- temp[[1]][1]
+ 						unique(na.omit(as.numeric(unlist(strsplit(temp,"[^0-9]+")))))
+					}
+					actualAges <- unlist(lapply(actualAges,fun))
+					predictedAges <- ph$predicted_ages
+					txt <- "Plotting annotated ages versus predicted ages and indicating different tissues with different colors."
+					report <- add.info("Comparison Plot",add.agecomparison.plot,txt,actualAges,predictedAges)
+					txt <- "Plotting differences between predicted ages for each sample."
+					report <- add.info("Error Plot",add.error.plot,txt,actualAges,predictedAges)
+				}else{
+					txt <- "The age annotation column of the dataset has a format that can not be read."
+					report <- rnb.add.paragraph(report,txt)
+				}
 			}
 		}
 	}else{
 		txt <- "There was no age annotation available for the data set, therefore no inference based on age prediction could be done."
 		report <- rnb.add.paragraph(report,txt)
+		report <- add.age.histogram(report,predictedAges)
 	}
 	options(warn=1)
 	return(report)
@@ -151,6 +155,16 @@ rnb.step.ageprediction <- function(object,report){
 	logger.start("Adding Age Prediction Section to Report")
 	report <- rnb.section.ageprediction(object,report)
 	logger.completed()
+
+	if(rnb.getOption("inference.age.prediction.cv")){
+		if(rnb.getOption("inference.age.prediction.training")){
+			report <- run.cross.validation(object,report)
+		}else{
+			logger.info("Could not run Cross-Validation without Training. Please set inference.age.prediction.training.")
+			txt <- "Cross-Validation cannot be performed without training of a new predictor. Please set the option <em>inference.age.prediction.training</em> and run inference again."
+			report <- rnb.add.paragraph(report,txt)
+		}		
+	}
 
 	return(report)
 }
@@ -215,7 +229,12 @@ rnb.execute.training <- function(object,path=""){
 		stop("A path to store the predictor has to be specified.")
 	}else{
 		logger.start("Training new age predictor")
-		prediction_path <- trainPredictor(object,path)
+		age <- rnb.getOption("inference.age.column")
+		if(!(age %in% colnames(pheno(object)))){
+			logger.warning("No Age information available, training not successful")
+		}else{
+			prediction_path <- trainPredictor(object,path)
+		}
 		logger.completed()
 	}
 }
@@ -243,14 +262,20 @@ add.agecomparison.plot <- function(report, object, actualAges, predictedAges){
 	ph <- pheno(object)
 	Default <- rep(NA,dim(ph)[1])
 	ph <- cbind(ph,Default=Default)
-	copyActual <- actualAges
+	naAges <- is.na(actualAges)
+	actualAges <- actualAges[!naAges]
+	predictedAges <- predictedAges[!naAges]
+	notPredicted <- is.na(predictedAges)
+	actualAges <- actualAges[!notPredicted]
+	predictedAges <- predictedAges[!notPredicted]
 
 	traits <- names(rnb.sample.groups(object))
 	traits <- c("Default",traits)
+	remove.age <- traits %in% rnb.getOption("inference.age.column")
+	traits <- traits[!remove.age]
 
 	report.plots <- list()
 	if(length(traits)<=1){
-		print("only one or less trait")
 		actualAges <- as.numeric(actualAges)
 		naAges <- is.na(actualAges)
 		actualAges <- actualAges[!naAges]
@@ -269,24 +294,17 @@ add.agecomparison.plot <- function(report, object, actualAges, predictedAges){
 	for(trait in traits){
 		if(trait %in% colnames(ph)){
 			placeholder <- ph[,trait]
-			actualAges <- copyActual
 			if(!is.null(placeholder)){
+				placeholder <- as.factor(placeholder)
 				for(secondTrait in traits){
 					if(secondTrait %in% colnames(ph)){
 					placeholder2 <- ph[,secondTrait]
-					actualAges <- copyActual
 					if(!is.null(placeholder2)){
+						placeholder2 <- as.factor(placeholder2)
 						trait <- gsub(" ","",trait)
 						trait <- gsub("[[:punct:]]","",trait)
 						secondTrait <- gsub(" ","",secondTrait)
 						secondTrait <- gsub("[[:punct:]]","",secondTrait)
-						actualAges <- as.numeric(actualAges)
-						naAges <- is.na(actualAges)
-						actualAges <- actualAges[!naAges]
-						predictedAges <- predictedAges[!naAges]
-						notPredicted <- is.na(predictedAges)
-						actualAges <- actualAges[!notPredicted]
-						predictedAges <- predictedAges[!notPredicted]
 						placeholder <- placeholder[!naAges]
 						placeholder <- placeholder[!notPredicted]
 						placeholder2 <- placeholder2[!naAges]
@@ -349,7 +367,7 @@ add.agecomparison.plot <- function(report, object, actualAges, predictedAges){
 
 add.error.plot <- function(report, object ,actualAges ,predictedAges){
 
-	descr <- "Differences between predicted ages and annotated ages. The mean of the difference is shown in blue, +/- two times the Standard Deviation in red. Points that are labeled with their identifiers have a higher deviation from the mean difference than four times the standard deviation."	
+	descr <- "Differences between predicted ages and annotated ages. The mean of the difference is shown in blue, +/- two times the Standard Deviation in red. Points that are labeled with their identifiers have a higher deviation from the mean difference than four times the standard deviation."
 	
 	ph <- pheno(object)
 
@@ -366,7 +384,7 @@ add.error.plot <- function(report, object ,actualAges ,predictedAges){
 	x_width <- count + 0.1*count
 	x_width <- round(x_width,0)
 
-plot <- ggplot(data,aes(x=order(sort(row.names(data))),y=Value,label=Sample),environment=environment())+geom_text(aes(label=ifelse(Deviance > 4*sd, as.character(Sample),"")),hjust=0,vjust=0,size=3)+geom_point()+geom_hline(data=hline_mean,aes(yintercept=yint,linetype=Measure),color="blue",show_guide=TRUE)+geom_hline(data=hline_sd,aes(yintercept=yint,linetype=Measure),color="red",show_guide=TRUE)+xlab("Sample Number")+ylab("Difference between predicted age and annotated age")+xlim(0,x_width)
+	plot <- ggplot(data,aes(x=order(sort(row.names(data))),y=Value,label=Sample),environment=environment())+geom_text(aes(label=ifelse(Deviance > 4*sd, as.character(Sample),"")),hjust=0,vjust=0,size=3)+geom_point()+geom_hline(data=hline_mean,aes(yintercept=yint,linetype=Measure),color="blue",show_guide=TRUE)+geom_hline(data=hline_sd,aes(yintercept=yint,linetype=Measure),color="red",show_guide=TRUE)+xlab("Sample Number")+ylab("Difference between predicted age and annotated age")+xlim(0,x_width)
 	report.plot <- createReportPlot("age_prediction_error", report)
 	print(plot)
 	report.plot <- off(report.plot)
@@ -479,6 +497,33 @@ add.combination.plot <- function(report, object, actualAges,predictedAges){
 }
 
 #######################################################################################
+#' add.age.histogram
+#'
+#' This function is creates an age distribution plot for the predicted ages in the case
+#' where there is no age annotation available for comparison with predicted ages
+#'
+#'
+#' @param report	The report object to be modified
+#' @param ages		The ages for which the distribution plots should be created
+#' 
+#' @return		Modified report object with the age histogram
+add.age.histogram <- function(report,ages){
+	data <- data.frame(Age=ages)
+	colors <- rnb.getOption("colors.category")
+	gradient <- rnb.getOption("colors.gradient")
+	plot <- ggplot(data,aes(x=Age))+geom_histogram(aes(fill=..count..,y=..density..),binwidth=5) +geom_density(color=colors[2])+scale_fill_gradient(low=gradient[1],high=gradient[2],name="Count")+ylab("Density")
+	report.plot <- createReportPlot("predicted_ages_histogram",report)
+	print(plot)
+	report.plot <- off(report.plot)
+
+	descr <- "Age distributions of the predicted ages by the age prediction algorithm."
+	report <- rnb.add.figure(report,descr,report.plot)
+
+	return(report)
+}
+
+
+#######################################################################################
 #' age.transformation
 #'
 #' This function is used to transform the inpute ages, to account for the fact, that
@@ -587,19 +632,22 @@ agePredictor450 <- function(rnbSet, path){
 	ages <- ph$predicted_ages
 	if(is.null(ages)){
 		rnbSet <- addPheno(rnbSet,predictedAges,"predicted_ages")
-		actualAges <- ph$age
-		if(!is.null(actualAges)){
-			if(is.character(actualAges)){
-				fun <- function(s){
-					temp <- strsplit(s,"[.]")
-					temp <- temp[[1]][1]
- 					unique(na.omit(as.numeric(unlist(strsplit(temp,"[^0-9]+")))))
+		age <- rnb.getOption("inference.age.column")
+		if(age %in% colnames(ph)){
+			actualAges <- ph[,age]
+			if(!is.null(actualAges)){
+				if(is.character(actualAges)){
+					fun <- function(s){
+						temp <- strsplit(s,"[.]")
+						temp <- temp[[1]][1]
+ 						unique(na.omit(as.numeric(unlist(strsplit(temp,"[^0-9]+")))))	
+					}
+					actualAges <- unlist(lapply(actualAges,fun))
 				}
-				actualAges <- unlist(lapply(actualAges,fun))
+				actualAges <- as.numeric(actualAges)
+				difference <- predictedAges-actualAges
+				rnbSet <- addPheno(rnbSet,difference,"age_increase")
 			}
-			actualAges <- as.numeric(actualAges)
-			difference <- predictedAges-actualAges
-			rnbSet <- addPheno(rnbSet,difference,"age_increase")
 		}
 	}
 	options(warn=1)
@@ -663,19 +711,22 @@ agePredictorRRBS <- function(rnbSet, path){
 	ages <- ph$predicted_ages
 	if(is.null(ages)){
 		rnbSet <- addPheno(rnbSet,predictedAges,"predicted_ages")
-		actualAges <- ph$age
-		if(!is.null(actualAges)){
-			if(is.character(actualAges)){
-				fun <- function(s){
-					temp <- strsplit(s,"[.]")
-					temp <- temp[[1]][1]
- 					unique(na.omit(as.numeric(unlist(strsplit(temp,"[^0-9]+")))))
+		age <- rnb.getOption("inference.age.column")
+		if(age %in% colnames(ph)){
+			actualAges <- ph[,age]
+			if(!is.null(actualAges)){
+				if(is.character(actualAges)){
+					fun <- function(s){
+						temp <- strsplit(s,"[.]")
+						temp <- temp[[1]][1]
+ 						unique(na.omit(as.numeric(unlist(strsplit(temp,"[^0-9]+")))))
+					}
+					actualAges <- unlist(lapply(actualAges,fun))
 				}
-				actualAges <- unlist(lapply(actualAges,fun))
+				actualAges <- as.numeric(actualAges)
+				difference <- predictedAges-actualAges
+				rnbSet <- addPheno(rnbSet,difference,"age_increase")
 			}
-			actualAges <- as.numeric(actualAges)
-			difference <- predictedAges-actualAges
-			rnbSet <- addPheno(rnbSet,difference,"age_increase")
 		}
 	}
 	options(warn=1)
@@ -696,13 +747,29 @@ trainPredictor <- function(rnbSet,data.dir){
 	if(!file.exists(data.dir)){
 		stop("The specified directory does not exist!")
 	}
+	age <- rnb.getOption("inference.age.column")
 	if(inherits(rnbSet,"RnBeadSet")){
+		if(!(age %in% colnames(pheno(rnbSet)))){
+			logger.warning("No Age information available, training not successful.")
+			return("")
+		}
 		path <- simpleGlmnet(rnbSet,file.path(data.dir,"trained_predictor.csv"))
+		if(!is.null(path)&&path!=""){
+			rnb.options(inference.age.prediction.predictor=path)
+		}else{
+			logger.warning("No new predictor created, deault predictor remains.")
+		}
 	}else if(inherits(rnbSet,"RnBiseqSet")){
+		if(!(age %in% colnames(pheno(rnbSet)))){
+			logger.warning("No Age information available, training not successful.")
+			return("")
+		}
 		path <- simpleGlmnetRRBS(rnbSet,file.path(data.dir,"trained_predictor_RRBS.csv"))
-		rnb.options(inference.age.prediction.biseq=TRUE)	
+		if(!is.null(path)&&path!=""){				rnb.options(inference.age.prediction.rrbs=path)
+		}else{
+			logger.warning("No new predictor created, deault predictor remains.")
+		}	
 	}
-	rnb.options(inference.age.prediction.predictor=path)
 	return(path)
 }
 
@@ -727,7 +794,8 @@ simpleGlmnet <- function(trainRnBSet,filePath=""){
 	methData <- meth(trainRnBSet)
 	anno <- annotation(trainRnBSet)
 	ph <- pheno(trainRnBSet)
-	ages <- ph$age
+	age <- rnb.getOption("inference.age.column")
+	ages <- ph[,age]
 	if(!is.null(ages)){
 		if(is.character(ages)){
 			fun <- function(s){
@@ -777,7 +845,7 @@ simpleGlmnet <- function(trainRnBSet,filePath=""){
 }
 
 #######################################################################################
-#' simpleGlmnet
+#' simpleGlmnetRRBS
 #'
 #' This function actually fits the metylation data to the available age data by fitting
 #' a general regularized linear model (alpha parameter = 0.8) and then building a linear
@@ -796,7 +864,8 @@ simpleGlmnetRRBS <- function(trainRnBSet,filePath=""){
 	methData <- meth(trainRnBSet)
 	anno <- annotation(trainRnBSet)
 	ph <- pheno(trainRnBSet)
-	ages <- ph$age
+	age <- rnb.getOption("inference.age.column")
+	ages <- ph[,age]
 	if(!is.null(ages)){
 		if(is.character(ages)){
 			fun <- function(s){
@@ -847,6 +916,284 @@ simpleGlmnetRRBS <- function(trainRnBSet,filePath=""){
 	}
 	return(NULL)
 }
+
+#######################################################################################
+#' run.cross.validation
+#'
+#' This function performs a 10-fold cross validation to estimate the performance of a
+#' newly trained predictor. If parallel setup was done, the function perfoms the cross
+#' validation in parallel. The function adds a table to the specified report containing 
+#' the result of the 10-fold cross validation.
+#'
+#' @param rnbSet	An \code{RnBSet} object containing the methylation info on which 
+#'			the new predictor should be trained
+#' @param report	Report to which the table should be added 	
+#' 
+#' @return	Modified report object
+
+run.cross.validation <- function(rnbSet,report){
+	logger.start("10-fold Cross Validation")
+	txt <- "Result of the 10-fold cross vallidation on the given dataset. The corresponding error measurements are: Correlation between predicted and annotated ages, Mean absolut deviation and Median absolute deviation"
+	cvalues <- rep(rnb.getOption("colors.category"))
+	descr <- "Boxplot for the two error measures Mean and Median Absolute Error. Each Boxplot consists of 10 different points for each cross-validation fold, respectively."
+	if(inherits(rnbSet,"RnBeadSet")){
+		result <- cv.array(rnbSet)
+		report <- rnb.add.table(report,result,tcaption=txt)
+		means <- result["Mean",]
+		means <- t(means)
+		medians <- result["Median",]
+		medians <- t(medians)
+		toPlot <- data.frame(Mean=means,Median=medians)
+		toPlot <- melt(toPlot,id=c())
+		colnames(toPlot) <- c("Measure","Error")
+		plot <- ggplot(toPlot,aes(x=Measure,y=Error,fill=Measure))+geom_boxplot()+scale_fill_manual(values=cvalues)+ylab("Error [years]")
+		report.plot <- createReportPlot("cv_error_boxplot",report)
+		print(plot)
+		report.plot <- off(report.plot)
+		report <- rnb.add.figure(report,descr,report.plot)
+	}else if(inherits(rnbSet,"RnBiseqSet")){
+		result <- cv.biseq(rnbSet)
+		report <- rnb.add.table(report,result,tcaption=txt)
+		means <- result["Mean",]
+		means <- t(means)
+		medians <- result["Median",]
+		medians <- t(medians)
+		toPlot <- data.frame(Mean=means,Median=medians)
+		toPlot <- melt(toPlot,id=c())
+		colnames(toPlot) <- c("Measure","Error")
+		plot <- ggplot(toPlot,aes(x=Measure,y=Error,fill=Measure))+geom_boxplot()+scale_fill_manual(values=cvalues)+ylab("Error [years]")
+		report.plot <- createReportPlot("cv_error_boxplot",report)
+		print(plot)
+		report.plot <- off(report.plot)
+		report <- rnb.add.figure(report,descr,report.plot)	
+	}
+	logger.completed()
+	return(report)
+}
+
+######################################################################################
+#' general.cv
+#'
+#' This functions performs k-fold-cross-validation on the predictor with a specified 
+#' methylation data and training ages
+#' @param:	fitFunction:	a function that fits a predictor from training data to #'				predict age from methylation data
+#'		ages:		the ages to be trained on
+#'		methData:	input methylation matrix
+#'		k:		the fold parameter
+#' @return:	a data matrix that contains the summarized quality measurments for 
+#'		the predictor which are:
+#'			$cor[k+1]:	the mean correlation between the predicted 
+#'					ages and the actual age
+#'			$cor[1:k]:	induvidual correaltions between predicted 
+#'					ages and actual ages for each fold
+#'			$mean[k+1]:	the mean of the mean absolute deviation 
+#'					between predicted ages and actual ages
+#'			$mean[1:k]:	the indivudal mean absolute deviation for 
+#'					each fold
+#'			$median[k+1]:	the mean of the median absolute deviation
+#'			$median[1:k]:	the individual median absolute devation 
+#'					for each fold
+general.cv <- function(fitFunction,ages,methData,k=10){
+	nSamples <- length(ages)
+	size <- nSamples%/%k
+	count <- 1
+	ret <- foreach(i=seq(1,k*size,by = size),.combine='cbind',.packages=c("RnBeads","impute","glmnet"),.export=c("age.transformation","age.anti.transformation","simpleGlmnetEvaluate")) %dopar% {
+		logger.info(as.character(count))
+		choose <- rep(FALSE,nSamples)
+		choose[i:(i+size-1)] <- TRUE
+		testSet <- methData[,choose]
+		testAges <- ages[choose]
+		notChosen <- !choose
+		trainSet <- methData[,notChosen]
+		trainAges <- ages[notChosen]
+		predictor <- fitFunction(trainSet,trainAges)
+		predictedAges <- predictor(testSet)
+		cor <- cor(predictedAges,testAges)
+		cor <- round(cor,2)
+		testAges <- age.anti.transformation(testAges)
+		mean <- mean(abs(predictedAges-testAges))
+		mean <- round(mean,2)
+		median <- median(abs(predictedAges-testAges))
+		median <- round(median,2)
+		column <- c(cor,mean,median)
+		count <- count+1
+		column
+	}
+	lastCol <- c(mean(ret[1,1:10]),mean(ret[2,1:10]),mean(ret[3,1:10]))
+	ret <- cbind(ret,lastCol)
+	colnames(ret) <- c(paste("Fold",seq(1:10)),"Mean")
+	row.names(ret) <- c("Correlation","Mean","Median")
+	return(ret)
+}
+
+###################################################################################
+#' cv.array
+#'
+#' This function calls the general cross validation function from the corresponding
+#' RnBSet object in the case of array data
+#' @param:	rnbSet: RnBSet object on which the cross validation should be perfomed
+#'
+#' @return:	the result of the cross validation in a data.frame format
+
+cv.array <- function(rnbSet){
+	ph <- pheno(rnbSet)
+	age <- rnb.getOption("inference.age.column")
+	if(age %in% colnames(ph)){
+		ages <- ph[,age]
+		ages <- as.numeric(ages)
+		ages <- age.transformation(ages)
+		missingAges <- is.na(ages)
+		ages <- ages[!missingAges]
+		rnbSet <- remove.samples(rnbSet,missingAges)
+		samples <- samples(rnbSet)
+		sampled <- sample(samples)
+		methData <- meth(rnbSet)
+		match <- match(sampled,samples)
+		methData <- methData[,sampled]
+		ages <- ages[match]
+		anno <- annotation(rnbSet)
+		row.names(methData) <- row.names(anno)
+		Xchrom <- is.element(anno$Chromosome,"chrX")
+		methData <- methData[!Xchrom,]
+		anno <- anno[!Xchrom,]
+		Ychrom <- is.element(anno$Chromosome,"chrY")
+		methData <- methData[!Ychrom,]
+		anno <- anno[!Ychrom,]
+		dummy <- capture.output(methData <- (impute.knn(methData))$data)
+		result <- general.cv(simpleGlmnetEvaluate,ages,methData)
+		result <- as.data.frame(result)
+		return(result)
+	}
+	return(NULL)	
+}
+
+###################################################################################
+#' cv.biseq
+#'
+#' This function calls the general cross validation function from the corresponding
+#' RnBSet object in the case of sequencing data
+#' @param:	rnbSet: RnBSet object on which the cross validation should be perfomed
+#'
+#' @return:	the result of the cross validation in a data.frame format
+
+cv.biseq <- function(rnbSet,report){
+	ph <- pheno(rnbSet)
+	age <- rnb.getOption("inference.age.column")
+	if(age %in% colnames(ph)){
+		ages <- ph[,age]
+		missingAges <- is.na(ages)
+		ages <- ages[!missingAges]
+		rnbSet <- remove.samples(rnbSet,missingAges)
+		ages <- age.transformation(ages)
+		samples <- samples(rnbSet)
+		sampled <- sample(samples)
+		methData <- meth(rnbSet)
+		match <- match(sampled,samples)
+		methData <- methData[,sampled]
+		ages <- ages[match]
+		anno <- annotation(rnbSet)
+		start <- anno$Start
+		end <- anno$End
+		chromosome <- anno$Chromosome
+		names <- paste0(chromosome,"_",start,"_",end) 
+		row.names(methData) <- names
+		Xchrom <- is.element(anno$Chromosome,"chrX")
+		methData <- methData[!Xchrom,]
+		anno <- anno[!Xchrom,]
+		Ychrom <- is.element(anno$Chromosome,"chrY")
+		methData <- methData[!Ychrom,]
+		anno <- anno[!Ychrom,]
+		methData <- imputeRRBS(methData)
+		result <- general.cv(simpleGlmnetEvaluate,ages,methData)
+		result <- as.data.frame(result)
+		return(result)
+	}
+	return(NULL)
+}
+
+###################################################################################
+#' simpleGlmnetEvaluate
+#'
+#' This function is needed to perform cross-validation. In contrast to simpleGlmnet
+#' it does not write the predictor to a csv-file but returns a prediction 
+#' function that can be used in each fold
+#'
+#' @param:	methData: input methylation data for the age prediction
+#' @param:	ages:	  reponse ages from the age prediction
+#'
+#' @return:	the age prediction function to be applied in each fold
+
+simpleGlmnetEvaluate <- function(methData,ages){
+	methData <- t(methData)
+	missingAges <- is.na(ages)
+	methData <- methData[!missingAges,]
+	ages <- ages[!missingAges]
+	cv <- cv.glmnet(methData,ages,parallel=TRUE)
+	model <- glmnet(methData,ages,alpha=0.8,lambda=cv$lambda.min)
+	coeffs <- as.matrix(coef(model))
+	coeffs <- coeffs[-1,]
+	non_zero <- which(coeffs!=0)
+	coeffs <- coeffs[non_zero]
+	max <- max(abs(coeffs))
+	scaled <- abs(coeffs)/max
+	sorted <- sort(scaled,decreasing=TRUE)
+	cpGs <- names(sorted)
+	selected <- methData[,cpGs]
+	selected <- as.data.frame(selected)
+	linearModel <- lm(ages~.,selected) 
+	finalModel <- createPredictor(linearModel)
+	return(finalModel)
+}
+
+###################################################################################
+#' createPredictor
+#'
+#' This function is needed to perform cross-validation. It creates a prediction 
+#' function in contrast to writing the predictor to a csv-file.
+#'
+#' @param:	linearModel: an output of glmnet from which the predictor should
+#'			     be created
+#'
+#' @return:	the age prediction function
+
+
+createPredictor <- function(linearModel){
+	ret <- function(rnbSet){
+		if(!is.matrix(rnbSet)){
+			methData <- meth(rnbSet)
+			coeffs <- as.matrix(coef(linearModel))
+			intercept <- coeffs[1]
+			anno <- annotation(rnbSet)
+			coeffs <- coeffs[-1]
+			usedCpGs <- row.names(coeffs)
+			match <- match(sort(usedCpGs),usedCpGs)
+			usedCpGs <- sort(usedCpGs)
+			usedCoeffs <- coeffs
+			usedCoeffs <- usedCoeffs[match]
+			selectCpGs <- row.names(methData) %in% usedCpGs
+			existingCpGs <- usedCpGs  %in% row.names(methData) 
+			selected <- methData[selectCpGs,]
+			selected <- selected[sort(row.names(selected)),]
+			dummy <- capture.output(selected <- (impute.knn(selected))$data)
+			selected <- t(selected)
+			if(length(usedCoeffs) > dim(selected)[2]){
+				usedCoeffs <- usedCoeffs[existingCpGs]
+			}
+			predictedAges <- intercept + selected%*%usedCoeffs
+			predictedAges <- age.anti.transformation(predictedAges)
+			return(predictedAges)
+		}else{
+			methData <- rnbSet
+			methData <- t(methData)
+			methData <- as.data.frame(methData)
+			predictedAges <- predict(linearModel,methData)
+			predictedAges <- age.anti.transformation(predictedAges)
+			return(predictedAges)
+		}	
+	}
+	return(ret)
+}
+
 
 #######################################################################################
 #' writePredictorToCsv
