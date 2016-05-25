@@ -182,7 +182,7 @@ rnb.step.ageprediction <- function(object,report){
 #' @return the modified  \code{\linkS4class{RnBeadSet}} object
 #'
 #' @author Michael Scherer
-
+#' @export
 rnb.execute.age.prediction <- function(object){
 	if(!inherits(object,"RnBSet")){
 		stop("Supplied object is not of the class inheriting from RnBSet")
@@ -223,7 +223,7 @@ rnb.execute.age.prediction <- function(object){
 #' @return the modified  \code{\linkS4class{RnBeadSet}} object
 #'
 #' @author Michael Scherer
-
+#' @export
 rnb.execute.training <- function(object,path=""){
 	if(path==""){
 		stop("A path to store the predictor has to be specified.")
