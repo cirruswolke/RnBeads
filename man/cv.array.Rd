@@ -7,13 +7,16 @@
 cv.array(rnbSet)
 }
 \arguments{
-\item{:}{rnbSet: RnBSet object on which the cross validation should be perfomed}
+\item{rnbSet}{RnBSet object on which the cross validation should be perfomed}
 }
 \value{
-:	the result of the cross validation in a data.frame format
+the result of the cross validation in a data.frame format
 }
 \description{
 This function calls the general cross validation function from the corresponding
 RnBSet object in the case of array data
+}
+\author{
+Michael Scherer
 }
 

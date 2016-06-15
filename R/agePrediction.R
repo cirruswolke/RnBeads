@@ -507,6 +507,8 @@ add.combination.plot <- function(report, object, actualAges,predictedAges){
 #' @param ages		The ages for which the distribution plots should be created
 #' 
 #' @return		Modified report object with the age histogram
+#'
+#' @author	Michael Scherer
 add.age.histogram <- function(report,ages){
 	data <- data.frame(Age=ages)
 	colors <- rnb.getOption("colors.category")
@@ -537,6 +539,8 @@ add.age.histogram <- function(report,ages){
 #' @param adult.age	Threshold for deciding between 'fast' and 'slow' changes in DNA methylation
 #' 
 #' @return	Transformed age
+#'
+#' @author 	Steve Horvath
 age.transformation <- function(x,adult.age=20)
 {
 	x=(x+1)/(1+adult.age);
@@ -557,6 +561,8 @@ age.transformation <- function(x,adult.age=20)
 #' @param adult.age	Threshold for deciding between 'fast' and 'slow' changes in DNA methylation
 #' 
 #' @return	Backtransformed age
+#'
+#' @author	Steve Horvath
 age.anti.transformation <- function(x,adult.age=20)
 {
 	ifelse(x<0, (1+adult.age)*exp(x)-1, (1+adult.age)*x+adult.age)
@@ -575,6 +581,8 @@ age.anti.transformation <- function(x,adult.age=20)
 #' 
 #' @return	RnBeadSet with a new column in the phenotypic table in which the predicted ages
 #'		are annotated
+#'
+#' @author	Michael Scherer
 
 agePredictor <- function(rnbSet, path=system.file(file.path("extdata", "predefined_predictor.csv"), package="RnBeads")){
 	if(!file.exists(path)){
@@ -601,6 +609,8 @@ agePredictor <- function(rnbSet, path=system.file(file.path("extdata", "predefin
 #' 
 #' @return	RnBeadSet with a new column in the phenotypic table in which the predicted ages
 #'		are annotated
+#'
+#' @author	Michael Scherer
 
 agePredictor450 <- function(rnbSet, path){
 	require(impute)
@@ -666,6 +676,8 @@ agePredictor450 <- function(rnbSet, path){
 #' 
 #' @return	RnBeadSet with a new column in the phenotypic table in which the predicted ages
 #'		are annotated
+#'
+#' @author	Michael Scherer
 
 agePredictorRRBS <- function(rnbSet, path){
 	require(impute)
@@ -740,9 +752,12 @@ agePredictorRRBS <- function(rnbSet, path){
 #'
 #' @param rnbSet	An \code{RnBeadSet} object containing the methylation info on which 
 #'			the new predictor should be trained
+#' @param data.dir	Directory to which the resulting Predictor should be written
 #' 
 #' @return	Absolute path to the corresponding predictor. The path is also set as the 
 #'		option \code{inference.age.prediction.predictor}
+#'
+#' @author	Michael Scherer
 trainPredictor <- function(rnbSet,data.dir){
 	if(!file.exists(data.dir)){
 		stop("The specified directory does not exist!")
@@ -783,10 +798,12 @@ trainPredictor <- function(rnbSet,data.dir){
 #'
 #' @param trainRnBSet	An \code{RnBeadSet} object containing the methylation info on which 
 #'			the new predictor should be trained
-#' @param path		Path in which the new predictor should be written
+#' @param filePath		Path in which the new predictor should be written
 #' 
 #' @return	Absolute path to the corresponding predictor. Null if the function was 
 #'		unable to create such an predictor.
+#'
+#' @author	Michael Scherer
 
 simpleGlmnet <- function(trainRnBSet,filePath=""){
 	require(glmnet)
@@ -854,10 +871,12 @@ simpleGlmnet <- function(trainRnBSet,filePath=""){
 #'
 #' @param trainRnBSet	An \code{RnBeadSet} object containing the methylation info on which 
 #'			the new predictor should be trained
-#' @param path		Path in which the new predictor should be written
+#' @param filePath	Path in which the new predictor should be written
 #' 
 #' @return	Absolute path to the corresponding predictor. Null if the function was 
 #'		unable to create such an predictor.
+#'
+#' @author	Michael Scherer
 
 simpleGlmnetRRBS <- function(trainRnBSet,filePath=""){
 	require(glmnet)
@@ -930,6 +949,8 @@ simpleGlmnetRRBS <- function(trainRnBSet,filePath=""){
 #' @param report	Report to which the table should be added 	
 #' 
 #' @return	Modified report object
+#'
+#' @author	Michael Scherer
 
 run.cross.validation <- function(rnbSet,report){
 	logger.start("10-fold Cross Validation")
@@ -976,11 +997,12 @@ run.cross.validation <- function(rnbSet,report){
 #'
 #' This functions performs k-fold-cross-validation on the predictor with a specified 
 #' methylation data and training ages
-#' @param:	fitFunction:	a function that fits a predictor from training data to #'				predict age from methylation data
-#'		ages:		the ages to be trained on
-#'		methData:	input methylation matrix
-#'		k:		the fold parameter
-#' @return:	a data matrix that contains the summarized quality measurments for 
+#' @param	fitFunction	a function that fits a predictor from training data to #'				predict age from methylation data
+#' @param	ages		the ages to be trained on
+#' @param	methData	input methylation matrix
+#' @param	k		the fold parameter
+#'
+#' @return	a data matrix that contains the summarized quality measurments for 
 #'		the predictor which are:
 #'			$cor[k+1]:	the mean correlation between the predicted 
 #'					ages and the actual age
@@ -993,6 +1015,8 @@ run.cross.validation <- function(rnbSet,report){
 #'			$median[k+1]:	the mean of the median absolute deviation
 #'			$median[1:k]:	the individual median absolute devation 
 #'					for each fold
+#'
+#' @author	Michael Scherer
 general.cv <- function(fitFunction,ages,methData,k=10){
 	nSamples <- length(ages)
 	size <- nSamples%/%k
@@ -1031,9 +1055,11 @@ general.cv <- function(fitFunction,ages,methData,k=10){
 #'
 #' This function calls the general cross validation function from the corresponding
 #' RnBSet object in the case of array data
-#' @param:	rnbSet: RnBSet object on which the cross validation should be perfomed
+#' @param	rnbSet	RnBSet object on which the cross validation should be perfomed
 #'
-#' @return:	the result of the cross validation in a data.frame format
+#' @return	the result of the cross validation in a data.frame format
+#'
+#' @author	Michael Scherer
 
 cv.array <- function(rnbSet){
 	ph <- pheno(rnbSet)
@@ -1072,9 +1098,12 @@ cv.array <- function(rnbSet){
 #'
 #' This function calls the general cross validation function from the corresponding
 #' RnBSet object in the case of sequencing data
-#' @param:	rnbSet: RnBSet object on which the cross validation should be perfomed
+#' @param	rnbSet	RnBSet object on which the cross validation should be perfomed
+#' @param	report	HTML-report to which the evaluation via cross-validation should be added	
 #'
-#' @return:	the result of the cross validation in a data.frame format
+#' @return	the result of the cross validation in a data.frame format
+#'
+#' @author	Michael Scherer
 
 cv.biseq <- function(rnbSet,report){
 	ph <- pheno(rnbSet)
@@ -1118,10 +1147,12 @@ cv.biseq <- function(rnbSet,report){
 #' it does not write the predictor to a csv-file but returns a prediction 
 #' function that can be used in each fold
 #'
-#' @param:	methData: input methylation data for the age prediction
-#' @param:	ages:	  reponse ages from the age prediction
+#' @param	methData input methylation data for the age prediction
+#' @param	ages	  reponse ages from the age prediction
 #'
-#' @return:	the age prediction function to be applied in each fold
+#' @return	the age prediction function to be applied in each fold
+#'
+#' @author	Michael Scherer
 
 simpleGlmnetEvaluate <- function(methData,ages){
 	methData <- t(methData)
@@ -1151,10 +1182,12 @@ simpleGlmnetEvaluate <- function(methData,ages){
 #' This function is needed to perform cross-validation. It creates a prediction 
 #' function in contrast to writing the predictor to a csv-file.
 #'
-#' @param:	linearModel: an output of glmnet from which the predictor should
+#' @param	linearModel	an output of glmnet from which the predictor should
 #'			     be created
 #'
-#' @return:	the age prediction function
+#' @return	the age prediction function
+#'
+#' @author	Michael Scherer
 
 
 createPredictor <- function(linearModel){
@@ -1204,6 +1237,8 @@ createPredictor <- function(linearModel){
 #' @param path		Path in which the new predictor should be written
 #' 
 #' @return	TRUE if the writing is successful
+#'
+#' @author	Michael Scherer
 writePredictorToCsv <- function(linearModel,path){
 	coeffs <- as.matrix(coef(linearModel))
 	write.csv(coeffs,path)
@@ -1236,6 +1271,8 @@ mapToCpG <- function(methData,anno){
 #' @param methData	Methylation data as a data frame or matix to be imputed
 #' 
 #' @return	the changed methyaltion data frame
+#'
+#' @author	Michael Scherer
 
 imputeRRBS <- function(methData){
 	samples <- dim(methData)[2]

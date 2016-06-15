@@ -17,4 +17,7 @@ TRUE if the writing is successful
 \description{
 This function writes the coefficients of a linear model into a csv file.
 }
+\author{
+Michael Scherer
+}
 

@@ -21,4 +21,7 @@ newly trained predictor. If parallel setup was done, the function perfoms the cr
 validation in parallel. The function adds a table to the specified report containing 
 the result of the 10-fold cross validation.
 }
+\author{
+Michael Scherer
+}
 

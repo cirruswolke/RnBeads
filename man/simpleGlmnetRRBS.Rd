@@ -10,7 +10,7 @@ simpleGlmnetRRBS(trainRnBSet, filePath = "")
 \item{trainRnBSet}{An \code{RnBeadSet} object containing the methylation info on which 
 the new predictor should be trained}
 
-\item{path}{Path in which the new predictor should be written}
+\item{filePath}{Path in which the new predictor should be written}
 }
 \value{
 Absolute path to the corresponding predictor. Null if the function was 
@@ -21,5 +21,8 @@ This function actually fits the metylation data to the available age data by fit
 a general regularized linear model (alpha parameter = 0.8) and then building a linear
 regression model upon the coefficients that had a non-zero coefficient in the glm.
 Dedicated to sequencing data.
+}
+\author{
+Michael Scherer
 }
 

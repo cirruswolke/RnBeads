@@ -20,4 +20,7 @@ RnBeadSet with a new column in the phenotypic table in which the predicted ages
 This function is the corresponding instance of the general age prediction algorithm for data
 created by Reduced Representation Bisulphite Sequencing. WGBS is not supported until now.
 }
+\author{
+Michael Scherer
+}
 

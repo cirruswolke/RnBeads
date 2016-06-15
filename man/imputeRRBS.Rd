@@ -16,4 +16,7 @@ the changed methyaltion data frame
 Since the k-nearest-neighbroing approach does not converge for all CpGs present in
 sequencing data, a simple mean imputation is performed for this kind of data
 }
+\author{
+Michael Scherer
+}
 

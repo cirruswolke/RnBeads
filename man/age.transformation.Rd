@@ -23,4 +23,7 @@ life and milder changes later on.
 The function is directly taken from Steve Horvath's prediction algorithm
 DNA methylation age of human tissues and cell types, Steve Horvath, Genome Biology, 2013
 }
+\author{
+Steve Horvath
+}
 
