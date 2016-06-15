@@ -22,4 +22,7 @@ This function is the core of the age prediction algorithm. It takes a rnb.set ob
 and loads a given predictor from a csv file to directly predict the age of the samples
 by this predictor.
 }
+\author{
+Michael Scherer
+}
 

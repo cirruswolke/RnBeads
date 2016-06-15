@@ -9,6 +9,8 @@ trainPredictor(rnbSet, data.dir)
 \arguments{
 \item{rnbSet}{An \code{RnBeadSet} object containing the methylation info on which 
 the new predictor should be trained}
+
+\item{data.dir}{Directory to which the resulting Predictor should be written}
 }
 \value{
 Absolute path to the corresponding predictor. The path is also set as the 
@@ -16,5 +18,8 @@ Absolute path to the corresponding predictor. The path is also set as the
 }
 \description{
 This function is the starting point for training a new predictor based on the dataset
+}
+\author{
+Michael Scherer
 }
 

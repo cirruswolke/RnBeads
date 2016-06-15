@@ -18,4 +18,7 @@ Modified report object with the age histogram
 This function is creates an age distribution plot for the predicted ages in the case
 where there is no age annotation available for comparison with predicted ages
 }
+\author{
+Michael Scherer
+}
 

@@ -7,14 +7,17 @@
 createPredictor(linearModel)
 }
 \arguments{
-\item{:}{linearModel: an output of glmnet from which the predictor should
+\item{linearModel}{an output of glmnet from which the predictor should
 be created}
 }
 \value{
-:	the age prediction function
+the age prediction function
 }
 \description{
 This function is needed to perform cross-validation. It creates a prediction 
 function in contrast to writing the predictor to a csv-file.
+}
+\author{
+Michael Scherer
 }
 

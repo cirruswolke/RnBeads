@@ -7,13 +7,18 @@
 cv.biseq(rnbSet, report)
 }
 \arguments{
-\item{:}{rnbSet: RnBSet object on which the cross validation should be perfomed}
+\item{rnbSet}{RnBSet object on which the cross validation should be perfomed}
+
+\item{report}{HTML-report to which the evaluation via cross-validation should be added}
 }
 \value{
-:	the result of the cross validation in a data.frame format
+the result of the cross validation in a data.frame format
 }
 \description{
 This function calls the general cross validation function from the corresponding
 RnBSet object in the case of sequencing data
+}
+\author{
+Michael Scherer
 }
 

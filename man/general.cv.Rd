@@ -7,13 +7,16 @@
 general.cv(fitFunction, ages, methData, k = 10)
 }
 \arguments{
-\item{:}{fitFunction:    a function that fits a predictor from training data to #'                predict age from methylation data
-ages:        the ages to be trained on
-methData:    input methylation matrix
-k:        the fold parameter}
+\item{fitFunction}{a function that fits a predictor from training data to #'                predict age from methylation data}
+
+\item{ages}{the ages to be trained on}
+
+\item{methData}{input methylation matrix}
+
+\item{k}{the fold parameter}
 }
 \value{
-:	a data matrix that contains the summarized quality measurments for 
+a data matrix that contains the summarized quality measurments for 
 	the predictor which are:
 		$cor[k+1]:	the mean correlation between the predicted 
 				ages and the actual age
@@ -30,5 +33,8 @@ k:        the fold parameter}
 \description{
 This functions performs k-fold-cross-validation on the predictor with a specified 
 methylation data and training ages
+}
+\author{
+Michael Scherer
 }
 

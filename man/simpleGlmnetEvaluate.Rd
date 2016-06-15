@@ -7,16 +7,19 @@
 simpleGlmnetEvaluate(methData, ages)
 }
 \arguments{
-\item{:}{methData: input methylation data for the age prediction}
+\item{methData}{input methylation data for the age prediction}
 
-\item{:}{ages:      reponse ages from the age prediction}
+\item{ages}{reponse ages from the age prediction}
 }
 \value{
-:	the age prediction function to be applied in each fold
+the age prediction function to be applied in each fold
 }
 \description{
 This function is needed to perform cross-validation. In contrast to simpleGlmnet
 it does not write the predictor to a csv-file but returns a prediction 
 function that can be used in each fold
+}
+\author{
+Michael Scherer
 }
 
