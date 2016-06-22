@@ -13,7 +13,8 @@ rnb.plot.dreduction(rnb.set, plot.type = "pca", dimensions = 1:2,
 must contain at least four samples.}
 
 \item{plot.type}{Type of plot to be created. This must be one of \code{"pca"} (projection to two principal
-components) or \code{"mds"} (multidimensional scaling to two dimensions). The section
+components), \code{"mds"} (multidimensional scaling to two dimensions) or \code{"tsne"}
+(t-distributed stochastic neighbor embedding to two dimensions). The section
 \emph{Details} provides more details on how the dimension reduction techniques are applied.}
 
 \item{dimensions}{Vector of two positive \code{integer} values giving the principle components to be shown in
@@ -21,8 +22,8 @@ the horizontal and vertical axis of the plot. This parameter is considered only 
 \code{plot.type} is \code{"pca"}.}
 
 \item{distance.metric}{Distance metric to be applied when reducing the dimensionality of the methylation data. This
-must be one of \code{"eucledian"} or \code{"manhattan"}. The second metric is supported only
-in multidimensional scaling.}
+must be one of \code{"eucledian"} or \code{"manhattan"}. The second metric is not supported by
+principal component analysis.}
 
 \item{target}{Site or region type to be used in the dimension reduction technique. This must be either
 \code{"sites"} (individual CpGs) or one of the region types summarized in \code{rnb.set}.}
@@ -35,7 +36,8 @@ displays the samples as identifiers instead of points.}
 
 \item{point.colors}{Trait, specified as column name or index in the sample annnotation table of \code{rnb.set}, to
 be used to define sample colors in the plot. Setting this parameter to zero (default) or to a
-trait that does not define categories results in all samples being displayed in black.}
+trait that does not define numerical values or categories results in all samples being
+displayed in black.}
 
 \item{legend.space}{Width, in inches, of the space dedicated for legends that will be assigned on the right side
 of the plot. This parameter is considered only if legends are actually included, that is, if
@@ -61,8 +63,10 @@ Creates a dimension reduction plot based on the methylation values of the given 
 The analysis option \code{"exploratory.top.dimensions"} controls whether dimension reduction is applied on all
 probes, sites or regions available in the given dataset, or only on the most variable ones. In case a trait is mapped
 to point types, the shapes to use are taken from the option \code{"points.category"}. Similary, the option
-\code{"colors.category"} determines which colors are used when mapping to color is applied. See
-\emph{\link[=rnb.options]{RnBeads Options}} for more information on these options.
+\code{"colors.category"} determines which colors are used when mapping sample categories to color. In cases when
+numerical values are mapped to color, the option \code{"colors.3.gradient"} is used. If the set of value contains
+both positive and negative numbers, the middle point in the color legend is set to zero. See
+\emph{\link[=rnb.options]{RnBeads Options}} for more information on the options mentioned above.
 }
 \examples{
 \donttest{

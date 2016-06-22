@@ -14,18 +14,8 @@
 #' @importFrom gplots colorpanel
 #' @importFrom gplots heatmap.2
 #' @importFrom plyr rbind.fill
-#' @importFrom matrixStats rowVars
-#' @importFrom matrixStats colVars
-#' @importFrom matrixStats rowMins
-#' @importFrom matrixStats colMins
-#' @importFrom matrixStats rowMaxs
-#' @importFrom matrixStats colMaxs
-#' @importFrom matrixStats rowSds
-#' @importFrom matrixStats colSds
-#' @importFrom matrixStats rowQuantiles
-#' @importFrom matrixStats colQuantiles
-#' @importFrom matrixStats rowMedians
-#' @importFrom matrixStats colMedians
+#' @importFrom matrixStats colMaxs colMedians colMins colQuantiles colSds colVars
+#' @importFrom matrixStats rowMaxs rowMedians rowMins rowQuantiles rowSds rowVars
 #' @docType package
 #' @name RnBeads
 NULL
