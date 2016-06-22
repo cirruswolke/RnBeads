@@ -584,14 +584,15 @@ rnb.plot.pheno.categories <- function(annotations, columns = NULL, fileprefix = 
 #' @param rnb.set         Methylation dataset as an object of type inheriting \code{\linkS4class{RnBSet}}. This dataset
 #'                        must contain at least four samples.
 #' @param plot.type       Type of plot to be created. This must be one of \code{"pca"} (projection to two principal
-#'                        components) or \code{"mds"} (multidimensional scaling to two dimensions). The section
+#'                        components), \code{"mds"} (multidimensional scaling to two dimensions) or \code{"tsne"}
+#'                        (t-distributed stochastic neighbor embedding to two dimensions). The section
 #'                        \emph{Details} provides more details on how the dimension reduction techniques are applied.
 #' @param dimensions      Vector of two positive \code{integer} values giving the principle components to be shown in
 #'                        the horizontal and vertical axis of the plot. This parameter is considered only when
 #'                        \code{plot.type} is \code{"pca"}.
 #' @param distance.metric Distance metric to be applied when reducing the dimensionality of the methylation data. This
-#'                        must be one of \code{"eucledian"} or \code{"manhattan"}. The second metric is supported only
-#'                        in multidimensional scaling.
+#'                        must be one of \code{"eucledian"} or \code{"manhattan"}. The second metric is not supported by
+#'                        principal component analysis.
 #' @param target          Site or region type to be used in the dimension reduction technique. This must be either
 #'                        \code{"sites"} (individual CpGs) or one of the region types summarized in \code{rnb.set}.
 #' @param point.types     Trait, specified as column name or index in the sample annnotation table of \code{rnb.set}, to
@@ -601,7 +602,8 @@ rnb.plot.pheno.categories <- function(annotations, columns = NULL, fileprefix = 
 #'                        displays the samples as identifiers instead of points.
 #' @param point.colors    Trait, specified as column name or index in the sample annnotation table of \code{rnb.set}, to
 #'                        be used to define sample colors in the plot. Setting this parameter to zero (default) or to a
-#'                        trait that does not define categories results in all samples being displayed in black.
+#'                        trait that does not define numerical values or categories results in all samples being
+#'                        displayed in black.
 #' @param legend.space    Width, in inches, of the space dedicated for legends that will be assigned on the right side
 #'                        of the plot. This parameter is considered only if legends are actually included, that is, if
 #'                        sample traits are mapped to point types and/or colors.
@@ -621,8 +623,10 @@ rnb.plot.pheno.categories <- function(annotations, columns = NULL, fileprefix = 
 #' The analysis option \code{"exploratory.top.dimensions"} controls whether dimension reduction is applied on all
 #' probes, sites or regions available in the given dataset, or only on the most variable ones. In case a trait is mapped
 #' to point types, the shapes to use are taken from the option \code{"points.category"}. Similary, the option
-#' \code{"colors.category"} determines which colors are used when mapping to color is applied. See
-#' \emph{\link[=rnb.options]{RnBeads Options}} for more information on these options.
+#' \code{"colors.category"} determines which colors are used when mapping sample categories to color. In cases when
+#' numerical values are mapped to color, the option \code{"colors.3.gradient"} is used. If the set of value contains
+#' both positive and negative numbers, the middle point in the color legend is set to zero. See
+#' \emph{\link[=rnb.options]{RnBeads Options}} for more information on the options mentioned above.
 #' 
 #' @examples
 #' \donttest{
@@ -644,7 +648,7 @@ rnb.plot.dreduction <- function(rnb.set, plot.type = "pca", dimensions = 1:2, di
 	if (!inherits(rnb.set, "RnBSet")) {
 		stop("invalid value for rnb.set")
 	}
-	if (!(is.character(plot.type) && length(plot.type) == 1 && tolower(plot.type) %in% c("mds", "pca"))) {
+	if (!(is.character(plot.type) && length(plot.type) == 1 && tolower(plot.type) %in% c("mds", "pca", "tsne"))) {
 		stop("invalid value for plot.type")
 	}
 	plot.type <- tolower(plot.type)
@@ -655,12 +659,14 @@ rnb.plot.dreduction <- function(rnb.set, plot.type = "pca", dimensions = 1:2, di
 		if (!(is.integer(dimensions) && length(dimensions) == 2 && isTRUE(all(dimensions > 0)))) {
 			stop("invalid value for dimensions")
 		}
+	} else if (plot.type == "tsne") {
+		rnb.require("tsne")
 	}
 	if (!(is.character(distance.metric) && length(distance.metric) == 1 &&
 		  	distance.metric %in% c("manhattan", "euclidean"))) {
 		stop("invalid value for distance.metric")
 	}
-	if (plot.type != "mds" && distance.metric != "euclidean") {
+	if (plot.type == "pca" && distance.metric != "euclidean") {
 		stop(paste("invalid distance metric for", plot.type))
 	}
 	if (!(is.character(target) && length(target) == 1 && (!is.na(target)))) {
@@ -718,7 +724,7 @@ rnb.plot.dreduction <- function(rnb.set, plot.type = "pca", dimensions = 1:2, di
 	site.nas <- colMeans(is.na(X))
 	if (plot.type == "mds") {
 		i <- which(site.nas == 1)
-	} else { # plot.type == c("pca", "pca")
+	} else { # plot.type %in% c("pca", "tsne")
 		i <- which(site.nas != 0)
 	}
 	info <- list("Target" = target, "Technique" = toupper(substr(plot.type, 1, 3)),
@@ -748,13 +754,16 @@ rnb.plot.dreduction <- function(rnb.set, plot.type = "pca", dimensions = 1:2, di
 	if (plot.type == "mds") {
 		X <- mds(X, distance.metric)
 		colnames(X) <- paste("MDS dimension", 1:2)
-	} else {
+	} else if (plot.type == "pca") {
 		X <- prcomp(X, center = TRUE, scale. = FALSE)$x
 		if (ncol(X) < max(dimensions)) {
 			stop(paste("unsupported value for dimensions;", ncol(X), "principal components available"))
 		}
 		X <- X[, dimensions]
 		colnames(X) <- paste("Principal component", dimensions)
+	} else { # plot.type == "tsne"
+		X <- tsne(dist(X, method = distance.metric), epoch = 2000)
+		colnames(X) <- paste("Dimension", 1:2)
 	}
 
 	## Define the data and mappings to plot
@@ -763,13 +772,20 @@ rnb.plot.dreduction <- function(rnb.set, plot.type = "pca", dimensions = 1:2, di
 	plot.labs <- list("x" = colnames(X)[1], "y" = colnames(X)[2])
 	if (point.colors != 0) {
 		i <- s.annotation[, point.colors]
-		if (is.character(i) || is.factor(i) || is.integer(i)) {
-			dframe$pcolor <- as.factor(i)
-			p.aes[["color"]] <- "pcolor"
-			plot.labs[["color"]] <- colnames(s.annotation)[point.types]
-		} else { # the trait cannot be mapped to point colors
-			rnb.warning("Cannot map point.colors to categories")
+		if (all(is.na(i))) {
+			rnb.warning("No data to visualize in point.colors")
 			point.colors <- 0L
+		} else if (is.logical(i) || is.character(i) || is.factor(i)) {
+			dframe$pcolor <- as.factor(i)
+		} else if (is.integer(i) || is.double(i)) {
+			dframe$pcolor <- as.double(i)
+		} else { # the trait cannot be mapped to point colors
+			rnb.warning("Cannot map point.colors to colors")
+			point.colors <- 0L
+		}
+		if (point.colors != 0) {
+			p.aes[["color"]] <- "pcolor"
+			plot.labs[["color"]] <- colnames(s.annotation)[point.colors]
 		}
 	}
 	if (point.types != 0) {
@@ -777,15 +793,15 @@ rnb.plot.dreduction <- function(rnb.set, plot.type = "pca", dimensions = 1:2, di
 		if ((is.character(i) || is.factor(i) || is.integer(i)) && (!any(is.na(i))) && anyDuplicated(i) == 0) {
 			dframe$id <- as.character(i)
 			p.aes[["label"]] <- "id"
-		} else if (point.types == point.colors) {
+		} else if (point.types == point.colors && (is.factor(dframe[, p.aes$color]))) {
 			p.aes[["shape"]] <- p.aes[["color"]]
 			plot.labs[["shape"]] <- plot.labs[["color"]]
-		}  else if (is.character(i) || is.factor(i) || is.integer(i)) {
+		}  else if (is.logical(i) || is.character(i) || is.factor(i) || is.integer(i)) {
 			dframe$ptype <- as.factor(i)
 			p.aes[["shape"]] <- "ptype"
 			plot.labs[["shape"]] <- colnames(s.annotation)[point.types]
 		} else { # the trait cannot be mapped to point types
-			rnb.warning("Cannot map point.types to categories")
+			rnb.warning("Cannot map point.types to point types")
 		}
 	}
 
@@ -797,8 +813,19 @@ rnb.plot.dreduction <- function(rnb.set, plot.type = "pca", dimensions = 1:2, di
 		pp <- pp + ggplot2::geom_point()
 	}
 	if ("pcolor" %in% colnames(dframe)) {
-		v2color <- rep_len(rnb.getOption("colors.category"), length.out = nlevels(dframe$pcolor))
-		pp <- pp + ggplot2::scale_color_manual(na.value = "#C0C0C0", values = v2color)
+		if (is.factor(dframe$pcolor)) {
+			v2c <- rep_len(rnb.getOption("colors.category"), length.out = nlevels(dframe$pcolor))
+			pp <- pp + ggplot2::scale_color_manual(na.value = "#C0C0C0", values = v2c)
+		} else { # is.double(dframe$pcolor)
+			v2c <- rnb.getOption("colors.3.gradient")
+			mp <- range(dframe$pcolor, na.rm = TRUE)
+			if (mp[1] < 0 && 0 < mp[2]) {
+				mp <- 0
+			} else {
+				mp <- mean(mp)
+			}
+			pp <- pp + ggplot2::scale_color_gradient2(low = v2c[1], mid = v2c[2], high = v2c[3], midpoint = mp)
+		}
 	}
 	if ("shape" %in% names(p.aes)) {
 		v2shape <- rep(rnb.getOption("points.category"), length.out = nlevels(dframe[, p.aes[["shape"]]]))
