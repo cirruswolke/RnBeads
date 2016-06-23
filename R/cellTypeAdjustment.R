@@ -16,7 +16,7 @@
 #' @param inds.g2 column indices of group 2 members
 #' @param adjustment.table a \code{data.frame} containing variables to adjust for in the testing
 #' @param paired should a paired analysis model be used. If so, the first index in \code{inds.g1} must correspond to the first
-#' 				 index in  \code{inds.g2} and so on.
+#'               index in  \code{inds.g2} and so on.
 #' @param nboot The number of bootstrapping resamples 
 #' @param ignore.na in this case all \code{NA} containing rows are removed 
 #' @param rescale.residual rescale the residual matrix as z-scores
@@ -548,20 +548,6 @@ rnb.plot.ct.heatmap<-function(ct.obj, type="nonnegative", writeToFile=FALSE, ...
 		tbl<-ct.obj$contributions.nonneg
 	}
 	
-	if(writeToFile){
-		fun.args <- list(...)
-		if (!("fname" %in% names(fun.args))) {
-			fun.args$fname <- "CellTypeContributionsPlot"
-		}
-		if (!("height" %in% names(fun.args))) {
-			fun.args$height <- 1.2 + nrow(tbl)* 0.15
-		}
-		if (!("width" %in% names(fun.args))) {
-			fun.args$width <- 3.2 + ncol(tbl) * 0.6
-		}
-		plot.file<-base::do.call(createReportPlot, fun.args)
-	}
-
 	dframe <- data.frame(
 		x = factor(rep(colnames(tbl), each = nrow(tbl)), levels = colnames(tbl)),
 		y = factor(rep(rownames(tbl), ncol(tbl)), levels = rev(rownames(tbl))),
@@ -582,6 +568,19 @@ rnb.plot.ct.heatmap<-function(ct.obj, type="nonnegative", writeToFile=FALSE, ...
 		pp <- suppressWarnings(ggplot_gtable(ggplot_build(pp)))
 		pp$widths[[3]] <- unit(2, "in")
 		pp$heights[[length(pp$heights) - 2L]] <- unit(1, "in")
+
+		fun.args <- list(...)
+		if (!("fname" %in% names(fun.args))) {
+			fun.args$fname <- "CellTypeContributionsPlot"
+		}
+		if (!("height" %in% names(fun.args))) {
+			fun.args$height <- 1.2 + nrow(tbl)* 0.15
+		}
+		if (!("width" %in% names(fun.args))) {
+			fun.args$width <- 3.2 + ncol(tbl) * 0.6
+		}
+		plot.file <- base::do.call(createReportPlot, fun.args)
+		grid.newpage()
 		grid.draw(pp)
 		return(off(plot.file))
 	}
