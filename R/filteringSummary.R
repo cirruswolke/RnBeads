@@ -59,6 +59,10 @@ rnb.filter.dataset <- function(rnb.set, r.samples, r.sites, mask = NULL) {
 	needs.summary <- (!is.null(mask))
 	if (needs.summary) {
 		rnb.set@meth.sites[,][mask] <- NA
+		if(inherits(rnb.set, "RnBeadRawSet")){
+			rnb.set@M[,][mask] <- NA
+			rnb.set@U[,][mask] <- NA
+		}
 	}
 	if (length(r.samples) != 0) {
 		if(rnb.getOption("enforce.destroy.disk.dumps")){
