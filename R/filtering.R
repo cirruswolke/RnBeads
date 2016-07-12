@@ -803,6 +803,12 @@ rnb.execute.low.coverage.masking <- function(rnb.set, covg.threshold = rnb.getOp
 	dataset <- rnb.set
 	if (any(mask)) {
 		dataset@meth.sites[,][mask] <- NA
+		if (inherits(dataset, "RnBeadRawSet")) {
+			dataset@M[,][mask] <- NA
+			dataset@U[,][mask] <- NA
+			dataset@M0[,][mask] <- NA
+			dataset@U0[,][mask] <- NA
+		}
 		dataset <- updateRegionSummaries(dataset)
 	}
 	list(dataset.before = rnb.set, dataset = dataset, mask = mask)
