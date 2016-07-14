@@ -797,7 +797,7 @@ rnb.options(inference.age.prediction.training=TRUE)
 @
 	In the first case, a new predictor is trained based on the methylation information in the \cs{rnb.set} object and written as a CSV-file at the given \cs{predictor.path}, which has to be a full path. The second option requires running \cs{rnb.run.inference} to create a new predictor that then is written into the \cs{RnBeads} data folder and sets the option \cs{inference.age.prediction.predictor} to the corresponding one.
 	 
-	Additionally, by setting the option \cs{inference.age.prediction.cv}, a 10-fold cross-validation is performed to serve as an accuracy measure for the training functionality. Setting the option \cs{inference.age.column} enables \cs{RnBeads} to read the corresponding age annotation column of the data set, which enables the creation of a bunch of evaluation plots. These include scatterplots of the deviation between annotated and predicted age as well as density plots for the differences between predicted and annotated ages. On default, \cs{inference.age.column} is set to \cs{age}.
+	Additionally, by setting the option \cs{inference.age.prediction.cv}, a 10-fold cross-validation is performed to serve as an accuracy measure for the training functionality. Setting the option \cs{inference.age.column} enables \cs{RnBeads} to read the corresponding age annotation column of the data set, which enables the creation of evaluation plots. These include scatterplots of the deviation between annotated and predicted age as well as density plots for the differences between predicted and annotated ages. On default, \cs{inference.age.column} is set to \cs{age}.
 
 \subsection{Exploratory Analysis}
 \label{sec:exploratory}
