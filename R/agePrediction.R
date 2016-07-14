@@ -108,12 +108,24 @@ rnb.section.ageprediction <- function(object,report){
 						temp <- temp[[1]][1]
  						unique(na.omit(as.numeric(unlist(strsplit(temp,"[^0-9]+")))))
 					}
-					actualAges <- unlist(lapply(actualAges,fun))
+					actualAges <- lapply(actualAges,fun)
+					set.na <- function(z){
+						if(length(z)==0){
+							NA
+						}else{
+							z
+						}
+					}
+					actualAges <- unlist(lapply(actualAges,set.na))
+					actualAgesNumeric <- as.numeric(actualAges)
+					print(actualAgesNumeric)
 					predictedAges <- ph$predicted_ages
 					txt <- "Plotting annotated ages versus predicted ages and indicating different tissues with different colors."
-					report <- add.info("Comparison Plot",add.agecomparison.plot,txt,actualAges,predictedAges)
-					txt <- "Plotting differences between predicted ages for each sample."
-					report <- add.info("Error Plot",add.error.plot,txt,actualAges,predictedAges)
+					report <- add.info("Comparison Plot",add.agecomparison.plot,txt,actualAgesNumeric,predictedAges)
+					#txt <- "Plotting differences between predicted ages for each sample."
+					report <- add.info("Error Plot",add.combination.plot,txt,actualAgesNumeric,predictedAges)
+					#txt <- "Plotting quantiles for the difference between predicted and annotated ages."
+					#report <- add.info("Quantile Plot",add.quantile.plot,txt,actualAgesNumeric,predictedAges)
 				}else{
 					txt <- "The age annotation column of the dataset has a format that can not be read."
 					report <- rnb.add.paragraph(report,txt)
@@ -268,6 +280,8 @@ add.agecomparison.plot <- function(report, object, actualAges, predictedAges){
 	notPredicted <- is.na(predictedAges)
 	actualAges <- actualAges[!notPredicted]
 	predictedAges <- predictedAges[!notPredicted]
+	ph <- ph[!naAges,]
+	ph <- ph[!notPredicted,]
 
 	traits <- names(rnb.sample.groups(object))
 	traits <- c("Default",traits)
@@ -283,6 +297,8 @@ add.agecomparison.plot <- function(report, object, actualAges, predictedAges){
 		notPredicted <- is.na(predictedAges)
 		actualAges <- actualAges[!notPredicted]
 		predictedAges <- predictedAges[!notPredicted]
+		ph <- ph[!naAges,]
+		ph <- ph[!notPredicted,]
 		report.plot <- createReportPlot("age_comparison_",report)
 		data <- data.frame(actualAges,predictedAges,Sample=row.names(ph))
 		diff <- abs(predictedAges-actualAges)
@@ -342,6 +358,9 @@ add.agecomparison.plot <- function(report, object, actualAges, predictedAges){
 	setting_names <- list("Compare first trait"=traits,"Compare second trait"=traits[])
 	names(setting_names[[1]]) <- traits
 	names(setting_names[[2]]) <- traits
+	if(length(traits)==1){
+		setting_names = list()
+	}
 	report <- rnb.add.figure(report, descr, report.plots,setting_names)
 
 	return(report)
@@ -468,6 +487,7 @@ add.combination.plot <- function(report, object, actualAges,predictedAges){
 	diff <- predictedAges - actualAges
 	q1 <- quantile(diff,0.01,na.rm=TRUE)
 	q99 <- quantile(diff,0.99,na.rm=TRUE)
+
 	density <- density(diff)
 	Sample <- rep(NA,length(density$x))
 	Set <- rep("Density",length(density$y))
@@ -485,6 +505,7 @@ add.combination.plot <- function(report, object, actualAges,predictedAges){
 
 	complete_data <- rbind(density.frame,data)
 	cvalues <- rep(rnb.getOption("colors.category"))
+
 
 	plot <- ggplot(complete_data,aes(x=Difference,y=Density,colour=Set))+geom_point()+facet_grid(Set~.,scale="free",drop=TRUE)+geom_text(aes(label=ifelse(Difference <= q1, as.character(Sample),""),hjust=.5),vjust=0,size=3,colour="black")+geom_text(aes(x=Difference,y=Density,label=ifelse(Difference >= q99, as.character(Sample),"")),hjust=.5,vjust=0,size=3,colour="black")+geom_vline(data=hline_mean,aes(xintercept=yint,linetype=Measure),show_guide=TRUE)+geom_vline(data=hline_quantiles,aes(xintercept=yint,linetype=Measure),show_guide=TRUE)+ylab("Sample Number / Density")+xlab("Difference between predicted age and annotated age")+scale_colour_manual(na.value = "#C0C0C0", values = cvalues, guide=FALSE)
 	report.plot <- createReportPlot("age_prediction_quantile", report)
