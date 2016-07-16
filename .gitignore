@@ -1,2 +1,13 @@
 *.sublime-project
 *.project
+*.log
+*.aux
+*.fls
+*.out
+*.toc
+*.synctex.gz
+*.fdb_latexmk
+vignettes/RnBeads.tex
+vignettes/RnBeads.pdf
+vignettes/RnBeads_Annotations.tex
+vignettes/RnBeads_Annotations.pdf
