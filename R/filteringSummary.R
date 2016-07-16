@@ -62,6 +62,7 @@ rnb.filter.dataset <- function(rnb.set, r.samples, r.sites, mask = NULL) {
 		if(inherits(rnb.set, "RnBeadRawSet")){
 			rnb.set@M[,][mask] <- NA
 			rnb.set@U[,][mask] <- NA
+			
 			if(!is.null(rnb.set@M0)){
 				rnb.set@M0[,][mask] <- NA
 			}
