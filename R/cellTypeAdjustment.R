@@ -136,7 +136,7 @@ refFreeEWASP <- function(
 
 #######################################################################################################################
 
-#' estimatePropotionsCP
+#' estimateProportionsCP
 #' 
 #' Estimates cell type proportions using the constrained projection method from Houseman et al. [1]
 #' 
@@ -145,8 +145,9 @@ refFreeEWASP <- function(
 #' 							in the RnBSet object sample annotation table 
 #' 							which gives the mapping to reference cell type
 #' 							samples
-#' @param n.most.variable	singleton integer specifying how many top variable CpGs should be used for marker selection.
-#' 							If \code{NA} all the sites are considered (take into account extended computation times).
+#' @param n.most.variable	Singleton integer specifying how many top variable CpGs should be used for marker selection.
+#' 							If this option is set to \code{NA} or \code{NULL}, all sites are considered. Please take
+#'                          into account the extended computation time in such a case.
 #' @param n.markers			singleton integer specifying how many CpGs should
 #' 							be used as markers for fitting the projection model
 #' @param constrained		if \code{TRUE} the returned cell type proportion estimates
@@ -209,6 +210,9 @@ estimateProportionsCP<-function(
 	if(length(which(is.na(pheno(rnb.set)[[cell.type.column]])))==0){
 		stop("invalid value for cell.type.column: should contain some missing values to define the target samples")
 	}
+	if (is.null(n.most.variable)) {
+		n.most.variable <- NA_integer_
+	}
 	
 	if(full.output){
 		result<-list()
@@ -218,9 +222,13 @@ estimateProportionsCP<-function(
 		result$cell.type.column.name=cell.type.column
 		result$cell.type.column=pheno(rnb.set)[,cell.type.column]
 	}
-	
-	cell.types<-as.character(unique(na.omit(pheno(rnb.set)[,cell.type.column])))
-	
+	if (is.factor(pheno(rnb.set)[,cell.type.column])) {
+		cell.types <- table(pheno(rnb.set)[,cell.type.column])
+		cell.types <- names(cell.types)[cell.types != 0]
+	} else {
+		cell.types <- unique(na.omit(as.character(pheno(rnb.set)[,cell.type.column])))
+	}
+
 	if(length(cell.types)<2){
 		stop("Found less than two reference cell types")
 		if(full.output){
@@ -596,7 +604,9 @@ rnb.plot.ct.heatmap<-function(ct.obj, type="nonnegative", writeToFile=FALSE, ...
 #' @param rnb.set			object of class \code{\linkS4class{RnBSet}}
 #' @param cell.type.column	integer index or character identifier of a column in sample annotation table of \code{rnb.set}
 #' 							which gives the mapping of samples to reference cell types 
-#' @param test.max.markers	maximal amount of CpG positions to use for marker selection
+#' @param test.max.markers	Maximal amount of CpG positions to use for marker selection. If this option is set to
+#' 							\code{NA} or \code{NULL}, all sites are considered. Please take into account the extended
+#'                          computation time in such a case.
 #' @param top.markers		the number of markers to select 
 #' @param method 			algorithm used for estmation of the cell type contributions
 #' @param verbose			flag specifying whether diagnostic output should be written to the console 
@@ -673,7 +683,7 @@ rnb.section.ct.estimation<-function(report, ct.object){
 		markers.text <- c("In the first step the reference methylomes were used to estimate the association of each ",
 			"CpG position to each of the cell types. The stength of association was measured using F-test. ")
 		ctMarkers <- rnb.getOption("inference.max.cell.type.markers")
-		if(!is.na(ctMarkers)){
+		if(!(is.null(ctMarkers) || is.na(ctMarkers))){
 			markers.text <- c(markers.text, "To decrease the computation load, only ", ctMarkers, " most variable ",
 				"CpGs were considered. ")
 		}
@@ -688,7 +698,7 @@ rnb.section.ct.estimation<-function(report, ct.object){
 		} else { # n.markers == length(ct.object$f.stat)
 			cutoff <- floor(min(ct.object$f.stat))
 		}
-		
+
 		markers.text <- c(markers.text, "Finally, only ", n.markers, " CpGs ",
 			"with the lowest F-test p-value were used in the contribution estimation. The plot below visualizes the ",
 			"distribution of F statistic values for all tested CpGs. Note that selecting the most informative CpGs is ",
@@ -799,10 +809,11 @@ set.covariates.ct <- function(rnb.set, ct.obj) {
 	if (!is.null(ct.obj)) {
 		## FIXME: Validate ct.obj and its elements
 		contributions <- matrix(as.double(NA), nrow = length(samples(rnb.set)), ncol = ncol(ct.obj$contributions),
-			dimnames = list(colnames(rnb.set@meth.sites), paste0("ct_", 1:ncol(ct.obj$contributions)))) #colnames(ct.obj$contributions))) #paste0("ct_", ...)
+			dimnames = list(colnames(rnb.set@meth.sites), paste0("ct_", 1:ncol(ct.obj$contributions))))
 		i.samples <- which(is.na(pheno(rnb.set)[, ct.obj$cell.type.column.name]))
 		contributions[i.samples, ] <- ct.obj$contributions
 		attr(contributions, "column") <- ct.obj$cell.type.column.name
+		attr(contributions, "cell types") <- colnames(ct.obj$contributions)
 		rnb.set@inferred.covariates[["cell.types"]] <- contributions
 	}
 

@@ -64,7 +64,7 @@ filtering.deviation.threshold	double	no	no	[0,1]	0
 inference	logical	no	no		FALSE
 inference.targets.sva	character.vector	no	no		()
 inference.reference.methylome.column	character	no	yes		NULL
-inference.max.cell.type.markers	integer	no	no	[1,	10000
+inference.max.cell.type.markers	integer	no	yes	[1,	50000
 inference.top.cell.type.markers	integer	no	no	[1,	500
 inference.sva.num.method	character	no	no	(be,leek)	leek
 inference.age.column	character	no	no		age
