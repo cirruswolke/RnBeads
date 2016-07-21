@@ -2,7 +2,7 @@
 % Please edit documentation in R/cellTypeAdjustment.R
 \name{estimateProportionsCP}
 \alias{estimateProportionsCP}
-\title{estimatePropotionsCP}
+\title{estimateProportionsCP}
 \usage{
 estimateProportionsCP(rnb.set, cell.type.column, n.most.variable = NA,
   n.markers = 500L, constrained = TRUE, full.output = FALSE)
