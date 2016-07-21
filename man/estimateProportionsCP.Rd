@@ -15,8 +15,9 @@ in the RnBSet object sample annotation table
 which gives the mapping to reference cell type
 samples}
 
-\item{n.most.variable}{singleton integer specifying how many top variable CpGs should be used for marker selection.
-If \code{NA} all the sites are considered (take into account extended computation times).}
+\item{n.most.variable}{Singleton integer specifying how many top variable CpGs should be used for marker selection.
+   If this option is set to \code{NA} or \code{NULL}, all sites are considered. Please take
+into account the extended computation time in such a case.}
 
 \item{n.markers}{singleton integer specifying how many CpGs should
 be used as markers for fitting the projection model}

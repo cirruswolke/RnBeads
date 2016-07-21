@@ -252,11 +252,13 @@ is available (see below). Attempting to get or set the value of a non-existing o
   \item{\bold{\code{inference.reference.methylome.column}}\code{ = character()}}{
        Column name in the sample annotation table giving the assignment of samples to reference methylomes.
 		  The target samples should have \code{NA} values in this column.}
-  \item{\bold{\code{inference.max.cell.type.markers}}\code{ = 10000}}{
-       A number of most variable CpGs which are tested for association with the reference cell types.}
+  \item{\bold{\code{inference.max.cell.type.markers}}\code{ = 50000}}{
+       Number of most variable CpGs which are tested for association with the reference cell types. Setting this
+       option to \code{NULL} forces the algorithm to use all available sites in the dataset, and may greatly
+       increase the running time for cell type comoposition estimation.}
   \item{\bold{\code{inference.top.cell.type.markers}}\code{ = 500}}{
-       The number of top cell type markers used for determining cell type contributions to the target
-		  DNA methylation profiles using the projection method of Houseman et al.}
+       Number of top cell type markers used for determining cell type contributions to the target DNA methylation
+		  profiles using the projection method of Houseman et al.}
   \item{\bold{\code{inference.sva.num.method}}\code{ = "leek"}}{
        Name of the method to be used for estimating the number of surrogate variables.
 	  must be either 'leek' or 'be', See \code{sva} function for details.}

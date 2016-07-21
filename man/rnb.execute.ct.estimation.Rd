@@ -14,7 +14,9 @@ rnb.execute.ct.estimation(rnb.set, cell.type.column = NA,
 \item{cell.type.column}{integer index or character identifier of a column in sample annotation table of \code{rnb.set}
 which gives the mapping of samples to reference cell types}
 
-\item{test.max.markers}{maximal amount of CpG positions to use for marker selection}
+\item{test.max.markers}{Maximal amount of CpG positions to use for marker selection. If this option is set to
+   \code{NA} or \code{NULL}, all sites are considered. Please take into account the extended
+computation time in such a case.}
 
 \item{top.markers}{the number of markers to select}
 
