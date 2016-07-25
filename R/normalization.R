@@ -1019,3 +1019,8 @@ rnb.step.normalization<-function(object, report, method = rnb.getOption("normali
 	logger.completed()
 	return(list(dataset=object, report=report))
 }
+#######################################################################################################################
+subtract.bg.illumina<-function(rnb.set){
+	return(rnb.set)
+}
+#######################################################################################################################
