@@ -1095,6 +1095,7 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 		report <- result$report
 		removed.sites <- sort(c(removed.sites, result$filtered))
 	}
+	rnb.cleanMem()
 	mask <- NULL
 	if (rnb.getOption("filtering.low.coverage.masking")) {
 		result <- rnb.step.low.coverage.masking.internal(rnb.set, removed.sites, report, anno.table,
@@ -1105,6 +1106,7 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 		report <- result$report
 	}
 	suppressWarnings(rm(result))
+	rnb.cleanMem()
 
 	logger.completed.filtering <- function(rnb.set, r.samples, r.sites) {
 		retained.p <- nsites(rnb.set) - length(r.sites)
