@@ -2230,6 +2230,45 @@ setMethod("sampleCovgApply", signature(object = "RnBSet"),
 	}
 )
 ########################################################################################################################
+if(!isGeneric("getNumNaMeth")) setGeneric("getNumNaMeth", function(object, ...) standardGeneric("getNumNaMeth"))
+#' getNumNaMeth-methods
+#'
+#' for each site/region, the getNumNaMeth retrieves the number of NA values accross all samples.
+#' Does this efficiently by breaking down the methylation matrix into submatrices
+#' @param type "sites" or region type
+#' @param chunkSize size of each submatrix (performance tuning parameter)
+#' @param mask logical matrix. its entries will also be considered NAs in counting
+#' @return vector containing the number of NAs per site/region
+#'
+#' @rdname getNumNaMeth-methods
+#' @docType methods
+#' @aliases getNumNaMeth
+#' @aliases getNumNaMeth,RnBSet-method
+setMethod("getNumNaMeth", signature(object = "RnBSet"),
+	function(object, type="sites", chunkSize=1e5, mask=NULL) {
+		if (!(is.character(type) && length(type) == 1 && (!is.na(type)))) {
+			stop("invalid value for type")
+		}
+		if (!(type %in% c("sites", object@target, names(object@regions)))) {
+			stop("unsupported region type")
+		}
+		#get start and end indices for the chunks
+		n <- nsites(object, type)
+		indStarts <- seq(1,n,by=chunkSize)
+		indEnds <- c(indStarts[-1]-1, n)
+		#apply to each chunk
+		res <- unlist(lapply(1:length(indStarts), FUN=function(i){
+			indsCur <- indStarts[i]:indEnds[i]
+			mm <- meth(object, type=type, i=indsCur)
+			isNaMat <- is.na(mm)
+			if (!is.null(mask)) isNaMat <- isNaMat | mask[indsCur,]
+			return(as.integer(rowSums(isNaMat)))
+		}))
+		
+		return(res)
+	}
+)
+########################################################################################################################
 #' rnb.sample.summary.table
 #'
 #' Creates a sample summary table from an RnBSet object

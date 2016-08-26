@@ -1089,6 +1089,7 @@ rnb.step.high.coverage.removal.internal <- function(rnb.set, sites2ignore, repor
 #'           \item{\code{"filtered"}}{\code{integer} vector storing the indices (in beta matrix of the unfiltered
 #'                dataset) of all removed sites.}
 #' 			 \item{\code{"threshold"}}{Copy of \code{threshold}.}
+#' 			 \item{\code{"naCounts"}}{Vector storing the number of NAs per site}
 #'         }
 #'
 #' @examples
@@ -1110,15 +1111,19 @@ rnb.execute.na.removal <- function(rnb.set, threshold = rnb.getOption("filtering
 	if (!(0 <= threshold && threshold <= 1)) {
 		stop("invalid value for threshold; expected a value between 0 and 1")
 	}
-	filtered <- which(rowMeans(is.na(meth(rnb.set))) > threshold)
-	list(dataset.before = rnb.set, dataset = remove.sites(rnb.set, filtered), filtered = filtered,
-		threshold = threshold)
+	filterRes <- rnb.execute.na.removal.internal(rnb.set, NULL, threshold)$filtered
+	list(dataset.before = rnb.set, dataset = remove.sites(rnb.set, filtered), filtered = filterRes$filtered,
+		threshold = threshold, naCounts=filterRes$naCounts)
 }
 
-rnb.execute.na.removal.internal <- function(mm, sites2ignore, threshold, mask=NULL) {
-	isNaMat <- is.na(mm)
-	if (!is.null(mask)) isNaMat <- isNaMat | mask
-	setdiff(which(rowMeans(isNaMat) > threshold), sites2ignore)
+rnb.execute.na.removal.internal <- function(rnb.set, sites2ignore, threshold, mask=NULL) {
+	naCounts <- getNumNaMeth(rnb.set, mask=mask)
+	filtered <- which((naCounts/length(samples(rnb.set))) > threshold)
+	if (length(sites2ignore) > 0){
+		filtered <- setdiff(filtered, sites2ignore)
+	}
+	res <- list(naCounts=naCounts, filtered=filtered)
+	return(res)
 }
 
 ########################################################################################################################
@@ -1146,16 +1151,16 @@ rnb.section.na.removal <- function(report, stats) {
 	if (!(0 <= stats$threshold && stats$threshold <= 1)) {
 		stop("invalid value for stats$threshold; expected a value between 0 and 1")
 	}
-	rnb.section.na.removal.internal(report, class(stats$dataset), meth(stats$dataset.before),
+	rnb.section.na.removal.internal(report, class(stats$dataset), length(samples(stats$dataset)), stats$naCounts,
 		stats$filtered, stats$threshold, annotation(stats$dataset.before, add.names = TRUE))
 }
 
-rnb.section.na.removal.internal <- function(report, dataset.class, mm, filtered, threshold, anno.table) {
+rnb.section.na.removal.internal <- function(report, dataset.class, numSamples, naCounts, filtered, threshold, anno.table) {
 	txt.site <- rnb.get.row.token(dataset.class)
 	txt.sites <- rnb.get.row.token(dataset.class, plural = TRUE)
-	threshold.abs <- as.integer(floor(threshold * ncol(mm)))
+	threshold.abs <- as.integer(floor(threshold * numSamples))
 	txt.title <- paste("Removal of", capitalize(txt.sites), "with (Many) Missing Values")
-	na.counts <- as.integer(rowSums(is.na(mm)))
+	na.counts <- as.integer(naCounts)
 	removed.count <- length(filtered)
 	if (removed.count == 0) {
 		txt <- "No sites with too many missing values were found in the methylation table."
@@ -1193,7 +1198,7 @@ rnb.section.na.removal.internal <- function(report, dataset.class, mm, filtered,
 				pp <- ggplot(dframe, aes_string(x = "x")) + labs(x = "Number of missing values", y = "Frequency") +
 					geom_histogram(aes_string(y = "..count.."), binwidth = binwidth)
 				if (0 < threshold && threshold < 1) {
-					pp <- pp + geom_vline(xintercept = threshold * ncol(mm), linetype = "dotted")
+					pp <- pp + geom_vline(xintercept = threshold * numSamples, linetype = "dotted")
 				}
 				print(pp)
 				return(off(rplot))
@@ -1253,20 +1258,21 @@ rnb.step.na.removal <- function(rnb.set, report, threshold = 0) {
 	if (!(0 <= threshold && threshold <= 1)) {
 		stop("invalid value for threshold; expected a value between 0 and 1")
 	}
-	result <- rnb.step.na.removal.internal(class(rnb.set), meth(rnb.set), report, annotation(rnb.set, add.names = TRUE),
+	result <- rnb.step.na.removal.internal(rnb.set, sites2ignore, report, annotation(rnb.set, add.names = TRUE),
 		threshold)
 	return(list(dataset = remove.sites(rnb.set, result$filtered), report = result$report))
 }
 
-rnb.step.na.removal.internal <- function(dataset.class, mm, sites2ignore, report, anno.table, threshold, mask=NULL) {
+rnb.step.na.removal.internal <- function(rnb.set, sites2ignore, report, anno.table, threshold, mask=NULL) {
+	dataset.class <- class(rnb.set)
 	logger.start("Missing Value Removal")
 	logger.status(c("Using a sample quantile threshold of", threshold))
-	filtered <- rnb.execute.na.removal.internal(mm, sites2ignore, threshold, mask)
-	logger.status(c("Removed", length(filtered), "site(s) with too many missing values"))
-	report <- rnb.section.na.removal.internal(report, dataset.class, mm, filtered, threshold, anno.table)
+	filterRes <- rnb.execute.na.removal.internal(rnb.set, sites2ignore, threshold, mask)
+	logger.status(c("Removed", length(filterRes$filtered), "site(s) with too many missing values"))
+	report <- rnb.section.na.removal.internal(report, dataset.class, length(samples(rnb.set)), filterRes$naCounts, filterRes$filtered, threshold, anno.table)
 	logger.status("Added a corresponding section to the report")
 	logger.completed()
-	list(report = report, filtered = filtered)
+	list(report = report, filtered = filterRes$filtered)
 }
 
 ########################################################################################################################

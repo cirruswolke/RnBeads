@@ -1156,8 +1156,8 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 	}
 	ttt <- rnb.getOption("filtering.missing.value.quantile")
 	if (ttt != 1) {
-		if (is.null(mm)) mm <- meth(rnb.set)
-		result <- rnb.step.na.removal.internal(class(rnb.set), mm, removed.sites, report, anno.table, ttt, mask)
+		# if (is.null(mm)) mm <- meth(rnb.set)
+		result <- rnb.step.na.removal.internal(rnb.set, removed.sites, report, anno.table, ttt, mask)
 		report <- result$report
 		removed.sites <- sort(c(removed.sites, result$filtered))
 	}
