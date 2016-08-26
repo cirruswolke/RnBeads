@@ -746,41 +746,49 @@ setMethod("remove.sites", signature(object = "RnBSet"),
 			if(length(inds) != 0) {
 					object@sites <- object@sites[-inds, ]
 					if(!is.null(object@status) && object@status$disk.dump){
-						mat <- object@meth.sites[,]
-						new.matrix <- mat[-inds, ,drop=FALSE]
+						doBigFf <- !is.null(object@status$disk.dump.bigff)
+						bff.finalizer <- NULL
+						if (doBigFf) doBigFf <- object@status$disk.dump.bigff
+						if (doBigFf) bff.finalizer <- rnb.getOption("disk.dump.bigff.finalizer")
+						nSites.new <- nrow(object@meth.sites) - length(inds)
+						nSamples <- length(samples(object))
+						# methylation
+						newMat <- NULL
+						if (doBigFf){
+							newMat <- BigFfMat(row.n=nSites.new, col.n=nSamples, row.names=NULL, col.names=samples(object), finalizer=bff.finalizer)
+						} else {
+							newMat <- ff(NA, dim=c(nSites.new, nSamples), dimnames=list(NULL, samples(object)), vmode="double")
+						}
+						for (j in 1:nSamples){
+							newMat[,j] <- object@meth.sites[-inds,j]
+						}
 						if(isTRUE(object@status$discard.ff.matrices)){
 							delete(object@meth.sites)
 						}
-						doBigFf <- !is.null(object@status$disk.dump.bigff)
-						if (doBigFf) doBigFf <- object@status$disk.dump.bigff
+						object@meth.sites <- newMat
 
-						if (doBigFf){
-							bff.finalizer <- rnb.getOption("disk.dump.bigff.finalizer")
-							object@meth.sites <- BigFfMat(new.matrix, finalizer=bff.finalizer)
-						} else {
-							object@meth.sites <- convert.to.ff.matrix.tmp(new.matrix)
-						}
-						rm(new.matrix); rnb.cleanMem()
+						# coverage
 						if(!is.null(object@covg.sites)) {
-							mat <- object@covg.sites[,]
-							new.matrix <- mat[-inds, ,drop=FALSE]
+							newMat <- NULL
+							if (doBigFf){
+								newMat <- BigFfMat(row.n=nSites.new, col.n=nSamples, row.names=NULL, col.names=samples(object), na.prototype=as.integer(NA), finalizer=bff.finalizer)
+							} else {
+								newMat <- ff(NA_integer_, dim=c(nSites.new, nSamples), dimnames=list(NULL, sample.names))
+							}
+							for (j in 1:nSamples){
+								newMat[,j] <- object@covg.sites[-inds,j]
+							}
 							if(isTRUE(object@status$discard.ff.matrices)){
 								delete(object@covg.sites)
-						 	}
-						 	if (doBigFf){
-						 		object@covg.sites <- BigFfMat(new.matrix, finalizer=bff.finalizer)
-						 	} else {
-								object@covg.sites <- convert.to.ff.matrix.tmp(new.matrix)
 							}
-							rm(new.matrix); rnb.cleanMem()
+							object@covg.sites <- newMat
 						}
-					}else{
+					} else {
 						object@meth.sites <- object@meth.sites[-inds, ,drop=FALSE]
 						if(!is.null(object@covg.sites)) {
 							object@covg.sites <- object@covg.sites[-inds, ,drop=FALSE]
 						}
 					}
-
 			}
 
 			## Update region methylation
