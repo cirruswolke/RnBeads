@@ -829,7 +829,7 @@ computeDiffMeth.bin.site <- function(b,inds.g1,inds.g2,n.perm=0,...){
 	if (length(union(inds.g1,inds.g2)) != (length(inds.g1)+length(inds.g2))){
 		logger.error("Overlapping sample sets in differential methylation analysis")
 	}
-	logger.start("Computing Differential Methylation Table (Site Level)")
+	logger.start("Computing Differential Methylation Table")
 	diffmeth.tab <- computeDiffTab.extended.site(b,inds.g1=inds.g1,inds.g2=inds.g2,...)
 	diffmethTab4ranks <- extractRankingCols.site(diffmeth.tab)
 	combRank <- combinedRanking.tab(diffmethTab4ranks,rerank=FALSE)

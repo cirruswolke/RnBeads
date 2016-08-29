@@ -822,6 +822,51 @@ setMethod("remove.sites", signature(object = "RnBSet"),
 
 ########################################################################################################################
 
+if (!isGeneric("mask.sites.meth")) {
+	setGeneric("mask.sites.meth", function(object, mask, verbose=FALSE) standardGeneric("mask.sites.meth"))
+}
+
+#' mask.sites.meth-methods
+#'
+#' Given a logical matrix, sets corresponding entries in the methylation table to NA (masking).
+#' Low memory footprint
+#'
+#' @param object    Dataset of interest.
+#' @param mask      logical matrix indicating which sites should be masked
+#' @param verbose	if \code{TRUE} additional diagnostic output is generated
+#'
+#' @return The modified dataset.
+#'
+#' @rdname mask.sites.meth-methods
+#' @aliases mask.sites.meth
+#' @aliases mask.sites.meth,RnBSet-method
+#' @docType methods
+setMethod("mask.sites.meth", signature(object = "RnBSet"),
+	function(object, mask, verbose=FALSE) {
+		if(!is.null(object@status) && object@status$disk.dump){
+			nSamples <- length(samples(object))
+			for (j in 1:nSamples){
+				object@meth.sites[mask[,j],j] <- NA
+			}
+		} else {
+			object@meth.sites[,][mask] <- NA
+			if(inherits(object, "RnBeadRawSet")){
+				object@M[,][mask] <- NA
+				object@U[,][mask] <- NA
+				if(!is.null(object@M0)){
+					object@M0[,][mask] <- NA
+				}
+				if(!is.null(object@U0)){
+					object@U0[,][mask] <- NA
+				}
+			}
+		}
+		object
+	}
+)
+
+########################################################################################################################
+
 if (!isGeneric("remove.samples")) {
 	setGeneric("remove.samples", function(object, samplelist) standardGeneric("remove.samples"))
 }

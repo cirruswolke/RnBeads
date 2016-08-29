@@ -1189,6 +1189,14 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 			report, section.name=sn, section.order=so)
 	logger.completed()
 
+	#DEBUG
+	if (TRUE){
+		fn <- file.path(rnb.get.directory(report, "data", absolute=TRUE), "filterData.RData")
+		logger.status(c("DEBUG: Saving filtering data to", fn))
+		save(removed.samples, removed.sites, mask, file=fn)
+	}
+
+
 	rnb.set <- rnb.filter.dataset(rnb.set, removed.samples, removed.sites, mask)
 
 	if (rnb.getOption("region.subsegments") > 1L) {
@@ -1367,7 +1375,10 @@ rnb.run.exploratory <- function(rnb.set, dir.reports,
 	if (!is.null(rnb.getOption("replicate.id.column"))) {
 		replicateList <- rnb.sample.replicates(rnb.set, replicate.id.col = rnb.getOption("replicate.id.column"))
 		if (length(replicateList) > 0) {
-			region.types <- c("sites", rnb.region.types.for.analysis(rnb.set))
+			region.types <- rnb.region.types.for.analysis(rnb.set)
+			if (rnb.getOption("analyze.sites")){
+				region.types <- c("sites", region.types)
+			}
 			report <- rnb.section.replicate.concordance(rnb.set, replicateList, types = region.types, report)
 		}
 	}
