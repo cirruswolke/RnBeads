@@ -1095,6 +1095,7 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 		report <- result$report
 		removed.sites <- sort(c(removed.sites, result$filtered))
 	}
+	rnb.cleanMem()
 	mask <- NULL
 	if (rnb.getOption("filtering.low.coverage.masking")) {
 		result <- rnb.step.low.coverage.masking.internal(rnb.set, removed.sites, report, anno.table,
@@ -1105,6 +1106,7 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 		report <- result$report
 	}
 	suppressWarnings(rm(result))
+	rnb.cleanMem()
 
 	logger.completed.filtering <- function(rnb.set, r.samples, r.sites) {
 		retained.p <- nsites(rnb.set) - length(r.sites)
@@ -1154,8 +1156,8 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 	}
 	ttt <- rnb.getOption("filtering.missing.value.quantile")
 	if (ttt != 1) {
-		if (is.null(mm)) mm <- meth(rnb.set)
-		result <- rnb.step.na.removal.internal(class(rnb.set), mm, removed.sites, report, anno.table, ttt, mask)
+		# if (is.null(mm)) mm <- meth(rnb.set)
+		result <- rnb.step.na.removal.internal(rnb.set, removed.sites, report, anno.table, ttt, mask)
 		report <- result$report
 		removed.sites <- sort(c(removed.sites, result$filtered))
 	}
@@ -1186,6 +1188,14 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 	report <- rnb.step.filter.summary.internal(rnb.set, removed.samples, removed.sites,
 			report, section.name=sn, section.order=so)
 	logger.completed()
+
+	#DEBUG
+	if (TRUE){
+		fn <- file.path(rnb.get.directory(report, "data", absolute=TRUE), "filterData.RData")
+		logger.status(c("DEBUG: Saving filtering data to", fn))
+		save(removed.samples, removed.sites, mask, file=fn)
+	}
+
 
 	rnb.set <- rnb.filter.dataset(rnb.set, removed.samples, removed.sites, mask)
 
@@ -1365,7 +1375,10 @@ rnb.run.exploratory <- function(rnb.set, dir.reports,
 	if (!is.null(rnb.getOption("replicate.id.column"))) {
 		replicateList <- rnb.sample.replicates(rnb.set, replicate.id.col = rnb.getOption("replicate.id.column"))
 		if (length(replicateList) > 0) {
-			region.types <- c("sites", rnb.region.types.for.analysis(rnb.set))
+			region.types <- rnb.region.types.for.analysis(rnb.set)
+			if (rnb.getOption("analyze.sites")){
+				region.types <- c("sites", region.types)
+			}
 			report <- rnb.section.replicate.concordance(rnb.set, replicateList, types = region.types, report)
 		}
 	}
