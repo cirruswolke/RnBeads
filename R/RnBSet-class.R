@@ -773,7 +773,7 @@ setMethod("remove.sites", signature(object = "RnBSet"),
 							if (doBigFf){
 								newMat <- BigFfMat(row.n=nSites.new, col.n=nSamples, row.names=NULL, col.names=samples(object), na.prototype=as.integer(NA), finalizer=bff.finalizer)
 							} else {
-								newMat <- ff(NA_integer_, dim=c(nSites.new, nSamples), dimnames=list(NULL, sample.names))
+								newMat <- ff(NA_integer_, dim=c(nSites.new, nSamples), dimnames=list(NULL, samples(object)))
 							}
 							for (j in 1:nSamples){
 								newMat[,j] <- object@covg.sites[-inds,j]
