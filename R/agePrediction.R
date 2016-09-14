@@ -801,7 +801,9 @@ trainPredictor <- function(rnbSet,data.dir){
 			return("")
 		}
 		path <- simpleGlmnetRRBS(rnbSet,file.path(data.dir,"trained_predictor_RRBS.csv"))
-		if(!is.null(path)&&path!=""){				rnb.options(inference.age.prediction.rrbs=path)
+		if(!is.null(path)&&path!=""){
+			rnb.options(inference.age.prediction.biseq=TRUE)
+			rnb.options(inference.age.predicton.predictor=path)
 		}else{
 			logger.warning("No new predictor created, deault predictor remains.")
 		}	
