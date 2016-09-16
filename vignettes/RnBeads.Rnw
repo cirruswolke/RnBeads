@@ -780,7 +780,7 @@ type counts and sum up to a small value $<1$ .
 
 In addition to the inference possibilities mentioned before, \cs{RnBeads} is capable of predicting human age from DNA methylation data. The prediction was initially performed by building an elastic net regression model on the methylation values of the CpG sites. Performance was evaluated by testing the prediction on several independent test data sets.
 
-	In principal, the age prediction section of \cs{RnBeads} is activated by setting:
+	Basically, the age prediction section of \cs{RnBeads} is activated by setting:
 <<eval=FALSE>>=
 rnb.options(inference.age.prediction=TRUE)
 @

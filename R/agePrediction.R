@@ -487,8 +487,12 @@ add.combination.plot <- function(report, object, actualAges,predictedAges){
 	diff <- predictedAges - actualAges
 	q1 <- quantile(diff,0.01,na.rm=TRUE)
 	q99 <- quantile(diff,0.99,na.rm=TRUE)
+	na <- is.na(diff)
+	density <- rep(na,length(diff))
+	diff <- diff[!na]
 
-	density <- density(diff)
+	temp <- density(diff)
+	density[!na] <- temp
 	Sample <- rep(NA,length(density$x))
 	Set <- rep("Density",length(density$y))
 	density.frame <- data.frame(Sample,Difference=as.numeric(density$x),Density=as.numeric(density$y),Set)
@@ -652,7 +656,7 @@ agePredictor450 <- function(rnbSet, path){
 	existingCpGs <- usedCpGs  %in% row.names(methData) 
 	selected <- methData[selectCpGs,]
 	selected <- selected[sort(row.names(selected)),]
-	dummy <- capture.output(selected <- (impute.knn(selected))$data)
+	dummy <- capture.output(selected <- (impute.knn(selected,colmax=1))$data)
 	selected <- t(selected)
 	if(length(usedCoeffs) > dim(selected)[2]){
 		usedCoeffs <- usedCoeffs[existingCpGs]
@@ -728,7 +732,7 @@ agePredictorRRBS <- function(rnbSet, path){
 	existingCpGs <- usedCpGs  %in% row.names(methData) 
 	selected <- methData[selectCpGs,]
 	selected <- selected[sort(row.names(selected)),]
-	dummy <- capture.output(selected <- (impute.knn(selected))$data)
+	dummy <- capture.output(selected <- (impute.knn(selected,colmax=1))$data)
 	selected <- t(selected)
 	if(dim(selected)[1]==0){
 		logger.info("Age prediction could not be performed; NAs introduced")
@@ -803,7 +807,7 @@ trainPredictor <- function(rnbSet,data.dir){
 		path <- simpleGlmnetRRBS(rnbSet,file.path(data.dir,"trained_predictor_RRBS.csv"))
 		if(!is.null(path)&&path!=""){
 			rnb.options(inference.age.prediction.biseq=TRUE)
-			rnb.options(inference.age.predicton.predictor=path)
+			rnb.options(inference.age.prediction.predictor=path)
 		}else{
 			logger.warning("No new predictor created, deault predictor remains.")
 		}	
@@ -856,7 +860,7 @@ simpleGlmnet <- function(trainRnBSet,filePath=""){
 		anno <- anno[!Ychrom,]
 		#Imputing of missing values is performed by a k-nearest-neighbors approach
 		options(warn=-1)
-		dummy <- capture.output(methData <- (impute.knn(methData))$data)
+		dummy <- capture.output(methData <- (impute.knn(methData,colmax=1))$data)
 		options(warn=1)
 		methData <- t(methData)
 		missingAges <- is.na(ages)
@@ -963,7 +967,7 @@ simpleGlmnetRRBS <- function(trainRnBSet,filePath=""){
 #' run.cross.validation
 #'
 #' This function performs a 10-fold cross validation to estimate the performance of a
-#' newly trained predictor. If parallel setup was done, the function perfoms the cross
+#' newly trained predictor. If \code{parallel.isEnabled()}, the function perfoms the cross
 #' validation in parallel. The function adds a table to the specified report containing 
 #' the result of the 10-fold cross validation.
 #'
@@ -974,6 +978,7 @@ simpleGlmnetRRBS <- function(trainRnBSet,filePath=""){
 #' @return	Modified report object
 #'
 #' @author	Michael Scherer
+#' @export
 
 run.cross.validation <- function(rnbSet,report){
 	logger.start("10-fold Cross Validation")
@@ -1108,7 +1113,7 @@ cv.array <- function(rnbSet){
 		Ychrom <- is.element(anno$Chromosome,"chrY")
 		methData <- methData[!Ychrom,]
 		anno <- anno[!Ychrom,]
-		dummy <- capture.output(methData <- (impute.knn(methData))$data)
+		dummy <- capture.output(methData <- (impute.knn(methData,colmax=1))$data)
 		result <- general.cv(simpleGlmnetEvaluate,ages,methData)
 		result <- as.data.frame(result)
 		return(result)
@@ -1215,7 +1220,7 @@ simpleGlmnetEvaluate <- function(methData,ages){
 
 createPredictor <- function(linearModel){
 	ret <- function(rnbSet){
-		if(!is.matrix(rnbSet)){
+		if(inherits(rnbSet,"RnBSet")){
 			methData <- meth(rnbSet)
 			coeffs <- as.matrix(coef(linearModel))
 			intercept <- coeffs[1]
@@ -1230,7 +1235,7 @@ createPredictor <- function(linearModel){
 			existingCpGs <- usedCpGs  %in% row.names(methData) 
 			selected <- methData[selectCpGs,]
 			selected <- selected[sort(row.names(selected)),]
-			dummy <- capture.output(selected <- (impute.knn(selected))$data)
+			dummy <- capture.output(selected <- (impute.knn(selected,colmax=1))$data)
 			selected <- t(selected)
 			if(length(usedCoeffs) > dim(selected)[2]){
 				usedCoeffs <- usedCoeffs[existingCpGs]
@@ -1259,7 +1264,7 @@ createPredictor <- function(linearModel){
 #' @param linearModel	Linear Model which should be stored as a csv file
 #' @param path		Path in which the new predictor should be written
 #' 
-#' @return	TRUE if the writing is successful
+#' @return	TRUE if the writing was successful
 #'
 #' @author	Michael Scherer
 writePredictorToCsv <- function(linearModel,path){
