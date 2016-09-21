@@ -118,9 +118,8 @@ rnb.section.ageprediction <- function(object,report){
 					}
 					actualAges <- unlist(lapply(actualAges,set.na))
 					actualAgesNumeric <- as.numeric(actualAges)
-					print(actualAgesNumeric)
 					predictedAges <- ph$predicted_ages
-					txt <- "Plotting annotated ages versus predicted ages and indicating different tissues with different colors."
+					txt <- "Plotting annotated ages versus predicted ages and indicating different traits with different colors."
 					report <- add.info("Comparison Plot",add.agecomparison.plot,txt,actualAgesNumeric,predictedAges)
 					#txt <- "Plotting differences between predicted ages for each sample."
 					report <- add.info("Error Plot",add.combination.plot,txt,actualAgesNumeric,predictedAges)
@@ -307,47 +306,77 @@ add.agecomparison.plot <- function(report, object, actualAges, predictedAges){
 		report.plot <- off(report.plot)
 		report.plots <- c(report.plots,report.plot)
 	}else{
-	for(trait in traits){
-		if(trait %in% colnames(ph)){
-			placeholder <- ph[,trait]
-			if(!is.null(placeholder)){
-				placeholder <- as.factor(placeholder)
-				for(secondTrait in traits){
-					if(secondTrait %in% colnames(ph)){
-					placeholder2 <- ph[,secondTrait]
-					if(!is.null(placeholder2)){
-						placeholder2 <- as.factor(placeholder2)
-						trait <- gsub(" ","",trait)
-						trait <- gsub("[[:punct:]]","",trait)
-						secondTrait <- gsub(" ","",secondTrait)
-						secondTrait <- gsub("[[:punct:]]","",secondTrait)
-						placeholder <- placeholder[!naAges]
-						placeholder <- placeholder[!notPredicted]
-						placeholder2 <- placeholder2[!naAges]
-						placeholder2 <- placeholder2[!notPredicted]
-						names <- row.names(ph)
-						names <- names[!naAges]
-						names <- names[!notPredicted]
-						report.plot <- createReportPlot(paste0("age_comparison_",trait,"_",secondTrait), report)
-						if(length(placeholder)==0){
-							placeholder <- rep(NA,length(actualAges))
+		for(trait in traits){
+			if(trait %in% colnames(ph)){
+				placeholder <- ph[,trait]
+				if(!is.null(placeholder)){
+					placeholder <- as.factor(placeholder)
+					for(secondTrait in traits){
+						if(secondTrait %in% colnames(ph)){
+							placeholder2 <- ph[,secondTrait]
+							if(!is.null(placeholder2)){
+								if(!all(is.na(placeholder)) && !all(is.na(placeholder2))){
+									if((mean(nchar(as.character(placeholder)),na.rm=TRUE)<42) && (mean(nchar(as.character(placeholder2)),na.rm=TRUE)<42)){
+										placeholder2 <- as.factor(placeholder2)
+										trait <- gsub(" ","",trait)
+										trait <- gsub("[[:punct:]]","",trait)
+										secondTrait <- gsub(" ","",secondTrait)
+										secondTrait <- gsub("[[:punct:]]","",secondTrait)
+										placeholder <- placeholder[!naAges]
+										placeholder <- placeholder[!notPredicted]
+										placeholder2 <- placeholder2[!naAges]
+										placeholder2 <- placeholder2[!notPredicted]
+										names <- row.names(ph)
+										names <- names[!naAges]
+										names <- names[!notPredicted]
+										report.plot <- createReportPlot(paste0("age_comparison_",trait,"_",secondTrait), report)
+										if(length(placeholder)==0){
+											placeholder <- rep(NA,length(actualAges))
+										}
+										if(length(placeholder2)==0){
+											placeholder2 <- rep(NA,length(actualAges))
+										}
+										data <- data.frame(actualAges,predictedAges,placeholder,Sample=names)
+										diff <- abs(predictedAges-actualAges)
+										cvalues <- rep(rnb.getOption("colors.category"),length.out=length(placeholder))
+										ptvalues <- rep(rnb.getOption("points.category"),length.out=length(placeholder2))
+										plot <- ggplot(data,aes(x=actualAges,y=predictedAges,group=placeholder),environment=environment())+geom_point(aes(colour=placeholder,shape=placeholder2))+geom_text(aes(label=ifelse(diff > 15, as.character(Sample),"")),hjust=0,vjust=0,size=3)+xlim(1,100)+ylim(1,100)+geom_abline(intercept=0,slope=1)+xlab("Annotated Ages")+ylab("Predicted Age")+scale_colour_manual(name=trait,na.value = ifelse(trait=="Default","black","#C0C0C0"), values = cvalues)+scale_shape_manual(name=secondTrait,na.value=ifelse(trait=="Default",20,1L),values=ptvalues)
+										print(plot)
+										report.plot <- off(report.plot)
+										report.plots <- c(report.plots,report.plot)
+									}
+								}else{
+placeholder2 <- as.factor(placeholder2)
+										trait <- gsub(" ","",trait)
+										trait <- gsub("[[:punct:]]","",trait)
+										secondTrait <- gsub(" ","",secondTrait)
+										secondTrait <- gsub("[[:punct:]]","",secondTrait)
+										placeholder <- placeholder[!naAges]
+										placeholder <- placeholder[!notPredicted]
+										placeholder2 <- placeholder2[!naAges]
+										placeholder2 <- placeholder2[!notPredicted]
+										names <- row.names(ph)
+										names <- names[!naAges]
+										names <- names[!notPredicted]
+										report.plot <- createReportPlot(paste0("age_comparison_",trait,"_",secondTrait), report)
+										if(length(placeholder)==0){
+											placeholder <- rep(NA,length(actualAges))
+										}
+										if(length(placeholder2)==0){
+											placeholder2 <- rep(NA,length(actualAges))
+										}
+										data <- data.frame(actualAges,predictedAges,placeholder,Sample=names)
+										diff <- abs(predictedAges-actualAges)
+										cvalues <- rep(rnb.getOption("colors.category"),length.out=length(placeholder))
+										ptvalues <- rep(rnb.getOption("points.category"),length.out=length(placeholder2))
+										plot <- ggplot(data,aes(x=actualAges,y=predictedAges,group=placeholder),environment=environment())+geom_point(aes(colour=placeholder,shape=placeholder2))+geom_text(aes(label=ifelse(diff > 15, as.character(Sample),"")),hjust=0,vjust=0,size=3)+xlim(1,100)+ylim(1,100)+geom_abline(intercept=0,slope=1)+xlab("Annotated Ages")+ylab("Predicted Age")+scale_colour_manual(name=trait,na.value = ifelse(trait=="Default","black","#C0C0C0"), values = cvalues)+scale_shape_manual(name=secondTrait,na.value=ifelse(trait=="Default",20,1L),values=ptvalues)
+										print(plot)
+										report.plot <- off(report.plot)
+										report.plots <- c(report.plots,report.plot)
+									
+								}
+							}
 						}
-						if(length(placeholder2)==0){
-							placeholder2 <- rep(NA,length(actualAges))
-						}
-						data <- data.frame(actualAges,predictedAges,placeholder,Sample=names)
-						diff <- abs(predictedAges-actualAges)
-						cvalues <- rep(rnb.getOption("colors.category"),length.out=length(placeholder))
-						ptvalues <- rep(rnb.getOption("points.category"),length.out=length(placeholder2))
-						plot <- ggplot(data,aes(x=actualAges,y=predictedAges,group=placeholder),environment=environment())+geom_point(aes(colour=placeholder,shape=placeholder2))+geom_text(aes(label=ifelse(diff > 15, as.character(Sample),"")),hjust=0,vjust=0,size=3)+xlim(1,100)+ylim(1,100)+geom_abline(intercept=0,slope=1)+xlab("Annotated Ages")+ylab("Predicted Age")+scale_colour_manual(name=trait,na.value = ifelse(trait=="Default","black","#C0C0C0"), values = cvalues)+scale_shape_manual(name=secondTrait,na.value=ifelse(trait=="Default",20,1L),values=ptvalues)
-						print(plot)
-						report.plot <- off(report.plot)
-						report.plots <- c(report.plots,report.plot)
-						}else{
-							txt <- "There was no supported trait annotation avaible, therefore no tissue comparison for age prediction was performed. Supported traits (column names in the sample annotation sheet are: tissue, gender, hivstatus, sex, disease state, smoking status, ethnicity)"
-							report <- rnb.add.paragraph(report, txt)
-						}
-					}
 					}
 				}	
 			}
@@ -488,11 +517,9 @@ add.combination.plot <- function(report, object, actualAges,predictedAges){
 	q1 <- quantile(diff,0.01,na.rm=TRUE)
 	q99 <- quantile(diff,0.99,na.rm=TRUE)
 	na <- is.na(diff)
-	density <- rep(na,length(diff))
 	diff <- diff[!na]
 
-	temp <- density(diff)
-	density[!na] <- temp
+	density <- density(diff)
 	Sample <- rep(NA,length(density$x))
 	Set <- rep("Density",length(density$y))
 	density.frame <- data.frame(Sample,Difference=as.numeric(density$x),Density=as.numeric(density$y),Set)
@@ -741,6 +768,9 @@ agePredictorRRBS <- function(rnbSet, path){
 		if(length(usedCoeffs) > dim(selected)[2]){
 			usedCoeffs <- usedCoeffs[existingCpGs]
 		}
+		na_coeffs <- is.na(usedCoeffs)
+		usedCoeffs <- usedCoeffs[!na_coeffs]
+		selected <- selected[,!na_coeffs]
 		predictedAges <- intercept + selected%*%usedCoeffs
 		predictedAges <- age.anti.transformation(predictedAges)
 		predictedAges <- as.numeric(predictedAges)
@@ -840,6 +870,7 @@ simpleGlmnet <- function(trainRnBSet,filePath=""){
 	ph <- pheno(trainRnBSet)
 	age <- rnb.getOption("inference.age.column")
 	ages <- ph[,age]
+	naAges <- is.na(ages)
 	if(!is.null(ages)){
 		if(is.character(ages)){
 			fun <- function(s){
@@ -851,6 +882,7 @@ simpleGlmnet <- function(trainRnBSet,filePath=""){
 		}
 		ages <- as.numeric(ages)
 		ages <- age.transformation(ages)
+		methData <- methData[,!naAges]
 		row.names(methData) <- row.names(anno)
 		Xchrom <- is.element(anno$Chromosome,"chrX")
 		methData <- methData[!Xchrom,]
@@ -912,6 +944,7 @@ simpleGlmnetRRBS <- function(trainRnBSet,filePath=""){
 	ph <- pheno(trainRnBSet)
 	age <- rnb.getOption("inference.age.column")
 	ages <- ph[,age]
+	naAges <- is.na(ages)
 	if(!is.null(ages)){
 		if(is.character(ages)){
 			fun <- function(s){
@@ -923,6 +956,7 @@ simpleGlmnetRRBS <- function(trainRnBSet,filePath=""){
 		}
 		ages <- as.numeric(ages)
 		ages <- age.transformation(ages)
+		methData <- methData[,!naAges]
 		Xchrom <- is.element(anno$Chromosome,"chrX")
 		methData <- methData[!Xchrom,]
 		anno <- anno[!Xchrom,]
@@ -982,9 +1016,9 @@ simpleGlmnetRRBS <- function(trainRnBSet,filePath=""){
 
 run.cross.validation <- function(rnbSet,report){
 	logger.start("10-fold Cross Validation")
-	txt <- "Result of the 10-fold cross vallidation on the given dataset. The corresponding error measurements are: Correlation between predicted and annotated ages, Mean absolut deviation and Median absolute deviation"
+	txt <- "Result of the 10-fold cross validation on the given dataset. The corresponding error measures are: Correlation between predicted and annotated ages, Mean absolute deviation and Median absolute deviation"
 	cvalues <- rep(rnb.getOption("colors.category"))
-	descr <- "Boxplot for the two error measures Mean and Median Absolute Error. Each Boxplot consists of 10 different points for each cross-validation fold, respectively."
+	descr <- "Boxplot for the two error measures Mean and Median absolute Error. Each Boxplot consists of 10 different points for each cross-validation fold, respectively."
 	if(inherits(rnbSet,"RnBeadSet")){
 		result <- cv.array(rnbSet)
 		report <- rnb.add.table(report,result,tcaption=txt)
