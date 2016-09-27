@@ -71,7 +71,6 @@ inference.age.column	character	no	no		age
 inference.age.prediction	logical	no	no		TRUE
 inference.age.prediction.training	logical	no	no		FALSE
 inference.age.prediction.predictor	character	no	yes		NULL
-inference.age.prediction.biseq	logical	no	no		FALSE
 inference.age.prediction.cv	logical	no	no		FALSE
 exploratory	logical	no	no		TRUE
 exploratory.columns	integer.vector	no	yes		NULL

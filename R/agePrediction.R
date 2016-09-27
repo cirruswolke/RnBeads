@@ -60,7 +60,7 @@ rnb.section.ageprediction <- function(object,report){
 				header <- "A default predictor that was used"
 			}
 		}
-	}else if(inherits(object,"RnBiseqSet") && rnb.getOption("inference.age.prediction.biseq")){
+	}else if(inherits(object,"RnBiseqSet")){
 		header <- "A new predictor was trained for the specified data set"
 		if(is.null(prediction_path) || prediction_path==""){
 			if(rnb.getOption("inference.age.prediction.training")){
@@ -209,7 +209,7 @@ rnb.execute.age.prediction <- function(object){
 			rnbSet <- agePredictor(object)
 			logger.completed()
 		}
-	}else if(inherits(object,"RnBiseqSet") && rnb.getOption("inference.age.prediction.biseq")){
+	}else if(inherits(object,"RnBiseqSet")){
 		if(!is.null(prediction_path) && prediction_path != ""){
 			logger.start("Performing Age Prediction")
 			rnbSet <- agePredictor(object,prediction_path)
@@ -537,13 +537,24 @@ add.combination.plot <- function(report, object, actualAges,predictedAges){
 	complete_data <- rbind(density.frame,data)
 	cvalues <- rep(rnb.getOption("colors.category"))
 
-
+	report.plots <- list()
+	
+	report.plot <- createReportPlot("combination_plot_Points",report)
 	plot <- ggplot(complete_data,aes(x=Difference,y=Density,colour=Set))+geom_point()+facet_grid(Set~.,scale="free",drop=TRUE)+geom_text(aes(label=ifelse(Difference <= q1, as.character(Sample),""),hjust=.5),vjust=0,size=3,colour="black")+geom_text(aes(x=Difference,y=Density,label=ifelse(Difference >= q99, as.character(Sample),"")),hjust=.5,vjust=0,size=3,colour="black")+geom_vline(data=hline_mean,aes(xintercept=yint,linetype=Measure),show_guide=TRUE)+geom_vline(data=hline_quantiles,aes(xintercept=yint,linetype=Measure),show_guide=TRUE)+ylab("Sample Number / Density")+xlab("Difference between predicted age and annotated age")+scale_colour_manual(na.value = "#C0C0C0", values = cvalues, guide=FALSE)
-	report.plot <- createReportPlot("age_prediction_quantile", report)
 	print(plot)
 	report.plot <- off(report.plot)
+	report.plots <- c(report.plots,report.plot)
 
-	report <- rnb.add.figure(report,descr,report.plot)
+	report.plot <- createReportPlot("combination_plot_Identifiers",report)
+	plot <- ggplot(complete_data,aes(x=Difference,y=Density,colour=Set))+geom_point()+facet_grid(Set~.,scale="free",drop=TRUE)+geom_text(aes(label=as.character(Sample)),colour="black",size=3)+geom_vline(data=hline_mean,aes(xintercept=yint,linetype=Measure),show_guide=TRUE)+geom_vline(data=hline_quantiles,aes(xintercept=yint,linetype=Measure),show_guide=TRUE)+ylab("Sample Number / Density")+xlab("Difference between predicted age and annotated age")+scale_colour_manual(na.value = "#C0C0C0", values = cvalues, guide=FALSE)
+	print(plot)
+	report.plot <- off(report.plot)
+	report.plots <- c(report.plots,report.plot)
+
+	setting_names <- list("Sample representation"=c("Points","Identifiers"))
+	names(setting_names[[1]]) <- c("Points","Identifiers")
+
+	report <- rnb.add.figure(report,descr,report.plots,setting_names)
 
 	return(report)	
 }
@@ -692,22 +703,27 @@ agePredictor450 <- function(rnbSet, path){
 	predictedAges <- age.anti.transformation(predictedAges)
 	predictedAges <- as.numeric(predictedAges)
 	ages <- ph$predicted_ages
+	increase <- ph$age_increase
 	if(is.null(ages)){
 		rnbSet <- addPheno(rnbSet,predictedAges,"predicted_ages")
+	}
+	if(is.null(increase) || any(is.na(increase))){
 		age <- rnb.getOption("inference.age.column")
 		if(age %in% colnames(ph)){
 			actualAges <- ph[,age]
+			nas <- is.na(actualAges)
+			difference <- rep(NA,length(actualAges))
+			actualAges <- actualAges[!nas]
+			predictedAges <- predictedAges[!nas]
 			if(!is.null(actualAges)){
+				if(is.factor(actualAges)){
+					actualAges <- as.character(actualAges)
+				}
 				if(is.character(actualAges)){
-					fun <- function(s){
-						temp <- strsplit(s,"[.]")
-						temp <- temp[[1]][1]
- 						unique(na.omit(as.numeric(unlist(strsplit(temp,"[^0-9]+")))))	
-					}
-					actualAges <- unlist(lapply(actualAges,fun))
+					actualAges <- unlist(lapply(actualAges,convert.string.ages))
 				}
 				actualAges <- as.numeric(actualAges)
-				difference <- predictedAges-actualAges
+				difference[!nas] <- predictedAges-actualAges
 				rnbSet <- addPheno(rnbSet,difference,"age_increase")
 			}
 		}
@@ -738,11 +754,6 @@ agePredictorRRBS <- function(rnbSet, path){
 	methData <- meth(rnbSet)
 	anno <- annotation(rnbSet)
 	ph <- pheno(rnbSet)
-	ages <- ph$age
-	ages <- age.transformation(ages)
-	missingAges <- is.na(ages)
-	methData <- methData[,!missingAges]
-	ages <- ages[!missingAges]
 	start <- anno$Start
 	end <- anno$End
 	chromosome <- anno$Chromosome
@@ -776,22 +787,27 @@ agePredictorRRBS <- function(rnbSet, path){
 		predictedAges <- as.numeric(predictedAges)
 	}
 	ages <- ph$predicted_ages
+	increase <- ph$age_increase
 	if(is.null(ages)){
 		rnbSet <- addPheno(rnbSet,predictedAges,"predicted_ages")
+	}
+	if(is.null(increase) || any(is.na(increase))){
 		age <- rnb.getOption("inference.age.column")
 		if(age %in% colnames(ph)){
 			actualAges <- ph[,age]
+			nas <- is.na(actualAges)
+			difference <- rep(NA,length(actualAges))
+			actualAges <- actualAges[!nas]
+			predictedAges <- predictedAges[!nas]
 			if(!is.null(actualAges)){
+				if(is.factor(actualAges)){
+					actualAges <- as.character(actualAges)
+				}
 				if(is.character(actualAges)){
-					fun <- function(s){
-						temp <- strsplit(s,"[.]")
-						temp <- temp[[1]][1]
- 						unique(na.omit(as.numeric(unlist(strsplit(temp,"[^0-9]+")))))
-					}
-					actualAges <- unlist(lapply(actualAges,fun))
+					actualAges <- unlist(lapply(actualAges,convert.string.ages))
 				}
 				actualAges <- as.numeric(actualAges)
-				difference <- predictedAges-actualAges
+				difference[!nas] <- predictedAges-actualAges
 				rnbSet <- addPheno(rnbSet,difference,"age_increase")
 			}
 		}
@@ -836,7 +852,6 @@ trainPredictor <- function(rnbSet,data.dir){
 		}
 		path <- simpleGlmnetRRBS(rnbSet,file.path(data.dir,"trained_predictor_RRBS.csv"))
 		if(!is.null(path)&&path!=""){
-			rnb.options(inference.age.prediction.biseq=TRUE)
 			rnb.options(inference.age.prediction.predictor=path)
 		}else{
 			logger.warning("No new predictor created, deault predictor remains.")
@@ -883,6 +898,7 @@ simpleGlmnet <- function(trainRnBSet,filePath=""){
 		ages <- as.numeric(ages)
 		ages <- age.transformation(ages)
 		methData <- methData[,!naAges]
+		ages <- ages[!naAges]
 		row.names(methData) <- row.names(anno)
 		Xchrom <- is.element(anno$Chromosome,"chrX")
 		methData <- methData[!Xchrom,]
@@ -901,19 +917,12 @@ simpleGlmnet <- function(trainRnBSet,filePath=""){
 		cv <- cv.glmnet(methData,ages,parallel=TRUE)
 		model <- glmnet(methData,ages,alpha=0.8,lambda=cv$lambda.min)
 		coeffs <- as.matrix(coef(model))
-		coeffs <- coeffs[-1,]
+		names <- row.names(coeffs)
 		non_zero <- which(coeffs!=0)
 		coeffs <- coeffs[non_zero]
-		max <- max(abs(coeffs))
-		scaled <- abs(coeffs)/max
-		sorted <- sort(scaled,decreasing=TRUE)
-		cpGs <- names(sorted)
-		selected <- methData[,cpGs]
-		selected <- as.data.frame(selected)
-		selectedPredictors <- methData[,cpGs]
-		selectedPredictors <- as.data.frame(selectedPredictors)
-		linearModel <- lm(ages~.,selectedPredictors)
-		if(writePredictorToCsv(linearModel,filePath)){
+		names <- names[non_zero]
+		names(coeffs) <- names
+		if(writePredictorToCsv(coeffs,filePath)){
 			return(filePath)
 		}
 	}
@@ -947,16 +956,12 @@ simpleGlmnetRRBS <- function(trainRnBSet,filePath=""){
 	naAges <- is.na(ages)
 	if(!is.null(ages)){
 		if(is.character(ages)){
-			fun <- function(s){
-					temp <- strsplit(s,"[.]")
-					temp <- temp[[1]][1]
- 					unique(na.omit(as.numeric(unlist(strsplit(temp,"[^0-9]+")))))
-				}
-			ages <- unlist(lapply(ages,fun))
+			ages <- unlist(lapply(ages,convert.string.ages))
 		}
 		ages <- as.numeric(ages)
 		ages <- age.transformation(ages)
 		methData <- methData[,!naAges]
+		ages <- ages[!naAges]
 		Xchrom <- is.element(anno$Chromosome,"chrX")
 		methData <- methData[!Xchrom,]
 		anno <- anno[!Xchrom,]
@@ -978,19 +983,12 @@ simpleGlmnetRRBS <- function(trainRnBSet,filePath=""){
 		cv <- cv.glmnet(methData,ages)
 		model <- glmnet(methData,ages,alpha=0.8,lambda=cv$lambda.min)
 		coeffs <- as.matrix(coef(model))
-		coeffs <- coeffs[-1,]
+		names <- row.names(coeffs)
 		non_zero <- which(coeffs!=0)
 		coeffs <- coeffs[non_zero]
-		max <- max(abs(coeffs))
-		scaled <- abs(coeffs)/max
-		sorted <- sort(scaled,decreasing=TRUE)
-		cpGs <- names(sorted)
-		selected <- methData[,cpGs]
-		selected <- as.data.frame(selected)
-		selectedPredictors <- methData[,cpGs]
-		selectedPredictors <- as.data.frame(selectedPredictors)
-		linearModel <- lm(ages~.,selectedPredictors)
-		if(writePredictorToCsv(linearModel,filePath)){
+		names <- names[non_zero]
+		names(coeffs) <- names
+		if(writePredictorToCsv(coeffs,filePath)){
 			return(filePath)
 		}
 	}
@@ -1016,6 +1014,11 @@ simpleGlmnetRRBS <- function(trainRnBSet,filePath=""){
 
 run.cross.validation <- function(rnbSet,report){
 	logger.start("10-fold Cross Validation")
+	if(length(samples(rnbSet))<30){
+		txt <- "ATTETION: Cross-validated correlation result might be misleading, since there are less than 3 samples per fold."
+		logger.warning(txt)
+		report <- rnb.add.paragraph(report,txt)
+	}
 	txt <- "Result of the 10-fold cross validation on the given dataset. The corresponding error measures are: Correlation between predicted and annotated ages, Mean absolute deviation and Median absolute deviation"
 	cvalues <- rep(rnb.getOption("colors.category"))
 	descr <- "Boxplot for the two error measures Mean and Median absolute Error. Each Boxplot consists of 10 different points for each cross-validation fold, respectively."
@@ -1128,6 +1131,9 @@ cv.array <- function(rnbSet){
 	age <- rnb.getOption("inference.age.column")
 	if(age %in% colnames(ph)){
 		ages <- ph[,age]
+		if(is.character(ages)){
+			ages <- unlist(lapply(ages,convert.string.ages))
+		}
 		ages <- as.numeric(ages)
 		ages <- age.transformation(ages)
 		missingAges <- is.na(ages)
@@ -1137,7 +1143,7 @@ cv.array <- function(rnbSet){
 		sampled <- sample(samples)
 		methData <- meth(rnbSet)
 		match <- match(sampled,samples)
-		methData <- methData[,sampled]
+		methData <- methData[,match]
 		ages <- ages[match]
 		anno <- annotation(rnbSet)
 		row.names(methData) <- row.names(anno)
@@ -1148,6 +1154,7 @@ cv.array <- function(rnbSet){
 		methData <- methData[!Ychrom,]
 		anno <- anno[!Ychrom,]
 		dummy <- capture.output(methData <- (impute.knn(methData,colmax=1))$data)
+		rm(dummy)
 		result <- general.cv(simpleGlmnetEvaluate,ages,methData)
 		result <- as.data.frame(result)
 		return(result)
@@ -1172,6 +1179,10 @@ cv.biseq <- function(rnbSet,report){
 	age <- rnb.getOption("inference.age.column")
 	if(age %in% colnames(ph)){
 		ages <- ph[,age]
+		if(is.character(ages)){
+			ages <- unlist(lapply(ages,convert.string.ages))
+		}
+		ages <- as.numeric(ages)
 		missingAges <- is.na(ages)
 		ages <- ages[!missingAges]
 		rnbSet <- remove.samples(rnbSet,missingAges)
@@ -1180,7 +1191,7 @@ cv.biseq <- function(rnbSet,report){
 		sampled <- sample(samples)
 		methData <- meth(rnbSet)
 		match <- match(sampled,samples)
-		methData <- methData[,sampled]
+		methData <- methData[,match]
 		ages <- ages[match]
 		anno <- annotation(rnbSet)
 		start <- anno$Start
@@ -1223,18 +1234,7 @@ simpleGlmnetEvaluate <- function(methData,ages){
 	ages <- ages[!missingAges]
 	cv <- cv.glmnet(methData,ages,parallel=TRUE)
 	model <- glmnet(methData,ages,alpha=0.8,lambda=cv$lambda.min)
-	coeffs <- as.matrix(coef(model))
-	coeffs <- coeffs[-1,]
-	non_zero <- which(coeffs!=0)
-	coeffs <- coeffs[non_zero]
-	max <- max(abs(coeffs))
-	scaled <- abs(coeffs)/max
-	sorted <- sort(scaled,decreasing=TRUE)
-	cpGs <- names(sorted)
-	selected <- methData[,cpGs]
-	selected <- as.data.frame(selected)
-	linearModel <- lm(ages~.,selected) 
-	finalModel <- createPredictor(linearModel)
+	finalModel <- createPredictor(model,lambda=cv$lambda.min)
 	return(finalModel)
 }
 
@@ -1252,7 +1252,7 @@ simpleGlmnetEvaluate <- function(methData,ages){
 #' @author	Michael Scherer
 
 
-createPredictor <- function(linearModel){
+createPredictor <- function(linearModel,lambda=NULL){
 	ret <- function(rnbSet){
 		if(inherits(rnbSet,"RnBSet")){
 			methData <- meth(rnbSet)
@@ -1280,8 +1280,9 @@ createPredictor <- function(linearModel){
 		}else{
 			methData <- rnbSet
 			methData <- t(methData)
-			methData <- as.data.frame(methData)
-			predictedAges <- predict(linearModel,methData)
+			methData <- as.matrix(methData)
+			predictedAges <- predict(linearModel,methData,s=lambda)
+			predictedAges <- as.vector(predictedAges)
 			predictedAges <- age.anti.transformation(predictedAges)
 			return(predictedAges)
 		}	
@@ -1302,7 +1303,7 @@ createPredictor <- function(linearModel){
 #'
 #' @author	Michael Scherer
 writePredictorToCsv <- function(linearModel,path){
-	coeffs <- as.matrix(coef(linearModel))
+	coeffs <- as.matrix(linearModel)
 	write.csv(coeffs,path)
 	return(TRUE)
 }
@@ -1348,3 +1349,10 @@ imputeRRBS <- function(methData){
 	}
 	return(methData)
 }
+
+convert.string.ages <- function(s){
+	temp <- strsplit(s,"[.]")
+	temp <- temp[[1]][1]
+	unique(na.omit(as.numeric(unlist(strsplit(temp,"[^0-9]+")))))
+}
+			
