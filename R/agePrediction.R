@@ -33,8 +33,6 @@ rnb.section.ageprediction <- function(object,report){
 			logger.completed()
 		}else{
 			logger.info("Age prediction was not successful")
-			infoText <- "Until now there is no predefined predictor available for sequencing based data. You may want to train your own age predictor based on your dataset by setting the option <em>inference.age.prediction.training</em>."
-			rnb.add.paragraph(report,infoText)
 			return(report)
 		}
 	}
@@ -53,11 +51,15 @@ rnb.section.ageprediction <- function(object,report){
 					txt <- "No age information was available for the column age in the annotation, therefore the predefined predictor is used in the further calculation."
 					rnb.add.paragraph(report,txt)
 			}
-			header <- "The predefined predictor was used"
-			prediction_path <- system.file(file.path("extdata", "predefined_predictor.csv"), package="RnBeads")
+			header <- "A predefined predictor was used"
+			if(dim(annotation(object))<30000){
+			  prediction_path <- system.file(file.path("extdata", "predefined_predictor_27K.csv"), package="RnBeads")
+	  	}else{
+	  	  prediction_path <- system.file(file.path("extdata", "predefined_predictor_450K.csv"), package="RnBeads")
+		  }
 		}else{
 			if(!rnb.getOption("inference.age.prediction.training")){
-				header <- "A default predictor that was used"
+				header <- "A default predictor was used"
 			}
 		}
 	}else if(inherits(object,"RnBiseqSet")){
@@ -67,9 +69,12 @@ rnb.section.ageprediction <- function(object,report){
 					txt <- "No age information was available for the column age in the annotation, therefore the predefined predictor is used in the further calculation."
 					rnb.add.paragraph(report,txt)
 			}
-			txt <- "Until now there is no predefined predictor for sequencing based data available."
-			rnb.add.paragraph(report,txt)
-			prediction_path <- ""
+		  header <- "A predefined predictor was used"
+		  if(assembly(object)=="hg19"){
+		    prediction_path <- system.file(file.path("extdata", "predefined_predictor_RRBS_hg19.csv"), package="RnBeads")
+		  }else{
+		    prediction_path <- system.file(file.path("extdata", "predefined_predictor_RRBS_hg38.csv"), package="RnBeads")
+		  }
 		}else{
 			if(!rnb.getOption("inference.age.prediction.training")){
 				header <- "A default predictor that was used"
@@ -199,24 +204,10 @@ rnb.execute.age.prediction <- function(object){
 		stop("Supplied object is not of the class inheriting from RnBSet")
 	}
 	prediction_path <- rnb.getOption("inference.age.prediction.predictor")
-	if(inherits(object,"RnBeadSet")){
-		if(!is.null(prediction_path) && prediction_path != ""){
-			logger.start("Performing Age Prediction on specified predictor")
-			rnbSet <- agePredictor(object,prediction_path)
-			logger.completed()
-		}else{
-			logger.start("Performing Age Prediction")
-			rnbSet <- agePredictor(object)
-			logger.completed()
-		}
-	}else if(inherits(object,"RnBiseqSet")){
-		if(!is.null(prediction_path) && prediction_path != ""){
+	if(inherits(object,"RnBSet")){
 			logger.start("Performing Age Prediction")
 			rnbSet <- agePredictor(object,prediction_path)
 			logger.completed()
-		}else{
-			logger.error("Currently no predefined RRBS predictor available.")
-		}
 	}
 	return(rnbSet)
 }
@@ -647,11 +638,28 @@ age.anti.transformation <- function(x,adult.age=20)
 #'
 #' @author	Michael Scherer
 
-agePredictor <- function(rnbSet, path=system.file(file.path("extdata", "predefined_predictor.csv"), package="RnBeads")){
-	if(!file.exists(path)){
-		logger.info(c("The specified predictor does not exists at ",path))
-		return(rnbSet)
-	}
+agePredictor <- function(rnbSet, path=""){
+  if(!is.null(path) && path != ""){
+  	if(!file.exists(path)){
+  		logger.info(c("The specified predictor does not exists at ",path))
+  		return(rnbSet)
+  	}
+  }else{
+    if(inherits(rnbSet,"RnBeadSet")){
+      anno <- annotation(rnbSet)
+      if(dim(anno)[1] > 30000){
+        path <- system.file(file.path("extdata", "predefined_predictor_450K.csv"), package="RnBeads")
+      }else{
+        path <- system.file(file.path("extdata", "predefined_predictor_27K.csv"), package="RnBeads")
+      }
+    }else if(inherits(rnbSet,"RnBiseqSet")){
+      if(assembly(rnbSet)=="hg19"){
+        path <- system.file(file.path("extdata", "predefined_predictor_RRBS_hg19.csv"), package="RnBeads")
+      }else{
+        path <- system.file(file.path("extdata", "predefined_predictor_RRBS_hg38.csv"), package="RnBeads")
+      }
+    }
+  }
 	if(inherits(rnbSet,"RnBeadSet")){
 		rnbSet <- agePredictor450(rnbSet,path)
 	}else if(inherits(rnbSet,"RnBiseqSet")){

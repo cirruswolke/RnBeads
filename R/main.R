@@ -1222,7 +1222,7 @@ rnb.run.inference <- function(rnb.set, dir.reports,
 	module.start.log("Covariate Inference")
 
 	report <- init.pipeline.report("covariate_inference", dir.reports, init.configuration)
-	optionlist <- rnb.options("inference.targets.sva","inference.sva.num.method","covariate.adjustment.columns", "export.to.ewasher","inference.age.prediction","inference.age.prediction.training","inference.age.prediction.predictor","inference.age.prediction.biseq","inference.age.column","inference.age.prediction.cv")
+	optionlist <- rnb.options("inference.targets.sva","inference.sva.num.method","covariate.adjustment.columns", "export.to.ewasher","inference.age.prediction","inference.age.prediction.training","inference.age.prediction.predictor","inference.age.column","inference.age.prediction.cv")
 	report <- rnb.add.optionlist(report, optionlist)
 
 	if (inherits(rnb.set,"RnBSet") && rnb.getOption("inference.age.prediction")){
@@ -1236,25 +1236,15 @@ rnb.run.inference <- function(rnb.set, dir.reports,
 				logger.completed()
 			}
 			prediction_path <- rnb.getOption("inference.age.prediction.predictor")
-			if(inherits(rnb.set,"RnBeadSet")){
+			if(inherits(rnb.set,"RnBSet")){
 				if(!is.null(prediction_path)&&prediction_path!=""){
 					logger.start("Age Prediction using specified predictor")
 					rnb.set <- agePredictor(rnb.set,prediction_path)
 					logger.completed()
 				}else{
-					if(inherits(rnb.set,"RnBeadSet")){
-						logger.start("Performing Age Prediction")
-						rnb.set <- agePredictor(rnb.set)
-						logger.completed()
-					}
-				}
-			}else if(inherits(rnb.set,"RnBiseqSet") && rnb.getOption("inference.age.prediction.biseq")){
-				if(!is.null(prediction_path)&&prediction_path!=""){
-					logger.start("Age Prediction using specified predictor")
-					rnb.set <- agePredictorRRBS(rnb.set,prediction_path)
-					logger.completed()
-				}else{
-					logger.error("Currently no predefined RRBS predictor available.")
+				  logger.start("Age Prediction using predefined predictor")
+				  rnb.set <- agePredictor(rnb.set)
+				  logger.completed()
 				}
 			}
 		}else{
