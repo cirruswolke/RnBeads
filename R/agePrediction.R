@@ -21,7 +21,7 @@
 
 rnb.section.ageprediction <- function(object,report){
 	title <- "Age Prediction"
-	descr <- "Plots for the visualization of predicted ages based on the DNA methylation pattern"
+	descr <- "Plots for the visualization of predicted ages based on the DNA methylation pattern."
 	report <- rnb.add.section(report,title,descr)
 	predictedAges <- pheno(object)$predicted_ages
 	if(is.null(predictedAges)){
@@ -33,11 +33,16 @@ rnb.section.ageprediction <- function(object,report){
 			logger.completed()
 		}else{
 			logger.info("Age prediction was not successful")
+			prediction_path <- rnb.getOption("inference.age.prediction.predictor")
+			if(!file.exists(prediction_path)){
+					text <- paste("The specified predictor does not exist at",prediction_path,", please check the option <em>inference.age.prediction.predictor</em> again.")
+					report <- rnb.add.paragraph(report,text)
+			}
 			return(report)
 		}
 	}
 	if(!is.null(predictedAges) && sum(is.na(predictedAges))==length(samples(object))){
-		txt <- "The Age prediction was not successful, therefore no age prediction Section was added to the report"
+		txt <- "The Age prediction was not successful, therefore no age prediction section was added to the report"
 		logger.info("No Age Prediction Section Added")
 		report <- rnb.add.paragraph(report,txt)
 		return(report)
@@ -49,17 +54,22 @@ rnb.section.ageprediction <- function(object,report){
 		if(is.null(prediction_path) || prediction_path==""){
 			if(rnb.getOption("inference.age.prediction.training")){
 					txt <- "No age information was available for the column age in the annotation, therefore the predefined predictor is used in the further calculation."
-					rnb.add.paragraph(report,txt)
+					report <- rnb.add.paragraph(report,txt)
 			}
 			header <- "A predefined predictor was used"
-			if(dim(annotation(object))<30000){
+			if(assembly(object)=="hg38"){
+				text <- "Currently there is no predictor available for Genome Build <em>hg38</em>. Prediction will be performed on a predictor trained on a hg19-data set."
+				logger.warning(text)
+				report <- rnb.add.paragraph(report,text)
+			}
+			if(dim(annotation(object))[1] < 30000){
 			  prediction_path <- system.file(file.path("extdata", "predefined_predictor_27K.csv"), package="RnBeads")
-	  	}else{
-	  	  prediction_path <- system.file(file.path("extdata", "predefined_predictor_450K.csv"), package="RnBeads")
-		  }
+	  		}else{
+	  		  prediction_path <- system.file(file.path("extdata", "predefined_predictor_450K.csv"), package="RnBeads")
+			}
 		}else{
 			if(!rnb.getOption("inference.age.prediction.training")){
-				header <- "A default predictor was used"
+				header <- "A user-specified predictor was used"
 			}
 		}
 	}else if(inherits(object,"RnBiseqSet")){
@@ -67,7 +77,7 @@ rnb.section.ageprediction <- function(object,report){
 		if(is.null(prediction_path) || prediction_path==""){
 			if(rnb.getOption("inference.age.prediction.training")){
 					txt <- "No age information was available for the column age in the annotation, therefore the predefined predictor is used in the further calculation."
-					rnb.add.paragraph(report,txt)
+					report <- rnb.add.paragraph(report,txt)
 			}
 		  header <- "A predefined predictor was used"
 		  if(assembly(object)=="hg19"){
@@ -77,11 +87,11 @@ rnb.section.ageprediction <- function(object,report){
 		  }
 		}else{
 			if(!rnb.getOption("inference.age.prediction.training")){
-				header <- "A default predictor that was used"
+				header <- "A user-specified predictor was used"
 			}
 		}
 	}
-	txt <- c(header, " and can be found as a <a href=\"",prediction_path,"\">","comma-separated file</a>.")
+	txt <- c(header, " and is available as a <a href=\"",prediction_path,"\">","comma-separated file</a>.")
 	rnb.add.paragraph(report, txt)
 
 	add.info <- function(stitle, ffunction, txt, actualAges, predictedAges) {
@@ -97,23 +107,51 @@ rnb.section.ageprediction <- function(object,report){
 		actualAges <- ph[,age]
 		if(!is.null(actualAges)){
 			options(warn=-1)
+			if(is.factor(actualAges)){
+					actualAges <- as.character(actualAges)
+			}
+			if(is.character(actualAges)){
+					actualAges <- lapply(actualAges,convert.string.ages)
+					if(length(actualAges)==0 || is.null(actualAges)){
+						predictedAges <- ph$predicted_ages
+						report <- add.age.histogram(report,predictedAges)
+						logger.warning("Could not read age column")
+						text <- "The age column has a format that can not be read by RnBeads. Please check the option <em>inference.age.column</em>."
+						report <- rnb.add.paragraph(report,text)
+						return(report)
+					}
+					set.na <- function(z){
+						if(length(z)==0){
+							NA
+						}else{
+							z
+						}
+					}
+					actualAges <- unlist(lapply(actualAges,set.na))
+			}
 			actualAgesNumeric <- as.numeric(actualAges)
 			if(sum(is.na(actualAgesNumeric)) != length(actualAges)){
 				predictedAges <- ph$predicted_ages
-				txt <- "Plotting annotated ages versus predicted ages and indicating different traits with different colors."
+				txt <- "Plotting annotated ages versus predicted ages and indicating different traits with different colors and different shapes."
 				report <- add.info("Comparison Plot",add.agecomparison.plot,txt,actualAgesNumeric,predictedAges)
-				txt <- "Plotting differences between predicted ages for each sample."
+				txt <- "Plotting differences between predicted and annotated age for each sample."
 				report <- add.info("Error Plot",add.combination.plot,txt,actualAgesNumeric,predictedAges)
 				#txt <- "Plotting quantiles for the difference between predicted and annotated ages."
 				#report <- add.info("Quantile Plot",add.quantile.plot,txt,actualAgesNumeric,predictedAges)
 			}else{
+				if(is.factor(actualAges)){
+					actualAges <- as.character(actualAges)
+				}
 				if(is.character(actualAges)){
-					fun <- function(s){
-						temp <- strsplit(s,"[.]")
-						temp <- temp[[1]][1]
- 						unique(na.omit(as.numeric(unlist(strsplit(temp,"[^0-9]+")))))
+					actualAges <- lapply(actualAges,convert.string.ages)
+					if(length(actualAges)==0 || is.null(actualAges)){
+						predictedAges <- ph$predicted_ages
+						report <- add.age.histogram(report,predictedAges)
+						logger.warning("Could not read age column")
+						text <- "The age column has a format that can not be read by RnBeads. Please check the option <em>inference.age.column</em>."
+						report <- rnb.add.paragraph(report,text)
+						return(report)
 					}
-					actualAges <- lapply(actualAges,fun)
 					set.na <- function(z){
 						if(length(z)==0){
 							NA
@@ -132,6 +170,8 @@ rnb.section.ageprediction <- function(object,report){
 					#report <- add.info("Quantile Plot",add.quantile.plot,txt,actualAgesNumeric,predictedAges)
 				}else{
 					txt <- "The age annotation column of the dataset has a format that can not be read."
+					predictedAges <- ph$predicted_ages
+					report <- add.age.histogram(report,predictedAges)
 					report <- rnb.add.paragraph(report,txt)
 				}
 			}
@@ -730,6 +770,10 @@ agePredictor450 <- function(rnbSet, path){
 				if(is.character(actualAges)){
 					actualAges <- unlist(lapply(actualAges,convert.string.ages))
 				}
+				if(length(actualAges)==0 || is.null(actualAges)){
+					logger.warning("Could not read age column")
+					return(rnbSet)
+				}
 				actualAges <- as.numeric(actualAges)
 				difference[!nas] <- predictedAges-actualAges
 				rnbSet <- addPheno(rnbSet,difference,"age_increase")
@@ -814,6 +858,10 @@ agePredictorRRBS <- function(rnbSet, path){
 				if(is.character(actualAges)){
 					actualAges <- unlist(lapply(actualAges,convert.string.ages))
 				}
+				if(length(actualAges)==0 || is.null(actualAges)){
+					logger.warning("Could not read age column")
+					return(rnbSet)
+				}
 				actualAges <- as.numeric(actualAges)
 				difference[!nas] <- predictedAges-actualAges
 				rnbSet <- addPheno(rnbSet,difference,"age_increase")
@@ -895,13 +943,14 @@ simpleGlmnet <- function(trainRnBSet,filePath=""){
 	ages <- ph[,age]
 	naAges <- is.na(ages)
 	if(!is.null(ages)){
+		if(is.factor(ages)){
+			ages <- as.character(ages)
+		}
 		if(is.character(ages)){
-			fun <- function(s){
-					temp <- strsplit(s,"[.]")
-					temp <- temp[[1]][1]
- 					unique(na.omit(as.numeric(unlist(strsplit(temp,"[^0-9]+")))))
-				}
-			ages <- unlist(lapply(ages,fun))
+			ages <- unlist(lapply(ages,convert.string.ages))
+		}
+		if(length(ages)==0){
+			return(NULL)
 		}
 		ages <- as.numeric(ages)
 		ages <- age.transformation(ages)
@@ -963,8 +1012,14 @@ simpleGlmnetRRBS <- function(trainRnBSet,filePath=""){
 	ages <- ph[,age]
 	naAges <- is.na(ages)
 	if(!is.null(ages)){
+		if(is.factor(ages)){
+			ages <- as.character(ages)
+		}
 		if(is.character(ages)){
 			ages <- unlist(lapply(ages,convert.string.ages))
+		}
+		if(length(ages)==0){
+			return(NULL)
 		}
 		ages <- as.numeric(ages)
 		ages <- age.transformation(ages)
@@ -1032,6 +1087,11 @@ run.cross.validation <- function(rnbSet,report){
 	descr <- "Boxplot for the two error measures Mean and Median absolute Error. Each Boxplot consists of 10 different points for each cross-validation fold, respectively."
 	if(inherits(rnbSet,"RnBeadSet")){
 		result <- cv.array(rnbSet)
+		if(is.null(result)){
+			text <- "Problem when performing age prediction."
+			report <- rnb.add.paragraph(report,text)
+			return(report)
+		}
 		report <- rnb.add.table(report,result,tcaption=txt)
 		means <- result["Mean",]
 		means <- t(means)
@@ -1047,6 +1107,11 @@ run.cross.validation <- function(rnbSet,report){
 		report <- rnb.add.figure(report,descr,report.plot)
 	}else if(inherits(rnbSet,"RnBiseqSet")){
 		result <- cv.biseq(rnbSet)
+		if(is.null(result)){
+			text <- "Problem when performing age prediction."
+			report <- rnb.add.paragraph(report,text)
+			return(report)
+		}
 		report <- rnb.add.table(report,result,tcaption=txt)
 		means <- result["Mean",]
 		means <- t(means)
@@ -1139,10 +1204,17 @@ cv.array <- function(rnbSet){
 	age <- rnb.getOption("inference.age.column")
 	if(age %in% colnames(ph)){
 		ages <- ph[,age]
+		if(is.factor(ages)){
+			ages <- as.character(ages)
+		}
 		if(is.character(ages)){
 			ages <- unlist(lapply(ages,convert.string.ages))
 		}
 		ages <- as.numeric(ages)
+		if(length(ages)==0 || is.null(ages) || sum(is.na(ages)) == length(ages)){
+			logger.warning("Could not read age column")
+			return(NULL)
+		}
 		ages <- age.transformation(ages)
 		missingAges <- is.na(ages)
 		ages <- ages[!missingAges]
@@ -1187,10 +1259,17 @@ cv.biseq <- function(rnbSet,report){
 	age <- rnb.getOption("inference.age.column")
 	if(age %in% colnames(ph)){
 		ages <- ph[,age]
+		if(is.factor(ages)){
+			ages <- as.character(ages)
+		}
 		if(is.character(ages)){
 			ages <- unlist(lapply(ages,convert.string.ages))
 		}
 		ages <- as.numeric(ages)
+		if(length(ages)==0 || is.null(ages) || sum(is.na(ages)) == length(ages)){
+			logger.warning("Could not read age column")
+			return(NULL)
+		}
 		missingAges <- is.na(ages)
 		ages <- ages[!missingAges]
 		rnbSet <- remove.samples(rnbSet,missingAges)
@@ -1361,6 +1440,10 @@ imputeRRBS <- function(methData){
 convert.string.ages <- function(s){
 	temp <- strsplit(s,"[.]")
 	temp <- temp[[1]][1]
-	unique(na.omit(as.numeric(unlist(strsplit(temp,"[^0-9]+")))))
+	temp <- unique(na.omit(as.numeric(unlist(strsplit(temp,"[^0-9]+")))))
+	if(length(temp)>1){
+		temp <- temp[1]
+	}
+	temp
 }
 			
