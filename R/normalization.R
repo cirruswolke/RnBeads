@@ -195,6 +195,8 @@ rnb.execute.normalization<-function(
 		}
 		if (verbose) {
 			rnb.status(c("Performed background subtraction with method", bgcorr.method))
+		} else if (bgcorr.method == "enmix.oob") {
+			## TODO: Implement
 		}
 		rnb.cleanMem()
 	}
