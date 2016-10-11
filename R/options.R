@@ -494,9 +494,8 @@ rnb.is.option <- function(txt) {
 #'        setting this option to a specific algorithm, make sure its dedicated package is installed.}
 #'   \item{\bold{\code{normalization.background.method}}\code{ = "methylumi.noob"}}{
 #'        A character singleton specifying which background subtraction is to be performed during normalization.
-#'        The \href{http://www.bioconductor.org/packages/devel/bioc/html/methylumi.html}{methylumi} background
-#'        correction methods are supported. The following values are accepted: \code{"none"}, \code{"methylumi.noob"},
-#'        \code{"methylumi.goob"} and \code{"methylumi.lumi"}.}
+#'        The following values are accepted: \code{"none"}, \code{"methylumi.noob"}, \code{"methylumi.goob"},
+#'        \code{"methylumi.lumi"} and \code{"enmix.oob"}.}
 #'   \item{\bold{\code{normalization.plot.shifts}}\code{ = TRUE}}{
 #'        Flag indicating if the report on normalization should include plots of shifts (degrees of beta value
 #'        correction).}
