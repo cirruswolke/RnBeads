@@ -195,6 +195,8 @@ rnb.execute.normalization<-function(
 				object@status$discard.ff.matrices<-TRUE
 			}
 			rnb.status(c("Performed background subtraction with method", bgcorr.method))
+		} else if (bgcorr.method == "enmix.oob") {
+			## TODO: Implement
 		}
 		object@status$background<-bgcorr.method
 		rnb.cleanMem()
