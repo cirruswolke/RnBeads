@@ -71,7 +71,7 @@ rnb.execute.normalization<-function(
 
 
 	if((inherits(object,"MethyLumiSet") && ncol(exprs(object))<2 || inherits(object,"RnBeadSet") && length(samples(object))<2) &&
-			!method %in% c("bmiq")){
+			!(method %in% c("none", "bmiq"))){
 			rnb.warning("The object has less than two samples and selected normalization method is not feasible in this case. Changed the normalization method to \"none\"")
 			method <- "none"
 	}
