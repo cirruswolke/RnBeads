@@ -62,8 +62,7 @@ rnb.probe.types <- function(dataset, include.snp = TRUE) {
 #' @author Yassen Assenov
 #' @noRd
 rnb.enmix.oob <- function(dataset, update.betas = TRUE) {
-	## TODO: Remove the second parameter passed to rnb.probe.types when integrating this in RnBeads
-	ptypes <- rnb.probe.types(dataset, FALSE)
+	ptypes <- rnb.probe.types(dataset)
 	if (parallel.isEnabled()) {
 		## TODO: Update fexport after integrating this in RnBeads
 		fexport <- c("rnb.enmix.em", "rnb.enmix.cm", "rnb.enmix.adjust", "rnb.enmix.oob.sample")
