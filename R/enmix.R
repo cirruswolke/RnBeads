@@ -145,7 +145,7 @@ rnb.enmix.oob.sample <- function(dataset, i.sample, ptypes = rnb.probe.types(dat
 #' @param sigmaB Estimated sigma parameter for the background (noise).
 #' @return Corrected vector of intensity values.
 #' 
-#' @author , modified by Yassen Assenov
+#' @author Zongli Xu and Liang Niu, modified by Yassen Assenov
 #' @noRd
 rnb.enmix.adjust <- function(x, muB, sigmaB) {
 	x[is.na(x)] <- 1
@@ -172,7 +172,7 @@ rnb.enmix.adjust <- function(x, muB, sigmaB) {
 #' @param x Set of read values, in the form of a \code{double} \code{vector}, against which the model is to be fit.
 #' @return \code{vector} of the fitted parameters: lambda, mu, sigma, and p.
 #'
-#' @author , modified by Yassen Assenov
+#' @author Zongli Xu and Liang Niu, modified by Yassen Assenov
 #' @noRd
 rnb.enmix.em <- function(x) {
 	epsilon = c(1e-04, 0.001, 0.001, 0.001)
@@ -214,7 +214,7 @@ rnb.enmix.em <- function(x) {
 #' @param sigmaB The sigma parameter for the background (noise).
 #' @param x      Observed intensities given as a \code{vector} of type \code{double}.
 #' 
-#' @author , modified by Yassen Assenov
+#' @author Zongli Xu and Liang Niu, modified by Yassen Assenov
 #' @noRd
 rnb.enmix.cm <- function(lambda, muS, sigmaS, p, muB, sigmaB, x) {
 	a <- muB + lambda * sigmaB^2
