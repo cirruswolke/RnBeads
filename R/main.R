@@ -1095,6 +1095,7 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 		report <- result$report
 		removed.sites <- sort(c(removed.sites, result$filtered))
 	}
+	rnb.cleanMem()
 	mask <- NULL
 	if (rnb.getOption("filtering.low.coverage.masking")) {
 		result <- rnb.step.low.coverage.masking.internal(rnb.set, removed.sites, report, anno.table,
@@ -1105,6 +1106,7 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 		report <- result$report
 	}
 	suppressWarnings(rm(result))
+	rnb.cleanMem()
 
 	logger.completed.filtering <- function(rnb.set, r.samples, r.sites) {
 		retained.p <- nsites(rnb.set) - length(r.sites)
@@ -1154,8 +1156,8 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 	}
 	ttt <- rnb.getOption("filtering.missing.value.quantile")
 	if (ttt != 1) {
-		if (is.null(mm)) mm <- meth(rnb.set)
-		result <- rnb.step.na.removal.internal(class(rnb.set), mm, removed.sites, report, anno.table, ttt, mask)
+		# if (is.null(mm)) mm <- meth(rnb.set)
+		result <- rnb.step.na.removal.internal(rnb.set, removed.sites, report, anno.table, ttt, mask)
 		report <- result$report
 		removed.sites <- sort(c(removed.sites, result$filtered))
 	}
@@ -1187,6 +1189,14 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 			report, section.name=sn, section.order=so)
 	logger.completed()
 
+	#DEBUG
+	if (TRUE){
+		fn <- file.path(rnb.get.directory(report, "data", absolute=TRUE), "filterData.RData")
+		logger.status(c("DEBUG: Saving filtering data to", fn))
+		save(removed.samples, removed.sites, mask, file=fn)
+	}
+
+
 	rnb.set <- rnb.filter.dataset(rnb.set, removed.samples, removed.sites, mask)
 
 	if (rnb.getOption("region.subsegments") > 1L) {
@@ -1212,7 +1222,7 @@ rnb.run.inference <- function(rnb.set, dir.reports,
 	module.start.log("Covariate Inference")
 
 	report <- init.pipeline.report("covariate_inference", dir.reports, init.configuration)
-	optionlist <- rnb.options("inference.targets.sva","inference.sva.num.method","covariate.adjustment.columns", "export.to.ewasher","inference.age.prediction","inference.age.prediction.training","inference.age.prediction.predictor","inference.age.prediction.biseq","inference.age.column","inference.age.prediction.cv")
+	optionlist <- rnb.options("inference.targets.sva","inference.sva.num.method","covariate.adjustment.columns", "export.to.ewasher","inference.age.prediction","inference.age.prediction.training","inference.age.prediction.predictor","inference.age.column","inference.age.prediction.cv")
 	report <- rnb.add.optionlist(report, optionlist)
 
 	if (inherits(rnb.set,"RnBSet") && rnb.getOption("inference.age.prediction")){
@@ -1226,25 +1236,15 @@ rnb.run.inference <- function(rnb.set, dir.reports,
 				logger.completed()
 			}
 			prediction_path <- rnb.getOption("inference.age.prediction.predictor")
-			if(inherits(rnb.set,"RnBeadSet")){
+			if(inherits(rnb.set,"RnBSet")){
 				if(!is.null(prediction_path)&&prediction_path!=""){
 					logger.start("Age Prediction using specified predictor")
 					rnb.set <- agePredictor(rnb.set,prediction_path)
 					logger.completed()
 				}else{
-					if(inherits(rnb.set,"RnBeadSet")){
-						logger.start("Performing Age Prediction")
-						rnb.set <- agePredictor(rnb.set)
-						logger.completed()
-					}
-				}
-			}else if(inherits(rnb.set,"RnBiseqSet") && rnb.getOption("inference.age.prediction.biseq")){
-				if(!is.null(prediction_path)&&prediction_path!=""){
-					logger.start("Age Prediction using specified predictor")
-					rnb.set <- agePredictorRRBS(rnb.set,prediction_path)
-					logger.completed()
-				}else{
-					logger.error("Currently no predefined RRBS predictor available.")
+				  logger.start("Age Prediction using predefined predictor")
+				  rnb.set <- agePredictor(rnb.set)
+				  logger.completed()
 				}
 			}
 		}else{
@@ -1365,7 +1365,10 @@ rnb.run.exploratory <- function(rnb.set, dir.reports,
 	if (!is.null(rnb.getOption("replicate.id.column"))) {
 		replicateList <- rnb.sample.replicates(rnb.set, replicate.id.col = rnb.getOption("replicate.id.column"))
 		if (length(replicateList) > 0) {
-			region.types <- c("sites", rnb.region.types.for.analysis(rnb.set))
+			region.types <- rnb.region.types.for.analysis(rnb.set)
+			if (rnb.getOption("analyze.sites")){
+				region.types <- c("sites", region.types)
+			}
 			report <- rnb.section.replicate.concordance(rnb.set, replicateList, types = region.types, report)
 		}
 	}

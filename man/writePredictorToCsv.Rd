@@ -12,7 +12,7 @@ writePredictorToCsv(linearModel, path)
 \item{path}{Path in which the new predictor should be written}
 }
 \value{
-TRUE if the writing is successful
+TRUE if the writing was successful
 }
 \description{
 This function writes the coefficients of a linear model into a csv file.
