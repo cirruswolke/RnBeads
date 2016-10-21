@@ -17,7 +17,7 @@ Modified report object
 }
 \description{
 This function performs a 10-fold cross validation to estimate the performance of a
-newly trained predictor. If parallel setup was done, the function perfoms the cross
+newly trained predictor. If \code{parallel.isEnabled()}, the function perfoms the cross
 validation in parallel. The function adds a table to the specified report containing 
 the result of the 10-fold cross validation.
 }

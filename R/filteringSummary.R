@@ -58,17 +58,8 @@ rnb.filter.dataset <- function(rnb.set, r.samples, r.sites, mask = NULL) {
 	logger.start("Manipulating the object")
 	needs.summary <- (!is.null(mask))
 	if (needs.summary) {
-		rnb.set@meth.sites[,][mask] <- NA
-		if(inherits(rnb.set, "RnBeadRawSet")){
-			rnb.set@M[,][mask] <- NA
-			rnb.set@U[,][mask] <- NA
-			if(!is.null(rnb.set@M0)){
-				rnb.set@M0[,][mask] <- NA
-			}
-			if(!is.null(rnb.set@U0)){
-				rnb.set@U0[,][mask] <- NA
-			}
-		}
+		rnb.set <- mask.sites.meth(rnb.set, mask)
+		logger.status("Updated NA masking")
 	}
 	if (length(r.samples) != 0) {
 		if(rnb.getOption("enforce.destroy.disk.dumps")){
@@ -86,16 +77,18 @@ rnb.filter.dataset <- function(rnb.set, r.samples, r.sites, mask = NULL) {
 			rnb.set@status$discard.ff.matrices<-TRUE
 		}
 		rnb.set <- remove.sites(rnb.set, r.sites)
+		# rnb.set <- remove.sites(rnb.set, r.sites, verbose=TRUE) #DEBUG
 		if(isTRUE(rnb.set@status$discard.ff.matrices)){
 			rnb.set@status$discard.ff.matrices<-NULL
 		}
-		needs.summary <- FALSE
+		needs.summary <- FALSE # remove.sites already takes care of region summaries
 		logger.status(sprintf("Removed %d sites (probes)", length(r.sites)))
 	}
 	if (needs.summary) {
 		rnb.set <- updateRegionSummaries(rnb.set)
 		logger.status("Updated region-level data")
 	}
+	logger.info(c("Retained", nsites(rnb.set), "sites and", length(samples(rnb.set)), "samples"))
 	logger.completed()
 	rnb.set
 }

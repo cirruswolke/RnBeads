@@ -746,41 +746,49 @@ setMethod("remove.sites", signature(object = "RnBSet"),
 			if(length(inds) != 0) {
 					object@sites <- object@sites[-inds, ]
 					if(!is.null(object@status) && object@status$disk.dump){
-						mat <- object@meth.sites[,]
-						new.matrix <- mat[-inds, ,drop=FALSE]
+						doBigFf <- !is.null(object@status$disk.dump.bigff)
+						bff.finalizer <- NULL
+						if (doBigFf) doBigFf <- object@status$disk.dump.bigff
+						if (doBigFf) bff.finalizer <- rnb.getOption("disk.dump.bigff.finalizer")
+						nSites.new <- nrow(object@meth.sites) - length(inds)
+						nSamples <- length(samples(object))
+						# methylation
+						newMat <- NULL
+						if (doBigFf){
+							newMat <- BigFfMat(row.n=nSites.new, col.n=nSamples, row.names=NULL, col.names=samples(object), finalizer=bff.finalizer)
+						} else {
+							newMat <- ff(NA, dim=c(nSites.new, nSamples), dimnames=list(NULL, samples(object)), vmode="double")
+						}
+						for (j in 1:nSamples){
+							newMat[,j] <- object@meth.sites[-inds,j]
+						}
 						if(isTRUE(object@status$discard.ff.matrices)){
 							delete(object@meth.sites)
 						}
-						doBigFf <- !is.null(object@status$disk.dump.bigff)
-						if (doBigFf) doBigFf <- object@status$disk.dump.bigff
+						object@meth.sites <- newMat
 
-						if (doBigFf){
-							bff.finalizer <- rnb.getOption("disk.dump.bigff.finalizer")
-							object@meth.sites <- BigFfMat(new.matrix, finalizer=bff.finalizer)
-						} else {
-							object@meth.sites <- convert.to.ff.matrix.tmp(new.matrix)
-						}
-						rm(new.matrix); rnb.cleanMem()
+						# coverage
 						if(!is.null(object@covg.sites)) {
-							mat <- object@covg.sites[,]
-							new.matrix <- mat[-inds, ,drop=FALSE]
+							newMat <- NULL
+							if (doBigFf){
+								newMat <- BigFfMat(row.n=nSites.new, col.n=nSamples, row.names=NULL, col.names=samples(object), na.prototype=as.integer(NA), finalizer=bff.finalizer)
+							} else {
+								newMat <- ff(NA_integer_, dim=c(nSites.new, nSamples), dimnames=list(NULL, samples(object)))
+							}
+							for (j in 1:nSamples){
+								newMat[,j] <- object@covg.sites[-inds,j]
+							}
 							if(isTRUE(object@status$discard.ff.matrices)){
 								delete(object@covg.sites)
-						 	}
-						 	if (doBigFf){
-						 		object@covg.sites <- BigFfMat(new.matrix, finalizer=bff.finalizer)
-						 	} else {
-								object@covg.sites <- convert.to.ff.matrix.tmp(new.matrix)
 							}
-							rm(new.matrix); rnb.cleanMem()
+							object@covg.sites <- newMat
 						}
-					}else{
+					} else {
 						object@meth.sites <- object@meth.sites[-inds, ,drop=FALSE]
 						if(!is.null(object@covg.sites)) {
 							object@covg.sites <- object@covg.sites[-inds, ,drop=FALSE]
 						}
 					}
-
 			}
 
 			## Update region methylation
@@ -810,6 +818,51 @@ setMethod("remove.sites", signature(object = "RnBSet"),
 			}
 			object
 		}
+)
+
+########################################################################################################################
+
+if (!isGeneric("mask.sites.meth")) {
+	setGeneric("mask.sites.meth", function(object, mask, verbose=FALSE) standardGeneric("mask.sites.meth"))
+}
+
+#' mask.sites.meth-methods
+#'
+#' Given a logical matrix, sets corresponding entries in the methylation table to NA (masking).
+#' Low memory footprint
+#'
+#' @param object    Dataset of interest.
+#' @param mask      logical matrix indicating which sites should be masked
+#' @param verbose	if \code{TRUE} additional diagnostic output is generated
+#'
+#' @return The modified dataset.
+#'
+#' @rdname mask.sites.meth-methods
+#' @aliases mask.sites.meth
+#' @aliases mask.sites.meth,RnBSet-method
+#' @docType methods
+setMethod("mask.sites.meth", signature(object = "RnBSet"),
+	function(object, mask, verbose=FALSE) {
+		if(!is.null(object@status) && object@status$disk.dump){
+			nSamples <- length(samples(object))
+			for (j in 1:nSamples){
+				object@meth.sites[mask[,j],j] <- NA
+			}
+		} else {
+			object@meth.sites[,][mask] <- NA
+			if(inherits(object, "RnBeadRawSet")){
+				object@M[,][mask] <- NA
+				object@U[,][mask] <- NA
+				if(!is.null(object@M0)){
+					object@M0[,][mask] <- NA
+				}
+				if(!is.null(object@U0)){
+					object@U0[,][mask] <- NA
+				}
+			}
+		}
+		object
+	}
 )
 
 ########################################################################################################################
@@ -2218,6 +2271,45 @@ setMethod("sampleCovgApply", signature(object = "RnBSet"),
 		res <- sapply(1:length(samples(object)), FUN=function(j){
 			fn(covg(object, type=type, j=j), ...)
 		})
+		return(res)
+	}
+)
+########################################################################################################################
+if(!isGeneric("getNumNaMeth")) setGeneric("getNumNaMeth", function(object, ...) standardGeneric("getNumNaMeth"))
+#' getNumNaMeth-methods
+#'
+#' for each site/region, the getNumNaMeth retrieves the number of NA values accross all samples.
+#' Does this efficiently by breaking down the methylation matrix into submatrices
+#' @param type "sites" or region type
+#' @param chunkSize size of each submatrix (performance tuning parameter)
+#' @param mask logical matrix. its entries will also be considered NAs in counting
+#' @return vector containing the number of NAs per site/region
+#'
+#' @rdname getNumNaMeth-methods
+#' @docType methods
+#' @aliases getNumNaMeth
+#' @aliases getNumNaMeth,RnBSet-method
+setMethod("getNumNaMeth", signature(object = "RnBSet"),
+	function(object, type="sites", chunkSize=1e5, mask=NULL) {
+		if (!(is.character(type) && length(type) == 1 && (!is.na(type)))) {
+			stop("invalid value for type")
+		}
+		if (!(type %in% c("sites", object@target, names(object@regions)))) {
+			stop("unsupported region type")
+		}
+		#get start and end indices for the chunks
+		n <- nsites(object, type)
+		indStarts <- seq(1,n,by=chunkSize)
+		indEnds <- c(indStarts[-1]-1, n)
+		#apply to each chunk
+		res <- unlist(lapply(1:length(indStarts), FUN=function(i){
+			indsCur <- indStarts[i]:indEnds[i]
+			mm <- meth(object, type=type, i=indsCur)
+			isNaMat <- is.na(mm)
+			if (!is.null(mask)) isNaMat <- isNaMat | mask[indsCur,]
+			return(as.integer(rowSums(isNaMat)))
+		}))
+		
 		return(res)
 	}
 )

@@ -93,7 +93,7 @@
 
 \author{Fabian M\"uller, Yassen Assenov, Pavlo Lutsik \\
 	\small{Contact: \cs{rnbeads@mpi-inf.mpg.de}} \\
-	\small{Package version: \cs{1.2.0}}}
+	\small{Package version: \cs{1.7.1}}}
 
 \thispagestyle{empty}
 \maketitle
@@ -780,7 +780,7 @@ type counts and sum up to a small value $<1$ .
 
 In addition to the inference possibilities mentioned before, \cs{RnBeads} is capable of predicting human age from DNA methylation data. The prediction was initially performed by building an elastic net regression model on the methylation values of the CpG sites. Performance was evaluated by testing the prediction on several independent test data sets.
 
-	In principal, the age prediction section of \cs{RnBeads} is activated by setting:
+	Basically, the age prediction section of \cs{RnBeads} is activated by setting:
 <<eval=FALSE>>=
 rnb.options(inference.age.prediction=TRUE)
 @
@@ -1541,7 +1541,7 @@ create.densityScatter(dframe, is.special=isDMP, sparse.points=0.001,
 
 	Cell type heterogeneity of the profiled samples is a widely recognized source of confounding in DNA methylation profiling studies. Several methods have been proposed to tackle it in large data sets, some of which rely upon availability of reference methylomes~\cite{Houseman2012, Guintivano2013},   while the other can be applied directly~\cite{Houseman2014, Zou2014}. \cs{RnBeads} supports several approaches for cell type heterogeneity inference and adjustment. In case the reference methylomes are available, they can be used to estimate the relative contributions of each cell type (see Section~\ref{sec:ct-inference}). Next, the contribution estimates can be used as covariates in the limma-based differential methylation analysis.
 
-	For the case when reference methylomes are absent, differential methylation analysis in \cs{RnBeads} can be corrected using the reference-free method by Houseman {\it et al}.~\cite{Houseman2014}. \cs{RefFreeEWAS} analysis is fully integrated with differential methylation module of \cs{RnBeads}, and, similarly to limma-based analysis, can adjust for covariates. It can be activated using a single option:
+	For the case when reference methylomes are absent, differential methylation analysis in \cs{RnBeads} can be corrected using the reference-free method by Houseman \textit{et al.}~\cite{Houseman2014}. \cs{RefFreeEWAS} analysis is fully integrated with differential methylation module of \cs{RnBeads}, and, similarly to limma-based analysis, can adjust for covariates. It can be activated using a single option:
 <<eval=FALSE>>=
 rnb.options(differential.site.test.method="refFreeEWAS")
 @
