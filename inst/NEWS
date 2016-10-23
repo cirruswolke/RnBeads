@@ -1,6 +1,7 @@
 RnBeads 1.7.1
 =============
 
+ * Added support for the ENmix.oob background subtraction method
  * Several improvements in age prediction module
  * Added conversion from minfi raw dataset to RnBeadRawSet
  * Several minor bug fixes
