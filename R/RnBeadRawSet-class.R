@@ -371,9 +371,14 @@ setMethod("show", "RnBeadRawSet", rnb.show.rnbeadset)
 
 ########################################################################################################################
 
-#' as("MethyLumiSet", "RnBeadRawSet")
+#' Conversion to/from RnBeadRawSet
 #' 
-#' Convert a \code{\linkS4class{MethyLumiSet}} object to \code{\linkS4class{RnBeadRawSet}}
+#' The \code{"as"} method can be used for the following conversions:
+#' \itemize{
+#'   \item{}{\code{MethyLumiSet} (in package \pkg{methylumi}) to \code{\linkS4class{RnBeadRawSet}}}
+#'   \item{}{\code{RnBeadRawSet} to \code{MethyLumiSet}}
+#'   \item{}{\code{RGChannelSet} (in package \pkg{minfi}) to \code{\linkS4class{RnBeadRawSet}}}
+#' }
 #' 
 #' @name as.RnBeadRawSet
 setAs("MethyLumiSet", "RnBeadRawSet",
@@ -436,11 +441,6 @@ setAs("MethyLumiSet", "RnBeadRawSet",
 
 ########################################################################################################################
 		
-#' as("RnBeadRawSet", "MethyLumiSet")
-#'
-#' Convert a \code{\linkS4class{RnBeadRawSet}} object to \code{\linkS4class{MethyLumiSet}}
-#' 
-#' @name as.RnBeadRawSet 
 setAs("RnBeadRawSet","MethyLumiSet",
 		
 		function(from, to){
@@ -525,6 +525,122 @@ setAs("RnBeadRawSet","MethyLumiSet",
 			
 		})
 
+########################################################################################################################
+
+setAs("RGChannelSet", "RnBeadRawSet", function(from, to) {
+
+		## Get Illumina assay (platform)
+		target.info <- getManifest(from)
+		assay.name <- target.info@annotation
+		if (!(is.character(assay.name) && length(assay.name) == 1 && isTRUE(assay.name != ""))) {
+			stop("Unsupported platform; expected one-element character")
+		}
+		if (assay.name == "IlluminaMethylationEPIC") {
+			assay.name <- "probesEPIC"
+			platform.name <- "EPIC"
+		} else if (assay.name == "IlluminaHumanMethylation450k") {
+			assay.name <- "probes450"
+			platform.name <- "450k"
+		} else if (assay.name == "IlluminaHumanMethylation27k") {
+			assay.name <- "probes27"
+			platform.name <- "27k"
+		} else {
+			stop(paste("Unsupported platform", assay.name))
+		}
+	
+		## Use RnBeads' mapping from probe IDs to addresses
+		probes.all <- rnb.get.annotation(assay.name, "hg19")
+		probes.all <- lapply(probes.all, function(x) {
+				result <- as.data.frame(mcols(x)[, c("Design", "Color", "AddressA", "AddressB")])
+				rownames(result) <- names(x)
+				result
+			}
+		)
+		probes.all <- do.call(rbind, unname(probes.all))
+		controls.all <- rnb.get.annotation(sub("^probes", "controls", assay.name), "hg19")
+		controls.all <- controls.all[, "ID"]
+
+		## Extract data on signals
+		mm.green <- getGreen(from)
+		mm.red <- getRed(from)
+		addresses.raw <- as.integer(rownames(mm.green))
+		probes.supported <- probes.all[, 3] %in% addresses.raw | probes.all[, 4] %in% addresses.raw
+		probes.all <- probes.all[probes.supported, ]
+		rm(target.info, assay.name, probes.supported)
+
+		## Initialize matrices of signal intensities and bead counts
+		M <- matrix(NA_real_, nrow = nrow(probes.all), ncol = ncol(mm.red))
+		U <- matrix(NA_real_, nrow = nrow(probes.all), ncol = ncol(mm.red))
+		M0 <- matrix(NA_real_, nrow = nrow(probes.all), ncol = ncol(mm.red))
+		U0 <- matrix(NA_real_, nrow = nrow(probes.all), ncol = ncol(mm.red))
+		if (inherits(from, "RGChannelSetExtended")) {
+			mm.beads <- get("NBeads", pos = from@assayData)
+			beads.M <- matrix(0L, nrow = nrow(probes.all), ncol = ncol(mm.red))
+			beads.U <- matrix(0L, nrow = nrow(probes.all), ncol = ncol(mm.red))
+		} else {
+			beads.M <- NULL
+			beads.U <- NULL
+		}
+
+		## Map signals on addresses to probe signal intensities
+		ii <- which(probes.all[, "Design"] == "II")
+		jj <- findInterval(probes.all[ii, "AddressA"], addresses.raw)
+		M[ii, ] <- mm.green[jj, ]
+		U[ii, ] <- mm.red[jj, ]
+		if (!is.null(beads.M)) {
+			beads.M[ii, ] <- mm.beads[jj, ]
+			beads.U[ii, ] <- mm.beads[jj, ]
+		}
+		ii <- which(probes.all[, "Design"] == "I" & probes.all[, "Color"] == "Grn")
+		jj <- findInterval(probes.all[ii, "AddressB"], addresses.raw)
+		M[ii, ] <- mm.green[jj, ]
+		M0[ii, ] <- mm.red[jj, ]
+		if (!is.null(beads.M)) {
+			beads.M[ii, ] <- mm.beads[jj, ]
+		}
+		jj <- findInterval(probes.all[ii, "AddressA"], addresses.raw)
+		U[ii, ] <- mm.green[jj, ]
+		U0[ii, ] <- mm.red[jj, ]
+		if (!is.null(beads.M)) {
+			beads.U[ii, ] <- mm.beads[jj, ]
+		}
+		ii <- which(probes.all[, "Design"] == "I" & probes.all[, "Color"] == "Red")
+		jj <- findInterval(probes.all[ii, "AddressB"], addresses.raw)
+		M[ii, ] <- mm.red[jj, ]
+		M0[ii, ] <- mm.green[jj, ]
+		if (!is.null(beads.M)) {
+			beads.M[ii, ] <- mm.beads[jj, ]
+		}
+		jj <- findInterval(probes.all[ii, "AddressA"], addresses.raw)
+		U[ii, ] <- mm.red[jj, ]
+		U0[ii, ] <- mm.green[jj, ]
+		if (!is.null(beads.M)) {
+			beads.U[ii, ] <- mm.beads[jj, ]
+		}
+
+		## TODO: Extract detection p-values if present
+
+		## Extract control probe signals if available
+		jj <- findInterval(controls.all, addresses.raw, all.inside = TRUE)
+		ii <- which(controls.all == addresses.raw[jj])
+		if (length(ii) == 0) {
+			qc <- NULL
+		} else {
+			jj <- jj[ii]
+			qc <- matrix(NA_real_, nrow = length(controls.all), ncol = ncol(mm.red))
+			rownames(qc) <- as.character(controls.all)
+			qc <- list("Cy3" = qc, "Cy5" = qc)
+			qc[[1]][ii, ] <- mm.green[jj, ]
+			qc[[2]][ii, ] <- mm.red[jj, ]
+			if (all(sapply(qc, function(x) { all(is.na(x)) }))) {
+				qc <- NULL
+			}
+		}
+
+		## Construct the resulting object
+		RnBeadRawSet(pData(from), rownames(probes.all), M, U, M0, U0, beads.M, beads.U, NULL, qc, platform.name)
+	}
+)
 
 ########################################################################################################################
 		
