@@ -21,13 +21,14 @@
 #' @noRd
 rnb.probe.types <- function(dataset, include.snp = TRUE) {
 	ptypes <- rnb.get.annotation(dataset@target)
-	pindices <- tapply(dataset@sites[, 3], dataset@sites[, 2], identity, simplify = FALSE)
+	pindices <- tapply(dataset@sites[, 3], dataset@sites[, 2], unname, simplify = FALSE)
 	i.chrom <- as.integer(names(pindices))
 	probe.types <- list()
 	for (i in 1:length(pindices)) {
-		probe.types[[i]] <- as.data.frame(mcols(ptypes[[i.chrom[i]]])[, c("Design", "Color")])
+		probe.types[[i]] <- as.data.frame(mcols(ptypes[[i.chrom[i]]])[pindices[[i]], c("Design", "Color")])
 	}
 	probe.types <- do.call(rbind, probe.types)
+	rm(pindices, i.chrom)
 	i.probes <- list()
 	for (probe.design in levels(probe.types[, 1])) {
 		i <- probe.types[, 1] == probe.design
