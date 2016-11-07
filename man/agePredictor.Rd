@@ -4,8 +4,7 @@
 \alias{agePredictor}
 \title{agePredictor}
 \usage{
-agePredictor(rnbSet, path = system.file(file.path("extdata",
-  "predefined_predictor.csv"), package = "RnBeads"))
+agePredictor(rnbSet, path = "")
 }
 \arguments{
 \item{rnbSet}{An \code{RnBSet} object containing the relevant methylation infos.}

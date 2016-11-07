@@ -4,7 +4,7 @@
 \alias{createPredictor}
 \title{createPredictor}
 \usage{
-createPredictor(linearModel)
+createPredictor(linearModel, lambda = NULL)
 }
 \arguments{
 \item{linearModel}{an output of glmnet from which the predictor should

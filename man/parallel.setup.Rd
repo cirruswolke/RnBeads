@@ -4,7 +4,7 @@
 \alias{parallel.setup}
 \title{parallel.setup}
 \usage{
-\method{parallel}{setup}(...)
+parallel.setup(...)
 }
 \arguments{
 \item{...}{Parameters for \code{registerDoParallel} from the \pkg{doParallel} package.

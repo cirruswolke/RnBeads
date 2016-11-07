@@ -4,7 +4,7 @@
 \alias{parallel.isEnabled}
 \title{parallel.isEnabled}
 \usage{
-\method{parallel}{isEnabled}()
+parallel.isEnabled()
 }
 \value{
 \code{TRUE} if multicore processing is enabled, \code{FALSE} otherwise.
