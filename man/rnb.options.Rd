@@ -126,6 +126,37 @@ is available (see below). Attempting to get or set the value of a non-existing o
   \item{\bold{\code{import.gender.prediction}}\code{ = TRUE}}{
        Flag indicating if gender prediction is to be performed. Gender prediction is only supported for Infinium 450k
        datasets with signal intensity information. The value of this option is ignored for other datasets.}
+  \item{\bold{\code{qc}}\code{ = TRUE}}{
+       Flag indicating if the quality control module is to be executed.}
+  \item{\bold{\code{qc.boxplots}}\code{ = TRUE}}{
+       [Microarrays] Add boxplots for all types of quality control probes to the quality control report. The boxplots
+       give signal distribution across samples.}
+  \item{\bold{\code{qc.barplots}}\code{ = TRUE}}{
+       [Microarrays] Add barplots for each quality control probes to the quality control report.}
+  \item{\bold{\code{qc.negative.boxplot}}\code{ = TRUE}}{
+       [Microarrays] Add boxplot of negative control probe intensities for all samples.}
+  \item{\bold{\code{qc.snp.heatmap}}\code{ = TRUE}}{
+       [Microarrays] Flag indicating if a heatmap of the beta values for all SNP probes is to be geneerated.}
+  \item{\bold{\code{qc.snp.barplot}}\code{ = FALSE}}{
+       [Microarrays] Add bar plots of the beta-values observed for each SNP-calling probe.}
+  \item{\bold{\code{qc.snp.boxplot}}\code{ = FALSE}}{
+       [Microarrays] Add boxplot of beta-values for the SNP-calling probes.}
+  \item{\bold{\code{qc.snp.distances}}\code{ = TRUE}}{
+       [Microarrays] Flag indicating if intersample distances based on the beta values of SNP probes are to be
+        displayed. This can help identify genetically similar or identical samples.}
+  \item{\bold{\code{qc.snp.purity}}\code{ = FALSE}}{
+       [Microarrays] Flag indicating if genetic purity should be estimated based on the beta values of SNP probes.}
+  \item{\bold{\code{qc.sample.batch.size}}\code{ = 50}}{
+       [Microarrays] Maximal number of samples included in a single quality control barplot and negative control boxplot.}
+  \item{\bold{\code{qc.coverage.plots}}\code{ = FALSE}}{
+       [Bisulfite sequencing] Add genome-wide sequencing coverage plot for each sample.}
+  \item{\bold{\code{qc.coverage.threshold.plot}}\code{ = 1:10}}{
+       [Bisulfite sequencing] Values for coverage cutoffs to be shown in a coverage thresholds plot. This must be an \code{integer}
+       vector of positive values. Setting this to an empty vector disables the coverage thresholds plot.}
+  \item{\bold{\code{qc.coverage.histograms}}\code{ = FALSE}}{
+       [Bisulfite sequencing] Add sequencing coverage histogram for each sample.}
+  \item{\bold{\code{qc.coverage.violins}}\code{ = FALSE}}{
+       [Bisulfite sequencing] Add sequencing coverage violin plot for each sample.}
   \item{\bold{\code{preprocessing}}\code{ = TRUE}}{Flag controlling whether the data should be preprocessed
 		  (whether quality filtering and in case of Infinium microarray data normalization should be applied).}
   \item{\bold{\code{normalization}}\code{ = NULL}}{
@@ -152,33 +183,6 @@ is available (see below). Attempting to get or set the value of a non-existing o
   \item{\bold{\code{normalization.plot.shifts}}\code{ = TRUE}}{
        Flag indicating if the report on normalization should include plots of shifts (degrees of beta value
        correction).}
-  \item{\bold{\code{qc}}\code{ = TRUE}}{
-       Flag indicating if the quality control module is to be executed.}
-  \item{\bold{\code{qc.boxplots}}\code{ = TRUE}}{
-       [Infinium 450k] Add boxplots for all types of quality control probes to the quality control report. The boxplots give signal
-       distribution across samples.}
-  \item{\bold{\code{qc.barplots}}\code{ = TRUE}}{
-       [Infinium 450k] Add barplots for each quality control probes to the quality control report.}
-  \item{\bold{\code{qc.negative.boxplot}}\code{ = TRUE}}{
-       [Infinium 450k] Add boxplot of negative control probe intensities for all samples.}
-  \item{\bold{\code{qc.snp.distances}}\code{ = TRUE}}{
-       [Infinium 450k] Flag indicating if intersample distances based on the beta values of SNP probes are to be displayed. This
-       can help identify or validate genetically similar or identical samples.}
-  \item{\bold{\code{qc.snp.boxplot}}\code{ = FALSE}}{
-       [Infinium 450k] Add boxplot of beta-values for the SNP-calling probes. Can be useful for detection of sample mix-ups.}
-  \item{\bold{\code{qc.snp.barplot}}\code{ = FALSE}}{
-       [Infinium 450k] Add bar plots of beta-values for the SNP-calling probes in each profiled sample.}
-  \item{\bold{\code{qc.sample.batch.size}}\code{ = 50}}{
-       [Infinium 450k] Maximal number of samples included in a single quality control barplot and negative control boxplot.}
-  \item{\bold{\code{qc.coverage.plots}}\code{ = FALSE}}{
-       [Bisulfite sequencing] Add genome-wide sequencing coverage plot for each sample.}
-  \item{\bold{\code{qc.coverage.threshold.plot}}\code{ = 1:10}}{
-       [Bisulfite sequencing] Values for coverage cutoffs to be shown in a coverage thresholds plot. This must be an \code{integer}
-       vector of positive values. Setting this to an empty vector disables the coverage thresholds plot.}
-  \item{\bold{\code{qc.coverage.histograms}}\code{ = FALSE}}{
-       [Bisulfite sequencing] Add sequencing coverage histogram for each sample.}
-  \item{\bold{\code{qc.coverage.violins}}\code{ = FALSE}}{
-       [Bisulfite sequencing] Add sequencing coverage violin plot for each sample.}
   \item{\bold{\code{filtering.whitelist}}\code{ = NULL}}{Name of a file specifying site or probe identifiers to be
        whitelisted. Every line in this file must contain exactly one identifier. The whitelisted sites are always
        retained in the analysed datasets, even if filtering criteria or blacklisting requires their removal.

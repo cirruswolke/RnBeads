@@ -34,9 +34,10 @@ qc.boxplots	logical	no	no		TRUE
 qc.barplots	logical	no	no		TRUE
 qc.negative.boxplot	logical	no	no		TRUE
 qc.snp.heatmap	logical	no	no		TRUE
-qc.snp.distances	logical	no	no		TRUE
-qc.snp.boxplot	logical	no	no		FALSE
 qc.snp.barplot	logical	no	no		FALSE
+qc.snp.boxplot	logical	no	no		FALSE
+qc.snp.distances	logical	no	no		TRUE
+qc.snp.purity	logical	no	no		FALSE
 qc.coverage.plots	logical	no	no		FALSE
 qc.coverage.threshold.plot	integer.vector	no	yes	[1,	(1,2,3,4,5,6,7,8,9,10)
 qc.coverage.histograms	logical	no	no		TRUE

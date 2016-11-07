@@ -952,14 +952,20 @@ rnb.run.qc <- function(rnb.set, dir.reports, init.configuration = !file.exists(f
 	module.start.log("Quality Control")
 
 	report <- init.pipeline.report("quality_control", dir.reports, init.configuration)
-	optionlist <- rnb.options("qc.boxplots", "qc.barplots", "qc.negative.boxplot", "qc.snp.heatmap", "qc.snp.distances",
-		"qc.snp.boxplot", "qc.snp.barplot")
+	optionlist <- rnb.options("qc.boxplots", "qc.barplots", "qc.negative.boxplot")
+	if (inherits(rnb.set, "RnBeadSet")) {
+		snp.options <- list("qc.snp.heatmap", "qc.snp.barplot", "qc.snp.boxplot", "qc.snp.distances", "qc.snp.purity")
+		snp.options <- do.call(rnb.options, snp.options)
+		optionlist <- c(optionlist, snp.options)
+		snp.options <- any(unlist(snp.options, use.names = FALSE))
+	} else {
+		snp.options <- FALSE
+	}
 	report <- rnb.add.optionlist(report, optionlist)
 
 	report <- rnb.step.quality(rnb.set, report)
-	include.mixups <- any(unlist(rnb.options("qc.snp.heatmap", "qc.snp.boxplot", "qc.snp.barplot")))
-	if (inherits(rnb.set, "RnBeadSet") && include.mixups) {
-		report <- rnb.step.mixups(rnb.set, report)
+	if (snp.options) {
+		report <- rnb.step.snp.probes(rnb.set, report)
 	}
 	if (.hasSlot(rnb.set, "inferred.covariates") && isTRUE(rnb.set@inferred.covariates$gender)) {
 		if (inherits(rnb.set, "RnBeadRawSet")) {
