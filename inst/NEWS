@@ -1,3 +1,8 @@
+RnBeads 1.7.2
+=============
+
+ * Added genetic purity estimation based on SNP probes (option qc.snp.purity, microarrays only)
+
 RnBeads 1.7.1
 =============
 
