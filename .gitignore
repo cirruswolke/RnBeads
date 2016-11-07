@@ -13,3 +13,5 @@ vignettes/RnBeads_Annotations.tex
 vignettes/RnBeads_Annotations.pdf
 sftp-config.json
 .Rproj.user
+.Rbuildignore
+RnBeads.Rproj
