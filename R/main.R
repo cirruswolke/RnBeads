@@ -1501,7 +1501,7 @@ rnb.run.differential <- function(rnb.set, dir.reports,
 		report <- rnb.add.section(report, "Differential Methylation Analysis", txt)
 	} else {
 		gz <- rnb.getOption("gz.large.files")
-		includeSites <- rnb.getOption("differential.report.sites")
+		includeSites <- rnb.getOption("analyze.sites") && rnb.getOption("differential.report.sites")
 		report <- rnb.section.diffMeth.introduction(diffmeth,report)
 		if (includeSites){
 			report <- rnb.section.diffMeth.site(rnb.set,diffmeth,report,gzTable=gz)
