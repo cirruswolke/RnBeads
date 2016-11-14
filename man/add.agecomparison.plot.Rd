@@ -7,21 +7,21 @@
 \method{add}{agecomparison.plot}(report, object, actualAges, predictedAges)
 }
 \arguments{
-\item{report}{Report in which the corresponding plots should be integrated.}
+\item{report}{report in which the corresponding plot should be integrated.}
 
-\item{object}{Methylation dataset as an object of type \code{\linkS4class{RnBeadSet}}.}
+\item{object}{methylation dataset as an object of type \code{\linkS4class{RnBSet}}.}
 
-\item{actualAges}{Annotated ages as found in the sample annotation sheet}
+\item{actualAges}{annotated ages as found in the sample annotation sheet.}
 
-\item{predictedAges}{Ages as predicted by the age prediction algorithm}
+\item{predictedAges}{ages as predicted by the age prediction algorithm.}
 }
 \value{
-The modified report with the age plots integrated
+modified report with the age plots integrated.
 }
 \description{
-Adds a plot that compares predicted ages by the age predictor with the annotated ages of the samples. One can compare
-different traits with each other. Until now the following traits are (if annotated in the sample annotation sheet)
-supported:	tissue, gender, hivstatus, sex, disease state, smoking status, ethnicity
+Adds a plot that compares predicted ages by the age predictor with the annotated ages of the samples. The individual
+points are marked in different colors and shapes depending on different samples characteristics as defined by
+\code{rnb.sample.groups}.
 }
 \author{
 Michael Scherer

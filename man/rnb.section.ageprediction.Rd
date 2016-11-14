@@ -7,18 +7,19 @@
 rnb.section.ageprediction(object, report)
 }
 \arguments{
-\item{object}{Methylation dataset as an object of type \code{\linkS4class{RnBeadSet}}.}
+\item{object}{methylation dataset as an object of type \code{\linkS4class{RnBSet}}.}
 
-\item{report}{Report in which the age prediction section should be included. This must be an object of type \code{\linkS4class{Report}}.}
+\item{report}{report in which the age prediction section should be included. This must be an object of type \code{\linkS4class{Report}}.}
 }
 \value{
-The (possibly modified) report.
+(possibly modified) report.
 }
 \description{
-Adds section for the age prediction part to the report. In this function we check the available opions 
-\bold{\code{inference.age.predidction}},\bold{\code{inference.age.prediction.training}} and \bold{\code{inference.age.prediction.predictor}}
+Adds a section for the age prediction part to the report. In this function, we check the options 
+\bold{\code{inference.age.prediction.training}} and \bold{\code{inference.age.prediction.predictor}}
 and accordingly either the predefined predictor (in extdata), a newly trained predictor (in extdata) or a
-formerly trained predictor that is stored in the path given by \bold{\code{inference.age.prediction.predictor}}.
+formerly trained predictor that is stored in the path given by \bold{\code{inference.age.prediction.predictor}} is applied
+to execute epigenetic age prediction.
 }
 \author{
 Michael Scherer

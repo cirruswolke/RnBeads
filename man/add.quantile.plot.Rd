@@ -7,19 +7,19 @@
 \method{add}{quantile.plot}(report, object, actualAges, predictedAges)
 }
 \arguments{
-\item{report}{Report in which the corresponding plot should be integrated.}
+\item{report}{report in which the corresponding plot should be integrated.}
 
-\item{object}{Methylation dataset as an object of type \code{\linkS4class{RnBeadSet}}.}
+\item{object}{methylation dataset as an object of type \code{\linkS4class{RnBSet}}.}
 
-\item{actualAges}{Annotated ages as found in the sample annotation sheet}
+\item{actualAges}{annotated ages as found in the sample annotation sheet.}
 
-\item{predictedAges}{Ages as predicted by the age prediction algorithm}
+\item{predictedAges}{ages as predicted by the age prediction algorithm.}
 }
 \value{
-The modified report with the quantile plot integrated
+modified report with the quantile plot integrated.
 }
 \description{
-Adds a plot to the fiven report object, that shows the distribution of the differences between
+Adds a plot to the given report object, that shows the distribution of the differences between
 predicted and annotated ages. Point inside the 1- and 99-quantile, respectively are marked 
 by their sample identifiers.
 }

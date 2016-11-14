@@ -7,19 +7,19 @@
 \method{add}{error.plot}(report, object, actualAges, predictedAges)
 }
 \arguments{
-\item{report}{Report in which the corresponding plot should be integrated.}
+\item{report}{report in which the corresponding plot should be integrated.}
 
-\item{object}{Methylation dataset as an object of type \code{\linkS4class{RnBeadSet}}.}
+\item{object}{methylation dataset as an object of type \code{\linkS4class{RnBSet}}.}
 
-\item{actualAges}{Annotated ages as found in the sample annotation sheet}
+\item{actualAges}{annotated ages as found in the sample annotation sheet.}
 
-\item{predictedAges}{Ages as predicted by the age prediction algorithm}
+\item{predictedAges}{ages as predicted by the age prediction algorithm.}
 }
 \value{
-The modified report with the age plot integrated
+modified report with the error plot integrated.
 }
 \description{
-Adds a plot to the given report, that describes the differences between the predicted ages by the age prediction
+Adds a plot to the given report that describes the differences between predicted ages by the age prediction
 algorithm and the ages as annotated in the sample annotation sheet(if available). Possible outliers are marked by
 their sample names.
 }

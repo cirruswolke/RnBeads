@@ -7,17 +7,19 @@
 agePredictor(rnbSet, path = "")
 }
 \arguments{
-\item{rnbSet}{An \code{RnBSet} object containing the relevant methylation infos.}
+\item{rnbSet}{a \code{RnBSet} object containing the relevant methylation infos.}
 
-\item{path}{Path to a csv file in which a trained predictor should lay.
-DEFAULT:    The predefined predictor is loaded.}
+\item{path}{path to a csv file in which a trained predictor should lay.
+DEFAULT:    No predictor is specified. In this case the corresponding
+        predefined predictor is used.}
 }
 \value{
-RnBeadSet with a new column in the phenotypic table in which the predicted ages
-	are annotated
+modified \code{RnBSet} with two new columns in the phenotypic table (predicted_ages
+	for the predicted epigenetic ages and age_increase for the difference between predicted
+	and annnotated ages)
 }
 \description{
-This function is the core of the age prediction algorithm. It takes a rnb.set object
+This function is the core of the age prediction algorithm. It takes a \code{RnBSet} object
 and loads a given predictor from a csv file to directly predict the age of the samples
 by this predictor.
 }

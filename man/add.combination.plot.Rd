@@ -7,21 +7,21 @@
 \method{add}{combination.plot}(report, object, actualAges, predictedAges)
 }
 \arguments{
-\item{report}{Report in which the corresponding plot should be integrated.}
+\item{report}{report in which the corresponding plot should be integrated.}
 
-\item{object}{Methylation dataset as an object of type \code{\linkS4class{RnBeadSet}}.}
+\item{object}{methylation dataset as an object of type \code{\linkS4class{RnBSet}}.}
 
-\item{actualAges}{Annotated ages as found in the sample annotation sheet}
+\item{actualAges}{annotated ages as found in the sample annotation sheet.}
 
-\item{predictedAges}{Ages as predicted by the age prediction algorithm}
+\item{predictedAges}{ages as predicted by the age prediction algorithm.}
 }
 \value{
-The modified report with the quantile plot integrated
+modified report with the combination plot integrated.
 }
 \description{
-This function adds a plot that is the combination of the upper two plots in one plot.The upper 
+This function adds a plot that is the combination of two plots in one plot.The upper 
 panel shows the distribution and the quantiles for the differences between predicted and annotated
-ages and the lowe panel shows the corresponding errors
+ages and the lower panel shows the individual errors for each sample.
 }
 \author{
 Michael Scherer

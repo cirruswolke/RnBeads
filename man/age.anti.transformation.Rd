@@ -7,16 +7,15 @@
 age.anti.transformation(x, adult.age = 20)
 }
 \arguments{
-\item{x}{Input age about to be transformed back}
+\item{x}{input age about to be transformed back}
 
-\item{adult.age}{Threshold for deciding between 'fast' and 'slow' changes in DNA methylation}
+\item{adult.age}{threshold for deciding between 'fast' and 'slow' changes in DNA methylation}
 }
 \value{
-Backtransformed age
+age transformed back
 }
 \description{
-This function is used to transform the values back to actual ages, that are corresponding
-to the predicted ages by the prediction algorithm
+This function the ages that were transformed by \code{age.transformation} back to actual ages.
 }
 \details{
 The function is directly taken from Steve Horvath's prediction algorithm

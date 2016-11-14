@@ -7,17 +7,16 @@
 age.transformation(x, adult.age = 20)
 }
 \arguments{
-\item{x}{Input age about to be transformed}
+\item{x}{input age about to be transformed}
 
-\item{adult.age}{Threshold for deciding between 'fast' and 'slow' changes in DNA methylation}
+\item{adult.age}{threshold for deciding between 'fast' and 'slow' changes in DNA methylation}
 }
 \value{
-Transformed age
+transformed age
 }
 \description{
-This function is used to transform the inpute ages, to account for the fact, that
-the human DNA methylation pattern goes through vast changes in the beginning of human
-life and milder changes later on.
+This function is used to transform the input ages, to account for the fact that
+the human DNA methylation pattern changes more in the first phase of life than in the later.
 }
 \details{
 The function is directly taken from Steve Horvath's prediction algorithm

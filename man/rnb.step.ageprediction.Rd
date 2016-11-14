@@ -7,16 +7,17 @@
 rnb.step.ageprediction(object, report)
 }
 \arguments{
-\item{object}{a \code{\linkS4class{RnBeadSet}} object}
+\item{object}{a \code{\linkS4class{RnBSet}} object}
 
-\item{report}{Report in which the age prediction section should be created. This must be an object of
+\item{report}{report in which the age prediction section should be created. This must be an object of
 type \code{\linkS4class{Report}}.}
 }
 \value{
-the modified report object
+modified report object
 }
 \description{
-Creates section for the age prediction part in the report
+This function is the starting point for the report generation of the epigenetic age prediction. It call the functions
+\code{rnb.section.ageprediction} and, if activated, \code{rnb.run.cross.validation}.
 }
 \author{
 Michael Scherer

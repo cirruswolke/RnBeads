@@ -265,6 +265,17 @@ is available (see below). Attempting to get or set the value of a non-existing o
   \item{\bold{\code{inference.sva.num.method}}\code{ = "leek"}}{
        Name of the method to be used for estimating the number of surrogate variables.
 	  must be either 'leek' or 'be', See \code{sva} function for details.}
+  \item{\bold{\code{inference.age.column}}\code{ = "age"}}{
+       Name of the column in which the ages of the donors are annotated. This function can be of numeric, string or 
+	  factor format.}
+  \item{\bold{\code{inference.age.prediction}}\code{ = TRUE}}{
+       Flag indicating if the epigenetic age prediction within the inference module is to be executed.}
+  \item{\bold{\code{inference.age.prediction.training}}\code{ = FALSE}}{
+       Flag indicating if a new predictor should be created based on the provided data set.}
+  \item{\bold{\code{inference.age.prediction.cv}}\code{ = FALSE}}{
+       Flag indicating if predictive power of a predictor that was trained in that run of the age prediction should
+	be assessed by cross-validation. This option only has an influence if 
+	\code{inference.age.prediction.training}\code{ = TRUE}}.
   \item{\bold{\code{exploratory}}\code{ = TRUE}}{
        Flag indicating if the exploratory analysis module is to be executed.}
   \item{\bold{\code{exploratory.columns}}\code{ = NULL}}{

@@ -7,16 +7,12 @@
 rnb.execute.training(object, path = "")
 }
 \arguments{
-\item{object}{a \code{\linkS4class{RnBeadSet}} object for which the predictor should
-be trained}
+\item{object}{a \code{\linkS4class{RnBSet}} object on which a new predictor should be created}
 
-\item{path}{path to which the predictor should be written}
-}
-\value{
-the modified  \code{\linkS4class{RnBeadSet}} object
+\item{path}{path to which the predictor should be written out}
 }
 \description{
-Trains a new predictor on the specified data set and writes it to the given path
+Trains a new predictor on the specified data set and writes it to the given path.
 }
 \author{
 Michael Scherer

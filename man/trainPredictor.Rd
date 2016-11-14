@@ -7,17 +7,17 @@
 trainPredictor(rnbSet, data.dir)
 }
 \arguments{
-\item{rnbSet}{An \code{RnBeadSet} object containing the methylation info on which 
+\item{rnbSet}{An \code{RnBSet} object containing the methylation info on which 
 the new predictor should be trained}
 
-\item{data.dir}{Directory to which the resulting Predictor should be written}
+\item{data.dir}{directory to which the resulting predictor should be written out}
 }
 \value{
-Absolute path to the corresponding predictor. The path is also set as the 
+absolute path to the corresponding predictor. The path is also set as the 
 	option \code{inference.age.prediction.predictor}
 }
 \description{
-This function is the starting point for training a new predictor based on the dataset
+This function is the starting point for training a new predictor based on the the input dataset.
 }
 \author{
 Michael Scherer

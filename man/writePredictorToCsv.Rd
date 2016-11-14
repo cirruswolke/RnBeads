@@ -7,9 +7,9 @@
 writePredictorToCsv(linearModel, path)
 }
 \arguments{
-\item{linearModel}{Linear Model which should be stored as a csv file}
+\item{linearModel}{linear Model which should be stored as a csv file}
 
-\item{path}{Path in which the new predictor should be written}
+\item{path}{path in which the new predictor should be written}
 }
 \value{
 TRUE if the writing was successful

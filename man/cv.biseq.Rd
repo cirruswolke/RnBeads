@@ -4,19 +4,18 @@
 \alias{cv.biseq}
 \title{cv.biseq}
 \usage{
-cv.biseq(rnbSet, report)
+cv.biseq(rnbSet)
 }
 \arguments{
-\item{rnbSet}{RnBSet object on which the cross validation should be perfomed}
-
-\item{report}{HTML-report to which the evaluation via cross-validation should be added}
+\item{rnbSet}{\code{RnBiseqSet} object on which the cross validation should be perfomed}
 }
 \value{
 the result of the cross validation in a data.frame format
 }
 \description{
-This function calls the general cross validation function from the corresponding
-RnBSet object in the case of sequencing data
+This function randomly changes the order of the samples in the data set and then
+calls the \code{general.cv} to perform cross-validation for a RnBSet derived from
+bisulfite sequencing
 }
 \author{
 Michael Scherer

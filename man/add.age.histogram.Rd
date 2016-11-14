@@ -7,16 +7,16 @@
 \method{add}{age.histogram}(report, ages)
 }
 \arguments{
-\item{report}{The report object to be modified}
+\item{report}{report object to be modified.}
 
-\item{ages}{The ages for which the distribution plots should be created}
+\item{ages}{ages for which the histogram should be created.}
 }
 \value{
-Modified report object with the age histogram
+modified report object with the age histogram.
 }
 \description{
-This function is creates an age distribution plot for the predicted ages in the case
-where there is no age annotation available for comparison with predicted ages
+This function creates an age histogram for the predicted ages in the case
+where there is no age annotation available for comparison with predicted ages.
 }
 \author{
 Michael Scherer
