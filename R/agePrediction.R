@@ -18,6 +18,7 @@
 #' @return	(possibly modified) report.
 #'
 #' @author Michael Scherer
+#' @noRd
 
 rnb.section.ageprediction <- function(object,report){
 	title <- "Age Prediction"
@@ -198,6 +199,7 @@ rnb.section.ageprediction <- function(object,report){
 #' @return	modified report object
 #'
 #' @author Michael Scherer
+#' @noRd
 
 rnb.step.ageprediction <- function(object,report){
 	
@@ -293,6 +295,7 @@ rnb.execute.training <- function(object,path=""){
 #' @return	modified report with the age plots integrated.
 #'
 #' @author	Michael Scherer
+#' @noRd
 
 add.agecomparison.plot <- function(report, object, actualAges, predictedAges){
 	
@@ -309,6 +312,9 @@ add.agecomparison.plot <- function(report, object, actualAges, predictedAges){
 	predictedAges <- predictedAges[!notPredicted]
 	ph <- ph[!naAges,]
 	ph <- ph[!notPredicted,]
+	sample_names <- samples(rnbSet)
+	sample_names <- sample_names[!naAges]
+	sample_names <- sample_names[!notPredicted]
 
 	traits <- names(rnb.sample.groups(object))
 	traits <- c("Default",traits)
@@ -318,16 +324,8 @@ add.agecomparison.plot <- function(report, object, actualAges, predictedAges){
 	report.plots <- list()
 	if(length(traits)<=1){
 		actualAges <- as.numeric(actualAges)
-		naAges <- is.na(actualAges)
-		actualAges <- actualAges[!naAges]
-		predictedAges <- predictedAges[!naAges]
-		notPredicted <- is.na(predictedAges)
-		actualAges <- actualAges[!notPredicted]
-		predictedAges <- predictedAges[!notPredicted]
-		ph <- ph[!naAges,]
-		ph <- ph[!notPredicted,]
 		report.plot <- createReportPlot("age_comparison_",report)
-		data <- data.frame(actualAges,predictedAges,Sample=row.names(ph))
+		data <- data.frame(actualAges,predictedAges,Sample=sample_names)
 		diff <- abs(predictedAges-actualAges)
 		plot <- ggplot(data,aes(x=actualAges,y=predictedAges),environment=environment())+geom_point()+geom_text(aes(label=ifelse(diff > 15, as.character(Sample),"")),hjust=0,vjust=0,size=3)+xlim(-1,100)+ylim(-1,100)+geom_abline(intercept=0,slope=1)+xlab("Annotated Ages")+ylab("Predicted Age")+theme(legend.title=element_blank())
 		print(plot)
@@ -350,13 +348,6 @@ add.agecomparison.plot <- function(report, object, actualAges, predictedAges){
 										trait <- gsub("[[:punct:]]","",trait)
 										secondTrait <- gsub(" ","",secondTrait)
 										secondTrait <- gsub("[[:punct:]]","",secondTrait)
-										placeholder <- placeholder[!naAges]
-										placeholder <- placeholder[!notPredicted]
-										placeholder2 <- placeholder2[!naAges]
-										placeholder2 <- placeholder2[!notPredicted]
-										names <- row.names(ph)
-										names <- names[!naAges]
-										names <- names[!notPredicted]
 										report.plot <- createReportPlot(paste0("age_comparison_",trait,"_",secondTrait), report)
 										if(length(placeholder)==0){
 											placeholder <- rep(NA,length(actualAges))
@@ -364,7 +355,7 @@ add.agecomparison.plot <- function(report, object, actualAges, predictedAges){
 										if(length(placeholder2)==0){
 											placeholder2 <- rep(NA,length(actualAges))
 										}
-										data <- data.frame(actualAges,predictedAges,placeholder,Sample=names)
+										data <- data.frame(actualAges,predictedAges,placeholder,Sample=sample_names)
 										diff <- abs(predictedAges-actualAges)
 										cvalues <- rep(rnb.getOption("colors.category"),length.out=length(placeholder))
 										ptvalues <- rep(rnb.getOption("points.category"),length.out=length(placeholder2))
@@ -379,13 +370,6 @@ placeholder2 <- as.factor(placeholder2)
 										trait <- gsub("[[:punct:]]","",trait)
 										secondTrait <- gsub(" ","",secondTrait)
 										secondTrait <- gsub("[[:punct:]]","",secondTrait)
-										placeholder <- placeholder[!naAges]
-										placeholder <- placeholder[!notPredicted]
-										placeholder2 <- placeholder2[!naAges]
-										placeholder2 <- placeholder2[!notPredicted]
-										names <- row.names(ph)
-										names <- names[!naAges]
-										names <- names[!notPredicted]
 										report.plot <- createReportPlot(paste0("age_comparison_",trait,"_",secondTrait), report)
 										if(length(placeholder)==0){
 											placeholder <- rep(NA,length(actualAges))
@@ -393,7 +377,7 @@ placeholder2 <- as.factor(placeholder2)
 										if(length(placeholder2)==0){
 											placeholder2 <- rep(NA,length(actualAges))
 										}
-										data <- data.frame(actualAges,predictedAges,placeholder,Sample=names)
+										data <- data.frame(actualAges,predictedAges,placeholder,Sample=sample_names)
 										diff <- abs(predictedAges-actualAges)
 										cvalues <- rep(rnb.getOption("colors.category"),length.out=length(placeholder))
 										ptvalues <- rep(rnb.getOption("points.category"),length.out=length(placeholder2))
@@ -439,6 +423,7 @@ placeholder2 <- as.factor(placeholder2)
 #' @return	modified report with the error plot integrated.
 #'
 #' @author	Michael Scherer
+#' @noRd
 
 
 add.error.plot <- function(report, object ,actualAges ,predictedAges){
@@ -485,6 +470,7 @@ add.error.plot <- function(report, object ,actualAges ,predictedAges){
 #' @return	modified report with the quantile plot integrated.
 #'
 #' @author	Michael Scherer
+#' @noRd
 
 add.quantile.plot <- function(report, object, actualAges, predictedAges){
 	
@@ -525,6 +511,7 @@ add.quantile.plot <- function(report, object, actualAges, predictedAges){
 #' @return	modified report with the combination plot integrated.
 #'
 #' @author	Michael Scherer
+#' @noRd
 
 add.combination.plot <- function(report, object, actualAges,predictedAges){
 
@@ -540,6 +527,9 @@ add.combination.plot <- function(report, object, actualAges,predictedAges){
 	actualAges <- actualAges[!notPredicted]
 	ph <- ph[!naAges,]
 	ph <- ph[!notPredicted,]
+	sample_names <- samples(rnbSet)
+	sample_names <- sample_names[!naAges]
+	sample_names <- sample_names[!notPredicted]
 	
 	diff <- predictedAges - actualAges
 	q1 <- quantile(diff,0.01,na.rm=TRUE)
@@ -554,7 +544,7 @@ add.combination.plot <- function(report, object, actualAges,predictedAges){
 	median <- median(diff)
 
 	mean <- mean(diff,na.rm=TRUE)
-	data <- data.frame(row.names(ph),as.numeric(diff))
+	data <- data.frame(sample_names,as.numeric(diff))
 	data <- cbind(data,as.numeric(row.names(data)))
 	Set <- rep("Difference",length(diff))
 	data <- cbind(data,Set)	
@@ -599,6 +589,7 @@ add.combination.plot <- function(report, object, actualAges,predictedAges){
 #' @return		modified report object with the age histogram.
 #'
 #' @author	Michael Scherer
+#' @noRd
 
 add.age.histogram <- function(report,ages){
 	data <- data.frame(Age=ages)
@@ -631,6 +622,7 @@ add.age.histogram <- function(report,ages){
 #' @return	transformed age
 #'
 #' @author 	Steve Horvath
+#' @noRd
 
 age.transformation <- function(x,adult.age=20)
 {
@@ -653,6 +645,7 @@ age.transformation <- function(x,adult.age=20)
 #' @return	age transformed back
 #'
 #' @author	Steve Horvath
+#' @noRd
 
 age.anti.transformation <- function(x,adult.age=20)
 {
@@ -676,6 +669,7 @@ age.anti.transformation <- function(x,adult.age=20)
 #'		and annnotated ages)
 #'
 #' @author	Michael Scherer
+#' @noRd
 
 agePredictor <- function(rnbSet, path=""){
 	if(!is.null(path) && path != ""){
@@ -721,6 +715,7 @@ agePredictor <- function(rnbSet, path=""){
 #'		and annnotated ages)
 #'
 #' @author	Michael Scherer
+#' @noRd
 
 agePredictorChip <- function(rnbSet, path){
 	require(impute)
@@ -799,6 +794,7 @@ agePredictorChip <- function(rnbSet, path){
 #'		and annnotated ages)
 #'
 #' @author	Michael Scherer
+#' @noRd
 
 agePredictorBiseq <- function(rnbSet, path){
 	require(impute)
@@ -888,6 +884,7 @@ agePredictorBiseq <- function(rnbSet, path){
 #'		option \code{inference.age.prediction.predictor}
 #'
 #' @author	Michael Scherer
+#' @noRd
 
 trainPredictor <- function(rnbSet,data.dir){
 	if(!file.exists(data.dir)){
@@ -935,6 +932,7 @@ trainPredictor <- function(rnbSet,data.dir){
 #'		unable to create such an predictor.
 #'
 #' @author	Michael Scherer
+#' @noRd
 
 simpleGlmnet <- function(trainRnBSet,filePath=""){
 	require(glmnet)
@@ -1004,6 +1002,7 @@ simpleGlmnet <- function(trainRnBSet,filePath=""){
 #'		unable to create such an predictor.
 #'
 #' @author	Michael Scherer
+#' @noRd
 
 simpleGlmnetBiseq <- function(trainRnBSet,filePath=""){
 	require(glmnet)
@@ -1159,6 +1158,7 @@ run.cross.validation <- function(rnbSet,report){
 #'					for each fold
 #'
 #' @author	Michael Scherer
+#' @noRd
 
 general.cv <- function(fitFunction,ages,methData,k=10){
 	nSamples <- length(ages)
@@ -1205,6 +1205,7 @@ general.cv <- function(fitFunction,ages,methData,k=10){
 #' @return	the result of the cross validation in a data.frame format
 #'
 #' @author	Michael Scherer
+#' @noRd
 
 cv.array <- function(rnbSet){
 	ph <- pheno(rnbSet)
@@ -1264,6 +1265,7 @@ cv.array <- function(rnbSet){
 #' @return	the result of the cross validation in a data.frame format
 #'
 #' @author	Michael Scherer
+#' @noRd
 
 cv.biseq <- function(rnbSet){
 	ph <- pheno(rnbSet)
@@ -1325,6 +1327,7 @@ cv.biseq <- function(rnbSet){
 #' @return	the age prediction function to be applied in each fold
 #'
 #' @author	Michael Scherer
+#' @noRd
 
 simpleGlmnetEvaluate <- function(methData,ages){
 	methData <- t(methData)
@@ -1349,6 +1352,7 @@ simpleGlmnetEvaluate <- function(methData,ages){
 #' @return	the age prediction function
 #'
 #' @author	Michael Scherer
+#' @noRd
 
 createPredictor <- function(linearModel,lambda=NULL){
 	ret <- function(rnbSet){
@@ -1402,6 +1406,7 @@ createPredictor <- function(linearModel,lambda=NULL){
 #' @return	TRUE if the writing was successful
 #'
 #' @author	Michael Scherer
+#' @noRd
 
 writePredictorToCsv <- function(linearModel,path){
 	coeffs <- as.matrix(linearModel)
@@ -1420,6 +1425,7 @@ writePredictorToCsv <- function(linearModel,path){
 #' @return	the changed methylation data frame
 #'
 #' @author	Michael Scherer
+#' @noRd
 
 imputeBiseq <- function(methData){
 	samples <- dim(methData)[2]
@@ -1445,7 +1451,7 @@ imputeBiseq <- function(methData){
 #' @return	the input ages in numeric format
 #'
 #' @author	Michael Scherer
-
+#' @noRd
 
 convert.string.ages <- function(age_information){
 	temp <- strsplit(age_information,"[.]")
