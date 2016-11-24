@@ -1,7 +1,19 @@
+RnBeads 1.7.3
+=============
+ * Age predictor (MethylAger) updates and documentation
+ * minor bugfixes
+
+RnBeads 1.7.2
+=============
+
+ * Added genetic purity estimation based on SNP probes (option qc.snp.purity, microarrays only)
+
 RnBeads 1.7.1
 =============
 
+ * Added support for the ENmix.oob background subtraction method
  * Several improvements in age prediction module
+ * Added conversion from minfi raw dataset to RnBeadRawSet
  * Several minor bug fixes
 
 RnBeads 1.5.1

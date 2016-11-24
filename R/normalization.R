@@ -71,7 +71,7 @@ rnb.execute.normalization<-function(
 
 
 	if((inherits(object,"MethyLumiSet") && ncol(exprs(object))<2 || inherits(object,"RnBeadSet") && length(samples(object))<2) &&
-			!method %in% c("bmiq")){
+			!(method %in% c("none", "bmiq"))){
 			rnb.warning("The object has less than two samples and selected normalization method is not feasible in this case. Changed the normalization method to \"none\"")
 			method <- "none"
 	}
@@ -195,7 +195,11 @@ rnb.execute.normalization<-function(
 				object@status$discard.ff.matrices<-TRUE
 			}
 			rnb.status(c("Performed background subtraction with method", bgcorr.method))
+		} else if (grepl("enmix", bgcorr.method)[1]) {
+			bgcorr.enmix<-gsub("enmix\\.", "", bgcorr.method)
+			object<-rnb.enmix.oob(object)
 		}
+		
 		object@status$background<-bgcorr.method
 		rnb.cleanMem()
 	}

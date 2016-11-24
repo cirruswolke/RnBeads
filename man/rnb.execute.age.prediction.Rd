@@ -7,15 +7,15 @@
 rnb.execute.age.prediction(object)
 }
 \arguments{
-\item{object}{a \code{\linkS4class{RnBeadSet}} object for which age prediction should
+\item{object}{a \code{\linkS4class{RnBSet}} object for which age prediction should
 be performed}
 }
 \value{
-the modified  \code{\linkS4class{RnBeadSet}} object
+modified  \code{\linkS4class{RnBSet}} object
 }
 \description{
-Adds a column called 'predicted_ages' to the phenotypic table, in which the predicted ages of
-the corresponding sample reside
+Performs age prediction by either the specified predictor in the option \code{inference.age.prediction.predictor}
+or by the corresponding predefined predictor.
 }
 \author{
 Michael Scherer

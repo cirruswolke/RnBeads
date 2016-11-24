@@ -140,7 +140,7 @@ read.geo <- function(accession = NULL, filename = NULL, verbose = logger.isiniti
 
 		## Validate platform
 		pheno.data <- result.series@phenoData@data
-		sinds.accepted <- which(pheno.data$platform_id %in% c("GPL13534", "GPL8490")) # GEO accession for Infinium450K
+		sinds.accepted <- which(pheno.data$platform_id %in% c("GPL13534", "GPL8490", "GPL16304")) # GEO accession for Infinium450K
 		if (length(sinds.accepted) == 0) {
 			next
 		}

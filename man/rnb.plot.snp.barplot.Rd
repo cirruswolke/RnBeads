@@ -4,21 +4,22 @@
 \alias{rnb.plot.snp.barplot}
 \title{rnb.plot.snp.barplot}
 \usage{
-rnb.plot.snp.barplot(rnb.set, sample, writeToFile = FALSE,
+rnb.plot.snp.barplot(dataset, probeID, writeToFile = FALSE,
   numeric.names = FALSE, ...)
 }
 \arguments{
-\item{rnb.set}{\code{\linkS4class{RnBeadRawSet}} or \code{\linkS4class{RnBeadSet}} object}
+\item{dataset}{Dataset as an instance of \code{\linkS4class{RnBeadRawSet}} or \code{\linkS4class{RnBeadSet}}.
+Alternatively, the dataset can be specified as a non-empty \code{matrix} containing the computed
+beta values on the SNP probes.}
 
-\item{sample}{unique sample identifier. In case \code{rnb.getOption("identifiers.column")} is not \code{NULL},
-\code{sample} should attain values from the corresponding column, or \code{colnames(meth(rnb.set))}
-otherwise.}
+\item{probeID}{Probe identifier. This must be one of \code{rownames(meth(dataset))}.}
 
-\item{writeToFile}{flag specifying whether the output should be saved as \code{\linkS4class{ReportPlot}}}
+\item{writeToFile}{Flag specifying whether the output should be saved as \code{\linkS4class{ReportPlot}}.}
 
-\item{numeric.names}{if \code{TRUE} and \code{writeToFile} is \code{TRUE}substitute the plot options in the plot file name with digits}
+\item{numeric.names}{if \code{TRUE} and \code{writeToFile} is \code{TRUE}substitute the plot options in the plot file
+name with digits.}
 
-\item{...}{other arguments to \code{\link{createReportPlot}}}
+\item{...}{Additional named arguments passed to \code{\link{createReportPlot}}.}
 }
 \value{
 plot as an object of type \code{\linkS4class{ReportPlot}} if \code{writeToFile} is \code{TRUE} and of class

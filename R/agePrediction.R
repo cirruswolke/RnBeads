@@ -1,23 +1,24 @@
 #######################################################################################
 ##		agePrediction.R							     ##
-##	This file contains all the relevant function that are needed for the 	     ##
+##	This file contains all the relevant functions for the		 	     ##
 ##	age prediction section of RnBeads.					     ##
 #######################################################################################
 
 #######################################################################################################################
-
 #' rnb.section.ageprediction
 #'
-#' Adds section for the age prediction part to the report. In this function we check the available opions 
-#' \bold{\code{inference.age.predidction}},\bold{\code{inference.age.prediction.training}} and \bold{\code{inference.age.prediction.predictor}}
+#' Adds a section for the age prediction part to the report. In this function, we check the options 
+#' \bold{\code{inference.age.prediction.training}} and \bold{\code{inference.age.prediction.predictor}}
 #' and accordingly either the predefined predictor (in extdata), a newly trained predictor (in extdata) or a
-#' formerly trained predictor that is stored in the path given by \bold{\code{inference.age.prediction.predictor}}.
+#' formerly trained predictor that is stored in the path given by \bold{\code{inference.age.prediction.predictor}} is applied
+#' to execute epigenetic age prediction.
 #'
-#' @param report           Report in which the age prediction section should be included. This must be an object of type \code{\linkS4class{Report}}.
-#' @param object           Methylation dataset as an object of type \code{\linkS4class{RnBeadSet}}.
-#' @return The (possibly modified) report.
+#' @param object           methylation dataset as an object of type \code{\linkS4class{RnBSet}}.
+#' @param report           report in which the age prediction section should be included. This must be an object of type \code{\linkS4class{Report}}.
+#' @return	(possibly modified) report.
 #'
 #' @author Michael Scherer
+#' @noRd
 
 rnb.section.ageprediction <- function(object,report){
 	title <- "Age Prediction"
@@ -81,9 +82,9 @@ rnb.section.ageprediction <- function(object,report){
 			}
 		  header <- "A predefined predictor was used"
 		  if(assembly(object)=="hg19"){
-		    prediction_path <- system.file(file.path("extdata", "predefined_predictor_RRBS_hg19.csv"), package="RnBeads")
+		    prediction_path <- system.file(file.path("extdata", "predefined_predictor_Biseq_hg19.csv"), package="RnBeads")
 		  }else{
-		    prediction_path <- system.file(file.path("extdata", "predefined_predictor_RRBS_hg38.csv"), package="RnBeads")
+		    prediction_path <- system.file(file.path("extdata", "predefined_predictor_Biseq_hg38.csv"), package="RnBeads")
 		  }
 		}else{
 			if(!rnb.getOption("inference.age.prediction.training")){
@@ -186,18 +187,19 @@ rnb.section.ageprediction <- function(object,report){
 }
 
 #######################################################################################################################
-
 #' rnb.step.ageprediction
 #'
-#' Creates section for the age prediction part in the report
+#' This function is the starting point for the report generation of the epigenetic age prediction. It call the functions
+#' \code{rnb.section.ageprediction} and, if activated, \code{rnb.run.cross.validation}.
 #'
-#' @param object a \code{\linkS4class{RnBeadSet}} object
-#' @param report Report in which the age prediction section should be created. This must be an object of
-#'               type \code{\linkS4class{Report}}.
+#' @param object	a \code{\linkS4class{RnBSet}} object
+#' @param report	report in which the age prediction section should be created. This must be an object of
+#'              	type \code{\linkS4class{Report}}.
 #'
-#' @return the modified report object
+#' @return	modified report object
 #'
 #' @author Michael Scherer
+#' @noRd
 
 rnb.step.ageprediction <- function(object,report){
 	
@@ -226,19 +228,19 @@ rnb.step.ageprediction <- function(object,report){
 }
 
 #######################################################################################################################
-
 #' rnb.execute.age.prediction
 #'
-#' Adds a column called 'predicted_ages' to the phenotypic table, in which the predicted ages of
-#' the corresponding sample reside
+#' Performs age prediction by either the specified predictor in the option \code{inference.age.prediction.predictor}
+#' or by the corresponding predefined predictor.
 #'
-#' @param object a \code{\linkS4class{RnBeadSet}} object for which age prediction should
-#' 	be performed
+#' @param object	a \code{\linkS4class{RnBSet}} object for which age prediction should
+#' 			be performed
 #'
-#' @return the modified  \code{\linkS4class{RnBeadSet}} object
+#' @return	modified  \code{\linkS4class{RnBSet}} object
 #'
 #' @author Michael Scherer
 #' @export
+
 rnb.execute.age.prediction <- function(object){
 	if(!inherits(object,"RnBSet")){
 		stop("Supplied object is not of the class inheriting from RnBSet")
@@ -253,19 +255,16 @@ rnb.execute.age.prediction <- function(object){
 }
 
 #######################################################################################################################
-
 #' rnb.execute.age.training
 #'
-#' Trains a new predictor on the specified data set and writes it to the given path
+#' Trains a new predictor on the specified data set and writes it to the given path.
 #'
-#' @param object a \code{\linkS4class{RnBeadSet}} object for which the predictor should
-#' 	be trained
-#' @param path path to which the predictor should be written
-#'
-#' @return the modified  \code{\linkS4class{RnBeadSet}} object
+#' @param object	a \code{\linkS4class{RnBSet}} object on which a new predictor should be created
+#' @param path		path to which the predictor should be written out
 #'
 #' @author Michael Scherer
 #' @export
+
 rnb.execute.training <- function(object,path=""){
 	if(path==""){
 		stop("A path to store the predictor has to be specified.")
@@ -282,20 +281,21 @@ rnb.execute.training <- function(object,path=""){
 }
 
 #######################################################################################################################
-
 #' add.agecomparison.plot
 #'
-#' Adds a plot that compares predicted ages by the age predictor with the annotated ages of the samples. One can compare
-#' different traits with each other. Until now the following traits are (if annotated in the sample annotation sheet)
-#' supported:	tissue, gender, hivstatus, sex, disease state, smoking status, ethnicity
+#' Adds a plot that compares predicted ages by the age predictor with the annotated ages of the samples. The individual
+#' points are marked in different colors and shapes depending on different samples characteristics as defined by
+#' \code{rnb.sample.groups}.
 #'
-#' @param report	Report in which the corresponding plots should be integrated. 
-#' @param object	Methylation dataset as an object of type \code{\linkS4class{RnBeadSet}}.
-#' @param actualAges	Annotated ages as found in the sample annotation sheet
-#' @param predictedAges	Ages as predicted by the age prediction algorithm
-#' @return	The modified report with the age plots integrated
+#' @param report	report in which the corresponding plot should be integrated. 
+#' @param object	methylation dataset as an object of type \code{\linkS4class{RnBSet}}.
+#' @param actualAges	annotated ages as found in the sample annotation sheet.
+#' @param predictedAges	ages as predicted by the age prediction algorithm.
+#'
+#' @return	modified report with the age plots integrated.
 #'
 #' @author	Michael Scherer
+#' @noRd
 
 add.agecomparison.plot <- function(report, object, actualAges, predictedAges){
 	
@@ -312,6 +312,9 @@ add.agecomparison.plot <- function(report, object, actualAges, predictedAges){
 	predictedAges <- predictedAges[!notPredicted]
 	ph <- ph[!naAges,]
 	ph <- ph[!notPredicted,]
+	sample_names <- samples(rnbSet)
+	sample_names <- sample_names[!naAges]
+	sample_names <- sample_names[!notPredicted]
 
 	traits <- names(rnb.sample.groups(object))
 	traits <- c("Default",traits)
@@ -321,18 +324,10 @@ add.agecomparison.plot <- function(report, object, actualAges, predictedAges){
 	report.plots <- list()
 	if(length(traits)<=1){
 		actualAges <- as.numeric(actualAges)
-		naAges <- is.na(actualAges)
-		actualAges <- actualAges[!naAges]
-		predictedAges <- predictedAges[!naAges]
-		notPredicted <- is.na(predictedAges)
-		actualAges <- actualAges[!notPredicted]
-		predictedAges <- predictedAges[!notPredicted]
-		ph <- ph[!naAges,]
-		ph <- ph[!notPredicted,]
 		report.plot <- createReportPlot("age_comparison_",report)
-		data <- data.frame(actualAges,predictedAges,Sample=row.names(ph))
+		data <- data.frame(actualAges,predictedAges,Sample=sample_names)
 		diff <- abs(predictedAges-actualAges)
-		plot <- ggplot(data,aes(x=actualAges,y=predictedAges),environment=environment())+geom_point()+geom_text(aes(label=ifelse(diff > 15, as.character(Sample),"")),hjust=0,vjust=0,size=3)+xlim(1,100)+ylim(1,100)+geom_abline(intercept=0,slope=1)+xlab("Annotated Ages")+ylab("Predicted Age")+theme(legend.title=element_blank())
+		plot <- ggplot(data,aes(x=actualAges,y=predictedAges),environment=environment())+geom_point()+geom_text(aes(label=ifelse(diff > 15, as.character(Sample),"")),hjust=0,vjust=0,size=3)+xlim(-1,100)+ylim(-1,100)+geom_abline(intercept=0,slope=1)+xlab("Annotated Ages")+ylab("Predicted Age")+theme(legend.title=element_blank())
 		print(plot)
 		report.plot <- off(report.plot)
 		report.plots <- c(report.plots,report.plot)
@@ -353,13 +348,6 @@ add.agecomparison.plot <- function(report, object, actualAges, predictedAges){
 										trait <- gsub("[[:punct:]]","",trait)
 										secondTrait <- gsub(" ","",secondTrait)
 										secondTrait <- gsub("[[:punct:]]","",secondTrait)
-										placeholder <- placeholder[!naAges]
-										placeholder <- placeholder[!notPredicted]
-										placeholder2 <- placeholder2[!naAges]
-										placeholder2 <- placeholder2[!notPredicted]
-										names <- row.names(ph)
-										names <- names[!naAges]
-										names <- names[!notPredicted]
 										report.plot <- createReportPlot(paste0("age_comparison_",trait,"_",secondTrait), report)
 										if(length(placeholder)==0){
 											placeholder <- rep(NA,length(actualAges))
@@ -367,11 +355,11 @@ add.agecomparison.plot <- function(report, object, actualAges, predictedAges){
 										if(length(placeholder2)==0){
 											placeholder2 <- rep(NA,length(actualAges))
 										}
-										data <- data.frame(actualAges,predictedAges,placeholder,Sample=names)
+										data <- data.frame(actualAges,predictedAges,placeholder,Sample=sample_names)
 										diff <- abs(predictedAges-actualAges)
 										cvalues <- rep(rnb.getOption("colors.category"),length.out=length(placeholder))
 										ptvalues <- rep(rnb.getOption("points.category"),length.out=length(placeholder2))
-										plot <- ggplot(data,aes(x=actualAges,y=predictedAges,group=placeholder),environment=environment())+geom_point(aes(colour=placeholder,shape=placeholder2))+geom_text(aes(label=ifelse(diff > 15, as.character(Sample),"")),hjust=0,vjust=0,size=3)+xlim(1,100)+ylim(1,100)+geom_abline(intercept=0,slope=1)+xlab("Annotated Ages")+ylab("Predicted Age")+scale_colour_manual(name=trait,na.value = ifelse(trait=="Default","black","#C0C0C0"), values = cvalues)+scale_shape_manual(name=secondTrait,na.value=ifelse(trait=="Default",20,1L),values=ptvalues)
+										plot <- ggplot(data,aes(x=actualAges,y=predictedAges,group=placeholder),environment=environment())+geom_point(aes(colour=placeholder,shape=placeholder2))+geom_text(aes(label=ifelse(diff > 15, as.character(Sample),"")),hjust=0,vjust=0,size=3)+xlim(-1,100)+ylim(-1,100)+geom_abline(intercept=0,slope=1)+xlab("Annotated Ages")+ylab("Predicted Age")+scale_colour_manual(name=trait,na.value = ifelse(trait=="Default","black","#C0C0C0"), values = cvalues)+scale_shape_manual(name=secondTrait,na.value=ifelse(trait=="Default",20,1L),values=ptvalues)
 										print(plot)
 										report.plot <- off(report.plot)
 										report.plots <- c(report.plots,report.plot)
@@ -382,13 +370,6 @@ placeholder2 <- as.factor(placeholder2)
 										trait <- gsub("[[:punct:]]","",trait)
 										secondTrait <- gsub(" ","",secondTrait)
 										secondTrait <- gsub("[[:punct:]]","",secondTrait)
-										placeholder <- placeholder[!naAges]
-										placeholder <- placeholder[!notPredicted]
-										placeholder2 <- placeholder2[!naAges]
-										placeholder2 <- placeholder2[!notPredicted]
-										names <- row.names(ph)
-										names <- names[!naAges]
-										names <- names[!notPredicted]
 										report.plot <- createReportPlot(paste0("age_comparison_",trait,"_",secondTrait), report)
 										if(length(placeholder)==0){
 											placeholder <- rep(NA,length(actualAges))
@@ -396,11 +377,11 @@ placeholder2 <- as.factor(placeholder2)
 										if(length(placeholder2)==0){
 											placeholder2 <- rep(NA,length(actualAges))
 										}
-										data <- data.frame(actualAges,predictedAges,placeholder,Sample=names)
+										data <- data.frame(actualAges,predictedAges,placeholder,Sample=sample_names)
 										diff <- abs(predictedAges-actualAges)
 										cvalues <- rep(rnb.getOption("colors.category"),length.out=length(placeholder))
 										ptvalues <- rep(rnb.getOption("points.category"),length.out=length(placeholder2))
-										plot <- ggplot(data,aes(x=actualAges,y=predictedAges,group=placeholder),environment=environment())+geom_point(aes(colour=placeholder,shape=placeholder2))+geom_text(aes(label=ifelse(diff > 15, as.character(Sample),"")),hjust=0,vjust=0,size=3)+xlim(1,100)+ylim(1,100)+geom_abline(intercept=0,slope=1)+xlab("Annotated Ages")+ylab("Predicted Age")+scale_colour_manual(name=trait,na.value = ifelse(trait=="Default","black","#C0C0C0"), values = cvalues)+scale_shape_manual(name=secondTrait,na.value=ifelse(trait=="Default",20,1L),values=ptvalues)
+										plot <- ggplot(data,aes(x=actualAges,y=predictedAges,group=placeholder),environment=environment())+geom_point(aes(colour=placeholder,shape=placeholder2))+geom_text(aes(label=ifelse(diff > 15, as.character(Sample),"")),hjust=0,vjust=0,size=3)+xlim(-1,100)+ylim(-1,100)+geom_abline(intercept=0,slope=1)+xlab("Annotated Ages")+ylab("Predicted Age")+scale_colour_manual(name=trait,na.value = ifelse(trait=="Default","black","#C0C0C0"), values = cvalues)+scale_shape_manual(name=secondTrait,na.value=ifelse(trait=="Default",20,1L),values=ptvalues)
 										print(plot)
 										report.plot <- off(report.plot)
 										report.plots <- c(report.plots,report.plot)
@@ -428,20 +409,21 @@ placeholder2 <- as.factor(placeholder2)
 
 
 #######################################################################################################################
-
 #' add.error.plot
 #'
-#' Adds a plot to the given report, that describes the differences between the predicted ages by the age prediction
+#' Adds a plot to the given report that describes the differences between predicted ages by the age prediction
 #' algorithm and the ages as annotated in the sample annotation sheet(if available). Possible outliers are marked by
 #' their sample names.
 #'
-#' @param report	Report in which the corresponding plot should be integrated. 
-#' @param object	Methylation dataset as an object of type \code{\linkS4class{RnBeadSet}}.
-#' @param actualAges	Annotated ages as found in the sample annotation sheet
-#' @param predictedAges	Ages as predicted by the age prediction algorithm
-#' @return	The modified report with the age plot integrated
+#' @param report	report in which the corresponding plot should be integrated. 
+#' @param object	methylation dataset as an object of type \code{\linkS4class{RnBSet}}.
+#' @param actualAges	annotated ages as found in the sample annotation sheet.
+#' @param predictedAges	ages as predicted by the age prediction algorithm.
+#'
+#' @return	modified report with the error plot integrated.
 #'
 #' @author	Michael Scherer
+#' @noRd
 
 
 add.error.plot <- function(report, object ,actualAges ,predictedAges){
@@ -474,20 +456,21 @@ add.error.plot <- function(report, object ,actualAges ,predictedAges){
 }
 
 #######################################################################################################################
-
 #' add.quantile.plot
 #'
-#' Adds a plot to the fiven report object, that shows the distribution of the differences between
+#' Adds a plot to the given report object, that shows the distribution of the differences between
 #' predicted and annotated ages. Point inside the 1- and 99-quantile, respectively are marked 
 #' by their sample identifiers.
 #'
-#' @param report	Report in which the corresponding plot should be integrated. 
-#' @param object	Methylation dataset as an object of type \code{\linkS4class{RnBeadSet}}.
-#' @param actualAges	Annotated ages as found in the sample annotation sheet
-#' @param predictedAges	Ages as predicted by the age prediction algorithm
-#' @return	The modified report with the quantile plot integrated
+#' @param report	report in which the corresponding plot should be integrated. 
+#' @param object	methylation dataset as an object of type \code{\linkS4class{RnBSet}}.
+#' @param actualAges	annotated ages as found in the sample annotation sheet.
+#' @param predictedAges	ages as predicted by the age prediction algorithm.
+#'
+#' @return	modified report with the quantile plot integrated.
 #'
 #' @author	Michael Scherer
+#' @noRd
 
 add.quantile.plot <- function(report, object, actualAges, predictedAges){
 	
@@ -514,20 +497,21 @@ add.quantile.plot <- function(report, object, actualAges, predictedAges){
 }
 
 #######################################################################################################################
-
 #' add.combination.plot
 #'
-#' This function adds a plot that is the combination of the upper two plots in one plot.The upper 
+#' This function adds a plot that is the combination of two plots in one plot.The upper 
 #' panel shows the distribution and the quantiles for the differences between predicted and annotated
-#' ages and the lowe panel shows the corresponding errors
+#' ages and the lower panel shows the individual errors for each sample.
 #'
-#' @param report	Report in which the corresponding plot should be integrated. 
-#' @param object	Methylation dataset as an object of type \code{\linkS4class{RnBeadSet}}.
-#' @param actualAges	Annotated ages as found in the sample annotation sheet
-#' @param predictedAges	Ages as predicted by the age prediction algorithm
-#' @return	The modified report with the quantile plot integrated
+#' @param report	report in which the corresponding plot should be integrated. 
+#' @param object	methylation dataset as an object of type \code{\linkS4class{RnBSet}}.
+#' @param actualAges	annotated ages as found in the sample annotation sheet.
+#' @param predictedAges	ages as predicted by the age prediction algorithm.
+#'
+#' @return	modified report with the combination plot integrated.
 #'
 #' @author	Michael Scherer
+#' @noRd
 
 add.combination.plot <- function(report, object, actualAges,predictedAges){
 
@@ -543,6 +527,9 @@ add.combination.plot <- function(report, object, actualAges,predictedAges){
 	actualAges <- actualAges[!notPredicted]
 	ph <- ph[!naAges,]
 	ph <- ph[!notPredicted,]
+	sample_names <- samples(rnbSet)
+	sample_names <- sample_names[!naAges]
+	sample_names <- sample_names[!notPredicted]
 	
 	diff <- predictedAges - actualAges
 	q1 <- quantile(diff,0.01,na.rm=TRUE)
@@ -557,7 +544,7 @@ add.combination.plot <- function(report, object, actualAges,predictedAges){
 	median <- median(diff)
 
 	mean <- mean(diff,na.rm=TRUE)
-	data <- data.frame(row.names(ph),as.numeric(diff))
+	data <- data.frame(sample_names,as.numeric(diff))
 	data <- cbind(data,as.numeric(row.names(data)))
 	Set <- rep("Difference",length(diff))
 	data <- cbind(data,Set)	
@@ -593,16 +580,17 @@ add.combination.plot <- function(report, object, actualAges,predictedAges){
 #######################################################################################
 #' add.age.histogram
 #'
-#' This function is creates an age distribution plot for the predicted ages in the case
-#' where there is no age annotation available for comparison with predicted ages
+#' This function creates an age histogram for the predicted ages in the case
+#' where there is no age annotation available for comparison with predicted ages.
 #'
-#'
-#' @param report	The report object to be modified
-#' @param ages		The ages for which the distribution plots should be created
+#' @param report	report object to be modified.
+#' @param ages		ages for which the histogram should be created.
 #' 
-#' @return		Modified report object with the age histogram
+#' @return		modified report object with the age histogram.
 #'
 #' @author	Michael Scherer
+#' @noRd
+
 add.age.histogram <- function(report,ages){
 	data <- data.frame(Age=ages)
 	colors <- rnb.getOption("colors.category")
@@ -622,19 +610,20 @@ add.age.histogram <- function(report,ages){
 #######################################################################################
 #' age.transformation
 #'
-#' This function is used to transform the inpute ages, to account for the fact, that
-#' the human DNA methylation pattern goes through vast changes in the beginning of human
-#' life and milder changes later on.
+#' This function is used to transform the input ages, to account for the fact that
+#' the human DNA methylation pattern changes more in the first phase of life than in the later.
 #'
 #' The function is directly taken from Steve Horvath's prediction algorithm
 #' DNA methylation age of human tissues and cell types, Steve Horvath, Genome Biology, 2013
 #'
-#' @param x		Input age about to be transformed
-#' @param adult.age	Threshold for deciding between 'fast' and 'slow' changes in DNA methylation
+#' @param x		input age about to be transformed
+#' @param adult.age	threshold for deciding between 'fast' and 'slow' changes in DNA methylation
 #' 
-#' @return	Transformed age
+#' @return	transformed age
 #'
 #' @author 	Steve Horvath
+#' @noRd
+
 age.transformation <- function(x,adult.age=20)
 {
 	x=(x+1)/(1+adult.age);
@@ -645,18 +634,19 @@ age.transformation <- function(x,adult.age=20)
 #######################################################################################
 #' age.anti.transformation
 #'
-#' This function is used to transform the values back to actual ages, that are corresponding
-#' to the predicted ages by the prediction algorithm
+#' This function the ages that were transformed by \code{age.transformation} back to actual ages. 
 #'
 #' The function is directly taken from Steve Horvath's prediction algorithm
 #' DNA methylation age of human tissues and cell types, Steve Horvath, Genome Biology, 2013
 #'
-#' @param x		Input age about to be transformed back
-#' @param adult.age	Threshold for deciding between 'fast' and 'slow' changes in DNA methylation
+#' @param x		input age about to be transformed back
+#' @param adult.age	threshold for deciding between 'fast' and 'slow' changes in DNA methylation
 #' 
-#' @return	Backtransformed age
+#' @return	age transformed back
 #'
 #' @author	Steve Horvath
+#' @noRd
+
 age.anti.transformation <- function(x,adult.age=20)
 {
 	ifelse(x<0, (1+adult.age)*exp(x)-1, (1+adult.age)*x+adult.age)
@@ -665,65 +655,69 @@ age.anti.transformation <- function(x,adult.age=20)
 #######################################################################################
 #' agePredictor
 #'
-#' This function is the core of the age prediction algorithm. It takes a rnb.set object
+#' This function is the core of the age prediction algorithm. It takes a \code{RnBSet} object
 #' and loads a given predictor from a csv file to directly predict the age of the samples
 #' by this predictor.
 #'
-#' @param rnbSet	An \code{RnBSet} object containing the relevant methylation infos.
-#' @param path		Path to a csv file in which a trained predictor should lay.
-#'			DEFAULT:	The predefined predictor is loaded.
+#' @param rnbSet	a \code{RnBSet} object containing the relevant methylation infos.
+#' @param path		path to a csv file in which a trained predictor should lay.
+#'			DEFAULT:	No predictor is specified. In this case the corresponding
+#'					predefined predictor is used.
 #' 
-#' @return	RnBeadSet with a new column in the phenotypic table in which the predicted ages
-#'		are annotated
+#' @return	modified \code{RnBSet} with two new columns in the phenotypic table (predicted_ages
+#'		for the predicted epigenetic ages and age_increase for the difference between predicted
+#'		and annnotated ages)
 #'
 #' @author	Michael Scherer
+#' @noRd
 
 agePredictor <- function(rnbSet, path=""){
-  if(!is.null(path) && path != ""){
-  	if(!file.exists(path)){
-  		logger.info(c("The specified predictor does not exists at ",path))
-  		return(rnbSet)
-  	}
-  }else{
-    if(inherits(rnbSet,"RnBeadSet")){
-      anno <- annotation(rnbSet)
-      if(dim(anno)[1] > 30000){
-        path <- system.file(file.path("extdata", "predefined_predictor_450K.csv"), package="RnBeads")
-      }else{
-        path <- system.file(file.path("extdata", "predefined_predictor_27K.csv"), package="RnBeads")
-      }
-    }else if(inherits(rnbSet,"RnBiseqSet")){
-      if(assembly(rnbSet)=="hg19"){
-        path <- system.file(file.path("extdata", "predefined_predictor_RRBS_hg19.csv"), package="RnBeads")
-      }else{
-        path <- system.file(file.path("extdata", "predefined_predictor_RRBS_hg38.csv"), package="RnBeads")
-      }
-    }
-  }
+	if(!is.null(path) && path != ""){
+		if(!file.exists(path)){
+			logger.info(c("The specified predictor does not exists at ",path))
+	  		return(rnbSet)
+	  	}
+	}else{
+		if(inherits(rnbSet,"RnBeadSet")){
+			anno <- annotation(rnbSet)
+			if(dim(anno)[1] > 30000){
+				path <- system.file(file.path("extdata", "predefined_predictor_450K.csv"), package="RnBeads")
+			}else{
+				path <- system.file(file.path("extdata", "predefined_predictor_27K.csv"), package="RnBeads")
+			}
+		}else if(inherits(rnbSet,"RnBiseqSet")){
+			if(assembly(rnbSet)=="hg19"){
+				path <- system.file(file.path("extdata", "predefined_predictor_Biseq_hg19.csv"), package="RnBeads")
+			}else{
+				path <- system.file(file.path("extdata", "predefined_predictor_Biseq_hg38.csv"), package="RnBeads")
+			}
+		}
+	}
 	if(inherits(rnbSet,"RnBeadSet")){
-		rnbSet <- agePredictor450(rnbSet,path)
+		rnbSet <- agePredictorChip(rnbSet,path)
 	}else if(inherits(rnbSet,"RnBiseqSet")){
-		rnbSet <- agePredictorRRBS(rnbSet,path)
+		rnbSet <- agePredictorBiseq(rnbSet,path)
 	}
 	return(rnbSet)
 }
 
 #######################################################################################
-#' agePredictor450
+#' agePredictorChip
 #'
 #' This function is the corresponding instance of the general age prediction algorithm for data
 #' created by Illumina Infinium Bead Chips 
 #'
-#' @param rnbSet	An \code{RnBeadSet} object containing the relevant methylation infos.
-#' @param path		Path to a csv file in which a trained predictor should lay.
-#'			DEFAULT:	The predefined predictor is loaded.
+#' @param rnbSet	a \code{RnBeadSet} object containing the relevant methylation infos.
+#' @param path		path to a csv file in which a trained predictor should exist.
 #' 
-#' @return	RnBeadSet with a new column in the phenotypic table in which the predicted ages
-#'		are annotated
+#' @return	modified \code{RnBeadSet} with two new columns in the phenotypic table (predicted_ages
+#'		for the predicted epigenetic ages and age_increase for the difference between predicted
+#'		and annnotated ages)
 #'
 #' @author	Michael Scherer
+#' @noRd
 
-agePredictor450 <- function(rnbSet, path){
+agePredictorChip <- function(rnbSet, path){
 	require(impute)
 	options(warn=-1)
 	coeffs <- read.csv(path)
@@ -742,7 +736,9 @@ agePredictor450 <- function(rnbSet, path){
 	existingCpGs <- usedCpGs  %in% row.names(methData) 
 	selected <- methData[selectCpGs,]
 	selected <- selected[sort(row.names(selected)),]
+	options(warn=-1)
 	dummy <- capture.output(selected <- (impute.knn(selected,colmax=1))$data)
+	options(warn=1)
 	selected <- t(selected)
 	if(length(usedCoeffs) > dim(selected)[2]){
 		usedCoeffs <- usedCoeffs[existingCpGs]
@@ -785,21 +781,22 @@ agePredictor450 <- function(rnbSet, path){
 }
 
 #######################################################################################
-#' agePredictorRRBS
+#' agePredictorBiseq
 #'
 #' This function is the corresponding instance of the general age prediction algorithm for data
-#' created by Reduced Representation Bisulphite Sequencing. WGBS is not supported until now. 
+#' created by a sequencing-based approach. 
 #'
-#' @param rnbSet	An \code{RnBeadSet} object containing the relevant methylation infos.
-#' @param path		Path to a csv file in which a trained predictor should lay.
-#'			DEFAULT:	The predefined predictor is loaded.
+#' @param rnbSet	a \code{RnBiseqSet} object containing the relevant methylation infos.
+#' @param path		path to a csv file in which a trained predictor should exist.
 #' 
-#' @return	RnBeadSet with a new column in the phenotypic table in which the predicted ages
-#'		are annotated
+#' @return	modified \code{RnBiseqSet} with two new columns in the phenotypic table (predicted_ages
+#'		for the predicted epigenetic ages and age_increase for the difference between predicted
+#'		and annnotated ages)
 #'
 #' @author	Michael Scherer
+#' @noRd
 
-agePredictorRRBS <- function(rnbSet, path){
+agePredictorBiseq <- function(rnbSet, path){
 	require(impute)
 	options(warn=-1)
 	coeffs <- read.csv(path)
@@ -822,7 +819,9 @@ agePredictorRRBS <- function(rnbSet, path){
 	existingCpGs <- usedCpGs  %in% row.names(methData) 
 	selected <- methData[selectCpGs,]
 	selected <- selected[sort(row.names(selected)),]
+	options(warn=-1)
 	dummy <- capture.output(selected <- (impute.knn(selected,colmax=1))$data)
+	options(warn=1)	
 	selected <- t(selected)
 	if(dim(selected)[1]==0){
 		logger.info("Age prediction could not be performed; NAs introduced")
@@ -875,16 +874,18 @@ agePredictorRRBS <- function(rnbSet, path){
 #######################################################################################
 #' trainPredictor
 #'
-#' This function is the starting point for training a new predictor based on the dataset
+#' This function is the starting point for training a new predictor based on the the input dataset.
 #'
-#' @param rnbSet	An \code{RnBeadSet} object containing the methylation info on which 
+#' @param rnbSet	An \code{RnBSet} object containing the methylation info on which 
 #'			the new predictor should be trained
-#' @param data.dir	Directory to which the resulting Predictor should be written
+#' @param data.dir	directory to which the resulting predictor should be written out
 #' 
-#' @return	Absolute path to the corresponding predictor. The path is also set as the 
+#' @return	absolute path to the corresponding predictor. The path is also set as the 
 #'		option \code{inference.age.prediction.predictor}
 #'
 #' @author	Michael Scherer
+#' @noRd
+
 trainPredictor <- function(rnbSet,data.dir){
 	if(!file.exists(data.dir)){
 		stop("The specified directory does not exist!")
@@ -906,7 +907,7 @@ trainPredictor <- function(rnbSet,data.dir){
 			logger.warning("No Age information available, training not successful.")
 			return("")
 		}
-		path <- simpleGlmnetRRBS(rnbSet,file.path(data.dir,"trained_predictor_RRBS.csv"))
+		path <- simpleGlmnetBiseq(rnbSet,file.path(data.dir,"trained_predictor_Biseq.csv"))
 		if(!is.null(path)&&path!=""){
 			rnb.options(inference.age.prediction.predictor=path)
 		}else{
@@ -919,19 +920,19 @@ trainPredictor <- function(rnbSet,data.dir){
 #######################################################################################
 #' simpleGlmnet
 #'
-#' This function actually fits the metylation data to the available age data by fitting
-#' a general regularized linear model (alpha parameter = 0.8) and then building a linear
-#' regression model upon the coefficients that had a non-zero coefficient in the glm. Specifically
-#' dedicated to BeadChip data.
+#' This function fits the metylation data to the available ages by fitting
+#' a generalized linear model (alpha parameter = 0.8). The lambda parameter is chosen by
+#' 10-fold cross-validation. This function was created for array-based data.
 #'
-#' @param trainRnBSet	An \code{RnBeadSet} object containing the methylation info on which 
+#' @param trainRnBSet	a \code{RnBeadSet} object containing the methylation info on which 
 #'			the new predictor should be trained
-#' @param filePath		Path in which the new predictor should be written
+#' @param filePath	path to which the new predictor should be written out
 #' 
-#' @return	Absolute path to the corresponding predictor. Null if the function was 
+#' @return	absolute path to the corresponding predictor. \code{NULL} if the function was 
 #'		unable to create such an predictor.
 #'
 #' @author	Michael Scherer
+#' @noRd
 
 simpleGlmnet <- function(trainRnBSet,filePath=""){
 	require(glmnet)
@@ -987,23 +988,23 @@ simpleGlmnet <- function(trainRnBSet,filePath=""){
 }
 
 #######################################################################################
-#' simpleGlmnetRRBS
+#' simpleGlmnetBiseq
 #'
-#' This function actually fits the metylation data to the available age data by fitting
-#' a general regularized linear model (alpha parameter = 0.8) and then building a linear
-#' regression model upon the coefficients that had a non-zero coefficient in the glm.
-#' Dedicated to sequencing data.
+#' This function fits the metylation data to the available ages by fitting
+#' a generalized linear model (alpha parameter = 0.8). The lambda parameter is chosen by
+#' 10-fold cross-validation. This function was created for sequencing-based data.
 #'
-#' @param trainRnBSet	An \code{RnBeadSet} object containing the methylation info on which 
+#' @param trainRnBSet	a \code{RnBiseqSet} object containing the methylation info on which 
 #'			the new predictor should be trained
-#' @param filePath	Path in which the new predictor should be written
+#' @param filePath	path to which the new predictor should be written out
 #' 
-#' @return	Absolute path to the corresponding predictor. Null if the function was 
+#' @return	absolute path to the corresponding predictor. \code{NULL} if the function was 
 #'		unable to create such an predictor.
 #'
 #' @author	Michael Scherer
+#' @noRd
 
-simpleGlmnetRRBS <- function(trainRnBSet,filePath=""){
+simpleGlmnetBiseq <- function(trainRnBSet,filePath=""){
 	require(glmnet)
 	methData <- meth(trainRnBSet)
 	anno <- annotation(trainRnBSet)
@@ -1037,7 +1038,7 @@ simpleGlmnetRRBS <- function(trainRnBSet,filePath=""){
 		names <- paste0(chromosome,"_",start,"_",end) 
 		row.names(methData) <- names
 		options(warn=-1)
-		methData <- imputeRRBS(methData)
+		methData <- imputeBiseq(methData)
 		options(warn=1)
 		methData <- t(methData)
 		missingAges <- is.na(ages)
@@ -1061,16 +1062,16 @@ simpleGlmnetRRBS <- function(trainRnBSet,filePath=""){
 #######################################################################################
 #' run.cross.validation
 #'
-#' This function performs a 10-fold cross validation to estimate the performance of a
-#' newly trained predictor. If \code{parallel.isEnabled()}, the function perfoms the cross
-#' validation in parallel. The function adds a table to the specified report containing 
+#' This function performs 10-fold cross validation to estimate the performance of a
+#' newly trained predictor. If \code{parallel.isEnabled()}, the function perfoms cross
+#' validation in parallel. The function adds a table to the specified \code{report} containing 
 #' the result of the 10-fold cross validation.
 #'
-#' @param rnbSet	An \code{RnBSet} object containing the methylation info on which 
+#' @param rnbSet	a \code{RnBSet} object containing the methylation info and ages on which 
 #'			the new predictor should be trained
-#' @param report	Report to which the table should be added 	
+#' @param report	report to which the table should be added 	
 #' 
-#' @return	Modified report object
+#' @return	modified report object
 #'
 #' @author	Michael Scherer
 #' @export
@@ -1133,28 +1134,32 @@ run.cross.validation <- function(rnbSet,report){
 ######################################################################################
 #' general.cv
 #'
-#' This functions performs k-fold-cross-validation on the predictor with a specified 
-#' methylation data and training ages
-#' @param	fitFunction	a function that fits a predictor from training data to #'				predict age from methylation data
+#' This functions performs k-fold-cross-validation on the predictor with methylation 
+#' data as input and ages to be trained on
+#'
+#' @param	fitFunction	a function that fits a predictor from training data to 
+#'				predict age from methylation data (e.g \code{simpeGlmnetEvaluate})
 #' @param	ages		the ages to be trained on
 #' @param	methData	input methylation matrix
 #' @param	k		the fold parameter
 #'
-#' @return	a data matrix that contains the summarized quality measurments for 
+#' @return	a matrix that contains the summarized quality measures for 
 #'		the predictor which are:
-#'			$cor[k+1]:	the mean correlation between the predicted 
-#'					ages and the actual age
-#'			$cor[1:k]:	induvidual correaltions between predicted 
+#'			$cor[k+1]:	the mean correlation between predicted 
+#'					ages and actual ages
+#'			$cor[1:k]:	individual correlations between predicted 
 #'					ages and actual ages for each fold
 #'			$mean[k+1]:	the mean of the mean absolute deviation 
 #'					between predicted ages and actual ages
-#'			$mean[1:k]:	the indivudal mean absolute deviation for 
+#'			$mean[1:k]:	the individual mean absolute deviations for 
 #'					each fold
 #'			$median[k+1]:	the mean of the median absolute deviation
-#'			$median[1:k]:	the individual median absolute devation 
+#'			$median[1:k]:	the individual median absolute devations 
 #'					for each fold
 #'
 #' @author	Michael Scherer
+#' @noRd
+
 general.cv <- function(fitFunction,ages,methData,k=10){
 	nSamples <- length(ages)
 	size <- nSamples%/%k
@@ -1191,13 +1196,16 @@ general.cv <- function(fitFunction,ages,methData,k=10){
 ###################################################################################
 #' cv.array
 #'
-#' This function calls the general cross validation function from the corresponding
-#' RnBSet object in the case of array data
-#' @param	rnbSet	RnBSet object on which the cross validation should be perfomed
+#' This function randomly changes the order of the samples in the data set and then
+#' calls the \code{general.cv} to perform cross-validation for a RnBSet derived from
+#' BeadChip arrays
+#'
+#' @param	rnbSet	\code{RnBeadSet} object on which the cross validation should be perfomed
 #'
 #' @return	the result of the cross validation in a data.frame format
 #'
 #' @author	Michael Scherer
+#' @noRd
 
 cv.array <- function(rnbSet){
 	ph <- pheno(rnbSet)
@@ -1219,6 +1227,7 @@ cv.array <- function(rnbSet){
 		missingAges <- is.na(ages)
 		ages <- ages[!missingAges]
 		rnbSet <- remove.samples(rnbSet,missingAges)
+		set.seed(Sys.time())
 		samples <- samples(rnbSet)
 		sampled <- sample(samples)
 		methData <- meth(rnbSet)
@@ -1233,7 +1242,9 @@ cv.array <- function(rnbSet){
 		Ychrom <- is.element(anno$Chromosome,"chrY")
 		methData <- methData[!Ychrom,]
 		anno <- anno[!Ychrom,]
+		options(warn=-1)
 		dummy <- capture.output(methData <- (impute.knn(methData,colmax=1))$data)
+		options(warn=1)
 		rm(dummy)
 		result <- general.cv(simpleGlmnetEvaluate,ages,methData)
 		result <- as.data.frame(result)
@@ -1245,16 +1256,18 @@ cv.array <- function(rnbSet){
 ###################################################################################
 #' cv.biseq
 #'
-#' This function calls the general cross validation function from the corresponding
-#' RnBSet object in the case of sequencing data
-#' @param	rnbSet	RnBSet object on which the cross validation should be perfomed
-#' @param	report	HTML-report to which the evaluation via cross-validation should be added	
+#' This function randomly changes the order of the samples in the data set and then
+#' calls the \code{general.cv} to perform cross-validation for a RnBSet derived from
+#' bisulfite sequencing
+#'
+#' @param	rnbSet	\code{RnBiseqSet} object on which the cross validation should be perfomed
 #'
 #' @return	the result of the cross validation in a data.frame format
 #'
 #' @author	Michael Scherer
+#' @noRd
 
-cv.biseq <- function(rnbSet,report){
+cv.biseq <- function(rnbSet){
 	ph <- pheno(rnbSet)
 	age <- rnb.getOption("inference.age.column")
 	if(age %in% colnames(ph)){
@@ -1274,6 +1287,7 @@ cv.biseq <- function(rnbSet,report){
 		ages <- ages[!missingAges]
 		rnbSet <- remove.samples(rnbSet,missingAges)
 		ages <- age.transformation(ages)
+		set.seed(Sys.time())
 		samples <- samples(rnbSet)
 		sampled <- sample(samples)
 		methData <- meth(rnbSet)
@@ -1292,7 +1306,7 @@ cv.biseq <- function(rnbSet,report){
 		Ychrom <- is.element(anno$Chromosome,"chrY")
 		methData <- methData[!Ychrom,]
 		anno <- anno[!Ychrom,]
-		methData <- imputeRRBS(methData)
+		methData <- imputeBiseq(methData)
 		result <- general.cv(simpleGlmnetEvaluate,ages,methData)
 		result <- as.data.frame(result)
 		return(result)
@@ -1305,14 +1319,15 @@ cv.biseq <- function(rnbSet,report){
 #'
 #' This function is needed to perform cross-validation. In contrast to simpleGlmnet
 #' it does not write the predictor to a csv-file but returns a prediction 
-#' function that can be used in each fold
+#' function that is to be applied in each fold.
 #'
-#' @param	methData input methylation data for the age prediction
-#' @param	ages	  reponse ages from the age prediction
+#' @param	methData input methylation data as a data.frame for age prediction
+#' @param	ages	  training ages
 #'
 #' @return	the age prediction function to be applied in each fold
 #'
 #' @author	Michael Scherer
+#' @noRd
 
 simpleGlmnetEvaluate <- function(methData,ages){
 	methData <- t(methData)
@@ -1337,7 +1352,7 @@ simpleGlmnetEvaluate <- function(methData,ages){
 #' @return	the age prediction function
 #'
 #' @author	Michael Scherer
-
+#' @noRd
 
 createPredictor <- function(linearModel,lambda=NULL){
 	ret <- function(rnbSet){
@@ -1356,7 +1371,9 @@ createPredictor <- function(linearModel,lambda=NULL){
 			existingCpGs <- usedCpGs  %in% row.names(methData) 
 			selected <- methData[selectCpGs,]
 			selected <- selected[sort(row.names(selected)),]
+			options(warn=-1)
 			dummy <- capture.output(selected <- (impute.knn(selected,colmax=1))$data)
+			options(warn=1)
 			selected <- t(selected)
 			if(length(usedCoeffs) > dim(selected)[2]){
 				usedCoeffs <- usedCoeffs[existingCpGs]
@@ -1383,48 +1400,34 @@ createPredictor <- function(linearModel,lambda=NULL){
 #'
 #' This function writes the coefficients of a linear model into a csv file.
 #'
-#' @param linearModel	Linear Model which should be stored as a csv file
-#' @param path		Path in which the new predictor should be written
+#' @param linearModel	linear Model which should be stored as a csv file
+#' @param path		path in which the new predictor should be written
 #' 
 #' @return	TRUE if the writing was successful
 #'
 #' @author	Michael Scherer
+#' @noRd
+
 writePredictorToCsv <- function(linearModel,path){
 	coeffs <- as.matrix(linearModel)
 	write.csv(coeffs,path)
 	return(TRUE)
 }
 
-mapToCpG <- function(methData,anno){
-	anno <- GRanges(Rle(anno$Chromosome),IRanges(start=anno$Start,end=anno$End),anno$Strand)
-	anno_chip <- rnb.get.annotation("probes450")
-	anno_chip <- unlist(anno_chip)
-	names <- names(anno_chip)
-	names <- strsplit(names,"[[:punct:]]")
-	names <- lapply(names,function(x){x[2]})
-	names <- unlist(names)
-	overlap <- findOverlaps(anno_chip,anno)
-	hits_anno <- subjectHits(overlap)
-	hits_chip <- queryHits(overlap)
-	methData <- methData[hits_anno,]
-	names <- names[hits_chip]
-	row.names(methData) <- names
-	return(methData)
-}
-
 #######################################################################################
-#' imputeRRBS
+#' imputeBiseq
 #'
-#' Since the k-nearest-neighbroing approach does not converge for all CpGs present in
-#' sequencing data, a simple mean imputation is performed for this kind of data
+#' Since the k-nearest-neighboring approach does not converge for all CpGs present in
+#' sequencing data, a simple mean imputation is performed for this kind of data.
 #'
-#' @param methData	Methylation data as a data frame or matix to be imputed
+#' @param methData	methylation data as a data frame or matix to be imputed
 #' 
-#' @return	the changed methyaltion data frame
+#' @return	the changed methylation data frame
 #'
 #' @author	Michael Scherer
+#' @noRd
 
-imputeRRBS <- function(methData){
+imputeBiseq <- function(methData){
 	samples <- dim(methData)[2]
 	nas <- is.na(methData)
 	newMean <- function(x){
@@ -1437,8 +1440,21 @@ imputeRRBS <- function(methData){
 	return(methData)
 }
 
-convert.string.ages <- function(s){
-	temp <- strsplit(s,"[.]")
+#######################################################################################
+#' convert.string.ages
+#'
+#' This function converts different formats of age information into numeric format to
+#' be used in the following functions.
+#'
+#' @param age_information	input ages
+#' 
+#' @return	the input ages in numeric format
+#'
+#' @author	Michael Scherer
+#' @noRd
+
+convert.string.ages <- function(age_information){
+	temp <- strsplit(age_information,"[.]")
 	temp <- temp[[1]][1]
 	temp <- unique(na.omit(as.numeric(unlist(strsplit(temp,"[^0-9]+")))))
 	if(length(temp)>1){
