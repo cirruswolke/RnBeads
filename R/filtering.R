@@ -1111,8 +1111,8 @@ rnb.execute.na.removal <- function(rnb.set, threshold = rnb.getOption("filtering
 	if (!(0 <= threshold && threshold <= 1)) {
 		stop("invalid value for threshold; expected a value between 0 and 1")
 	}
-	filterRes <- rnb.execute.na.removal.internal(rnb.set, NULL, threshold)$filtered
-	list(dataset.before = rnb.set, dataset = remove.sites(rnb.set, filtered), filtered = filterRes$filtered,
+	filterRes <- rnb.execute.na.removal.internal(rnb.set, NULL, threshold)
+	list(dataset.before = rnb.set, dataset = remove.sites(rnb.set, filterRes$filtered), filtered = filterRes$filtered,
 		threshold = threshold, naCounts=filterRes$naCounts)
 }
 

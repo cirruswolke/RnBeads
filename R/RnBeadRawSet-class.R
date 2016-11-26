@@ -294,16 +294,16 @@ RnBeadRawSet<-function(
 		}
 		if(!is.null(bead.counts.M)){
 			rownames(bead.counts.M)<-NULL
-			M[,][bead.counts.M<1]<-NA
+			M[,][bead.counts.M[,]<1]<-NA
 			if(!is.null(M0)){
-				M0[,][bead.counts.M<1]<-NA
+				M0[,][bead.counts.M[,]<1]<-NA
 			}
 		}
 		if(!is.null(bead.counts.U)){
 			rownames(bead.counts.U)<-NULL
-			U[,][bead.counts.U<1]<-NA
+			U[,][bead.counts.U[,]<1]<-NA
 			if(!is.null(U0)){
-				U0[,][bead.counts.M<1]<-NA
+				U0[,][bead.counts.M[,]<1]<-NA
 			}
 		}
 		
