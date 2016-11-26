@@ -1021,8 +1021,7 @@ rnb.get.reliability.counts.per.sample <- function(rnb.set, siteIndices=NULL) {
 ## @author Pavlo Lutsik
 methylumi.intensities.by.color<-function(mset,address.rownames=TRUE){
 
-	if(!require("IlluminaHumanMethylation450kmanifest"))
-		stop("IlluminaHumanMethylation450kmanifest should be installed")
+	rnb.require("IlluminaHumanMethylation450kmanifest")
 
 	pinfos <- rnb.annotation2data.frame(rnb.get.annotation("probes450"), add.names=TRUE)[featureNames(mset), ]
 	dII.probes <- featureNames(mset)[pinfos[,"Design"] == "II"]
@@ -1080,7 +1079,7 @@ methylumi.intensities.by.color<-function(mset,address.rownames=TRUE){
 
 	
 	intensities.by.channel <- list(
-			Cy3=rbind(dII.grn, dI.grn.meth,dI.grn.umeth, dI.red.meth.oob, dI.red.umeth.oob),
+			Cy3=rbind(dII.grn, dI.grn.meth, dI.grn.umeth, dI.red.meth.oob, dI.red.umeth.oob),
 			Cy5=rbind(dII.red, dI.red.meth, dI.red.umeth, dI.grn.meth.oob, dI.grn.umeth.oob))
 
 #	intensities.by.channel$Cy3<-rbind(intensities.by.channel$Cy3, 

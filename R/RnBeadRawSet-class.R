@@ -1025,39 +1025,41 @@ m.value<-function(M,U,offset=100){
 #' 
 #' Rearranges information from "M" and "U" slots of a RnBeadsRawSet object by color channer.
 #'
-#' @param raw.set 			RnBeadRawSet object
+#' @param raw.set          Methylation dataset as an instance of \code{RnBeadRawSet} object.
 #' @param address.rownames  if \code{TRUE} the rows of the returned matrices are named with the with the correspoding Illumina probe addresses 
 #' @param add.oob			if \code{TRUE} the "out-of-band" intensities are included
 #' @param add.controls		if \code{TRUE} the control probe intensities are included
 #' @param add.missing		if \code{TRUE} the rows for the probes missing in \code{raw.set} is imputed with \code{NA} values
-#' 
-#' @return a \code{list} with elements \code{Cy3} and \code{Cy5} containing average bead intensities 
-#' measured for each probe in the green and red channels, respectively
+#' @return a \code{list} with elements \code{Cy3} and \code{Cy5} containing average bead intensities measured for each
+#'         each probe in the green and red channels, respectively.
 #' 
 #' @author Pavlo Lutsik
-intensities.by.color<-function(raw.set, 
-		address.rownames=TRUE, 
-		add.oob=TRUE, 
-		add.controls=TRUE, 
-		add.missing=TRUE
-		){
-	
-	if(!require("IlluminaHumanMethylation450kmanifest")){
-		rnb.error("IlluminaHumanMethylation450kmanifest should be installed")
-	}		
-	
+intensities.by.color<-function(raw.set,
+		address.rownames = TRUE, 
+		add.oob = all(!is.null(M0(raw.set)), !is.null(U0(raw.set))), 
+		add.controls = !is.null(qc(raw.set)),
+		add.missing = TRUE) {
+	if (raw.set@target == "probesEPIC") {
+		rnb.require("IlluminaHumanMethylationEPICmanifest")
+		manifest.object <- IlluminaHumanMethylationEPICmanifest
+	} else if (raw.set@target == "probes450") {
+		rnb.require("IlluminaHumanMethylation450kmanifest")
+		manifest.object <- IlluminaHumanMethylation450kmanifest
+	} else {
+		stop("Unsupported platform")
+	}
+
 	Mmatrix<-M(raw.set, row.names=TRUE)
 	Umatrix<-U(raw.set, row.names=TRUE)
 	if(add.oob){
 		M0matrix<-M0(raw.set, row.names=TRUE)
 		U0matrix<-U0(raw.set, row.names=TRUE)
 	}
-	
 	pinfos <- annotation(raw.set, add.names=TRUE)
 
 	if(add.missing){
 		full.ann<-rnb.annotation2data.frame(rnb.get.annotation(raw.set@target))
-		ann.missing<-full.ann[!rownames(full.ann)%in%rownames(pinfos),]
+		ann.missing<-full.ann[setdiff(rownames(full.ann), rownames(pinfos)),]
 		pinfos<-rbind(pinfos, ann.missing[,colnames(full.ann)])
 		filler<-matrix(NA_real_, nrow=nrow(ann.missing), ncol=length(samples(raw.set)))
 		rownames(filler)<-rownames(ann.missing)
@@ -1069,99 +1071,88 @@ intensities.by.color<-function(raw.set,
 			M0matrix<-rbind(M0matrix, filler)
 			U0matrix<-rbind(U0matrix, filler)
 		}
-		rm(ann.missing, filler, full.ann)
+		rm(full.ann, ann.missing, filler)
 	}
 	
 	rnb.set.probe.ids<-pinfos[["ID"]]
-	
-	dII.probes <- rnb.set.probe.ids[pinfos[,"Design"] == "II"]
-	
-	#dII.probes <- dII.probes[!grepl("rs", dII.probes)]
-	
-	if(address.rownames){
-	
-		tII<-rbind(as.data.frame(IlluminaHumanMethylation450kmanifest@data$TypeII[,c("Name", "AddressA")]),
-			as.data.frame(IlluminaHumanMethylation450kmanifest@data$TypeSnpII[,c("Name", "AddressA")]))
-	
+	dII.probes <- rnb.set.probe.ids[pinfos[, "Design"] == "II"]
+
+	if (address.rownames) {
+		tII<-rbind(as.data.frame(manifest.object@data$TypeII[,c("Name", "AddressA")]),
+			as.data.frame(manifest.object@data$TypeSnpII[,c("Name", "AddressA")]))
 		tII<-tII[match(dII.probes, tII$Name),]
 	}
-	dII.grn<-Mmatrix[pinfos[,"Design"] == "II",,drop=FALSE]
-	if(address.rownames) rownames(dII.grn)<-tII$AddressA
-	
-	dII.red<-Umatrix[pinfos[,"Design"] == "II",,drop=FALSE]
-	if(address.rownames) rownames(dII.red)<-tII$AddressA
-	
+	dII.grn <- Mmatrix[pinfos[, "Design"] == "II", , drop = FALSE]
+	dII.red <- Umatrix[pinfos[, "Design"] == "II", , drop = FALSE]
+	if (address.rownames) {
+		rownames(dII.grn) <- rownames(dII.red) <- tII$AddressA
+	}
+
 	dI.red.probes <- rnb.set.probe.ids[pinfos[, "Color"] == "Red"]
-	#dI.red.probes <- dI.red.probes[!grepl("rs", dI.red.probes)]
 	dI.green.probes <- rnb.set.probe.ids[pinfos[, "Color"] == "Grn"]
+	#dI.red.probes <- dI.red.probes[!grepl("rs", dI.red.probes)]
 	#dI.green.probes <- dI.green.probes[!grepl("rs", dI.green.probes)]
-	
-	if(address.rownames){
-	
-		tI<-rbind(as.data.frame(IlluminaHumanMethylation450kmanifest@data$TypeI[,c("Name","Color", "AddressA", "AddressB")]),
-				as.data.frame(IlluminaHumanMethylation450kmanifest@data$TypeSnpI[,c("Name","Color", "AddressA", "AddressB")]))
-	
-	
+
+	if (address.rownames) {
+		tI <- c("Name","Color", "AddressA", "AddressB")
+		tI <- lapply(c("TypeI", "TypeSnpI"), function(x) { as.data.frame(manifest.object@data[[x]][, tI]) })
+		tI <- do.call(rbind, unname(tI))
+
 		tI.red<-tI[tI$Color=="Red",]
 		tI.red<-tI.red[match(dI.red.probes, tI.red$Name),]
 	
 		tI.grn<-tI[tI$Color=="Grn",]
 		tI.grn<-tI.grn[match(dI.green.probes, tI.grn$Name),]
+		rm(tI)
 	}
-	
-	dI.red.meth<-Mmatrix[pinfos[, "Color"] == "Red",,drop=FALSE]
-	
-	if(address.rownames) rownames(dI.red.meth)<-tI.red[,"AddressB"]
-	
-	dI.red.umeth<-Umatrix[pinfos[, "Color"] == "Red",,drop=FALSE]
-	if(address.rownames) rownames(dI.red.umeth)<-tI.red[,"AddressA"]
-	
-	if(add.oob){
-		dI.red.meth.oob<-M0matrix[pinfos[, "Color"] == "Red",,drop=FALSE]
-		if(address.rownames) rownames(dI.red.meth.oob)<-tI.red[,"AddressB"]
-		
-		dI.red.umeth.oob<-U0matrix[pinfos[, "Color"] == "Red",,drop=FALSE]
-		if(address.rownames) rownames(dI.red.umeth.oob)<-tI.red[,"AddressA"]
+
+	dI.red.meth <- Mmatrix[pinfos[, "Color"] == "Red", , drop = FALSE]
+	dI.red.umeth <- Umatrix[pinfos[, "Color"] == "Red", , drop = FALSE]
+	dI.grn.meth <- Mmatrix[pinfos[, "Color"] == "Grn", , drop = FALSE]
+	dI.grn.umeth <- Umatrix[pinfos[, "Color"] == "Grn", , drop = FALSE]
+	if (address.rownames) {
+		rownames(dI.red.meth) <- tI.red[, "AddressB"]
+		rownames(dI.red.umeth) <- tI.red[, "AddressA"]
+		rownames(dI.grn.meth) <- tI.grn[, "AddressB"]
+		rownames(dI.grn.umeth) <- tI.grn[, "AddressA"]
 	}
-	
-	dI.grn.meth<-Mmatrix[pinfos[, "Color"] == "Grn",,drop=FALSE]
-	if(address.rownames) rownames(dI.grn.meth)<-tI.grn[,"AddressB"]
-	
-	dI.grn.umeth<-Umatrix[pinfos[, "Color"] == "Grn",,drop=FALSE]
-	if(address.rownames) rownames(dI.grn.umeth)<-tI.grn[,"AddressA"]
-	
-	if(add.oob){
-		dI.grn.meth.oob<-M0matrix[pinfos[, "Color"] == "Grn",,drop=FALSE]
-		if(address.rownames) rownames(dI.grn.meth.oob)<-tI.grn[,"AddressB"]
-		
-		dI.grn.umeth.oob<-U0matrix[pinfos[, "Color"] == "Grn",,drop=FALSE]
-		if(address.rownames) rownames(dI.grn.umeth.oob)<-tI.grn[,"AddressA"]
+	if (add.oob) {
+		dI.red.meth.oob <- M0matrix[pinfos[, "Color"] == "Red", , drop = FALSE]
+		dI.red.umeth.oob <- U0matrix[pinfos[, "Color"] == "Red", , drop = FALSE]
+		dI.grn.meth.oob <- M0matrix[pinfos[, "Color"] == "Grn", , drop = FALSE]
+		dI.grn.umeth.oob <- U0matrix[pinfos[, "Color"] == "Grn", , drop = FALSE]
+		if (address.rownames) {
+			rownames(dI.red.meth.oob) <- tI.red[, "AddressB"]
+			rownames(dI.red.umeth.oob) <- tI.red[, "AddressA"]
+			rownames(dI.grn.meth.oob) <- tI.grn[, "AddressB"]
+			rownames(dI.grn.umeth.oob) <- tI.grn[, "AddressA"]
+		}
 	}
-	
+
 	intensities.by.channel <- list(
-			Cy3=rbind(dII.grn, dI.grn.meth,dI.grn.umeth, 
+			Cy3=rbind(dII.grn, dI.grn.meth, dI.grn.umeth, 
 					if(add.oob) dI.red.meth.oob else NULL, if(add.oob) dI.red.umeth.oob else NULL),
 			Cy5=rbind(dII.red, dI.red.meth, dI.red.umeth, 
 					if(add.oob) dI.grn.meth.oob else NULL, if(add.oob) dI.grn.umeth.oob else NULL))
 	
 	rm(dII.grn, dI.grn.meth, dI.grn.umeth, dI.red.meth.oob, dI.red.umeth.oob, 
 			dII.red, dI.red.meth, dI.red.umeth, dI.grn.meth.oob, dI.grn.umeth.oob)
+	invisible(gc())
 
-	gc()
-	
-	if(address.rownames) intensities.by.channel$Cy5<-intensities.by.channel$Cy5[rownames(intensities.by.channel$Cy3),,drop=FALSE]
-	if(add.controls){
-		ncd<-rnb.get.annotation("controls450")
-		#ncd<-ncd[ncd[["Target"]] == "NEGATIVE", ]
-		ncd$Target<-tolower(ncd$Target)
-		controls.by.channel<-qc(raw.set)
-			
-		controls.by.channel$Cy3<-controls.by.channel$Cy3[as.character(ncd$ID),,drop=FALSE]
-		controls.by.channel$Cy5<-controls.by.channel$Cy5[as.character(ncd$ID),,drop=FALSE]
-		
-		intensities.by.channel$Cy3<-rbind(intensities.by.channel$Cy3, controls.by.channel$Cy3)
-		intensities.by.channel$Cy5<-rbind(intensities.by.channel$Cy5, controls.by.channel$Cy5)
+	if(address.rownames) {
+		intensities.by.channel$Cy5<-intensities.by.channel$Cy5[rownames(intensities.by.channel$Cy3),,drop=FALSE]
+	}
+	if (add.controls) {
+		ncd <- rnb.get.annotation(ifelse(raw.set@target == "probesEPIC", "controlsEPIC", "controls450"))
+		#ncd <- ncd[ncd[["Target"]] == "NEGATIVE", ]
+		ncd$Target <- tolower(ncd$Target)
+		controls.by.channel <- qc(raw.set)
+		controls.by.channel$Cy3 <- controls.by.channel$Cy3[as.character(ncd$ID), , drop=FALSE]
+		controls.by.channel$Cy5 <- controls.by.channel$Cy5[as.character(ncd$ID), , drop=FALSE]
+		intensities.by.channel$Cy3 <- rbind(intensities.by.channel$Cy3, controls.by.channel$Cy3)
+		intensities.by.channel$Cy5 <- rbind(intensities.by.channel$Cy5, controls.by.channel$Cy5)
 	}
 	return(intensities.by.channel)
 }
+
 ########################################################################################################################

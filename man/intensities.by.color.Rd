@@ -4,11 +4,12 @@
 \alias{intensities.by.color}
 \title{intensities.by.color}
 \usage{
-intensities.by.color(raw.set, address.rownames = TRUE, add.oob = TRUE,
-  add.controls = TRUE, add.missing = TRUE)
+intensities.by.color(raw.set, address.rownames = TRUE,
+  add.oob = all(!is.null(M0(raw.set)), !is.null(U0(raw.set))),
+  add.controls = !is.null(qc(raw.set)), add.missing = TRUE)
 }
 \arguments{
-\item{raw.set}{RnBeadRawSet object}
+\item{raw.set}{Methylation dataset as an instance of \code{RnBeadRawSet} object.}
 
 \item{address.rownames}{if \code{TRUE} the rows of the returned matrices are named with the with the correspoding Illumina probe addresses}
 
@@ -19,8 +20,8 @@ intensities.by.color(raw.set, address.rownames = TRUE, add.oob = TRUE,
 \item{add.missing}{if \code{TRUE} the rows for the probes missing in \code{raw.set} is imputed with \code{NA} values}
 }
 \value{
-a \code{list} with elements \code{Cy3} and \code{Cy5} containing average bead intensities 
-measured for each probe in the green and red channels, respectively
+a \code{list} with elements \code{Cy3} and \code{Cy5} containing average bead intensities measured for each
+        each probe in the green and red channels, respectively.
 }
 \description{
 Rearranges information from "M" and "U" slots of a RnBeadsRawSet object by color channer.
