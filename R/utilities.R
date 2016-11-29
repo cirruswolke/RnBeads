@@ -131,6 +131,37 @@ rnb.call.destructor <- function(object,...) {
 
 ########################################################################################################################
 
+#' Get the path to an executable
+#' 
+#' Gets the full path to the requested executable file.
+#' 
+#' @param fname Name of the requested executable file. On Windows, this must not include the extension \code{.exe}.
+#' @return Full path the specified executable file; an empty \code{character} vector if it could not be found.
+#' 
+#' @author Yassen Assenov
+#' @noRd
+rnb.get.executable <- function(fname) {
+	dname <- Sys.info()["sysname"]
+	if (dname == "Darwin") {
+		dname <- "macOSX.i386"
+		cmd.search <- "which"
+	} else if (dname == "Linux") {
+		dname <- "linux_x86.64"
+		cmd.search <- "which"
+	} else { # dname == "Windows"
+		fname <- paste0(fname, ".exe")
+		dname <- "windows"
+		cmd.search <- "where"
+	}
+	dname <- system.file(paste0("bin/", dname, "/", fname), package = "RnBeads")
+	if (dname != "") {
+		return(dname)
+	}
+	suppressWarnings(system(paste(cmd.search, fname), intern = TRUE))
+}
+
+########################################################################################################################
+
 #' rnb.sample.groups
 #'
 #' Identifies sample subgroups defined in the given annotation information.
