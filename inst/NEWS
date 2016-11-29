@@ -1,7 +1,9 @@
 RnBeads 1.7.3
 =============
+
  * Age predictor (MethylAger) updates and documentation
- * minor bugfixes
+ * Support for external tools bedToBigBed and bedGraphToBigWig
+ * Minor bugfixes
 
 RnBeads 1.7.2
 =============
