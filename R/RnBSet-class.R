@@ -205,36 +205,38 @@ setMethod("samples", signature(object="RnBSet"),
 	function(object) {
 		pheno.table <- pheno(object)
 		id.column <- rnb.getOption("identifiers.column")
+		ids <- NULL
 		if (!(is.null(pheno.table) || is.null(id.column))) {
-			ids <- NA
-			if (is.character(id.column) || length(unique(pheno[,id.column]!=nrow(pheno)))){
-				if(id.column %in% colnames(pheno.table)){
+			if (is.character(id.column)) {
+				if (id.column %in% colnames(pheno.table)) {
 					ids <- pheno.table[, id.column]
-				}else{
-					warning("The supplied identifiers column is not found or is not suitable")
-					return(as.character(1:nrow(object@pheno)))
 				}
-			} else if(1 <= id.column && id.column <= ncol(pheno.table)) {
+			} else if (1L <= id.column && id.column <= ncol(pheno.table)) {
 				ids <- pheno.table[, id.column]
-			}else{
-				return(as.character(1:nrow(object@pheno)))
 			}
 
-			if (any(is.na(ids)) == FALSE && anyDuplicated(ids) == 0) {
-				return(as.character(ids))
-			}else{
-				return(as.character(1:nrow(object@pheno)))
+			if (!is.null(ids)) {
+				if (any(is.na(ids)) || anyDuplicated(ids) != 0) {
+					ids <- NULL
+				}
 			}
-		}else{
-			if(!is.null(colnames(object@meth.sites))){
-				return(colnames(object@meth.sites))
-			}else{
-			    return(as.character(1:nrow(object@pheno)))
+			if (is.null(ids)) {
+				rnb.warning("The supplied identifiers column is not found or is not suitable")
+			}
+		} else {
+			if (!is.null(colnames(object@meth.sites))) {
+				ids <- colnames(object@meth.sites)
 			}
 		}
+		if (is.null(ids)) {
+			ids <- as.character(1:nrow(object@pheno))
+		}
+		ids
 	}
 )
+
 ########################################################################################################################
+
 if(!isGeneric("sites")) setGeneric("sites",
 			function(object) standardGeneric("sites"))
 
