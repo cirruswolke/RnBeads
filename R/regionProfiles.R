@@ -337,7 +337,7 @@ locus.profile.get.base.tracks <- function(chrom,start,end,assembly="hg19"){
 		stop("invalid value for chrom")
 	}
 	
-	suppressPackageStartupMessages(require(biomaRt))
+	rnb.require("biomaRt")
 	mart <- NULL
 	featMap <- Gviz:::.getBMFeatureMap()
 	if (assembly == "hg19"){
@@ -632,7 +632,7 @@ rnb.plot.locus.profile <- function(rnbSet,chrom,start,end,grps=NULL,
 	if (!is.element(smooth.profile, c("wide", "narrow"))){
 		stop("invalid value for smooth.profile")
 	}
-	require(Gviz)	
+	rnb.require("Gviz")	
 	
 	#get methylation info
 	mm <- meth(rnbSet,type="sites")
@@ -691,8 +691,8 @@ rnb.section.locus.profiles <- function(rnb.set, locus.tab, report, type="", grp.
 	if (any(duplicated(locus.tab[,"id"]))){
 		stop("Invalid value for locus.tab: non-unique ids")
 	}
-	require(Gviz)
-	require(biomaRt)
+	rnb.require("Gviz")
+	rnb.require("biomaRt")
 	if (rnb.getOption("logging") && logger.isinitialized() == FALSE) {
 		logger.start(fname = NA) # initialize console logger
 	}

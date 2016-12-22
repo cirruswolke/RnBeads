@@ -716,9 +716,8 @@ agePredictor <- function(rnbSet, path=""){
 #'
 #' @author	Michael Scherer
 #' @noRd
-
 agePredictorChip <- function(rnbSet, path){
-	require(impute)
+	rnb.require("impute")
 	options(warn=-1)
 	coeffs <- read.csv(path)
 	methData <- meth(rnbSet)
@@ -797,7 +796,7 @@ agePredictorChip <- function(rnbSet, path){
 #' @noRd
 
 agePredictorBiseq <- function(rnbSet, path){
-	require(impute)
+	rnb.require("impute")
 	options(warn=-1)
 	coeffs <- read.csv(path)
 	methData <- meth(rnbSet)
@@ -935,8 +934,8 @@ trainPredictor <- function(rnbSet,data.dir){
 #' @noRd
 
 simpleGlmnet <- function(trainRnBSet,filePath=""){
-	require(glmnet)
-	require(impute)
+	rnb.require("glmnet")
+	rnb.require("impute")
 	methData <- meth(trainRnBSet)
 	anno <- annotation(trainRnBSet)
 	ph <- pheno(trainRnBSet)
@@ -1005,7 +1004,7 @@ simpleGlmnet <- function(trainRnBSet,filePath=""){
 #' @noRd
 
 simpleGlmnetBiseq <- function(trainRnBSet,filePath=""){
-	require(glmnet)
+	rnb.require("glmnet")
 	methData <- meth(trainRnBSet)
 	anno <- annotation(trainRnBSet)
 	ph <- pheno(trainRnBSet)

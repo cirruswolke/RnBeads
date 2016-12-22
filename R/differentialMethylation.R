@@ -1409,7 +1409,7 @@ addReportPlots.diffMeth.bin.region.volcano <- function(report,dmt,cmpName,regNam
 
 ### a more robust version of summary.GOHyperGResult (from GOstats)
 robustHyperGResultSummary <- function(hgr,maxPval=0.01,htmlLinks=FALSE){
-	require(Category)
+	rnb.require("Category")
 	AMIGO_URL <- "http://amigo.geneontology.org/amigo/term/%s"
 	GOenv <- function(what) {
 		annotate::getAnnMap(what, "GO", load=TRUE, type=c("db", "env"))
@@ -2191,7 +2191,7 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 	report <- rnb.add.section(report, 'Enrichment Analysis', sectionText, level = 2)
 	if (class(dm.enrich)=="DiffMeth.enrich" && length(dm.enrich$region)>0){
 		logger.start("Adding enrichment analysis results")
-		require(annotate)
+		rnb.require("annotate")
 		comps <- names(dm.enrich$region)
 		names(comps) <- paste("comp",1:length(comps),sep="")
 		ontol <- names(dm.enrich$region[[1]])
@@ -2218,7 +2218,7 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 
 		colnames2round <- c("Pvalue","OddsRatio","ExpCount")
 		do.enrichment.table <- function(ccn,hhn,oon,rrn,rcn){
-			require(Category)
+			rnb.require("Category")
 			cc <- comps[ccn]
 			hh <- hyper.hypo[hhn]
 			oo <- ontol[oon]

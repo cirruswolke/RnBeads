@@ -879,9 +879,7 @@ rnb.set.annotation <- function(type, regions, description = NULL, assembly = "hg
 rnb.set.annotation.and.cpg.stats <- function(type, regions, description = NULL, assembly = "hg19"){
 	## FIXME: Incorporate this function as a parameter in rnb.set.annotation
 	GENOME <- .rnb.annotations[[assembly]][['GENOME']]
-	if (!suppressWarnings(suppressPackageStartupMessages(require(GENOME, character.only = TRUE)))) {
-		stop(paste("missing required package"), GENOME)
-	}
+	rnb.require(GENOME)
 	genome.data <- get(GENOME)
 	regs.gr <- data.frame2GRanges(regions, chrom.column = "Chromosome", start.column = "Start",
 		end.column = "End", strand.column = "Strand", assembly = assembly)

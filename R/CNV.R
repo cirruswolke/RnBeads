@@ -238,8 +238,8 @@ rnb.section.cnv<-function(report, cnv.data){
 #' @noRd
 rnb.step.cnv<-function(rnb.set, report){
 	
-	suppressPackageStartupMessages(require(GLAD))
-	
+	rnb.require("GLAD")
+
 	if (!is.list(intensities)){
 		stop("invalid value for intensities")
 	}
