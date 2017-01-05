@@ -312,7 +312,7 @@ add.agecomparison.plot <- function(report, object, actualAges, predictedAges){
 	predictedAges <- predictedAges[!notPredicted]
 	ph <- ph[!naAges,]
 	ph <- ph[!notPredicted,]
-	sample_names <- samples(rnbSet)
+	sample_names <- samples(object)
 	sample_names <- sample_names[!naAges]
 	sample_names <- sample_names[!notPredicted]
 
