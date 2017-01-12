@@ -21,7 +21,7 @@
 Extracts sample identifiers
 }
 \details{
-The column of the sample annotation table which contain identifiers is globally controlled via the
+The column of the sample annotation table which contains identifiers is globally controlled via the
  \code{"identifiers.column"} option. In case the latter is \code{NULL} column names of the matrix returned
 by the \code{meth} method are treated as sample identifiers. In case the latter are also missing, a \code{character}
 vector with sample numbers is returned.

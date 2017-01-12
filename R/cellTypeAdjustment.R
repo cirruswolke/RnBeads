@@ -41,7 +41,7 @@ refFreeEWASP <- function(
 		rescale.residual=TRUE) {
 
 	rnb.require("RefFreeEWAS")
-	if (paired && packageVersion("RefFreeEWAS")<'1.3'){
+	if (paired && utils::packageVersion("RefFreeEWAS")<'1.3'){
 		rnb.warning("RefFreeEWAS version >=1.3 is required for paired analysis, pairing will be disregarded")
 		paired<-FALSE
 	}

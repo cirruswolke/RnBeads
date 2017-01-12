@@ -100,7 +100,7 @@ complete.report <- function(report, report.type = "report") {
 	write.line("\t<div id=\"rnbeads\">", report@fname)
 	write.line(c("\tThis ", report.type, " was generated on ", format(Sys.time(), "%Y-%m-%d"), " by ",
 			"<a href=\"http://rnbeads.mpi-inf.mpg.de/\">RnBeads</a> version ",
-			paste(packageVersion("RnBeads"), collapse = "."), "."), report@fname)
+			paste(as.character(utils::packageVersion("RnBeads")), collapse = "."), "."), report@fname)
 	write.line("\t</div>", report@fname)
 	write.line("\t<div id=\"validlogo\">", report@fname)
 	write.line(c("\t\t<a href=\"http://validator.w3.org/check?uri=referer\">",

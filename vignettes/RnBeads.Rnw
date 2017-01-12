@@ -93,7 +93,7 @@
 
 \author{Fabian M\"uller, Yassen Assenov, Pavlo Lutsik \\
 	\small{Contact: \cs{rnbeads@mpi-inf.mpg.de}} \\
-	\small{Package version: \cs{1.7.1}}}
+	\small{Package version: \cs{1.7.3}}}
 
 \thispagestyle{empty}
 \maketitle
@@ -111,14 +111,14 @@ suppressPackageStartupMessages(library(RnBeads))
 
 \section{Getting Started}
 
-\subsection{Automatic Installation}
-	Automatic installation of \cs{RnBeads} and its companion data packages can be
-	performed using an installation script available on the \cs{RnBeads} web site. All you have to do is to execute the following command in your R environment:
+\subsection{Installation}
+	Automatic installation of \cs{RnBeads} and one or more of its companion data packages is performed just like any other Bioconductor package. As an example, the following commands install RnBeads and its annotation package for the human genome annotation hg38:
 <<eval=FALSE>>=
-source("http://rnbeads.mpi-inf.mpg.de/install.R")
+source("http://bioconductor.org/biocLite.R")
+biocLite(c("RnBeads", "RnBeads.hg38"))
 @
 
-	This will also install and update all package dependencies. Additionally, you might have to install \textit{Ghostscript} which \cs{RnBeads} uses for generating plot files. \textit{Ghostscript} is included in most Unix/Linux distributions by default, but may require installation on other operating systems. You can find more information on how to install it in Appendix~\ref{sec:manualInstall} and the FAQ section on the \href{http://rnbeads.mpi-inf.mpg.de/}{RnBeads website}\footnote{\href{http://rnbeads.mpi-inf.mpg.de/}{http://rnbeads.mpi-inf.mpg.de}}. Alternative ways to install RnBeads and its dependencies can also be found in Appendix~\ref{sec:manualInstall}.
+	Additionally, you might have to install \textit{Ghostscript} which \cs{RnBeads} uses for generating plot files. \textit{Ghostscript} is included in most Unix/Linux distributions by default, but may require installation on other operating systems. You can obtain the version corresponding to your operating system freely from the program's website\footnote{\href{http://www.ghostscript.com/download/gsdnld.html}{http://www.ghostscript.com/download/gsdnld.html}}. Follow their installation instructions. You might have to set path variables as well. Additional hints on installation of Ghostscript can be found on the FAQ section of the \href{http://rnbeads.mpi-inf.mpg.de/}{RnBeads website}\footnote{\href{http://rnbeads.mpi-inf.mpg.de/}{http://rnbeads.mpi-inf.mpg.de}}. The web site also describes alternative ways to install RnBeads and its dependencies.
 
 \subsection{Overview of \cs{RnBeads} Modules}
 	\cs{RnBeads} implements a comprehensive analysis pipeline from data import via
@@ -1899,80 +1899,5 @@ draw.lotto()
 
 
 	\end{thebibliography}
-
-\appendix
-
-\section{Step-By-Step Installation}
-\label{sec:manualInstall}
-	This section contains instructions for installing \cs{RnBeads} manually. The main package, \cs{RnBeads} is dependent on \cs{RnBeadsData}, its companion annotation package. You need to install both packages in order to run \cs{RnBeads} analyses. Additionally, you might need to install \emph{Ghostscript}.
-    % \todo{CHANGE THIS SECTION TO USE ONLY ONE OR TWO COMMANDS IN AN R SESSION}
-
-% The easiest way to install \cs{RnBeads} is via Bioconductor.
-%
-Alternative ways to install depending on your operating system are also described in this section. As a prerequisite, you should have R already installed\footnote{You can obtain R and instructions on how to install it from \href{http://www.r-project.org/}{http://www.r-project.org/}}.
-
-\subsection{Manually from the \cs{RnBeads} website}
-	First, download both packages for your operating system from the \cs{RnBeads} website\footnote{\href{http://rnbeads.mpi-inf.mpg.de/}{http://rnbeads.mpi-inf.mpg.de/}}. As a prerequisite for installing \cs{RnBeads}, we need to install additional CRAN and Bioconductor packages that \cs{RnBeads} depends on. If you are certain the packages in the following commands are already installed, you can skip this step. Otherwise, start an R session and install them using the following commands:
-
-<<eval=FALSE>>=
-install.packages(c("doParallel", "fields", "foreach", "gplots", "matrixStats",
-    "mclust", "mgcv", "RPMM", "wordcloud", "XML"))
-source("http://bioconductor.org/biocLite.R")
-biocLite(c("biomaRt", "GenomicRanges", "GEOquery", "ggbio", "GOstats", "Gviz",
-    "IlluminaHumanMethylation450k.db", "IlluminaHumanMethylation450kmanifest",
-	"methylumi", "rtracklayer"))
-@
-
-	Multiple packages will be installed, which might take a while. When this is done you are ready to install the \cs{RnBeads} and its data packages. Depending on your operating system there are several options to do so. Follow one of the instructions below.
-
-	\paragraph{Windows:} In your \cs{RGui} application:
-		\begin{enumerate}
-			\item go to \cs{Packages}\ra\cs{Install package(s) from local zip files}
-			\item select the downloaded package \cs{RnBeads.hg19\_0.99.2.zip}
-			\item repeat the above steps for the package \cs{RnBeads\_0.99.20.zip}
-			\item load the package using the following command in the R console:
-<<eval=FALSE>>=
-library(RnBeads)
-@
-			\item If you receive an error matching the pattern \cs{Error: package 'XYZ' could not be loaded} or \cs{There is no package called 'XYZ'} then the package XYZ which \cs{RnBeads} depends on has probably not been installed. You can do this manually by
-<<eval=FALSE>>=
-install.packages("XYZ")
-@
-			where you replace \cs{XYZ} with the corresponding package name that raised the error. Some packages \cs{RnBeads} depends on are not in CRAN but have to be installed from Bioconductor. Hence, if you receive an error that the package is not available try:
-<<eval=FALSE>>=
-source("http://bioconductor.org/biocLite.R")
-biocLite("XYZ")
-@
-			\item repeat the previous two steps until you no longer receive an error when using \cs{library(RnBeads)}
-
-		\end{enumerate}
-
-	\paragraph{Unix/Linux/MacOS:} In the command line (or a Terminal window on MacOS) use:
-
-	    \vspace{5mm}
-		\cs{R CMD INSTALL RnBeadsData [PATH\_OF\_DOWNLOADED\_DATA\_ARCHIVE]}
-
-		\cs{R CMD INSTALL RnBeads [PATH\_OF\_DOWNLOADED\_MAIN\_ARCHIVE]}
-		\vspace{5mm}
-
-	Here, \cs{[PATH\_OF\_DOWNLOADED\_DATA\_ARCHIVE]} and \cs{[PATH\_OF\_DOWNLOADED\_MAIN\_ARCHIVE]} specify the locations where you downloaded the packages to (\cs{RnBeads.hg19\_0.99.2.tar.gz} and \cs{RnBeads\_0.99.20.tar.gz} respectively). Alternatively, within an R session use the following command:
-<<eval=FALSE>>=
-install.packages("[PATH_OF_DOWNLOADED_DATA_ARCHIVE]", repos=NULL)
-install.packages("[PATH_OF_DOWNLOADED_MAIN_ARCHIVE]", repos=NULL)
-@
-
-	You might have to install other packages \cs{RnBeads} depends on from Bioconductor or CRAN. Follow the final three steps described in the Windows section to accomplish that.
-
-%		\subsection{Bioconductor}
-%			\cs{RnBeads} is available from the Bioconductor project. To install it use the following commands within an R session:
-% <<eval=FALSE>>=
-% source("http://bioconductor.org/biocLite.R")
-% biocLite("RnBeads")
-% @
-%			You might have to install other packages \cs{RnBeads} depends on from Bioconductor or CRAN. \todo{check if this is really the case}
-
-\subsection{Ghostscript}
-
-	For some of the methods for figure generation in this package, Ghostscript is required. You can obtain the version corresponding to your operating system freely from the program's website\footnote{\href{http://www.ghostscript.com/download/gsdnld.html}{http://www.ghostscript.com/download/gsdnld.html}}. Follow their installation instructions. You might have to set path variables as well. Additional hints on installation of Ghostscript can be found on the FAQ section of the \cs{RnBeads} website.
 
 \end{document}

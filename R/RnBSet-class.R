@@ -8,12 +8,6 @@
 ## GLOBALS
 
 RNBSET.SLOTNAMES<-c("meth.sites", "covg.sites")
-get.rnb.version<-function(){
-	tryCatch(
-		as.character(packageVersion("RnBeads")),
-		error = function(err) { return(NULL) }
-	)
-}
 
 ##
 ## ---------------------------------------------------------------------------------------------------------------------
@@ -107,7 +101,7 @@ setClass("RnBSet",
 				assembly="hg19",
 				target=NULL,
 				inferred.covariates=list(),
-				version=get.rnb.version()),
+				version=as.character(packageVersion("RnBeads"))),
 		contains = "VIRTUAL",
 		package = "RnBeads")
 
@@ -144,8 +138,7 @@ setClass("RnBSet",
 ## ACCESSORS
 ## ---------------------------------------------------------------------------------------------------------------------
 
-if(!isGeneric("pheno")) setGeneric("pheno",
-			function(object) standardGeneric("pheno"))
+if (!isGeneric("pheno")) setGeneric("pheno", function(object) standardGeneric("pheno"))
 
 #' pheno-methods
 #'
@@ -165,10 +158,7 @@ if(!isGeneric("pheno")) setGeneric("pheno",
 #' data(small.example.object)
 #' pheno(rnb.set.example)
 #' }
-setMethod("pheno", signature(object="RnBSet"),
-		function(object){
-			return(object@pheno)
-		})
+setMethod("pheno", signature(object="RnBSet"), function(object) object@pheno)
 
 ########################################################################################################################
 
@@ -182,7 +172,7 @@ if (!isGeneric("samples")) {
 #'
 #' @param object Dataset of interest.
 #'
-#' @details The column of the sample annotation table which contain identifiers is globally controlled via the
+#' @details The column of the sample annotation table which contains identifiers is globally controlled via the
 #'  \code{"identifiers.column"} option. In case the latter is \code{NULL} column names of the matrix returned
 #' by the \code{meth} method are treated as sample identifiers. In case the latter are also missing, a \code{character}
 #' vector with sample numbers is returned.

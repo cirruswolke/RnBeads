@@ -10,12 +10,14 @@
 #' @import methods MASS cluster RColorBrewer fields ggplot2 S4Vectors IRanges GenomicRanges methylumi ff gridExtra limma
 #' @importFrom BiocGenerics annotation
 #' @importFrom BiocGenerics annotation<-
+#' @importFrom grDevices pdf png
+#' @importFrom gplots colorpanel heatmap.2
 #' @importFrom illuminaio readIDAT
-#' @importFrom gplots colorpanel
-#' @importFrom gplots heatmap.2
-#' @importFrom plyr rbind.fill
 #' @importFrom matrixStats colMaxs colMedians colMins colQuantiles colSds colVars
 #' @importFrom matrixStats rowMaxs rowMedians rowMins rowQuantiles rowSds rowVars
+#' @importFrom plyr rbind.fill
+#' @importFrom utils browseURL capture.output combn data download.file installed.packages memory.size
+#' @importFrom utils read.csv read.delim read.table untar unzip write.table zip
 #' @docType package
 #' @name RnBeads
 NULL

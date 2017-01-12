@@ -558,13 +558,13 @@ add.combination.plot <- function(report, object, actualAges,predictedAges){
 	report.plots <- list()
 
 	report.plot <- createReportPlot("combination_plot_Points",report)
-	plot <- ggplot(complete_data,aes(x=Difference,y=Density,colour=Set))+geom_point()+facet_grid(Set~.,scale="free",drop=TRUE)+geom_text(aes(label=ifelse(Difference <= q1, as.character(Sample),""),hjust=.5),vjust=0,size=3,colour="black")+geom_text(aes(x=Difference,y=Density,label=ifelse(Difference >= q99, as.character(Sample),"")),hjust=.5,vjust=0,size=3,colour="black")+geom_vline(data=hline_mean,aes(xintercept=yint,linetype=Measure),show_guide=TRUE)+geom_vline(data=hline_quantiles,aes(xintercept=yint,linetype=Measure),show_guide=TRUE)+ylab("Sample Number / Density")+xlab("Difference between predicted age and annotated age")+scale_colour_manual(na.value = "#C0C0C0", values = cvalues, guide=FALSE)
+	plot <- ggplot(complete_data,aes(x=Difference,y=Density,colour=Set))+geom_point()+facet_grid(Set~.,scales="free",drop=TRUE)+geom_text(aes(label=ifelse(Difference <= q1, as.character(Sample),""),hjust=.5),vjust=0,size=3,colour="black")+geom_text(aes(x=Difference,y=Density,label=ifelse(Difference >= q99, as.character(Sample),"")),hjust=.5,vjust=0,size=3,colour="black")+geom_vline(data=hline_mean,aes(xintercept=yint,linetype=Measure),show_guide=TRUE)+geom_vline(data=hline_quantiles,aes(xintercept=yint,linetype=Measure),show_guide=TRUE)+ylab("Sample Number / Density")+xlab("Difference between predicted age and annotated age")+scale_colour_manual(na.value = "#C0C0C0", values = cvalues, guide=FALSE)
 	print(plot)
 	report.plot <- off(report.plot)
 	report.plots <- c(report.plots,report.plot)
 
 	report.plot <- createReportPlot("combination_plot_Identifiers",report)
-	plot <- ggplot(complete_data,aes(x=Difference,y=Density,colour=Set))+geom_point()+facet_grid(Set~.,scale="free",drop=TRUE)+geom_text(aes(label=as.character(Sample)),colour="black",size=3)+geom_vline(data=hline_mean,aes(xintercept=yint,linetype=Measure),show_guide=TRUE)+geom_vline(data=hline_quantiles,aes(xintercept=yint,linetype=Measure),show_guide=TRUE)+ylab("Sample Number / Density")+xlab("Difference between predicted age and annotated age")+scale_colour_manual(na.value = "#C0C0C0", values = cvalues, guide=FALSE)
+	plot <- ggplot(complete_data,aes(x=Difference,y=Density,colour=Set))+geom_point()+facet_grid(Set~.,scales="free",drop=TRUE)+geom_text(aes(label=as.character(Sample)),colour="black",size=3)+geom_vline(data=hline_mean,aes(xintercept=yint,linetype=Measure),show_guide=TRUE)+geom_vline(data=hline_quantiles,aes(xintercept=yint,linetype=Measure),show_guide=TRUE)+ylab("Sample Number / Density")+xlab("Difference between predicted age and annotated age")+scale_colour_manual(na.value = "#C0C0C0", values = cvalues, guide=FALSE)
 	print(plot)
 	report.plot <- off(report.plot)
 	report.plots <- c(report.plots,report.plot)
