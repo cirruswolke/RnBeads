@@ -1025,7 +1025,7 @@ rnb.update.controlsEPIC.enrich <- function(control.probe.infos) {
 	
 	## Add column Sample-dependent
 	control.probe.infos[["Sample-dependent"]] <-
-			!(control.probe.infos[["Target"]] %in% RnBeads:::CONTROL.TARGETS.SAMPLE.INDEPENDENT)
+			!(control.probe.infos[["Target"]] %in% CONTROL.TARGETS.SAMPLE.INDEPENDENT)
 	
 	control.probe.infos[["Index"]][order(control.probe.infos$Target)]<-unlist(sapply(sort(unique(control.probe.infos$Target)), function(target) 1:length(which(control.probe.infos$Target==target))))
 	
