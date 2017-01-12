@@ -886,8 +886,7 @@ rnb.set.annotation.and.cpg.stats <- function(type, regions, description = NULL, 
 	regs.grl <- GenomicRanges::split(regs.gr, seqnames(regs.gr))
 
 	regs.grl <- append.cpg.stats(genome.data, regs.grl)
-	# regs.gr <- GenomicRanges::unlist(regs.grl,use.names=FALSE)
-	regs.gr <- unlist(regs.grl,use.names=FALSE)
+	regs.gr <- BiocGenerics::unlist(regs.grl,use.names=FALSE)
 
 	regs.df <- GenomicRanges::as.data.frame(regs.gr)
 	colnames(regs.df)[colnames(regs.df)=="seqnames"] <- "chromosome"
@@ -979,8 +978,7 @@ rnb.export.annotation <- function(fname, type, assembly = "hg19", format = "bed"
 	}
 	aa <- rnb.get.annotation(type,assembly)
 	names(aa) <- NULL
-	# aa <- GenomicRanges::unlist(aa)
-	aa <- unlist(aa)
+	aa <- BiocGenerics::unlist(aa)
 	names(aa) <- NULL
 	aa.df <- GenomicRanges::as.data.frame(aa)
 	colnames(aa.df)[colnames(aa.df)=="seqnames"] <- "chrom"
