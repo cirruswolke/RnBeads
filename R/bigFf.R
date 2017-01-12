@@ -162,6 +162,8 @@ setMethod("ncol", signature(x="BigFfMat"),
 		x@colN
 	}
 )
+#' Dimensions of BigFfMat
+#'
 setMethod("dim", signature(x="BigFfMat"),
 	function(x){
 		c(x@rowN, x@colN)
@@ -196,7 +198,8 @@ setReplaceMethod("colnames", signature(x="BigFfMat"),
 	}
 )
 
-#TODO: -indices
+#' Extract parts of BigFfMat
+#'
 setMethod("[", "BigFfMat",
 	function(x, i, j, drop=TRUE){
 		if (missing(i)) i <- 1:x@rowN
@@ -237,6 +240,8 @@ setMethod("[", "BigFfMat",
 	}
 )
 
+#' Replace parts of BigFfMat
+#'
 setReplaceMethod("[", "BigFfMat",
 	function(x, i, j, value){
 		if (missing(i)) i <- 1:x@rowN
