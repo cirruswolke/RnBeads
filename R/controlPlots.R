@@ -169,6 +169,7 @@ rnb.plot.control.boxplot <- function(
 		#,vp=viewport(layout.pos.row=i, layout.pos.col=1))
 	}
 
+	## FIXME: Rewrite the plotting function without using the function arrangeGrob in gridExtra
 	grb<-do.call(arrangeGrob, plots)
 
 	grid.draw(grb)
@@ -304,6 +305,7 @@ rnb.plot.negative.boxplot<- function(
 						#,vp=viewport(layout.pos.row=i, layout.pos.col=1))
 	}
 
+	## FIXME: Rewrite the plotting function without using the function arrangeGrob in gridExtra
 	grb<-do.call(arrangeGrob, plots)
 
 	grid.draw(grb)
@@ -491,7 +493,8 @@ rnb.plot.control.barplot<-function(
 	}
 	#print(red.plot, vp=viewport(layout.pos.row=2, layout.pos.col=1))
 
-  grb<-arrangeGrob(green.plot, red.plot)
+	## FIXME: Rewrite the plotting function without using the function arrangeGrob in gridExtra
+	grb<-arrangeGrob(green.plot, red.plot)
   grid.draw(grb)
   
   if(writeToFile) {
