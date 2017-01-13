@@ -51,7 +51,6 @@ Depends:
     S4Vectors (>= 0.9.25),
     GenomicRanges,
     MASS,
-    RColorBrewer,
     cluster,
     ff,
     fields,
