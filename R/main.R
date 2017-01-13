@@ -895,7 +895,7 @@ module.complete <- function(report, close.report, show.report) {
 #'
 #' ## Data import
 #' data.source <- c(idat.dir, sample.annotation)
-#' result <- rnb.run.import(data.source = data.source, data.type = "idat.dir", dir.reports = report.dir)
+#' result <- rnb.run.import(data.source=data.source, data.type="idat.dir", dir.reports=report.dir)
 #' rnb.set <- result$rnb.set
 #'
 #' ## Quality Control

@@ -450,9 +450,9 @@ if (!isGeneric("addDiffMethTable")) setGeneric("addDiffMethTable", function(obje
 #' library(RnBeads.hg19)
 #' data(small.example.object)
 #' logger.start(fname=NA)
-#' dm <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols="Sample_Group",region.types=c("genes","tiling"))
-#' sample.groups <- rnb.sample.groups(rnb.set.example,"Sample_Group")[[1]]
-#' dmt.sites <- computeDiffTab.extended.site(meth(rnb.set.example),sample.groups[[1]],sample.groups[[2]])
+#' dm <- rnb.execute.computeDiffMeth(rnb.set.example,"Sample_Group",c("genes","tiling"))
+#' s.groups <- rnb.sample.groups(rnb.set.example,"Sample_Group")[[1]]
+#' dmt.sites <- computeDiffTab.extended.site(meth(rnb.set.example),s.groups[[1]],s.groups[[2]])
 #' map.regions.to.sites <- regionMapping(rnb.set.example,"promoters")
 #' dmt.promoters <- computeDiffTab.default.region(dmt.sites,map.regions.to.sites)
 #' cmp.name <- get.comparisons(dm)[1]
@@ -565,7 +565,9 @@ if (!isGeneric("save.tables")) setGeneric("save.tables", function(object,...) st
 #' library(RnBeads.hg19)
 #' data(small.example.object)
 #' logger.start(fname=NA)
-#' dm <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Sample_Group","Treatment"),disk.dump=TRUE,disk.dump.dir=tempfile())
+#' pcols <- c("Sample_Group","Treatment")
+#' tdir <- tempfile()
+#' dm <- rnb.execute.computeDiffMeth(rnb.set.example,pcols,disk.dump=TRUE,disk.dump.dir=tdir)
 #' save.tables(dm,tempfile())
 #' }
 setMethod("save.tables", signature(object="RnBDiffMeth"),
@@ -617,7 +619,9 @@ if (!isGeneric("reload")) setGeneric("reload", function(object,...) standardGene
 #' data(small.example.object)
 #' logger.start(fname=NA)
 #' #compute differential methylation
-#' dm <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Sample_Group","Treatment"),disk.dump=TRUE,disk.dump.dir=tempfile(pattern="working"))
+#' pcols <- c("Sample_Group","Treatment")
+#' tdir <- tempfile(pattern="working")
+#' dm <- rnb.execute.computeDiffMeth(rnb.set.example,pcols,disk.dump=TRUE,disk.dump.dir=tdir)
 #' #get temporary file names
 #' fn.save.tabs <- tempfile(pattern="saveTables")
 #' fn.save.obj  <- tempfile(pattern="saveObject")
@@ -796,14 +800,14 @@ if (!isGeneric("join.diffMeth")) setGeneric("join.diffMeth", function(obj1,obj2,
 #' library(RnBeads.hg19)
 #' data(small.example.object)
 #' logger.start(fname=NA)
-#' dm1 <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Sample_Group"),region.types=c("genes","tiling"))
-#' dm2 <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Sample_Group","Treatment"),region.types=c("promoters"))
+#' dm1 <- rnb.execute.computeDiffMeth(rnb.set.example,"Sample_Group",c("genes","tiling"))
+#' dm2 <- rnb.execute.computeDiffMeth(rnb.set.example,c("Sample_Group","Treatment"),"promoters")
 #' dm.join1 <- join.diffMeth(dm1,dm2)
-#' #the following joint object is invalid, because some region type - comparison combinations are missing
+#' #The following joint object is invalid due to missing region type - comparison combinations
 #' is.valid(dm.join1)
-#' dm3 <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Treatment"),region.types=c("genes","tiling"))
+#' dm3 <- rnb.execute.computeDiffMeth(rnb.set.example,"Treatment",c("genes","tiling"))
 #' dm.join2 <- join.diffMeth(dm.join1,dm3)
-#' #after joining the missing information, the new object is valid
+#' #After joining the missing information, the new object is valid
 #' is.valid(dm.join2)
 #' }
 setMethod("join.diffMeth", signature(obj1="RnBDiffMeth",obj2="RnBDiffMeth"),
@@ -939,14 +943,14 @@ if (!isGeneric("is.valid")) setGeneric("is.valid", function(object,...) standard
 #' library(RnBeads.hg19)
 #' data(small.example.object)
 #' logger.start(fname=NA)
-#' dm1 <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Sample_Group"),region.types=c("genes","tiling"))
-#' dm2 <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Sample_Group","Treatment"),region.types=c("promoters"))
+#' dm1 <- rnb.execute.computeDiffMeth(rnb.set.example,"Sample_Group",c("genes","tiling"))
+#' dm2 <- rnb.execute.computeDiffMeth(rnb.set.example,c("Sample_Group","Treatment"),"promoters")
 #' dm.join1 <- join.diffMeth(dm1,dm2)
-#' #the following joint object is invalid, because some region type - comparison combinations are missing
+#' #The following joint object is invalid due to missing region type - comparison combinations
 #' is.valid(dm.join1)
-#' dm3 <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Treatment"),region.types=c("genes","tiling"))
+#' dm3 <- rnb.execute.computeDiffMeth(rnb.set.example,c("Treatment"),c("genes","tiling"))
 #' dm.join2 <- join.diffMeth(dm.join1,dm3)
-#' #after joining the missing information, the new object is valid
+#' #After joining the missing information, the new object is valid
 #' is.valid(dm.join2)
 #' }
 setMethod("is.valid", signature(object="RnBDiffMeth"),
