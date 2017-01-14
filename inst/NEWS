@@ -2,6 +2,8 @@ RnBeads 1.7.4
 =============
 
  * Several minor bugfixes and performance improvements
+ * Vignette installation instructions updated
+ * Reduce warnings in R CMD check
 
 RnBeads 1.7.3
 =============
