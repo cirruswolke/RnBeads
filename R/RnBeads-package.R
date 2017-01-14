@@ -7,15 +7,22 @@
 #' The complete analysis can be performed by calling the function \code{\link{rnb.run.analysis}}. 
 #' 
 #' @references Yassen Assenov*, Fabian Mueller*, Pavlo Lutsik*, Joern Walter, Thomas Lengauer and Christoph Bock (2014) Compehensive Analysis of DNA Methylation Data with RnBeads, Nature Methods, 11(11):1138-1140.
-#' @import methods MASS cluster RColorBrewer fields ggplot2 S4Vectors IRanges GenomicRanges methylumi ff gridExtra limma
+#' @import methods MASS cluster fields ggplot2 S4Vectors IRanges GenomicRanges methylumi ff limma
 #' @importFrom BiocGenerics annotation
 #' @importFrom BiocGenerics annotation<-
+#' @importFrom grDevices colorRampPalette densCols dev.control dev.off dev2bitmap pdf png rgb xy.coords
+#' @importFrom graphics abline close.screen layout legend lines mtext par plot plot.new polygon screen split.screen
+#' @importFrom gridExtra arrangeGrob
+#' @importFrom gplots colorpanel heatmap.2
 #' @importFrom illuminaio readIDAT
-#' @importFrom gplots colorpanel
-#' @importFrom gplots heatmap.2
-#' @importFrom plyr rbind.fill
 #' @importFrom matrixStats colMaxs colMedians colMins colQuantiles colSds colVars
 #' @importFrom matrixStats rowMaxs rowMedians rowMins rowQuantiles rowSds rowVars
+#' @importFrom plyr rbind.fill
+#' @importFrom stats as.dendrogram as.dist as.formula coef cutree dbeta density dexp dist dnorm ecdf
+#' @importFrom stats fisher.test hclust knots kruskal.test lm model.matrix optim p.adjust pbeta pchisq pf pnorm
+#' @importFrom stats prcomp predict pt qbeta residuals rnorm rt t.test vcov wilcox.test
+#' @importFrom utils browseURL capture.output combn data download.file installed.packages memory.size
+#' @importFrom utils read.csv read.delim read.table untar unzip write.table zip
 #' @docType package
 #' @name RnBeads
 NULL

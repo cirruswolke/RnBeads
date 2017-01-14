@@ -2,23 +2,26 @@
 % Please edit documentation in R/dataExport.R
 \name{rnb.RnBSet.to.bed}
 \alias{rnb.RnBSet.to.bed}
-\title{rnb.RnBSet.to.bed}
+\title{Export to BED files}
 \usage{
 rnb.RnBSet.to.bed(rnb.set, out.dir, reg.type = "sites",
-  names.quant.meth = TRUE, add.track.line = TRUE, verbose = TRUE)
+  names.quant.meth = TRUE, add.track.line = TRUE, lexicographic = FALSE,
+  verbose = TRUE)
 }
 \arguments{
-\item{rnb.set}{Object of class \code{\linkS4class{RnBSet}}}
+\item{rnb.set}{Methylation dataset as an object of type inheriting \code{\linkS4class{RnBSet}}.}
 
-\item{out.dir}{output directory. If not existing, it will be created. otherwise files in that directory are overwritten.}
+\item{out.dir}{Output directory. If not existing, it will be created. otherwise files in that directory are overwritten.}
 
-\item{reg.type}{region type to be converted}
+\item{reg.type}{Region type to be extracted.}
 
 \item{names.quant.meth}{should the names of the bed regions contain information on the methylation level.
 If TRUE the following format is applied: meth_percent%[coverage]. Coverage is available only when
  \code{covg(rnb.set)} is not NULL}
 
 \item{add.track.line}{Add a track line to the bed file to enable browsers like IGV to display the data better}
+
+\item{lexicographic}{Should lexicographic ordering be used for chromosome names}
 
 \item{verbose}{More detailed logger output}
 }
@@ -28,10 +31,10 @@ If TRUE the following format is applied: meth_percent%[coverage]. Coverage is av
         and \code{assembly} (a string indicating the assembly used by \code{rnb.set}).
 }
 \description{
-convert an \code{\linkS4class{RnBSet}}  object to \code{*.bed} files.
+Exports the beta values from a methylation dataset to BED files.
 }
 \details{
-Details on bed can be found in the \href{http://genome.ucsc.edu/FAQ/FAQformat.html}{UCSC Genome Browser
+Details on the BED file format can be found in the \href{http://genome.ucsc.edu/FAQ/FAQformat.html}{UCSC Genome Browser
          documentation}.  Each methylation site is an entry in the resulting bed file. The Score column corresponds
          to a site's methylation value in the interval \code{[0,1]}.
 }

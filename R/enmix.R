@@ -82,9 +82,9 @@ rnb.enmix.oob <- function(dataset, update.betas = TRUE) {
 	}
 	if (update.betas) {
 		if (dataset@status$disk.dump) {
-			dataset@meth.sites <- RnBeads:::convert.to.ff.matrix.tmp(beta.value(dataset@M[,], dataset@U[,]))
+			dataset@meth.sites <- convert.to.ff.matrix.tmp(beta.value(dataset@M[,], dataset@U[,]))
 		} else {
-			dataset@meth.sites <- RnBeads:::beta.value(dataset@M[,], dataset@U[,])
+			dataset@meth.sites <- beta.value(dataset@M[,], dataset@U[,])
 		}
 	}
 	dataset

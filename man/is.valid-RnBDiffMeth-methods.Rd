@@ -25,14 +25,14 @@ and accounted for
 library(RnBeads.hg19)
 data(small.example.object)
 logger.start(fname=NA)
-dm1 <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Sample_Group"),region.types=c("genes","tiling"))
-dm2 <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Sample_Group","Treatment"),region.types=c("promoters"))
+dm1 <- rnb.execute.computeDiffMeth(rnb.set.example,"Sample_Group",c("genes","tiling"))
+dm2 <- rnb.execute.computeDiffMeth(rnb.set.example,c("Sample_Group","Treatment"),"promoters")
 dm.join1 <- join.diffMeth(dm1,dm2)
-#the following joint object is invalid, because some region type - comparison combinations are missing
+#The following joint object is invalid due to missing region type - comparison combinations
 is.valid(dm.join1)
-dm3 <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Treatment"),region.types=c("genes","tiling"))
+dm3 <- rnb.execute.computeDiffMeth(rnb.set.example,c("Treatment"),c("genes","tiling"))
 dm.join2 <- join.diffMeth(dm.join1,dm3)
-#after joining the missing information, the new object is valid
+#After joining the missing information, the new object is valid
 is.valid(dm.join2)
 }
 }

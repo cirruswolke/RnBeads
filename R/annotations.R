@@ -204,6 +204,38 @@ rnb.sort.regions <- function(x) {
 
 ########################################################################################################################
 
+#' Get chromosome sizes
+#' 
+#' Gets the lengths of the supported chromosomes for the given genome assembly.
+#' 
+#' @param assembly   Genome assembly of interest. Must be one of \code{\link{rnb.get.assemblies}}.
+#' @param file.chrom Optionally, the name of the text file to save the chromosome lengths to. If this file exists, it
+#'                   will be overwritten.
+#' @return Invisibly, a named \code{integer} vector listing the lengths, in base pairs, of all supported chromosomes.
+#' @author Yassen Assenov
+#' @noRd
+rnb.chromosome.lengths <- function(assembly, file.chrom = NULL) {
+	a.table <- NULL
+	if (exists(assembly, .rnb.annotations, inherits = FALSE)) {
+		a.table <- get(assembly, .rnb.annotations, inherits = FALSE)[["sites"]]
+		if (length(a.table) == 0) {
+			a.table <- NULL
+		} else {
+			a.table <- a.table[[1]]
+		}
+	}
+	if (is.null(a.table)) {
+		a.table <- rnb.get.annotation(assembly = assembly)
+	}
+	c.lengths <- seqlengths(a.table)
+	if (!is.null(file.chrom)) {
+		write(paste0(names(c.lengths), "\t", c.lengths), file.chrom, sep = "\t")
+	}
+	invisible(c.lengths)
+}
+
+########################################################################################################################
+
 #' rnb.load.bed
 #'
 #' Loads a BED file into a \code{data.frame} with fixed column names. The file contents is validated for structure
@@ -847,16 +879,14 @@ rnb.set.annotation <- function(type, regions, description = NULL, assembly = "hg
 rnb.set.annotation.and.cpg.stats <- function(type, regions, description = NULL, assembly = "hg19"){
 	## FIXME: Incorporate this function as a parameter in rnb.set.annotation
 	GENOME <- .rnb.annotations[[assembly]][['GENOME']]
-	if (!suppressWarnings(suppressPackageStartupMessages(require(GENOME, character.only = TRUE)))) {
-		stop(paste("missing required package"), GENOME)
-	}
+	rnb.require(GENOME)
 	genome.data <- get(GENOME)
 	regs.gr <- data.frame2GRanges(regions, chrom.column = "Chromosome", start.column = "Start",
 		end.column = "End", strand.column = "Strand", assembly = assembly)
 	regs.grl <- GenomicRanges::split(regs.gr, seqnames(regs.gr))
 
 	regs.grl <- append.cpg.stats(genome.data, regs.grl)
-	regs.gr <- GenomicRanges::unlist(regs.grl,use.names=FALSE)
+	regs.gr <- BiocGenerics::unlist(regs.grl,use.names=FALSE)
 
 	regs.df <- GenomicRanges::as.data.frame(regs.gr)
 	colnames(regs.df)[colnames(regs.df)=="seqnames"] <- "chromosome"
@@ -948,7 +978,7 @@ rnb.export.annotation <- function(fname, type, assembly = "hg19", format = "bed"
 	}
 	aa <- rnb.get.annotation(type,assembly)
 	names(aa) <- NULL
-	aa <- GenomicRanges::unlist(aa)
+	aa <- BiocGenerics::unlist(aa)
 	names(aa) <- NULL
 	aa.df <- GenomicRanges::as.data.frame(aa)
 	colnames(aa.df)[colnames(aa.df)=="seqnames"] <- "chrom"

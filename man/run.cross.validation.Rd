@@ -7,7 +7,7 @@
 run.cross.validation(rnbSet, report)
 }
 \arguments{
-\item{rnbSet}{a \code{RnBSet} object containing the methylation info and ages on which 
+\item{rnbSet}{a \code{RnBSet} object containing the methylation info and ages on which
 the new predictor should be trained}
 
 \item{report}{report to which the table should be added}
@@ -18,7 +18,7 @@ modified report object
 \description{
 This function performs 10-fold cross validation to estimate the performance of a
 newly trained predictor. If \code{parallel.isEnabled()}, the function perfoms cross
-validation in parallel. The function adds a table to the specified \code{report} containing 
+validation in parallel. The function adds a table to the specified \code{report} containing
 the result of the 10-fold cross validation.
 }
 \author{

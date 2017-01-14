@@ -397,7 +397,7 @@ rnb.plot.coverage.thresholds <- function(rnb.set, min.coverages, fname = NA, ...
 #' @author Fabian Mueller
 #' @export
 rnb.plot.num.sites.covg <- function(rnbs, addSampleNames=(length(samples(rnbs))<100), bar.percentiles=c(0.25,0.75)){
-	require(scales)
+	rnb.require("scales")
 	perc.vec <- c(bar.percentiles[1],0.5,bar.percentiles[2])
 	df2p <- do.call("rbind",lapply(1:length(samples(rnbs)),FUN=function(j){
 		sn <- samples(rnbs)[j]

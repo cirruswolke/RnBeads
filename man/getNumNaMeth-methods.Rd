@@ -10,6 +10,8 @@
   mask = NULL)
 }
 \arguments{
+\item{object}{object inheriting from \code{\linkS4class{RnBSet}}}
+
 \item{type}{"sites" or region type}
 
 \item{chunkSize}{size of each submatrix (performance tuning parameter)}

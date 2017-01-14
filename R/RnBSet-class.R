@@ -8,12 +8,6 @@
 ## GLOBALS
 
 RNBSET.SLOTNAMES<-c("meth.sites", "covg.sites")
-get.rnb.version<-function(){
-	tryCatch(
-		as.character(packageVersion("RnBeads")),
-		error = function(err) { return(NULL) }
-	)
-}
 
 ##
 ## ---------------------------------------------------------------------------------------------------------------------
@@ -107,7 +101,7 @@ setClass("RnBSet",
 				assembly="hg19",
 				target=NULL,
 				inferred.covariates=list(),
-				version=get.rnb.version()),
+				version=as.character(packageVersion("RnBeads"))),
 		contains = "VIRTUAL",
 		package = "RnBeads")
 
@@ -144,8 +138,7 @@ setClass("RnBSet",
 ## ACCESSORS
 ## ---------------------------------------------------------------------------------------------------------------------
 
-if(!isGeneric("pheno")) setGeneric("pheno",
-			function(object) standardGeneric("pheno"))
+if (!isGeneric("pheno")) setGeneric("pheno", function(object) standardGeneric("pheno"))
 
 #' pheno-methods
 #'
@@ -165,10 +158,7 @@ if(!isGeneric("pheno")) setGeneric("pheno",
 #' data(small.example.object)
 #' pheno(rnb.set.example)
 #' }
-setMethod("pheno", signature(object="RnBSet"),
-		function(object){
-			return(object@pheno)
-		})
+setMethod("pheno", signature(object="RnBSet"), function(object) object@pheno)
 
 ########################################################################################################################
 
@@ -182,7 +172,7 @@ if (!isGeneric("samples")) {
 #'
 #' @param object Dataset of interest.
 #'
-#' @details The column of the sample annotation table which contain identifiers is globally controlled via the
+#' @details The column of the sample annotation table which contains identifiers is globally controlled via the
 #'  \code{"identifiers.column"} option. In case the latter is \code{NULL} column names of the matrix returned
 #' by the \code{meth} method are treated as sample identifiers. In case the latter are also missing, a \code{character}
 #' vector with sample numbers is returned.
@@ -205,36 +195,38 @@ setMethod("samples", signature(object="RnBSet"),
 	function(object) {
 		pheno.table <- pheno(object)
 		id.column <- rnb.getOption("identifiers.column")
+		ids <- NULL
 		if (!(is.null(pheno.table) || is.null(id.column))) {
-			ids <- NA
-			if (is.character(id.column) || length(unique(pheno[,id.column]!=nrow(pheno)))){
-				if(id.column %in% colnames(pheno.table)){
+			if (is.character(id.column)) {
+				if (id.column %in% colnames(pheno.table)) {
 					ids <- pheno.table[, id.column]
-				}else{
-					warning("The supplied identifiers column is not found or is not suitable")
-					return(as.character(1:nrow(object@pheno)))
 				}
-			} else if(1 <= id.column && id.column <= ncol(pheno.table)) {
+			} else if (1L <= id.column && id.column <= ncol(pheno.table)) {
 				ids <- pheno.table[, id.column]
-			}else{
-				return(as.character(1:nrow(object@pheno)))
 			}
 
-			if (any(is.na(ids)) == FALSE && anyDuplicated(ids) == 0) {
-				return(as.character(ids))
-			}else{
-				return(as.character(1:nrow(object@pheno)))
+			if (!is.null(ids)) {
+				if (any(is.na(ids)) || anyDuplicated(ids) != 0) {
+					ids <- NULL
+				}
 			}
-		}else{
-			if(!is.null(colnames(object@meth.sites))){
-				return(colnames(object@meth.sites))
-			}else{
-			    return(as.character(1:nrow(object@pheno)))
+			if (is.null(ids)) {
+				rnb.warning("The supplied identifiers column is not found or is not suitable")
+			}
+		} else {
+			if (!is.null(colnames(object@meth.sites))) {
+				ids <- colnames(object@meth.sites)
 			}
 		}
+		if (is.null(ids)) {
+			ids <- as.character(1:nrow(object@pheno))
+		}
+		ids
 	}
 )
+
 ########################################################################################################################
+
 if(!isGeneric("sites")) setGeneric("sites",
 			function(object) standardGeneric("sites"))
 
@@ -2222,7 +2214,11 @@ if(!isGeneric("sampleMethApply")) setGeneric("sampleMethApply", function(object,
 #' sampleMethApply-methods
 #'
 #' Applies a function over the methylation values for all samples in an \code{RnBSet} using a low memory footprint.
+#' 
+#' @param object object inheriting from \code{\linkS4class{RnBSet}}
 #' @param fn function to be applied
+#' @param type \code{character} singleton. Specify "sites" (default) or a region type over which the function is applied
+#' @param ... arguments passed on to the function
 #' @return Result analogous to \code{apply(meth(rnbSet, type), 2, FUN=FUN)}
 #'
 #' @seealso \code{\link[=meth,RnBSet-method]{meth}} Retrieving the matrix of methylation values
@@ -2250,7 +2246,10 @@ if(!isGeneric("sampleCovgApply")) setGeneric("sampleCovgApply", function(object,
 #' sampleCovgApply-methods
 #'
 #' Applies a function over the coverage values for all samples in an \code{RnBSet} using a low memory footprint.
+#' @param object object inheriting from \code{\linkS4class{RnBSet}}
 #' @param fn function to be applied
+#' @param type \code{character} singleton. Specify "sites" (default) or a region type over which the function is applied
+#' @param ... arguments passed on to the function
 #' @return Result analogous to \code{apply(covg(rnbSet, type), 2, FUN=FUN)}
 #'
 #' @seealso \code{\link[=meth,RnBSet-method]{covg}} Retrieving the matrix of coverage values
@@ -2280,6 +2279,7 @@ if(!isGeneric("getNumNaMeth")) setGeneric("getNumNaMeth", function(object, ...) 
 #'
 #' for each site/region, the getNumNaMeth retrieves the number of NA values accross all samples.
 #' Does this efficiently by breaking down the methylation matrix into submatrices
+#' @param object object inheriting from \code{\linkS4class{RnBSet}}
 #' @param type "sites" or region type
 #' @param chunkSize size of each submatrix (performance tuning parameter)
 #' @param mask logical matrix. its entries will also be considered NAs in counting

@@ -6,13 +6,14 @@
 ## Data exporting routines
 ########################################################################################################################
 
-## rnb.export.fail
-##
-## Adds a paragraph describing why exporting data for a specific region type might fail.
-##
-## @param report Report to contain the description.
-## @param txt Text to be prepended to the paragraph.
-## @author Yassen Assenov
+#' rnb.export.fail
+#'
+#' Adds a paragraph describing why exporting data for a specific region type might fail.
+#'
+#' @param report Report to contain the description.
+#' @param txt Text to be prepended to the paragraph.
+#' @author Yassen Assenov
+#' @noRd
 rnb.export.fail <- function(report, txt = character()) {
 	txt <- c(txt, "There are several reasons why a certain output file cannot be (fully) generated. Examples include:")
 	rnb.add.paragraph(report, txt)
@@ -109,21 +110,25 @@ rnb.RnBSet.to.GRangesList <- function(rnb.set,reg.type="sites",return.regular.li
 	return(rnbs.grl)
 }
 
-#' rnb.RnBSet.to.bed
+########################################################################################################################
+
+#' Export to BED files
 #'
-#' convert an \code{\linkS4class{RnBSet}}  object to \code{*.bed} files.
-#' @param rnb.set Object of class \code{\linkS4class{RnBSet}}
-#' @param out.dir output directory. If not existing, it will be created. otherwise files in that directory are overwritten.
-#' @param reg.type region type to be converted
+#' Exports the beta values from a methylation dataset to BED files.
+#' 
+#' @param rnb.set Methylation dataset as an object of type inheriting \code{\linkS4class{RnBSet}}.
+#' @param out.dir Output directory. If not existing, it will be created. otherwise files in that directory are overwritten.
+#' @param reg.type Region type to be extracted.
 #' @param names.quant.meth should the names of the bed regions contain information on the methylation level.
 #' 		   If TRUE the following format is applied: meth_percent%[coverage]. Coverage is available only when
 #' 			\code{covg(rnb.set)} is not NULL
 #' @param add.track.line Add a track line to the bed file to enable browsers like IGV to display the data better
+#' @param lexicographic Should lexicographic ordering be used for chromosome names
 #' @param verbose More detailed logger output
 #' @return (invisibly) a summary list containing information on the conversion step.
 #'         elements are \code{filenames} (a table containing information on which sample has been written to what filename)
 #'         and \code{assembly} (a string indicating the assembly used by \code{rnb.set}).
-#' @details Details on bed can be found in the \href{http://genome.ucsc.edu/FAQ/FAQformat.html}{UCSC Genome Browser
+#' @details Details on the BED file format can be found in the \href{http://genome.ucsc.edu/FAQ/FAQformat.html}{UCSC Genome Browser
 #'          documentation}.  Each methylation site is an entry in the resulting bed file. The Score column corresponds
 #'          to a site's methylation value in the interval \code{[0,1]}.
 #' @author Fabian Mueller
@@ -135,7 +140,10 @@ rnb.RnBSet.to.GRangesList <- function(rnb.set,reg.type="sites",return.regular.li
 #' logger.start(fname=NA)
 #' rnb.RnBSet.to.bed(rnb.set.example,tempdir())
 #' }
-rnb.RnBSet.to.bed <- function(rnb.set,out.dir,reg.type="sites",names.quant.meth=TRUE,add.track.line=TRUE,verbose=TRUE){
+rnb.RnBSet.to.bed <- function(rnb.set,out.dir,reg.type="sites",names.quant.meth=TRUE,add.track.line=TRUE,lexicographic=FALSE,verbose=TRUE){
+	if (!inherits(rnb.set, "RnBSet")) {
+		stop("inavlid value for rnb.set")
+	}
 	if (!file.exists(out.dir)){
 		dir.create(out.dir)
 	}
@@ -146,40 +154,58 @@ rnb.RnBSet.to.bed <- function(rnb.set,out.dir,reg.type="sites",names.quant.meth=
 	if (verbose) logger.status("Converting to GRangesList")
 	rnb.set.grl <- rnb.RnBSet.to.GRangesList(rnb.set,reg.type=reg.type,return.regular.list=TRUE) #might take a while
 
-	#output the text files
-	for (i in 1:length(samples(rnb.set))){
-		ss <- samples(rnb.set)[i]
-		rr <- rnb.set.grl[[ss]]
-		if (verbose) logger.status(c("Exporting sample",ss))
-		bed.names <- 1:length(rr)
-		if (names.quant.meth){
-			bed.names <- paste("'",round(elementMetadata(rr)[,"score"]*100),"%",sep="")
-			if ("coverage" %in% colnames(elementMetadata(rr))){
-				bed.names <- paste(bed.names,"[",elementMetadata(rr)[,"coverage"],"]",sep="")
+	## Extract annotation table and methylation values
+	tbl <- annotation(rnb.set, type = reg.type)[, c("Chromosome", "Start", "End", "Strand")]
+	is.disjoint <- isDisjoint(GRanges(tbl$Chromosome, IRanges(tbl$Start, tbl$End), tbl$Strand))
+	levels(tbl$Strand) <- c("+", "-", ".")
+	tbl[, 2] <- tbl[, 2] - 1L # switch from 1-based closed intervals to 0-based half-open
+	tbl[["ID"]] <- FALSE
+	tbl[["Value"]] <- 0
+	tbl <- tbl[, c(1:3, 5:6, 4)]
+	if (lexicographic) {
+		i.order <- order(as.integer(factor(as.character(tbl$Chromosome))))
+	}
+
+	## Prepare the resulting structure
+	sample.ids <- samples(rnb.set)
+	res <- list()
+	res[["filenames"]] <- data.frame(i=1:length(sample.ids),sample=sample.ids,filename=paste0("rnbeads_sample",1:length(sample.ids),".bed"))
+	res[["assembly"]] <- assembly(rnb.set)
+	res[["contains.overlapping.regions"]] <- is.disjoint
+
+	## output the text files
+	for (i in 1:length(sample.ids)) {
+		if (verbose) logger.status(c("Exporting sample", sample.ids[i]))
+		mm <- as.vector(meth(rnb.set, type = reg.type, j = i))
+		ii <- which(!is.na(mm))
+		if (names.quant.meth) {
+			cvg <- covg(rnb.set, reg.type, j = i)
+			if (is.null(cvg)) {
+				cvg <- "%"
+			} else {
+				cvg <- paste0("%[", cvg, "]")
 			}
-			bed.names <- paste(bed.names,"'",sep="")
+			bed.names <- paste0("'", round(mm * 100), cvg, "'")
+		} else {
+			bed.names <- rownames(tbl)
 		}
-		table.bed <- data.frame(chrom=as.character(seqnames(rr)),
-								start=start(rr)-1,#-1 to adjust for 0-based format of bed files
-								end=end(rr),
-								name=bed.names,
-								score=round(elementMetadata(rr)[,"score"]*1000), #scale score to [0,1000]
-								strand=as.character(strand(rr)),stringsAsFactors=FALSE)
-		table.bed[table.bed[,"strand"]=="*","strand"] <- "."
-		fn <- file.path(out.dir,paste("rnbeads_sample",i,".bed",sep=""))
-		if (add.track.line){
-			trackLine <- paste0("track name=\"",ss,"\" description=\"",ss," methylation (",reg.type,")\" color=0,60,120 useScore=1")
+		tbl$Value <- as.integer(round(mm * 1000))
+		fn <- file.path(out.dir, res[["filenames"]][i, "filename"])
+		if (add.track.line) {
+			trackLine <- paste0("track name=\"",sample.ids[i],"\" description=\"",sample.ids[i]," methylation (",reg.type,")\" color=0,60,120 useScore=1")
 			write(trackLine,file=fn)
 		}
-		write.table(format(table.bed,scientific=FALSE),file=fn,
-					quote=FALSE,sep="\t",row.names=FALSE,col.names=FALSE,na=".",append=add.track.line)
+		if (lexicographic) {
+			x <- tbl[intersect(i.order, ii), , drop = FALSE]
+		} else {
+			x <- tbl[ii, , drop = FALSE]
+		}
+		write.table(x,file=fn,quote=FALSE,sep="\t",row.names=FALSE,col.names=FALSE,na=".",append=add.track.line)
 	}
-	res <- list()
-	res[["filenames"]] <- data.frame(i=1:length(samples(rnb.set)),sample=samples(rnb.set),filename=paste("rnbeads_sample",1:length(samples(rnb.set)),".bed",sep=""))
-	res[["assembly"]] <- assembly(rnb.set)
-	res[["contains.overlapping.regions"]] <- isDisjoint(rnb.set.grl[[1]])
 	invisible(res)
 }
+
+########################################################################################################################
 
 #' rnb.RnBSet.to.bedGraph
 #'
@@ -282,6 +308,9 @@ rnb.RnBSet.to.bedGraph <- function(rnb.set,out.dir=".",reg.type="sites",paramete
 		list("filenames" = filenames, "assembly" = assembly(rnb.set), "contains.overlapping.regions" = !all(are.disjoint)))
 }
 
+########################################################################################################################
+########################################################################################################################
+
 ## rnb.diffmeth.to.EpiExplorer.file
 ##
 ## Export the differential methylation information to a file that can be read by EpiExplorer
@@ -335,6 +364,8 @@ rnb.diffmeth.to.EpiExplorer.file <- function(rnb.set, diffmeth, fname, comp.name
 			quote=FALSE,sep="\t",row.names=FALSE,col.names=TRUE,na="")
 	return(fname)
 }
+
+########################################################################################################################
 
 ## create.ucsc.track.hub
 ##
@@ -423,98 +454,75 @@ create.ucsc.track.hub <- function(hub.dir,rnb.set,data.type="bigBed",ana.name="R
 	#Maybe later
 }
 
-## rnb.convert.bedGraph.to.bigWig
-##
-## converts \code{*.bedGraph} files to \code{*.bigWig} files
-## @param bedGraphFilenames filenames of the \code{*.bedGraph} files (input files).
-## @param bigWig filenames of the \code{*.bigWig} files (output files).
-## @param assembly assembly to be used. Important for determining chromosome sizes
-## @details Supported operating systems are currently Unix and MacOS only. The corresponding
-## 			binaries of \code{bedGraphToBigWig} are installed along with \pkg{RnBeads}. So are
-##          the chromosome sizes files.
-## @author Fabian Mueller
-rnb.convert.bedGraph.to.bigWig <- function(bedGraphFilenames,bigWigFilenames,assembly){
-	if (length(bedGraphFilenames)!=length(bigWigFilenames) | length(bedGraphFilenames) < 1){
-		stop("non-matching input and output filenames")
-	}
-	if (!Sys.info()["sysname"] %in% c("Linux","Darwin")){
-		stop(paste("Unsupported operating system:",Sys.info()["sysname"]))
-	}
-	if (!assembly %in% rnb.get.assemblies()){
-		stop("unsupported assembly")
-	}
-	get.f <- function(fname) {
-		tryCatch(system.file(fname, package = "RnBeads", mustWork = TRUE),
-				error = function(e) { stop(paste("Internal error in RnBeads: required file", fname, "not found")) })
-	}
-	bedGraphTobigWig.exe <- ""
-	if (Sys.info()["sysname"] == "Linux"){
-		bedGraphTobigWig.exe <- get.f("bin/linux_x86.64/bedGraphToBigWig")
-	} else if (Sys.info()["sysname"] == "Darwin"){
-		bedGraphTobigWig.exe <- get.f("bin/macOSX.i386/bedGraphToBigWig")
-	}
-	chromSizes.file <- get.f(paste("extdata/chromSizes/",assembly,".chrom.sizes",sep=""))
+########################################################################################################################
 
-	n <- length(bedGraphFilenames)
-	for (i in 1:n){
-		system(paste(bedGraphTobigWig.exe,bedGraphFilenames[i],chromSizes.file,bigWigFilenames[i]),ignore.stdout=TRUE)
+#' rnb.convert.bedGraph.to.bigWig
+#'
+#' Converts \code{*.bedGraph} files to \code{*.bigWig} files.
+#' 
+#' @param files.inp  File names of the \code{*.bedGraph} files (input files).
+#' @param files.out  File names of the \code{*.bigWig} files (output files).
+#' @param file.chrom Existing text file storing chromosome lengths in base pairs.
+#' @param file.exec  Full path to the tool bedGraphToBigWig.
+#' @return Invisibly, number of successfully converted bedGraph files.
+#'
+#' @details Supported operating systems are currently Unix and MacOS only. The corresponding
+#' 			binaries of \code{bedGraphToBigWig} are installed along with \pkg{RnBeads}. So are
+#'          the chromosome sizes files.
+#' @author Fabian Mueller
+#' @noRd
+rnb.convert.bedGraph.to.bigWig <- function(files.inp, files.out, file.chrom, file.exec) {
+	result <- 0L
+	for (i in 1:length(files.inp)) {
+		cmd <- paste0('"', file.exec, '" "', files.inp[i], '" "', file.chrom, '" "', files.out[i], '"')
+		cmd <- suppressWarnings(system(cmd, intern = TRUE, ignore.stderr = TRUE))
+		result <- result + is.null(attr(cmd, "status"))
 	}
+	invisible(result)
 }
 
-## rnb.convert.bed.to.bigBed
-##
-## converts \code{*.bed} files to \code{*.bigBed} files
-## @param bedGraphFilenames filenames of the \code{*.bed} files (input files).
-## @param bigBed filenames of the \code{*.bigBed} files (output files).
-## @param assembly assembly to be used. Important for determining chromosome sizes
-## @details Supported operating systems are currently Unix and MacOS only. The corresponding
-## 			binaries of \code{bedToBigBed} are installed along with \pkg{RnBeads}. So are
-##          the chromosome sizes files.
-## @author Fabian Mueller
-rnb.convert.bed.to.bigBed <- function(bedFilenames,bigBedFilenames,assembly){
-	if (length(bedFilenames)!=length(bigBedFilenames) | length(bedFilenames) < 1){
-		stop("non-matching input and output filenames")
-	}
-	if (!Sys.info()["sysname"] %in% c("Linux","Darwin")){
-		stop(paste("Unsupported operating system:",Sys.info()["sysname"]))
-	}
-	if (!assembly %in% rnb.get.assemblies()){
-		stop("unsupported assembly")
-	}
-	get.f <- function(fname) {
-		tryCatch(system.file(fname, package = "RnBeads", mustWork = TRUE),
-				error = function(e) { stop(paste("Internal error in RnBeads: required file", fname, "not found")) })
-	}
-	bedToBigBed.exe <- ""
-	if (Sys.info()["sysname"] == "Linux"){
-		bedToBigBed.exe <- get.f("bin/linux_x86.64/bedToBigBed")
-	} else if (Sys.info()["sysname"] == "Darwin"){
-		bedToBigBed.exe <- get.f("bin/macOSX.i386/bedToBigBed")
-	}
-	chromSizes.file <- get.f(paste("extdata/chromSizes/",assembly,".chrom.sizes",sep=""))
+########################################################################################################################
 
-	n <- length(bedFilenames)
-	for (i in 1:n){
-		bedFn <- bedFilenames[i]
-		#check if there is a track line in the bed file. If so remove it first
-		firstLine <- readLines(bedFn, n=1)
-		tmpFn <- ""
-		tmpFileCreated <- FALSE
-		if (grepl("^track",firstLine)){
-			tmpFn <- tempfile(pattern="bedFile",fileext=".bed")
-			tmpFileCreated <- TRUE
-			fileContent <- readLines(bedFn)
-			fileContent <- fileContent[-1]
-			writeLines(fileContent,tmpFn)
-			bedFn <- tmpFn
-		}
-		system(paste(bedToBigBed.exe,bedFn,chromSizes.file,bigBedFilenames[i]),ignore.stdout=TRUE)
-		#clean up the temp file if necessary
-		if (tmpFileCreated){
-			file.remove(tmpFn)
-		}
+#' rnb.convert.bed.to.bigBed
+#'
+#' converts \code{*.bed} files to \code{*.bigBed} files.
+#'
+#' @param files.inp  File names of the \code{*.bed} files (input files).
+#' @param files.out  File names of the \code{*.bigBed} files (output files).
+#' @param file.chrom Existing text file storing chromosome lengths in base pairs.
+#' @param file.exec  Full path to the tool bedToBigBed.
+#' @return Invisibly, number of successfully converted bedGraph files.
+#'
+#' @author Fabian Mueller
+#' @noRd
+rnb.convert.bed.to.bigBed <- function(files.inp, files.out, file.chrom, file.exec){
+
+	result <- 0L
+	for (i in 1:length(files.inp)) {
+		bedFn <- files.inp[i]
+
+		## Remove the header (track line) if such exists
+#		header.found <- isTRUE(grepl("^track", readLines(bedFn, n = 1)))
+#		if (header.found) {
+#			fileContent <- readLines(bedFn)[-1]
+#			bedFn <- tempfile(pattern = "bedFile", fileext = ".bed")
+#			writeLines(fileContent, bedFn)
+#		}
+
+		## Run bed to bigBed conversion
+		cmd <- paste0('"', file.exec, '" "', bedFn, '" "', file.chrom, '" "', files.out[i], '"')
+		cmd <- suppressWarnings(system(cmd, intern = TRUE, ignore.stderr = TRUE))
+		result <- result + is.null(attr(cmd, "status"))
+
+		## Clean up the temporary file if created
+#		if (header.found) {
+#			file.remove(bedFn)
+#		}
 	}
+	invisible(result)
 }
+
+########################################################################################################################
 
 #' rnb.export.to.trackhub
 #'
@@ -540,86 +548,130 @@ rnb.convert.bed.to.bigBed <- function(bedFilenames,bigBedFilenames,assembly){
 #' rnb.export.to.trackhub(rnb.set.example,tempdir())
 #' }
 rnb.export.to.trackhub <- function(rnb.set,out.dir,reg.type="sites",data.type="bigBed",...){
+	## Validate paramter values
 	if (!inherits(rnb.set, "RnBSet")) {
 		stop("Invalid value for rnb.set: Expected RnBSet")
 	}
-	if (!file.exists(out.dir)){
-		dir.create(out.dir)
+	if (!(is.character(out.dir) && length(out.dir) == 1 && isTRUE(out.dir != ""))) {
+		stop("Invalid value for out.dir")
 	}
-	if (!(reg.type %in% c(rnb.region.types(assembly(rnb.set)),"sites"))){
-		stop("Unsupported region type")
+	if (!file.exists(out.dir)) {
+		if (!dir.create(out.dir, FALSE, TRUE)) {
+			rnb.error(c("Could not create directory", out.dir))
+		}
 	}
-	if (!(data.type %in% c("bigBed","bigWig"))){
+	if (!(is.character(reg.type) && length(reg.type) == 1 && isTRUE(reg.type != ""))) {
+		stop("Invalid value for reg.type")
+	}
+	if (!(reg.type %in% c("sites", rnb.region.types(assembly(rnb.set))))) {
+		stop(paste("Unsupported region type:", reg.type))
+	}
+	if (!(is.character(data.type) && length(data.type) == 1 && isTRUE(data.type != ""))) {
+		stop("Invalid value for data.type")
+	}
+	if (!(data.type %in% c("bigBed","bigWig"))) {
 		stop("Unsupported data type")
 	}
-	res <- list(assembly=assembly(rnb.set))
-	if (data.type=="bigBed"){
-		track.hub.dir <- file.path(out.dir,"trackHub_bigBed")
-		bed.dir <- file.path(out.dir,"bed")
 
-		#convert RnBSet to bed
+	res <- list(assembly = assembly(rnb.set))
+	if (data.type=="bigBed") {
+
+		## Skip if executable is not found
+		file.exec <- rnb.get.executable("bedToBigBed")
+		if (length(file.exec) == 0) {
+			txt <- paste("Skipped conversion bed -> bigBed for region type", reg.type)
+			txt <- paste0(txt, "; could not find the tool bedToBigBed")
+			rnb.warning(txt)
+			res[["converted.bigBed"]] <- FALSE
+			return(res)
+		}
+		logger.info(paste("Using", file.exec))
+
+		## Expport all samples to bed files
+		track.hub.dir <- file.path(out.dir, "trackHub_bigBed")
+		bed.dir <- tempdir()
 		rnb.logger.start("Conversion to BED")
-		bed.conv <- rnb.RnBSet.to.bed(rnb.set,bed.dir,reg.type=reg.type,names.quant.meth=TRUE)
+		bed.conv <- rnb.RnBSet.to.bed(rnb.set, bed.dir, reg.type, inherits(rnb.set, "RnBiseqSet"), FALSE, TRUE, FALSE)
 		rnb.logger.completed()
-		#convert to binary
-		in.file.list <- file.path(bed.dir,bed.conv$filenames$filename)
-		out.file.list <- file.path(track.hub.dir,assembly(rnb.set),paste("rnbeads_sample",bed.conv$filenames$i,".bigBed",sep=""))
 
+		## Prepare for conversion to bigWig
+		file.chrom <- file.path(out.dir, "chromosomes.txt")
+		in.file.list <- file.path(bed.dir, bed.conv$filenames$filename)
+		out.file.list <- paste0("rnbeads_sample", bed.conv$filenames$i, ".bigBed")
+		out.file.list <- file.path(track.hub.dir, assembly(rnb.set), out.file.list)
 		res[["filenames.bed"]] <- bed.conv$filenames
 
+		#@ Write the UCSC track hub structure
 		rnb.logger.start("Creating Track Hub")
-		#write the UCSC track hub structure
-		create.ucsc.track.hub(track.hub.dir,rnb.set,data.type="bigBed",...)
-		if (Sys.info()["sysname"] %in% c("Linux","Darwin")){
-			rnb.convert.bed.to.bigBed(in.file.list,out.file.list,assembly=assembly(rnb.set))
-			res[["converted.bigBed"]] <- TRUE
-		}
-		else {
-			rnb.info("Skipped conversion of bed to bigBed as no conversion binary is currently available for your operating system")
-			res[["converted.bigBed"]] <- FALSE
-		}
-		rnb.logger.completed()
-	} else if (data.type=="bigWig"){
-		track.hub.dir <- file.path(out.dir,"trackHub_bigWig")
-		bedgraph.dir <- file.path(out.dir,"bedgraph")
+		create.ucsc.track.hub(track.hub.dir, rnb.set, data.type="bigBed", ...)
 
-		#convert RnBSet to bedGraph
+		## Convert bed to bigBed
+		if (!file.exists(file.chrom)) {
+			rnb.chromosome.lengths(rnb.set@assembly, file.chrom)
+		}
+		rnb.convert.bed.to.bigBed(in.file.list, out.file.list, file.chrom, file.exec)
+		res[["converted.bigBed"]] <- TRUE
+		rnb.logger.completed()
+
+	} else if (data.type=="bigWig") {
+
+		## Skip if executable is not found
+		file.exec <- rnb.get.executable("bedGraphToBigWig")
+		if (length(file.exec) == 0) {
+			txt <- paste("Skipped conversion bedGraph -> bigWig for region type", reg.type)
+			txt <- paste0(txt, "; could not find the tool bedGraphToBigWig")
+			rnb.warning(txt)
+			res[["converted.bigWig"]] <- FALSE
+			return(res)
+		}
+		logger.info(paste("Using", file.exec))
+
+		## Expport all samples to bedGraph files
+		file.chrom <- file.path(out.dir, "chromosomes.txt")
+		track.hub.dir <- file.path(out.dir, "trackHub_bigWig")
+		bedgraph.dir <- file.path(out.dir, "bedgraph")
 		rnb.logger.start("Conversion to bedGraph")
-		bedGraph.conv <- rnb.RnBSet.to.bedGraph(rnb.set,bedgraph.dir,reg.type=reg.type)
+		bedGraph.conv <- rnb.RnBSet.to.bedGraph(rnb.set, bedgraph.dir, reg.type=reg.type)
 		rnb.logger.completed()
-		#convert to binary
-		in.file.list <- file.path(bedgraph.dir,bedGraph.conv$filenames$File)
-		out.file.list <- gsub("bedGraph$","bigWig",bedGraph.conv$filenames$File)
-		out.file.list <- file.path(track.hub.dir,assembly(rnb.set),out.file.list)
 
+		## Prepare for conversion to bigWig
+		in.file.list <- file.path(bedgraph.dir, bedGraph.conv$filenames$File)
+		out.file.list <- gsub("bedGraph$", "bigWig", bedGraph.conv$filenames$File)
+		out.file.list <- file.path(track.hub.dir, assembly(rnb.set), out.file.list)
+
+		## Skip if overlapping regions are found
 		res[["contains.overlapping.regions"]] <- bedGraph.conv[["contains.overlapping.regions"]]
 		res[["filenames.bedGraph"]] <- bedGraph.conv$filenames
-		if (res[["contains.overlapping.regions"]]){
-			rnb.warning(c("Skipping conversion to track hub because bedGraph files for region type",reg.type,
-					"contain overlapping fragments"))
+		if (res[["contains.overlapping.regions"]]) {
+			txt <- paste("Skipped conversion bedGraph -> bigWig for region type", reg.type)
+			txt <- paste0(txt, "; overlapping fragments found")
+			rnb.warning(txt)
 			res[["converted.bigWig"]] <- FALSE
 			unlink(bedgraph.dir, recursive = TRUE, force = TRUE)
 			return(res)
 		}
 
+		## Write the UCSC track hub structure
 		rnb.logger.start("Creating Track Hub")
-		#write the UCSC track hub structure
-		create.ucsc.track.hub(track.hub.dir,rnb.set,data.type="bigWig",...)
-		if (Sys.info()["sysname"] %in% c("Linux","Darwin")){
-			rnb.convert.bedGraph.to.bigWig(in.file.list,out.file.list,assembly=assembly(rnb.set))
-			res[["converted.bigWig"]] <- TRUE
-			#delete bedGraph files after successful conversion
-			unlink(bedgraph.dir, recursive = TRUE, force = TRUE)
+		create.ucsc.track.hub(track.hub.dir, rnb.set, data.type="bigWig", ...)
+
+		## Convert bedGraph to bigWig
+		if (!file.exists(file.chrom)) {
+			rnb.chromosome.lengths(rnb.set@assembly, file.chrom)
 		}
-		else {
-			rnb.info("Skipped conversion of bedGraph to bigWig as no conversion binary is currently available for your operating system")
-			res[["converted.bigWig"]] <- FALSE
-		}
+		rnb.convert.bedGraph.to.bigWig(in.file.list,out.file.list,file.chrom,file.exec)
+		res[["converted.bigWig"]] <- TRUE
+
+		## Delete bedGraph files after successful conversion
+		unlink(bedgraph.dir, recursive = TRUE, force = TRUE)
 		rnb.logger.completed()
 	}
 
 	invisible(res)
 }
+
+########################################################################################################################
+########################################################################################################################
 
 #' rnb.export.to.ewasher
 #'
@@ -767,6 +819,7 @@ rnb.export.to.ewasher <- function(rnb.set, out.dir, reg.type="sites", ...){
 	return(res)
 }
 
+########################################################################################################################
 
 ### rnb.section.export.ct.adj
 ###
@@ -1010,7 +1063,8 @@ rnb.section.tnt <- function(res.exp,rnbSet,report){
 	}
 	return(report)
 }
-#report <- rnb.section.export(res,report)
+
+########################################################################################################################
 
 #' rnb.execute.tnt
 #'
@@ -1048,36 +1102,33 @@ rnb.execute.tnt <- function(rnb.set,out.dir,exp.bed=rnb.getOption("export.to.bed
 		logger.start(c("Exporting",rr))
 		out.dir.cur <- file.path(out.dir,rr)
 		dir.create(out.dir.cur)
-		res <- list(export.bed=FALSE)
-		if ("bigBed" %in% exp.trackhub){
+		res <- list(export.bed = exp.bed, export.trackhub = character())
+		if (exp.bed) {
+			logger.start("Creating BED Files")
+			bed.dir <- file.path(out.dir.cur,"bed")
+			res.exp <- rnb.RnBSet.to.bed(rnb.set,bed.dir,reg.type=rr,names.quant.meth=TRUE)
+			logger.completed()
+			res[["filenames.bed"]] <- res.exp[["filenames"]]
+		}
+		if ("bigBed" %in% exp.trackhub) {
 			logger.start("Creating Track Hub -- bigBed")
 			res.exp <- rnb.export.to.trackhub(rnb.set,out.dir.cur,reg.type=rr,
 							ana.name=paste("RnBeads Analysis -- ",rr,",bigBed",sep=""),
 							ana.desc=paste(rr, "methylation (bigBed)"),data.type="bigBed",...)
 			logger.completed()
 			res <- c(res,res.exp)
-			res[["export.bed"]] <- TRUE
-			res[["export.trackhub"]] <- c("bigBed")
-		} else if (exp.bed){
-			logger.start("Creating BED Files")
-			bed.dir <- file.path(out.dir.cur,"bed")
-			res.exp <- rnb.RnBSet.to.bed(rnb.set,bed.dir,reg.type=rr,names.quant.meth=TRUE)
-			logger.completed()
-			res[["filenames.bed"]] <- res.exp[["filenames"]]
-			res[["export.bed"]] <- TRUE
-			res[["export.trackhub"]] <- c()
+			res[["export.trackhub"]] <- c(res[["export.trackhub"]],"bigBed")
 		}
 		if ("bigWig" %in% exp.trackhub){
 			logger.start("Creating UCSC Track Hub -- bigWig")
 			res.exp <- rnb.export.to.trackhub(rnb.set,out.dir.cur,reg.type=rr,
-					ana.name=paste("RnBeads Analysis -- ",rr,",bigWig",sep=""),
+					ana.name=paste0("RnBeads Analysis -- ",rr,",bigWig"),
 					ana.desc=paste(rr, "methylation (bigWig)"),data.type="bigWig",...)
 			logger.completed()
 			res <- c(res,res.exp)
-			if (!res[["contains.overlapping.regions"]]){
+			if (res[["converted.bigWig"]]) {
 				res[["export.trackhub"]] <- c(res[["export.trackhub"]],"bigWig")
 			}
-
 		}
 		ress <- c(ress,list(res))
 		logger.completed()
@@ -1087,6 +1138,7 @@ rnb.execute.tnt <- function(rnb.set,out.dir,exp.bed=rnb.getOption("export.to.bed
 	invisible(ress)
 }
 
+########################################################################################################################
 ########################################################################################################################
 
 ## rnb.execute.export.csv.save
@@ -1110,7 +1162,7 @@ rnb.execute.export.csv.save <- function(rnb.set, region.type, output.location, f
 	accepted.columns <- tolower(colnames(reg.annotation)) %in% c("chrom", "chromosome", "start", "end", "strand")
 	mm <- cbind(data.frame(ID = rownames(mm), check.names = FALSE, stringsAsFactors = FALSE),
 		reg.annotation[, accepted.columns], mm)
-	rnb.write.table(mm, fname, output.location, gz = gz, row.names = FALSE, quote=FALSE)
+	rnb.write.table(mm, fname, output.location, gz = gz, row.names = FALSE, quote = FALSE)
 }
 
 ########################################################################################################################

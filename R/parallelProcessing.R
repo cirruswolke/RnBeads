@@ -31,8 +31,8 @@
 #' }
 parallel.setup <- function(...){
 	logger.start("Setting up Multicore")
-	require(foreach)
-	require(doParallel)
+	rnb.require("foreach")
+	rnb.require("doParallel")
 	# .parallel[["cl"]] <- makeCluster(...)
 	# registerDoParallel(.parallel[["cl"]])
 	registerDoParallel(...)

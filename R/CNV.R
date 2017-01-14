@@ -15,11 +15,6 @@ rnb.get.cnv.annotations<-function(platform="probes450"){
 	get("cnv.reference.data", envir=load_env)
 }
 
-rnb.get.chrom.sizes<-function(assembly="hg19"){
-	read.delim(system.file(paste0("extdata/chromSizes/", assembly, ".chrom.sizes"), package="RnBeads"), 
-			header=FALSE)
-}
-
 #######################################################################################################################
 
 getGLADProfiles<-function(rnb.set, cgs){
@@ -105,7 +100,7 @@ rnb.plot.GLAD.profile<-function(glad.profile, label, sample.names = NA, writeToF
 getCGCounts<-function(cnv.profiles, rnb.set){
 	
 	cnv.reference.data<-rnb.get.cnv.annotations("probes450")
-	chrom.data<-rnb.get.chrom.sizes("hg19")
+	chrom.data<-rnb.chromosome.lengths("hg19")
 	
 	si<-cnv.reference.data$seq.info.hg19
 	annot<-annotation(rnb.set)
@@ -243,8 +238,8 @@ rnb.section.cnv<-function(report, cnv.data){
 #' @noRd
 rnb.step.cnv<-function(rnb.set, report){
 	
-	suppressPackageStartupMessages(require(GLAD))
-	
+	rnb.require("GLAD")
+
 	if (!is.list(intensities)){
 		stop("invalid value for intensities")
 	}

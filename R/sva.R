@@ -11,7 +11,7 @@
 ##
 ## @author Fabian Mueller
 get.components.sva <- function(df.data,df.pheno,pheno.col,conf.cols=NULL,numSVmethod="leek"){
-	require(sva)
+	rnb.require("sva")
 	if (length(conf.cols)>0){
 		logger.info(paste0("Adjusting for known covariates: ",paste(conf.cols,collapse=",")))
 	}
@@ -61,7 +61,7 @@ get.components.sva <- function(df.data,df.pheno,pheno.col,conf.cols=NULL,numSVme
 ##
 ## @author Fabian Mueller
 get.components.isva <- function(df.data,df.pheno,pheno.cols,conf.cols=NULL){
-	require(isva)
+	rnb.require("isva")
 	if (length(conf.cols)>0){
 		conf.is.factor <- apply(df.pheno[,conf.cols],2,FUN=function(x){
 			is.factor(x) || is.logical(x)

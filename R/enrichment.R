@@ -31,7 +31,7 @@
 #' result <- performGOenrichment.diffMeth.entrez(hyper.promoters,all.promoters,"BP",assembly="hg19")
 #' }
 performGOenrichment.diffMeth.entrez <- function(gids,uids,ontology,assembly="hg19",...){
-	suppressPackageStartupMessages(require(GOstats))
+	rnb.require("GOstats")
 #	#testing
 #	dmt <- diffmeth$region[[1]][["promoters"]]
 #	annot <- rnb.get.annotations(type = "promoters")

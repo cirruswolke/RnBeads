@@ -28,7 +28,9 @@ library(RnBeads.hg19)
 data(small.example.object)
 logger.start(fname=NA)
 #compute differential methylation
-dm <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Sample_Group","Treatment"),disk.dump=TRUE,disk.dump.dir=tempfile(pattern="working"))
+pcols <- c("Sample_Group","Treatment")
+tdir <- tempfile(pattern="working")
+dm <- rnb.execute.computeDiffMeth(rnb.set.example,pcols,disk.dump=TRUE,disk.dump.dir=tdir)
 #get temporary file names
 fn.save.tabs <- tempfile(pattern="saveTables")
 fn.save.obj  <- tempfile(pattern="saveObject")

@@ -9,7 +9,13 @@
 \S4method{sampleCovgApply}{RnBSet}(object, fn, type = "sites", ...)
 }
 \arguments{
+\item{object}{object inheriting from \code{\linkS4class{RnBSet}}}
+
 \item{fn}{function to be applied}
+
+\item{type}{\code{character} singleton. Specify "sites" (default) or a region type over which the function is applied}
+
+\item{...}{arguments passed on to the function}
 }
 \value{
 Result analogous to \code{apply(covg(rnbSet, type), 2, FUN=FUN)}

@@ -169,6 +169,7 @@ rnb.plot.control.boxplot <- function(
 		#,vp=viewport(layout.pos.row=i, layout.pos.col=1))
 	}
 
+	## FIXME: Rewrite the plotting function without using the function arrangeGrob in gridExtra
 	grb<-do.call(arrangeGrob, plots)
 
 	grid.draw(grb)
@@ -304,6 +305,7 @@ rnb.plot.negative.boxplot<- function(
 						#,vp=viewport(layout.pos.row=i, layout.pos.col=1))
 	}
 
+	## FIXME: Rewrite the plotting function without using the function arrangeGrob in gridExtra
 	grb<-do.call(arrangeGrob, plots)
 
 	grid.draw(grb)
@@ -491,7 +493,8 @@ rnb.plot.control.barplot<-function(
 	}
 	#print(red.plot, vp=viewport(layout.pos.row=2, layout.pos.col=1))
 
-  grb<-arrangeGrob(green.plot, red.plot)
+	## FIXME: Rewrite the plotting function without using the function arrangeGrob in gridExtra
+	grb<-arrangeGrob(green.plot, red.plot)
   grid.draw(grb)
   
   if(writeToFile) {
@@ -501,71 +504,6 @@ rnb.plot.control.barplot<-function(
 	  return(invisible(grb))
   }
 
-}
-#######################################################################################################################
-
-## control.probe.PCA
-##
-## Correlation plots of the principal components of the data set and the quality control information
-##
-## @param qc.set Quality control information of an \code{\linkS4class{RnBeadSet}} object.
-## @param pca ...
-## @param type Desired type of the control probe, one of the c("BISULFITE CONVERSION I", "BISULFITE CONVERSION II",
-## "EXTENSION","HYBRIDIZATION", "NEGATIVE", "NON-POLYMORPHIC", "NORM_A", "NORM_C","NORM_G", "NORM_T", "SPECIFICITY I",
-## "SPECIFICITY II", "STAINING","TARGET REMOVAL")
-## @param ... other arguments to \code{\link{createReportPlot}}
-##
-## @export
-## @author Pavlo Lutsik
-control.probe.PCA <- function(
-		qc.set,
-		pca,
-		type,
-		...) {
-
-	if (!(type %in% rnb.infinium.control.targets())){
-		rnb.error(c("Unrecognized control probe type:", type))
-	}
-
-	control.meta.data <- rnb.get.annotation("controls450")
-
-	green <- qc.set$Cy3
-	red <- qc.set$Cy5
-
-	ids <- control.meta.data$ID[grep(paste(type, ".", sep = ""), paste(control.meta.data$Target, ".", sep = ""), fixed = TRUE)]
-	green <- green[as.character(ids),]
-	red <- red[as.character(ids),]
-
-#	if(is.null(dim(green))) green<-t(as.matrix(green))
-#	if(is.null(dim(red))) red<-t(as.matrix(red))
-
-	## Get meta information
-#   fd.data<-featureData(cd)@data
-#
-#   ids<-fd.data[probe, "ProbeID"]
-#   meta<-subset(control.meta.data, ID %in% ids)
-#
-
-	if (!is.null(red)) {
-		if(!is.null(dim(red))) {
-			map.red <- apply(pca$x, 2, function(proj) apply(red, 1, cor, y = proj, use = "pairwise.complete.obs"))
-			map.green <- apply(pca$x, 2, function(proj) apply(green, 1, cor, y = proj, use = "pairwise.complete.obs"))
-		} else {
-			map.red <- apply(pca$x, 2, cor, y = red, use = "pairwise.complete.obs")
-			map.green <- apply(pca$x, 2, cor, y = green, use = "pairwise.complete.obs")
- 		}
-	}
-
-	rownames(map.red) <- paste("Probe", 1:dim(map.red)[1])
-	rownames(map.green) <- paste("Probe", 1:dim(map.green)[1])
-
-	plot.file1 <- createReportPlot(paste('ControlProbePcaPlot_Red', gsub(" ", ".", type), sep="_"), width=7, height=3, ...)
-	corrHeatmap(map.red, 10, -1, margins=c(5,5))
-	off(plot.file1)
-	plot.file2 <- createReportPlot(paste('ControlProbePcaPlot_Green', gsub(" ", ".", type), sep="_"), width=7, height=3, ...)
-    corrHeatmap(map.green, 10, -1, margins=c(5,5))
-	off(plot.file2)
-	return(list(plot.file1, plot.file2))
 }
 
 #######################################################################################################################
@@ -1025,7 +963,7 @@ rnb.update.controlsEPIC.enrich <- function(control.probe.infos) {
 	
 	## Add column Sample-dependent
 	control.probe.infos[["Sample-dependent"]] <-
-			!(control.probe.infos[["Target"]] %in% RnBeads:::CONTROL.TARGETS.SAMPLE.INDEPENDENT)
+			!(control.probe.infos[["Target"]] %in% CONTROL.TARGETS.SAMPLE.INDEPENDENT)
 	
 	control.probe.infos[["Index"]][order(control.probe.infos$Target)]<-unlist(sapply(sort(unique(control.probe.infos$Target)), function(target) 1:length(which(control.probe.infos$Target==target))))
 	

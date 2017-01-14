@@ -1305,36 +1305,36 @@ read.bed.files<-function(base.dir=NULL,
 }
 
 ########################################################################################################################
-#'	read.single.bed
+#' read.single.bed
 #'
-#'	reads a BED file with methylation information
+#' reads a BED file with methylation information
 #'
-#'	@param file				the input BED file
-#'  @param chr.col			chromosome column index
-#'  @param start.col		start column index
-#'  @param end.col			end column index
-#'  @param strand.col		strand column index
-#'	@param mean.meth.col	mean methylation column index
-#'  @param c.col			converted C counts column index
-#'  @param t.col			unconverted C counts column index
-#'	@param coverage.col		column with coverage information
-#'  @param is.epp.style		Flag for custom Broad Epigenome Pipeline (EPP) bed style (columns \code{"chrom"}, \code{"start"},
+#' @param file				the input BED file
+#' @param chr.col			chromosome column index
+#' @param start.col		start column index
+#' @param end.col			end column index
+#' @param strand.col		strand column index
+#' @param mean.meth.col	mean methylation column index
+#' @param c.col			converted C counts column index
+#' @param t.col			unconverted C counts column index
+#' @param coverage.col		column with coverage information
+#' @param is.epp.style		Flag for custom Broad Epigenome Pipeline (EPP) bed style (columns \code{"chrom"}, \code{"start"},
 #'                          \code{"end"}, \code{"methylated_count/total_count"}, \code{"meth_score_scaled_0_1000"} and
 #'                          \code{"strand"} in this order). Setting this to \code{TRUE} overwrites all other parameters except
 #'                          \code{file}, and also neglects \code{...}.
-#'  @param coord.shift 		An integer specifying the coordinate adjustment applied to the start and end coordinates.
-#'  @param ffread			Use \code{ff} package functionality
-#'  @param context			prefix for the output rownames
-#'  @param ...				further arguments to \code{read.table} or \code{read.table.ffdf}
+#' @param coord.shift 		An integer specifying the coordinate adjustment applied to the start and end coordinates.
+#' @param ffread			Use \code{ff} package functionality
+#' @param context			prefix for the output rownames
+#' @param ...				further arguments to \code{read.table} or \code{read.table.ffdf}
 #'
-#'  @details Missing columns should be assigned with \code{NA}. In case \code{mean.meth.col} is absent at least \code{coverage.col}
+#' @details Missing columns should be assigned with \code{NA}. In case \code{mean.meth.col} is absent at least \code{coverage.col}
 #' 			and one of \code{c.col} or \code{t.col} should be specified.
 #'
-#'  @return a \code{data.frame} or \code{ff.data.frame} object with DNA methylation and coverage information. The row names are formed by the following convension:
+#' @return a \code{data.frame} or \code{ff.data.frame} object with DNA methylation and coverage information. The row names are formed by the following convension:
 #'  		\code{context\\.read.delim(file,...)[,chr.col]\\.read.delim(file,...)[,start.col]\\.read.delim(file,...)[,strand.col]}.
 #'
-#'  @author Pavlo Lutsik
-#'  @export
+#' @author Pavlo Lutsik
+#' @export
 read.single.bed<-function(file,
 		chr.col=1L,
 		start.col=2L,

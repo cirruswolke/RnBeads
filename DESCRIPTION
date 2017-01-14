@@ -9,8 +9,8 @@ Authors@R: c(
     role = c("aut")),
     person("Fabian", "Mueller", email = "rnbeads@mpi-inf.mpg.de",
     role = c("aut", "cre")))
-Date: 2016-11-24
-Version: 1.7.3
+Date: 2017-01-14
+Version: 1.7.4
 Suggests:
     Category,
     GEOquery,
@@ -41,14 +41,16 @@ Suggests:
     wordcloud,
     argparse,
     glmnet,
-    impute
+    impute,
+    GLAD,
+    IlluminaHumanMethylation450kanno.ilmn12.hg19,
+    scales
 Depends:
     R (>= 3.0.0),
     BiocGenerics,
     S4Vectors (>= 0.9.25),
     GenomicRanges,
     MASS,
-    RColorBrewer,
     cluster,
     ff,
     fields,

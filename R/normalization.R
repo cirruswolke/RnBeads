@@ -51,196 +51,208 @@ rnb.execute.normalization<-function(
 		stop("invalid value for object; expected MethyLumiSet, RnBeadSet or RnBiseqSet")
 	}
 	accepted <- .rnb.options[["accepted"]][["normalization.method"]]
+	accepted <- c(accepted, paste0(setdiff(accepted, c("none", "bmiq")), "+bmiq"))
 	if (!(is.character(method) && length(method) == 1 && isTRUE(method %in% accepted))) {
 		msg <- paste0('"', accepted, '"', collapse = ", ")
 		stop(paste("invalid value for method; expected one of", msg))
 	}
+	accepted <- .rnb.options[["accepted"]][["normalization.background.method"]]
+	if (!(is.character(bgcorr.method) && length(bgcorr.method) == 1 && isTRUE(bgcorr.method %in% accepted))) {
+		stop("invalid value for bgcorr.method")
+	}
 
-	if(inherits(object, "RnBiseqSet")){
+	## Split the double normalization
+	if (grepl("\\+bmiq$", method)) {
+		method <- substr(method, 1, nchar(method) - 5)
+		secondary.bmiq <- TRUE
+	} else {
+		secondary.bmiq <- FALSE
+	}
+	method.to.set <- method
+	bgcorr.method.to.set <- bgcorr.method
+	disable.method <- function(is.method, txt = '') {
+		txt <- paste0('Incompatible dataset and ', ifelse(is.method, 'normalization', 'background correction'),
+					  ' method', ifelse(txt == '', '', ': '), txt, '. Changed the method to "none"')
+		rnb.warning(txt)
+		if (is.method) {
+			rnb.options(normalization.method = "none")
+			method <<- "none"
+			method.to.set <<- object@status$normalized
+			secondary.bmiq <<- FALSE
+		} else {
+			rnb.options(normalization.background.method = "none")
+			bgcorr.method <<- "none"
+			bgcorr.method.to.set <<- object@status$background
+		}
+	}
+
+	## Ignore normalization for bisulfite sequencing datasets
+	if (inherits(object, "RnBiseqSet")) {
 		if (method != "none") {
-			rnb.options(normalization.method="none")
-			rnb.warning("Incompatible values for object and method. Changed the normalization method to \"none\"")
-			method <- "none"
+			disable.method(TRUE)
 		}
-		if(bgcorr.method!="none"){
-			rnb.options(normalization.background.method="none")
-			rnb.warning("Incompatible values for object and bacground correction method. Changed the background correction to \"none\"")
-			bgcorr.method <- "none"
+		if (bgcorr.method != "none") {
+			disable.method(FALSE)
 		}
+		return(object)
 	}
 
-
-	if((inherits(object,"MethyLumiSet") && ncol(exprs(object))<2 || inherits(object,"RnBeadSet") && length(samples(object))<2) &&
-			!(method %in% c("none", "bmiq"))){
-			rnb.warning("The object has less than two samples and selected normalization method is not feasible in this case. Changed the normalization method to \"none\"")
-			method <- "none"
+	## Validate there are enough samples present
+	if (inherits(object, "MethyLumiSet")) {
+		nsamples <- ncol(exprs(object))
+	} else {
+		nsamples <- ncol(object@meth.sites)
 	}
-
+	accepted <- c("none", "bmiq")
+	if (nsamples < 2 && !(method %in% accepted)) {
+		disable.method(TRUE, 'too few samples')
+	}
+	rm(nsamples)
 
 	if (inherits(object, "RnBeadSet")) {
-		if (method == "bmiq") {
-			if (object@status$normalized != "none") {
-				## Calling BMIQ as a secondary normalization method
-				rnb.error("Incompatible values for object and method. Change the normalization method to \"none\"")
+		if (object@status$normalized != "none") {
+			## Allow only BMIQ as a secondary normalization
+			if (method == "bmiq" && (!grepl("bmiq$", object@status$normalized))) {
+				method.to.set <- paste0(object@status$normalized, "+bmiq")
+			} else if (method != "none") {
+				disable.method(TRUE, 'dataset already normalized')
 			}
-		}
-		else if (method != "none" && !inherits(object, "RnBeadRawSet")) {
-			rnb.warning(c("Incompatible values for object and method: intensity data required to perform normalization with method \"",method,"\". Changed the normalization method to \"none\""))
-			rnb.options(normalization.method="none")
-			method<-"none"
-		}else if (method=="illumina" && is.null(qc(object))){
-			warn.txt<-c("Incompatible values for object and method: quality control information is required to to perform normalization with method \"illumina\". Disabled the normalization")
-			rnb.warning(warn.txt)
-
-			rnb.options(normalization.method="none")
+		} else if (!(method == "none" || inherits(object, "RnBeadRawSet"))) {
+			disable.method(TRUE, 'missing intensity data')
+		} else if (method == "illumina" && is.null(qc(object))) {
+			disable.method(TRUE, 'missing data on quality control probes')
 		}
 	}
 
-	if(inherits(object, "RnBeadSet") && object@target=="probes27" && !method %in% c("illumina")){
-		rnb.warning(c("Incompatible values for object and method: \"",method,"\" cannot be applied to HumanMethylation27 data. Changed the normalization method to \"none\""))
-		rnb.options(normalization.method="none")
-		method<-"none"
-	}
-	
-	if(inherits(object, "RnBeadSet") && object@target=="probesEPIC" && method %in% c("swan", "minfi.funnorm")){
-		rnb.warning(sprintf("Incompatible methods for object and method: normalization with method %s cannot be applied to MethylationEPIC data at the moment. Changed the normalization method to \"none\"", method))
-		rnb.options(normalization.method="none")
-		method<-"none"
-	}
+	## Perform background subtraction
+	if (bgcorr.method != "none") {
+		if (inherits(object, "MethyLumiSet")) {
 
-	if(inherits(object, "MethyLumiSet") && annotation(object)=="IlluminaHumanMethylation27" && !method %in% c("illumina")){
-		rnb.warning(c("Incompatible values for object and method: \"",method,"\" cannot be applied to HumanMethylation27 data . Changed the normalization method to \"none\""))
-		rnb.options(normalization.method="none")
-		method<-"none"
-	}
+			if (annotation(object) == "IlluminaHumanMethylation27") {
+				disable.method(FALSE, 'not supported for Infinium 27k')
+			} else if (grepl("enmix", bgcorr.method)) {
+				disable.method(FALSE, 'not supported for MethyLumiSet')
+			} else if (bgcorr.method == "methylumi.noob") {
+				if (!all(c("methylated.OOB", "unmethylated.OOB") %in% ls(object@assayData))) {
+					disable.method(FALSE, 'missing out-of-band intensities')
+				}
+			}
 
-	if(inherits(object, "MethyLumiSet") && bgcorr.method!="none"){
+			if (grepl("methylumi", bgcorr.method)) {
+				bgcorr.methylumi<-gsub("methylumi\\.", "", bgcorr.method)
+				pheno.columns<-colnames(phenoData(object)@data)
+				suppressMessages({
+					sinkfile<-ifelse("Windows" %in% Sys.info(),"NUL", "/dev/null")
+					sink(sinkfile)
+					object<-methylumi.bgcorr(object, method=bgcorr.methylumi)
+					sink()
+				})
+				#removing the introduced columns
+				phenoData(object)<-phenoData(object)[,pheno.columns]
+			}
 
-		if(bgcorr.method=="methylumi.noob" &&
-				(!"methylated.OOB" %in% ls(object@assayData) || !"unmethylated.OOB" %in% ls(object@assayData))){
-			rnb.warning(c("Incompatible values for object and background correction flag: no out-of-band information found.",
-					"Disabled the background correction"))
-			bgcorr.method<-"none"
+		} else if (inherits(object, "RnBeadRawSet")) {
+
+			if (object@target == "probes27") {
+				disable.method(FALSE, 'not supported for Infinium 27k')
+			} else if (bgcorr.method == "methylumi.noob" && object@target == "probesEPIC") {
+				disable.method(FALSE, 'methylumi.noob is not supported for MethylationEPIC')
+			} else if (grepl("oob$", bgcorr.method) && (is.null(M0(object)) || is.null(U0(object)))) {
+				disable.method(FALSE, 'missing out-of-band intensities')
+			} else if (object@status$normalized == "swan") {
+				disable.method(FALSE, 'dataset already normalized using SWAN')
+			}
+
+			if (grepl("methylumi", bgcorr.method)) {
+				bgcorr.methylumi<-gsub("methylumi\\.", "", bgcorr.method)
+				pheno.columns<-colnames(pheno(object))
+				inferred.covariates <- object@inferred.covariates
+				old.obj<-object
+				object<-as(object, "MethyLumiSet")
+				if(isTRUE(old.obj@status$discard.ff.matrices)){
+					rnb.call.destructor(old.obj)
+					rm(old.obj)
+				}
+				rnb.cleanMem()
+				suppressMessages({
+					sinkfile <- ifelse("Windows" %in% Sys.info(), "NUL", "/dev/null")
+					sink(sinkfile)
+					object<-methylumi.bgcorr(object, method=bgcorr.methylumi)
+					sink()
+				})
+				#removing the introduced columns
+				phenoData(object)<-phenoData(object)[,pheno.columns]
+				object<-as(object, "RnBeadRawSet")
+				if(object@status$disk.dump && rnb.getOption("enforce.destroy.disk.dumps")){
+					object@status$discard.ff.matrices<-TRUE
+				}
+			} else if (grepl("enmix", bgcorr.method)) {
+				bgcorr.enmix<-gsub("enmix\\.", "", bgcorr.method)
+				object<-rnb.enmix.oob(object)
+			}
+
+			object@status$background <- bgcorr.method
 		}
-
-		if(bgcorr.method=="methylumi.noob" && annotation(object)=="IlluminaHumanMethylation27"){
-			rnb.warning(c("Incompatible methods for object and background correction method: ",
-							"no background correction on the Infinium 27k data possible.",
-							"Disabled the background correction"))
-			bgcorr.method<-"none"
-		}
-
-		if(grepl("methylumi", bgcorr.method)[1]){
-			bgcorr.methylumi<-gsub("methylumi\\.", "", bgcorr.method)
-			pheno.columns<-colnames(phenoData(object)@data)
-			suppressMessages({
-						sinkfile<-ifelse("Windows" %in% Sys.info(),"NUL", "/dev/null")
-						sink(sinkfile)
-						object<-methylumi.bgcorr(object, method=bgcorr.methylumi)
-						sink()
-					})
-			#removing the introduced columns
-			phenoData(object)<-phenoData(object)[,pheno.columns]
+		if (verbose) {
 			rnb.status(c("Performed background subtraction with method", bgcorr.method))
 		}
 		rnb.cleanMem()
 	}
-	
-	if(inherits(object, "RnBeadRawSet") && bgcorr.method!="none"){
 
-		if(bgcorr.method=="methylumi.noob" && object@target=="probes27"){
-			rnb.warning("Incompatible methods for object and background correction method: ]
-						no background correction on the Infinium 27k data possible")
-			bgcorr.method<-"none"
-		}
-		
-		if(bgcorr.method=="methylumi.noob" && object@target=="probesEPIC"){
-			rnb.warning("Incompatible methods for object and background correction method: ]
-							no background correction on the MethylationEPIC data possible at the moment")
-			bgcorr.method<-"none"
-		}
-
-		if(bgcorr.method=="methylumi.noob" && (is.null(M0(object)) || is.null(U0(object)))){
-			rnb.warning(c("Incompatible values for object and background correction method: no out-of-band information found.",
-					"Disabled the background correction"))
-			bgcorr.method<-"none"
-		}
-
-		if(object@status$normalized=="swan"){
-			rnb.warning(c("This RnBeadRawSet object was normalized with method SWAN: no background correction possible."))
-			bgcorr.method<-"none"
-		}
-
-		if(grepl("methylumi", bgcorr.method)[1]){
-			bgcorr.methylumi<-gsub("methylumi\\.", "", bgcorr.method)
-			pheno.columns<-colnames(pheno(object))
-			inferred.covariates <- object@inferred.covariates
-			old.obj<-object
-			object<-as(object, "MethyLumiSet")
-			if(isTRUE(old.obj@status$discard.ff.matrices)){
-				rnb.call.destructor(old.obj)
-				rm(old.obj)
-			}
-			rnb.cleanMem()
-			suppressMessages({
-						sinkfile<-ifelse("Windows" %in% Sys.info(),"NUL", "/dev/null")
-						sink(sinkfile)
-						object<-methylumi.bgcorr(object, method=bgcorr.methylumi)
-						sink()
-					})
-			#removing the introduced columns
-			phenoData(object)<-phenoData(object)[,pheno.columns]
-			object<-as(object, "RnBeadRawSet")
-			if(object@status$disk.dump && rnb.getOption("enforce.destroy.disk.dumps")){
-				object@status$discard.ff.matrices<-TRUE
-			}
-			rnb.status(c("Performed background subtraction with method", bgcorr.method))
-		} else if (grepl("enmix", bgcorr.method)[1]) {
-			bgcorr.enmix<-gsub("enmix\\.", "", bgcorr.method)
-			object<-rnb.enmix.oob(object)
-		}
-		
-		object@status$background<-bgcorr.method
-		rnb.cleanMem()
+	## Validate the normalization method is supported for the given data type
+	accepted <- c("none", "illumina")
+	if (inherits(object, "MethyLumiSet") && annotation(object) == "IlluminaHumanMethylation27" &&
+		!(method %in% accepted)) {
+		disable.method(TRUE, 'not supported for Infinium 27k MethyLumiSet')
+	}
+	if (inherits(object, "RnBeadSet") && object@target == "probes27" && !(method %in% accepted)) {
+		disable.method(TRUE, 'not supported for Infinium 27k')
+	}
+	accepted <- c("none", "bmiq", "swan", "minfi.funnorm")
+	if (inherits(object, "RnBeadSet") && object@target == "probesEPIC" && !(method %in% accepted)) {
+		disable.method(TRUE, 'not supported for MethylationEPIC')
 	}
 
-	if(method=="illumina"){
-		
-		if(inherits(object, "RnBeadRawSet")){
-			inferred.covariates <- object@inferred.covariates
-			object<-as(object,"MethyLumiSet")
-		}
-		object<-suppressMessages(as(normalizeMethyLumiSet(object), "RnBeadRawSet"))
-		rnb.cleanMem()
+	## Perform normalization
+	if (method=="illumina") {
 
+		if (inherits(object, "RnBeadRawSet")) {
+			inferred.covariates <- object@inferred.covariates
+			object <- as(object, "MethyLumiSet")
+		}
+		object <- suppressMessages(as(normalizeMethyLumiSet(object), "RnBeadRawSet"))
 		object@status$normalized<-"illumina"
 		object@status$background<-bgcorr.method
+		rnb.cleanMem()
 
-	}else if(method=="swan"){
+	}else if (method=="swan"){
 
-		if(!suppressPackageStartupMessages(require("minfi"))) {
-			rnb.error("Missing required package minfi for normalization method \"SWAN\"")
-		}
-		if(!suppressPackageStartupMessages(require("IlluminaHumanMethylation450kmanifest"))) {
-			rnb.error("Missing required package IlluminaHumanMethylation450kmanifest for normalization method \"SWAN\"")
-		}
+		rnb.require("minfi")
+		rnb.require("IlluminaHumanMethylation450kmanifest")
 		if(inherits(object,"MethyLumiSet") && (is.null(methylated(object))||is.null(unmethylated(object)))) {
 			rnb.error("Invalid value for object; missing intensity information")
 		}
-		
+
+		rga <- c("IlluminaHumanMethylationEPIC", "ilm10b2.hg19", "IlluminaHumanMethylation450k", "ilmn12.hg19")
+		rga <- matrix(rga, 2, 2, TRUE, list(c("EPIC", "450"), c("array", "annotation")))
 		if(inherits(object,"MethyLumiSet")){
 			intensities.by.channel<-methylumi.intensities.by.color(object)
+			## FIXME: Update this MethyLumiSet can contain EPIC data as well
+			rga <- rga["450", ]
 		}else if(inherits(object,"RnBeadRawSet")){
-
-			intensities.by.channel<-intensities.by.color(object,
-					add.oob=all(!is.null(M0(object)), !is.null(U0(object))),
-					add.controls=!is.null(qc(object)))
+			intensities.by.channel<-intensities.by.color(object)
+			rga <- rga[gsub("^probes", "", object@target), ]
+		}
+		if (grepl("EPIC", rga[1])) {
+			rnb.require("IlluminaHumanMethylationEPICmanifest")
+		} else {
+			rnb.require("IlluminaHumanMethylation450kmanifest")
 		}
 
 		rg.set<-RGChannelSet(intensities.by.channel$Cy3, intensities.by.channel$Cy5)
-		annotation(rg.set)<-c(array="IlluminaHumanMethylation450k")
+		annotation(rg.set) <- rga
 		suppressMessages({
-				sinkfile<-ifelse("Windows" %in% Sys.info(), "%NULL%", "/dev/null")
+				sinkfile<-ifelse("Windows" %in% Sys.info(), "NUL", "/dev/null")
 				sink(sinkfile); methyl.set<-preprocessSWAN(rg.set); sink()
 		})
 
@@ -249,7 +261,6 @@ rnb.execute.normalization<-function(
 
 		if(inherits(object, "MethyLumiSet")){
 			methylated(object)<-meth.minfi[match(rownames(meth.minfi), featureNames(object)),]#+methylated(object)[setdiff(featureNames(object), rownames(meth.minfi)),]
-			umeth.minfi<-getUnmeth(methyl.set)
 			unmethylated(object)<-umeth.minfi[match(rownames(umeth.minfi), featureNames(object)),]#+unmethylated(object)[setdiff(featureNames(object), rownames(umeth.minfi)),]
 			rm(rg.set,methyl.set, meth.minfi, umeth.minfi)
 			betas(object)<-rbind(methylated(object)/(methylated(object)+unmethylated(object)),
@@ -274,91 +285,13 @@ rnb.execute.normalization<-function(
 			rm(rg.set,methyl.set, meth.minfi, umeth.minfi)
 		}
 
-		object@status$normalized<-"swan"
-		object@status$background<-bgcorr.method
-		rnb.cleanMem()
+	} else if (method == "bmiq") {
 
-	}else if(method == "bmiq") {
-
-		## Extract methylation value matrix and probe design information
-		if (inherits(object, "MethyLumiSet")) {
-			m.data <- MethyLumiSet2RnBeadSet(object)
-			beta.vals <- m.data$betas
-			probe.design <- rnb.annotation2data.frame(rnb.get.annotation("probes450"), add.names = TRUE)
-			probe.design <- as.integer(probe.design[rownames(beta.vals), "Design"])
-		} else {
-			beta.vals <- object@meth.sites[, , drop = FALSE]
-			probe.design <- as.integer(annotation(object)[, "Design"])
-		}
-
-		## Perform BMIQ
-		samples.skipped <- integer()
-		if (parallel.isEnabled() && ncol(beta.vals) > 1) {
-			beta.names <- dimnames(beta.vals)
-			beta.vals <- foreach(beta.v = as.data.frame(beta.vals), .combine = cbind, .packages = "RPMM",
-					.export = c("BMIQ", "betaEst2", "blc2"),
-					.noexport = c("bgcorr.method", "beta.names", "method", "object")) %dopar% {
-				i <- which(!is.na(beta.v))
-				if (length(i) != 0) {
-					p.design <- probe.design[i]
-					type1.count <- sum(p.design == 1L)
-					if (all(c(type1.count, length(p.design) - type1.count) >= 50000L)) {
-						beta.v[i] <- BMIQ(beta.v[i], p.design)$all
-					}
-				}
-				beta.v
-			}
-			dimnames(beta.vals) <- beta.names
-			rm(beta.names)
-		} else {
-			for (j in 1:ncol(beta.vals)) {
-				i <- which(!is.na(beta.vals[, j]))
-				if (length(i) != 0) {
-					p.design <- probe.design[i]
-					type1.count <- sum(p.design == 1L)
-					if (any(c(type1.count, length(p.design) - type1.count) < 50000L)) {
-						## There are not enough probes of types I and/or II
-						samples.skipped <- c(samples.skipped, j)
-						rnb.status(c("Skipped sample", j))
-						next
-					}
-					beta.vals[i, j] <- BMIQ(beta.vals[i, j], p.design)$all
-				}
-				rnb.status(c("Normalized sample", j))
-			}
-			suppressWarnings(rm(j, i, p.design, type1.count))
-		}
-		if (length(samples.skipped) != 0) {
-			## Some samples were skipped due to not enough observations
-			rnb.warning(c("The following samples were not normalized:", paste(samples.skipped, collapse = ", ")))
-		}
-		rm(probe.design, samples.skipped)
-
-		## Construct the resulting dataset
-		if (inherits(object,"MethyLumiSet")) {
-			object<-new("RnBeadSet",pheno=m.data$pheno,betas=beta.vals,p.values=m.data$p.values,bead.counts=m.data$bead.counts)
-			if ("qc" %in% names(m.data)) {
-				qc(object)<-m.data[["qc"]]
-			}
-		} else {
-			if(rnb.getOption("disk.dump.big.matrices")){
-				object@meth.sites <- convert.to.ff.matrix.tmp(beta.vals)
-			}else{
-				object@meth.sites <- beta.vals
-			}
-
-			for (region.type in rnb.region.types.for.analysis(object@assembly)) {
-				object <- summarize.regions(object, region.type)
-			}
-		}
-		object@status$normalized<-"bmiq"
-		object@status$background<-bgcorr.method
+		object <- rnb.execute.normalization.bmiq(object)
 
 	}else if(grepl("wm\\.",method)[1]){
 
-		if(!suppressPackageStartupMessages(require("wateRmelon"))){
-			rnb.error("Missing required package wateRmelon for normalization method method")
-		}
+		rnb.require("wateRmelon")
 		wm.method<-gsub("wm\\.","", method)
 
 		if(inherits(object, "MethyLumiSet")){
@@ -478,23 +411,14 @@ rnb.execute.normalization<-function(
 				}
 			}
 		}
-		object@status$normalized<-method
-		object@status$background<-bgcorr.method
-		rnb.cleanMem()
 
 	}else if(method == "minfi.funnorm"){
 
-		if(!suppressPackageStartupMessages(require("minfi"))) {
-			rnb.error("Missing required package minfi for normalization method \"minfi.funnorm\"")
-		}
-		if(!suppressPackageStartupMessages(require("IlluminaHumanMethylation450kmanifest"))) {
-			rnb.error("Missing required package IlluminaHumanMethylation450kmanifest for normalization method \"minfi.funnorm\"")
-		}
+		rnb.require("minfi")
+		rnb.require("IlluminaHumanMethylation450kmanifest")
+		rnb.require("IlluminaHumanMethylation450kanno.ilmn12.hg19")
 		if(inherits(object,"MethyLumiSet") && (is.null(methylated(object))||is.null(unmethylated(object)))) {
 			rnb.error("Invalid value for object; missing intensity information")
-		}
-		if(!suppressPackageStartupMessages(require("IlluminaHumanMethylation450kanno.ilmn12.hg19"))) {
-			rnb.error("Missing required package IlluminaHumanMethylation450kanno.ilmn12.hg19 for normalization method \"minfi.funnorm\"")
 		}
 
 		if(inherits(object,"MethyLumiSet")){
@@ -520,15 +444,13 @@ rnb.execute.normalization<-function(
 				rnb.cleanMem()
 				return(object)
 			}
-			intensities.by.channel<-intensities.by.color(object,
-					add.oob=all(!is.null(M0(object)), !is.null(U0(object))),
-					add.controls=!is.null(qc(object)))
+			intensities.by.channel<-intensities.by.color(object)
 		}
 
 		rg.set<-RGChannelSet(intensities.by.channel$Cy3, intensities.by.channel$Cy5)
 		annotation(rg.set)<-c(array="IlluminaHumanMethylation450k", annotation=minfi:::.default.450k.annotation)
 		suppressMessages({
-					#sinkfile<-ifelse("Windows" %in% Sys.info(),"%NULL%", "/dev/null")
+					#sinkfile<-ifelse("Windows" %in% Sys.info(),"NUL", "/dev/null")
 					#sink(sinkfile);
 					#methyl.set<-preprocessFunnorm(rg.set);
 					rg.set <- updateObject(rg.set)
@@ -584,35 +506,130 @@ rnb.execute.normalization<-function(
 			rm(methyl.set, meth.minfi, umeth.minfi)
 		}
 
-		object@status$normalized<-method
-		object@status$background<-bgcorr.method
-		rnb.cleanMem()
-
-	}else { # method == "none"
-		if(inherits(object,"MethyLumiSet")){
-			object<-as(object, "RnBeadSet")
-			object@status$normalized<-"none"
-			object@status$background<-bgcorr.method
-
+	} else { # method == "none"
+		if (inherits(object, "MethyLumiSet")) {
+			object <- as(object, "RnBeadSet")
 		}
-		if(is.null(object@status$normalized)) {
-			object@status$normalized<-"none"
-			object@status$background<-bgcorr.method
-		}
-
 	}
 
-	if(method!="none"){
-		object<-updateRegionSummaries(object)
+	## Display
+	if (method != "none") {
+		if (verbose) {
+			rnb.status(c("Performed normalization with method", method))
+		}
+		rnb.cleanMem()
+	}
+
+	## Apply BMIQ as a secondary normalization method
+	if (secondary.bmiq) {
+		object <- rnb.execute.normalization.bmiq(object)
+		if (verbose) {
+			rnb.status("Performed normalization with method bmiq")
+		}
+		rnb.cleanMem()
+	}
+
+	## Update the dataset instance
+	object@status$normalized <- method.to.set
+	object@status$background <- bgcorr.method.to.set
+	if (method != "none") {
+		object <- updateRegionSummaries(object)
 	}
 	if (base::exists("inferred.covariates", inherits = FALSE)) {
 		object@inferred.covariates <- inferred.covariates
 	}
 
-	rnb.cleanMem()
 	object
 }
 
+########################################################################################################################
+
+#' rnb.execute.normalization.bmiq
+#'
+#' Performs BMIQ normalization on the given dataset.
+#' @param object Methylation dataset as an object of type \code{\linkS4class{MethyLumiSet}} or
+#'               \code{\linkS4class{RnBSet}}.
+#' @return The normalized dataset.
+#'
+#' @author Yassen Assenov
+#' @noRd
+rnb.execute.normalization.bmiq <- function(object) {
+
+	## Extract methylation value matrix and probe design information
+	if (inherits(object, "MethyLumiSet")) {
+		m.data <- MethyLumiSet2RnBeadSet(object)
+		beta.vals <- m.data$betas
+		probe.design <- rnb.annotation2data.frame(rnb.get.annotation(object@target), add.names = TRUE)
+		probe.design <- as.integer(probe.design[rownames(beta.vals), "Design"])
+	} else {
+		beta.vals <- object@meth.sites[, , drop = FALSE]
+		probe.design <- as.integer(annotation(object)[, "Design"])
+	}
+
+	## Perform BMIQ
+	samples.skipped <- integer()
+	if (parallel.isEnabled() && ncol(beta.vals) > 1) {
+		beta.names <- dimnames(beta.vals)
+		beta.vals <- foreach(beta.v = as.data.frame(beta.vals), .combine = cbind, .packages = "RPMM",
+							 .export = c("BMIQ", "betaEst2", "blc2"),
+							 .noexport = c("bgcorr.method", "beta.names", "method", "object")) %dopar% {
+				i <- which(!is.na(beta.v))
+				if (length(i) != 0) {
+					p.design <- probe.design[i]
+					type1.count <- sum(p.design == 1L)
+					if (all(c(type1.count, length(p.design) - type1.count) >= 50000L)) {
+					beta.v[i] <- BMIQ(beta.v[i], p.design)$all
+				}
+			}
+			beta.v
+		}
+		dimnames(beta.vals) <- beta.names
+		rm(beta.names)
+	} else {
+		for (j in 1:ncol(beta.vals)) {
+			i <- which(!is.na(beta.vals[, j]))
+			if (length(i) != 0) {
+				p.design <- probe.design[i]
+				type1.count <- sum(p.design == 1L)
+				if (any(c(type1.count, length(p.design) - type1.count) < 50000L)) {
+					## There are not enough probes of types I and/or II
+					samples.skipped <- c(samples.skipped, j)
+					rnb.status(c("Skipped sample", j))
+					next
+				}
+				beta.vals[i, j] <- BMIQ(beta.vals[i, j], p.design)$all
+			}
+			rnb.status(c("Normalized sample", j))
+		}
+		suppressWarnings(rm(j, i, p.design, type1.count))
+	}
+	if (length(samples.skipped) != 0) {
+		## Some samples were skipped due to not enough observations
+		rnb.warning(c("The following samples were not normalized:", paste(samples.skipped, collapse = ", ")))
+	}
+	rm(probe.design, samples.skipped)
+
+	## Construct the resulting dataset
+	if (inherits(object, "MethyLumiSet")) {
+		object <- new("RnBeadSet", pheno=m.data$pheno, betas=beta.vals, p.values=m.data$p.values,
+					  bead.counts=m.data$bead.counts)
+		if ("qc" %in% names(m.data)) {
+			qc(object) <- m.data[["qc"]]
+		}
+	} else {
+		if (rnb.getOption("disk.dump.big.matrices")) {
+			object@meth.sites <- convert.to.ff.matrix.tmp(beta.vals)
+		} else {
+			object@meth.sites <- beta.vals
+		}
+		for (region.type in rnb.region.types.for.analysis(object@assembly)) {
+			object <- summarize.regions(object, region.type)
+		}
+	}
+	object
+}
+
+########################################################################################################################
 ########################################################################################################################
 
 #' rnb.section.normalization.shifts
@@ -1023,9 +1040,5 @@ rnb.step.normalization<-function(object, report, method = rnb.getOption("normali
 	logger.completed()
 	return(list(dataset=object, report=report))
 }
-#######################################################################################################################
-subtract.bg.illumina<-function(rnb.set){
-	print(42)
-	return(rnb.set)
-}
+
 #######################################################################################################################

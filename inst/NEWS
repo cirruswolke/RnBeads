@@ -1,7 +1,16 @@
+RnBeads 1.7.4
+=============
+
+ * Several minor bugfixes and performance improvements
+ * Vignette installation instructions updated
+ * Reduce warnings in R CMD check
+
 RnBeads 1.7.3
 =============
+
  * Age predictor (MethylAger) updates and documentation
- * minor bugfixes
+ * Support for external tools bedToBigBed and bedGraphToBigWig
+ * Minor bugfixes
 
 RnBeads 1.7.2
 =============
