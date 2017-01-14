@@ -21,6 +21,8 @@ If TRUE the following format is applied: meth_percent%[coverage]. Coverage is av
 
 \item{add.track.line}{Add a track line to the bed file to enable browsers like IGV to display the data better}
 
+\item{lexicographic}{Should lexicographic ordering be used for chromosome names}
+
 \item{verbose}{More detailed logger output}
 }
 \value{

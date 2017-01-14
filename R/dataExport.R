@@ -123,6 +123,7 @@ rnb.RnBSet.to.GRangesList <- function(rnb.set,reg.type="sites",return.regular.li
 #' 		   If TRUE the following format is applied: meth_percent%[coverage]. Coverage is available only when
 #' 			\code{covg(rnb.set)} is not NULL
 #' @param add.track.line Add a track line to the bed file to enable browsers like IGV to display the data better
+#' @param lexicographic Should lexicographic ordering be used for chromosome names
 #' @param verbose More detailed logger output
 #' @return (invisibly) a summary list containing information on the conversion step.
 #'         elements are \code{filenames} (a table containing information on which sample has been written to what filename)
