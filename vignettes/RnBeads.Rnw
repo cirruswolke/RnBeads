@@ -98,8 +98,7 @@
 \thispagestyle{empty}
 \maketitle
 
-\cs{RnBeads} is an R package for the comprehensive analysis of genome-wide DNA methylation data with single basepair resolution. Supported assays include the
-Infinium 450k microarray, whole genome bisulfite sequencing (WGBS), reduced representation bisulfite sequencing (RRBS), other forms of enrichment bisulfite sequencing, and any other large-scale method that can provide DNA methylation data at single basepair resolution (e.g. MeDIP-seq after suitable preprocessing). It builds upon a significant and ongoing community effort to devise effective algorithms for dealing with large-scale DNA methylation data and implements these methods in a user-friendly, high-throughput workflow, presenting the analysis results in a highly interpretable fashion.
+\cs{RnBeads} is an R package for the comprehensive analysis of genome-wide DNA methylation data with single basepair resolution. Supported assays include the Infinium 450k microarray, whole genome bisulfite sequencing (WGBS), reduced representation bisulfite sequencing (RRBS), other forms of enrichment bisulfite sequencing, and any other large-scale method that can provide DNA methylation data at single basepair resolution (e.g. MeDIP-seq after suitable preprocessing). It builds upon a significant and ongoing community effort to devise effective algorithms for dealing with large-scale DNA methylation data and implements these methods in a user-friendly, high-throughput workflow, presenting the analysis results in a highly interpretable fashion.
 
 <<echo=FALSE,warning=FALSE>>=
 suppressPackageStartupMessages(library(RnBeads))
@@ -161,7 +160,7 @@ biocLite(c("RnBeads", "RnBeads.hg38"))
 \subsection{Setting Up the Analysis Environment}
 	Before we get started, we need to carry out some preparations, such as loading the package and specifying input and output directories:
 
-<<eval=FALSE>>=
+<<>>=
 library(RnBeads)
 # Directory where your data is located
 data.dir <- "~/RnBeads/data/Ziller2011_PLoSGen_450K"
@@ -172,23 +171,20 @@ analysis.dir <- "~/RnBeads/analysis"
 # Directory where the report files should be written to
 report.dir <- file.path(analysis.dir, "reports")
 @
-		We will use these variables throughout this vignette whenever we mean to specify input and output files. Of course, you have to adapt the directories corresponding to your own file system and operating system. The zip file you downloaded contains a directory that entails a sample annotation sheet (we store its location in the \cs{sample.annotation} variable in the code above) and a directory containing the IDAT files that hold the methylation data (\cs{idat.dir}).
+We will use these variables throughout this vignette whenever we mean to specify input and output files. Of course, you have to adapt the directories corresponding to your own file system and operating system. The zip file you downloaded contains a directory that entails a sample annotation sheet (we store its location in the \cs{sample.annotation} variable in the code above) and a directory containing the IDAT files that hold the methylation data (\cs{idat.dir}).
 
 
 \section{Vanilla Analysis}
 \label{sec:vanilla}
 
-	So, let's get our hands dirty and perform an analysis. First we may want to
-	specify a few analysis parameters:
-<<eval=FALSE>>=
+	So, let's get our hands dirty and perform an analysis. First we may want to specify a few analysis parameters:
+<<>>=
 rnb.options(filtering.sex.chromosomes.removal=TRUE,
     identifiers.column="Sample_ID")
 @
-	This tells \cs{RnBeads} to remove all probes on sex chromosomes for the
-	analysis in the filtering step. Furthermore, \cs{RnBeads} will look for a
-	column called ``Sample\_Name'' in the sample annotation sheet and use its contents as identifiers in the analysis. Feel free to set other options as well (you can inspect available analysis options using \cs{?rnb.options}). More details on analysis options can be found in Section~\ref{sec:anaParams} of this vignette.
+	This tells \cs{RnBeads} to remove all probes on sex chromosomes for the analysis in the filtering step. Furthermore, \cs{RnBeads} will look for a column called ``Sample\_Name'' in the sample annotation sheet and use its contents as identifiers in the analysis. Feel free to set other options as well (you can inspect available analysis options using \cs{?rnb.options}). More details on analysis options can be found in Section~\ref{sec:anaParams} of this vignette.
 
-     The main function in RnBeads is \cs{rnb.run.analysis()}. It executes all
+    The main function in RnBeads is \cs{rnb.run.analysis()}. It executes all
     analysis modules, as specified in the package options and generates a
     dedicated report for each module. The method has multiple
     arguments, the most important of which are those specifying the type of the
@@ -215,15 +211,9 @@ rnb.options(filtering.sex.chromosomes.removal=TRUE,
 rnb.run.analysis(dir.reports=report.dir, sample.sheet=sample.annotation,
     data.dir=idat.dir, data.type="infinium.idat.dir")
 @
-    Note that in the above code we specified the arguments explicitly, i.e. we
-	used the syntax \cs{argument.name=argument.value}. It is good practice to
-	stick to this explicit argument statement.
+	Note that in the above code we specified the arguments explicitly, i.e. we used the syntax \cs{argument.name=argument.value}. It is good practice to stick to this explicit argument statement.
 
-	Now, as running through the entire analysis pipeline takes a while, get a cup
-	of coffee. You might also want to browse through some of the examples on the \cs{RnBeads} website to get an idea of what kind of results you can expect
-	once the analysis is done. Anyhow, it might take a while (on our testing machine,
-	roughly four hours for the complete analysis).
-
+	Now, as running through the entire analysis pipeline takes a while, get a cup of coffee. You might also want to browse through some of the examples on the \cs{RnBeads} website to get an idea of what kind of results you can expect once the analysis is done. Anyhow, it might take a while (on our testing machine, 	roughly four hours for the complete analysis).
 
 	After the analysis has finished, you can find a variety of files in the report
 	directory you specified. Of particular interest are the \cs{html} files containing the
@@ -242,13 +232,13 @@ rnb.run.analysis(dir.reports=report.dir, sample.sheet=sample.annotation,
 	This overview page provides the links to the analysis reports of the
 	individual modules. You can also access the individual reports directly by
 	opening the corresponding \cs{html} files in the reports directory. These
- 	reports contain method descriptions of the conducted analyses as well as the
+	reports contain method descriptions of the conducted analyses as well as the
 	results. The reports are designed to be self-contained and self-explanatory,
 	therefore, we do not discuss them in detail here. Take your time browsing
- 	through the results of the analysis and getting an idea of what \cs{RnBeads}
+	through the results of the analysis and getting an idea of what \cs{RnBeads}
 	can do for you.
 
-    The reports provide a convenient way of sharing results and
+	The reports provide a convenient way of sharing results and
 	re-inspecting them later. It is particularly easy to share results over the
 	Internet if you have webspace available somewhere. Simply upload the entire
 	report directory to a server and send a corresponding link to your
@@ -260,8 +250,39 @@ rnb.run.analysis(dir.reports=report.dir, sample.sheet=sample.annotation,
 	full-scale \cs{RnBeads} pipeline. You can deactivate individual modules by
 	setting the corresponding global \cs{RnBeads} options before running the
 	analysis. For instance, you could deactivate the differential methylation module:
-<<eval=FALSE>>=
+<<>>=
 rnb.options(differential=FALSE)
+@
+
+\section{Working with \cs{RnBeadSet}}
+
+	Every analysis workflow in \cs{RnBeads} evolves around a dataset object, which is implemented as an R object of type \cs{RnBeadSet}. The dataset contains the sample annotation table, methylation values for individual sites and regions, as well as additional data related to the platform used for measuring DNA methylation. The function \cs{rnb.run.analysis}, introduced in the previous section, returns invisibly such an object containing the processed dataset. \cs{RnBeads} provides a multitude of functions operating on a dataset; some of these functions get information from the dataset, others create plots summarizing some of the data contained, or modify the methylation values or sample annotation. In this section, we introduce the \cs{RnBeadSet} dataset and show a few simple examples on how this set can be used in an interactive R session. The following sections give more details by describing each of the \cs{RnBeads} modules and discussing other aspects of the analysis of methylation data.
+
+	Here, we use a small example dataset accompaying the \cs{RnBeads} package. Readers are encouraged to try the functions presented here on the datasets created from their own studies. As a first example, by printing a dataset you can see a summary of its type and size.
+
+<<>>=
+library(RnBeads.hg19)
+data(small.example.object)
+rnb.set.example
+@
+
+	As shown in the code snippet above, the example dataset consists of 12 samples x 1,736 probes. In addition to measurements at individual CpGs, it has summarized the methylation state for 470 genomic tiling regions, 184 gene bodies, 184 gene promoters and 137 CpG islands. Notice the first line of printed for this dataset, it states that it is an object of type \cs{RnBeadRawSet}. These objects denote array-based datasets containing array-specific measurements, such as probe intensity values, detection p-values, and others. The following command shows the the first 4 columns of the sample annotation table:
+
+<<>>=
+pheno(rnb.set.example)[, 1:4]
+@
+
+The next commands instruct \cs{RnBeads} that the first column in the annotation table denotes sample identifiers, and extract the methylation beta values at the first five gene promoters for the first three samples:
+
+<<>>=
+rnb.options(identifiers.column="Sample_ID")
+meth(rnb.set.example, "promoters", TRUE, i=1:5, j=1:3)
+@
+
+Similarly, the method \cs{mval} is used to extract M values:
+
+<<>>=
+mval(rnb.set.example, "promoters", TRUE)[1:5, 1:3]
 @
 
 \section{Tailored Analysis: \cs{RnBeads} Modules}
