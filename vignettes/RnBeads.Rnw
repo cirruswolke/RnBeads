@@ -254,9 +254,9 @@ rnb.run.analysis(dir.reports=report.dir, sample.sheet=sample.annotation,
 rnb.options(differential=FALSE)
 @
 
-\section{Working with \cs{RnBeadSet}}
+\section{Working with \cs{RnBSet}}
 
-	Every analysis workflow in \cs{RnBeads} evolves around a dataset object, which is implemented as an R object of type \cs{RnBeadSet}. The dataset contains the sample annotation table, methylation values for individual sites and regions, as well as additional data related to the platform used for measuring DNA methylation. The function \cs{rnb.run.analysis}, introduced in the previous section, returns invisibly such an object containing the processed dataset. \cs{RnBeads} provides a multitude of functions operating on a dataset; some of these functions get information from the dataset, others create plots summarizing some of the data contained, or modify the methylation values or sample annotation. In this section, we introduce the \cs{RnBeadSet} dataset and show a few simple examples on how this set can be used in an interactive R session. The following sections give more details by describing each of the \cs{RnBeads} modules and discussing other aspects of the analysis of methylation data.
+	Every analysis workflow in \cs{RnBeads} evolves around a dataset object, which is implemented as an R object of type \cs{RnBSet}. The dataset contains the sample annotation table, methylation values for individual sites and regions, as well as additional data related to the platform used for measuring DNA methylation. The function \cs{rnb.run.analysis}, introduced in the previous section, returns invisibly such an object containing the processed dataset. \cs{RnBeads} provides a multitude of functions operating on a dataset; some of these functions get information from the dataset, others create plots summarizing some of the data contained, or modify the methylation values or sample annotation. In this section, we introduce the \cs{RnBSet} dataset and show a few simple examples on how this set can be used in an interactive R session. The following sections give more details by describing each of the \cs{RnBeads} modules and discussing other aspects of the analysis of methylation data.
 
 	Here, we use a small example dataset accompaying the \cs{RnBeads} package. Readers are encouraged to try the functions presented here on the datasets created from their own studies. As a first example, by printing a dataset you can see a summary of its type and size.
 
@@ -810,14 +810,14 @@ rnb.options(inference.age.prediction=TRUE)
 rnb.exectue.age.prediction(rnb.set)
 @
 	The difference between the first and the second option is that the first one creates a report, whereas the second modifies the \cs{rnb.set} object by adding additional columns \cs{predicted\_ages} and \cs{age\_increase}. The first one corresponds to the predicted age by the prediction algorithm and the second to the difference between predicted and annotated age.
-	
+
 	Then, the age prediction section is able to run in two different modes. The default mode runs the prediction by loading a predefined predictor in the form of a CSV-file, which then is used to predict human age from DNA methylation data. More specifically, the predefined predictor consists of coefficients of an elastic net regression run for 761 CpG sites used in the final age prediction. As a second possibility, the user can set the option \cs{inference.age.prediction.predictor} to a path to a predictor that was previously trained in a \cs{RnBeads} run. For instance, this predictor could be trained by running the second mode of the age prediction, which is the training mode. Training is performed by either one of these commands:
 <<eval=FALSE>>=
 rnb.execute.training(rnb.set,predictor.path)
 rnb.options(inference.age.prediction.training=TRUE)
 @
 	In the first case, a new predictor is trained based on the methylation information in the \cs{rnb.set} object and written as a CSV-file at the given \cs{predictor.path}, which has to be a full path. The second option requires running \cs{rnb.run.inference} to create a new predictor that then is written into the \cs{RnBeads} data folder and sets the option \cs{inference.age.prediction.predictor} to the corresponding one.
-	 
+
 	Additionally, by setting the option \cs{inference.age.prediction.cv}, a 10-fold cross-validation is performed to serve as an accuracy measure for the training functionality. Setting the option \cs{inference.age.column} enables \cs{RnBeads} to read the corresponding age annotation column of the data set, which enables the creation of evaluation plots. These include scatterplots of the deviation between annotated and predicted age as well as density plots for the differences between predicted and annotated ages. On default, \cs{inference.age.column} is set to \cs{age}.
 
 \subsection{Exploratory Analysis}
