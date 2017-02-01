@@ -342,6 +342,31 @@ rnb.set.example <- addPheno(rnb.set.example, is.hiPSC, "is_hiPSC")
 pheno(rnb.set.example)[, c("Sample_ID", "Cell_Line", "is_hiPSC")]
 @
 
+Since the example object was derived from an Infinium 450k experiment it also
+stores respective quality control information. RnBeads offers a number of
+diagnostic plots visualizing this information:
+
+<<>>=
+# boxplot of control probes
+rnb.plot.control.boxplot(rnb.set.example)
+# barplot of a selected control probe
+control.meta.data <- rnb.get.annotation("controls450")
+ctrl.probe<-paste0(unique(control.meta.data[["Target"]])[4], ".1")
+rnb.plot.control.barplot(rnb.set.example, ctrl.probe)
+@
+
+Finally, the full control probe intensities can be retrieved using method
+\cs{qc}:
+
+<<>>=
+qc_data<-qc(rnb.set.example)
+@
+
+\cs{qc_data} is a list with elements \cs{Cy3} and \cs{Cy5} containing
+all Infinium control probe intensities for the green and red color channels
+respectively. It can be used for any more advanced QC procedures.
+
+
 \section{Tailored Analysis: \cs{RnBeads} Modules}
 
 	In this section, we show how the package's modules can be invoked individually given

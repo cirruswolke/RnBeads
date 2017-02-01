@@ -339,9 +339,9 @@ rnb.plot.negative.boxplot<- function(
 #' library(RnBeads.hg19)
 #' data(small.example.object)
 #' control.meta.data <- rnb.get.annotation("controls450")
-#' ctrl.probe<-paste0(unique(control.meta.data[["Target"]])[4], ".5")
-#' print(ctrl.probe) # EXTENSION.5
-#' rnb.control.barplot(rnb.set.example, ctrl.probe)
+#' ctrl.probe<-paste0(unique(control.meta.data[["Target"]])[4], ".3")
+#' print(ctrl.probe) # EXTENSION.3
+#' rnb.plot.control.barplot(rnb.set.example, ctrl.probe)
 #' }
 #'
 #' @author Pavlo Lutsik
@@ -366,7 +366,7 @@ rnb.plot.control.barplot<-function(
 		#	control.meta.data<-rnb.update.controlsEPIC.enrich(control.meta.data)
 		#}
 		type=strsplit(probe,".", fixed=TRUE)[[1]][1]
-		index=strsplit(probe,".", fixed=TRUE)[[1]][2]
+		index=as.integer(strsplit(probe,".", fixed=TRUE)[[1]][2])
 		if(!(type %in% rnb.infinium.control.targets(rnb.set@target))){
 			rnb.error(c("Unrecognized control probe:", probe))
 		}
@@ -377,7 +377,7 @@ rnb.plot.control.barplot<-function(
 	}else if(rnb.set@target=="probes450"){
 		control.meta.data <- rnb.get.annotation("controls450")
 		type=strsplit(probe,".", fixed=TRUE)[[1]][1]
-		index=strsplit(probe,".", fixed=TRUE)[[1]][2]
+		index=as.integer(strsplit(probe,".", fixed=TRUE)[[1]][2])
 		if(!(type %in% rnb.infinium.control.targets(rnb.set@target))){
 			rnb.error(c("Unrecognized control probe:", probe))
 		}
