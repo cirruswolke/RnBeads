@@ -24,4 +24,3 @@ parallel.getNumWorkers()
 \author{
 Fabian Mueller
 }
-

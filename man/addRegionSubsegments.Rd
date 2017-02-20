@@ -42,4 +42,3 @@ summary(meth(rnb.set.mod,type="tiling.subsegments"))
 \author{
 Fabian Mueller
 }
-

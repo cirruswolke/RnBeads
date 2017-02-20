@@ -20,10 +20,9 @@ Invisibly, \code{TRUE} if an existing annotation was replaced and \code{FALSE} o
 wrapper for \code{\link{rnb.set.annotation}} to accept the region format as output by \code{annotation(rnb.set)}.
 Additionally, CpG statistics are added to the annotation.
 }
-\author{
-Fabian Mueller
-}
 \seealso{
 \code{\link{rnb.set.annotation}}
 }
-
+\author{
+Fabian Mueller
+}

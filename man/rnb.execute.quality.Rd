@@ -32,4 +32,3 @@ Currently, summarizing coverage for \code{\linkS4class{RnBiseqSet}} object is th
 \author{
 Pavlo Lutsik
 }
-

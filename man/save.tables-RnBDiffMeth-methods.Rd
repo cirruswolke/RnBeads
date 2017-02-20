@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBDiffMeth-class.R
 \docType{methods}
 \name{save.tables,RnBDiffMeth-method}
-\alias{save.tables}
 \alias{save.tables,RnBDiffMeth-method}
+\alias{save.tables}
 \title{save.tables-methods}
 \usage{
 \S4method{save.tables}{RnBDiffMeth}(object, file)
@@ -33,4 +33,3 @@ save.tables(dm,tempfile())
 \author{
 Fabian Mueller
 }
-

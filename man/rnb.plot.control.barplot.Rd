@@ -47,4 +47,3 @@ rnb.control.barplot(rnb.set.example, ctrl.probe)
 \author{
 Pavlo Lutsik
 }
-

@@ -33,4 +33,3 @@ has.covariates.sva(rnb.set.mod,"Sample_Group")
 \author{
 Fabian Mueller
 }
-

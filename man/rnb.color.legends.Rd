@@ -43,4 +43,3 @@ In case \code{legends} specifies multiple legends in the form of a list, \code{n
 \author{
 Yassen Assenov
 }
-

@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBSet-class.R
 \docType{methods}
 \name{covg,RnBSet-method}
-\alias{covg}
 \alias{covg,RnBSet-method}
+\alias{covg}
 \title{covg-methods}
 \usage{
 \S4method{covg}{RnBSet}(object, type = "sites", row.names = FALSE,
@@ -37,4 +37,3 @@ cvg<-covg(rnb.set.example, row.names=TRUE)
 head(cvg)
 }
 }
-

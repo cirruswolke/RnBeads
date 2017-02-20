@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBeadRawSet-class.R
 \docType{methods}
 \name{U,RnBeadRawSet-method}
-\alias{U}
 \alias{U,RnBeadRawSet-method}
+\alias{U}
 \title{U-methods}
 \usage{
 \S4method{U}{RnBeadRawSet}(object, row.names = FALSE)
@@ -27,4 +27,3 @@ U.intensity<-U(rnb.set.example)
 head(U.intensity)
 } 
 }
-

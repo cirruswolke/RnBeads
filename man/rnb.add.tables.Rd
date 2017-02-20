@@ -29,11 +29,10 @@ The modified report.
 \description{
 Generates HTML code for a listing of tables (of which only one is visible at any moment) in the specified report.
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{rnb.add.table}} for adding a single table to a report; \code{\linkS4class{Report}} for other
   functions adding contents to an HTML report
 }
-
+\author{
+Yassen Assenov
+}

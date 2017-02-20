@@ -48,4 +48,3 @@ getSubCmdTokens(arch,c("Rscript","my_great_script.R"),"my_logfile.log")
 \author{
 Fabian Mueller
 }
-

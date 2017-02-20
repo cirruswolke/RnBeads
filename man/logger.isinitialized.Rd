@@ -18,10 +18,9 @@ if (!logger.isinitialized())
   logger.start(fname = NA)
 }
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{logger.start}} for initializing a logger or starting a section
 }
-
+\author{
+Yassen Assenov
+}

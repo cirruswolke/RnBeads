@@ -53,4 +53,3 @@ rnb.execute.export.csv(rnb.set.example, "", summarized.regions(rnb.set.example))
 \author{
 Yassen Assenov
 }
-

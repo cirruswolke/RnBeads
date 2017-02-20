@@ -13,4 +13,3 @@
 \description{
 Dimensions of BigFfMat
 }
-

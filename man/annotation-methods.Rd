@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBSet-class.R
 \docType{methods}
 \name{annotation,RnBSet-method}
-\alias{annotation}
 \alias{annotation,RnBSet-method}
+\alias{annotation}
 \title{annotation-methods}
 \usage{
 \S4method{annotation}{RnBSet}(object, type = "sites", add.names = FALSE,
@@ -42,4 +42,3 @@ head(ann.prom)
 \author{
 Pavlo Lutsik
 }
-

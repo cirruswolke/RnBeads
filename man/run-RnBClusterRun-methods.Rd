@@ -2,8 +2,8 @@
 % Please edit documentation in R/computeCluster.R
 \docType{methods}
 \name{run,RnBClusterRun-method}
-\alias{run}
 \alias{run,RnBClusterRun-method}
+\alias{run}
 \title{run-methods}
 \usage{
 \S4method{run}{RnBClusterRun}(object, analysis.id, config.xml,
@@ -50,4 +50,3 @@ run(rnb.cr, "rnbeads_analysis", xml.file, dry.run=TRUE)
 \author{
 Fabian Mueller
 }
-

@@ -28,4 +28,3 @@ Initialize an RnBDiffMeth object
 \author{
 Fabian Mueller
 }
-

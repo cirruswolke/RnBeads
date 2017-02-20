@@ -22,4 +22,3 @@ Calculates various statistics on the iterations of Greedycut.
 \author{
 Yassen Assenov
 }
-

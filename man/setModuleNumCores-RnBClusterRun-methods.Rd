@@ -2,8 +2,8 @@
 % Please edit documentation in R/computeCluster.R
 \docType{methods}
 \name{setModuleNumCores,RnBClusterRun,integer,character-method}
-\alias{setModuleNumCores}
 \alias{setModuleNumCores,RnBClusterRun,integer,character-method}
+\alias{setModuleNumCores}
 \title{setModuleNumCores-methods}
 \usage{
 \S4method{setModuleNumCores}{RnBClusterRun,integer,character}(object, num.cores,
@@ -25,4 +25,3 @@ Specifies the number of cores used by the different pipeline modules
 \author{
 Fabian Mueller
 }
-

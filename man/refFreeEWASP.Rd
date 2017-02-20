@@ -36,11 +36,10 @@ returns corrected p-values
 \note{
 Requires the package \pkg{RefFreeEWAS}.
 }
-\author{
-Pavlo Lutsik
-}
 \references{
 1. Houseman, E. Andres, John Molitor, and Carmen J. Marsit. "Reference-Free Cell Mixture Adjustments in Analysis of DNA Methylation Data." 
 Bioinformatics (2014): btu029.
 }
-
+\author{
+Pavlo Lutsik
+}

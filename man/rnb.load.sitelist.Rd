@@ -19,10 +19,9 @@ The loaded list of identifiers, or \code{NULL} if \code{fname} could not be open
 Loads a list of probe or site identifiers. This function is used in the preprocessing module for loading a whitelist
 and/or a blacklist of identifiers.
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{logger.start}} for initializing a logger
 }
-
+\author{
+Yassen Assenov
+}

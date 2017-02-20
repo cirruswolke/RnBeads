@@ -41,4 +41,3 @@ behavior is identical to \code{\link{createReportPlot}}.
 \author{
 Fabian Mueller
 }
-

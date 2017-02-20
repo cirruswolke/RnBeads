@@ -11,4 +11,3 @@ The \code{"as"} method can be used for the following conversions:
   \item{}{\code{RGChannelSet} (in package \pkg{minfi}) to \code{\linkS4class{RnBeadRawSet}}}
 }
 }
-

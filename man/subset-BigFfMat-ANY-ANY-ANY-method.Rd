@@ -19,4 +19,3 @@
 \description{
 Replace parts of BigFfMat
 }
-

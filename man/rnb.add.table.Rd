@@ -46,11 +46,10 @@ The modified report, invisibly.
 \description{
 Generates HTML code for a table in the specified report.
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{rnb.add.tables}} for adding a listing of tables; \code{\linkS4class{Report}} for other functions
   adding contents to an HTML report
 }
-
+\author{
+Yassen Assenov
+}

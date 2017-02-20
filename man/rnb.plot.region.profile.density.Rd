@@ -40,4 +40,3 @@ rnb.plot.region.profile.density(rnb.set.example,1,"genes")
 \author{
 Fabian Mueller
 }
-

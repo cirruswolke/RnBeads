@@ -56,11 +56,10 @@ off(plot.image)
 }
 
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{pdf}} for manually initializing a graphics device; \code{\linkS4class{Report}} for other
   functions adding contents to an HTML report
 }
-
+\author{
+Yassen Assenov
+}

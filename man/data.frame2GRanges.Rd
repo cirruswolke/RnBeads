@@ -37,4 +37,3 @@ Converts a \code{data.frame} that defines genomic regions to object of type \cod
 \author{
 Yassen Assenov
 }
-

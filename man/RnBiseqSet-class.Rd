@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBiseqSet-class.R
 \docType{class}
 \name{RnBiseqSet-class}
-\alias{RnBiseqSet}
 \alias{RnBiseqSet-class}
+\alias{RnBiseqSet}
 \alias{initialize,RnBiseqSet-method}
 \title{RnBiseqSet Class}
 \usage{
@@ -64,7 +64,7 @@ TBA
   \item{\code{\link[BiocGenerics]{combine}}}{Combines two datasets.}
 }
 }
+
 \author{
 Pavlo Lutsik
 }
-

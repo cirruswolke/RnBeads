@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBDiffMeth-class.R
 \docType{methods}
 \name{get.comparisons,RnBDiffMeth-method}
-\alias{get.comparisons}
 \alias{get.comparisons,RnBDiffMeth-method}
+\alias{get.comparisons}
 \title{get.comparisons-methods}
 \usage{
 \S4method{get.comparisons}{RnBDiffMeth}(object)
@@ -29,4 +29,3 @@ get.comparisons(dm)
 \author{
 Fabian Mueller
 }
-

@@ -49,7 +49,7 @@ as R objects or on disk
   \item{\code{\link{join.diffMeth}}}{Merges two disjoint RnBDiffMeth objects into one}
 }
 }
+
 \author{
 Fabian Mueller
 }
-

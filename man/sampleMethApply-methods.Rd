@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBSet-class.R
 \docType{methods}
 \name{sampleMethApply,RnBSet-method}
-\alias{sampleMethApply}
 \alias{sampleMethApply,RnBSet-method}
+\alias{sampleMethApply}
 \title{sampleMethApply-methods}
 \usage{
 \S4method{sampleMethApply}{RnBSet}(object, fn, type = "sites", ...)
@@ -26,4 +26,3 @@ Applies a function over the methylation values for all samples in an \code{RnBSe
 \seealso{
 \code{\link[=meth,RnBSet-method]{meth}} Retrieving the matrix of methylation values
 }
-

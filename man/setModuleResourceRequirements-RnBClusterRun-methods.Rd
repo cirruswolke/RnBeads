@@ -2,8 +2,8 @@
 % Please edit documentation in R/computeCluster.R
 \docType{methods}
 \name{setModuleResourceRequirements,RnBClusterRun,character,character-method}
-\alias{setModuleResourceRequirements}
 \alias{setModuleResourceRequirements,RnBClusterRun,character,character-method}
+\alias{setModuleResourceRequirements}
 \title{setModuleResourceRequirements-methods}
 \usage{
 
@@ -26,4 +26,3 @@ Specifies resource requirements for the different pipeline modules
 \author{
 Fabian Mueller
 }
-

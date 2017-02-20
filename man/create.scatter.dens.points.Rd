@@ -38,4 +38,3 @@ create.scatter.dens.points(d,s)
 \author{
 Fabian Mueller
 }
-

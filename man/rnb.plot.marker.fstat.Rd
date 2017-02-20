@@ -24,11 +24,10 @@ Plot the the cell type marker selection based on the reference methylome data
 The F-statistic values from the cell type association model (first part of eqn. (1) in [1]) are plotted in decreasing order 
 			for all tested CpG positions. A vertical line gives a cut-off for the number of selected cell type markers.
 }
-\author{
-Pavlo Lutsik
-}
 \references{
 1. Houseman, Eugene and Accomando, William and Koestler, Devin and Christensen, Brock and Marsit, Carmen and Nelson, 
 	Heather and Wiencke, John and Kelsey, Karl. DNA methylation arrays as surrogate measures of cell mixture distribution. BMC Bioinformatics 2012, 13:86
 }
-
+\author{
+Pavlo Lutsik
+}

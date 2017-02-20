@@ -27,11 +27,10 @@ txt <- c("This was shown in ", rnb.get.reference(report, txt.reference), ".")
 rnb.add.paragraph(report, txt)
 }
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{rnb.get.reference}} for adding citations in the report's text; \code{\linkS4class{Report}} for
   other functions adding contents to an HTML report
 }
-
+\author{
+Yassen Assenov
+}

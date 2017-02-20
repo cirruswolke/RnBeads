@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBeadRawSet-class.R
 \docType{class}
 \name{RnBeadRawSet-class}
-\alias{RnBeadRawSet}
 \alias{RnBeadRawSet-class}
+\alias{RnBeadRawSet}
 \alias{initialize,RnBeadRawSet-method}
 \title{RnBeadRawSet-class}
 \usage{
@@ -79,7 +79,7 @@ Wrapper function RnBeadRawSet
   \item{\code{\link{intensities.by.color}}}{Get probe intensities in each color channel.}
 }
 }
+
 \author{
 Pavlo Lutsik
 }
-

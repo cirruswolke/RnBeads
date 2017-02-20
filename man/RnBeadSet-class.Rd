@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBeadSet-class.R
 \docType{class}
 \name{RnBeadSet-class}
-\alias{RnBeadSet}
 \alias{RnBeadSet-class}
+\alias{RnBeadSet}
 \alias{initialize,RnBeadSet-method}
 \title{RnBeadSet Class}
 \usage{
@@ -79,7 +79,7 @@ There are multiple ways to create an object of type \code{RnBeadSet}:
   \item{\code{\link[BiocGenerics]{combine}}}{Combines two datasets.}
 }
 }
+
 \author{
 Pavlo Lutsik
 }
-

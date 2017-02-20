@@ -33,4 +33,3 @@ Draws plots that compare two distributions of beta values.
 \author{
 Yassen Assenov
 }
-

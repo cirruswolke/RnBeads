@@ -24,4 +24,3 @@ the result of the 10-fold cross validation.
 \author{
 Michael Scherer
 }
-

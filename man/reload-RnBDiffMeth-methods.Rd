@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBDiffMeth-class.R
 \docType{methods}
 \name{reload,RnBDiffMeth-method}
-\alias{reload}
 \alias{reload,RnBDiffMeth-method}
+\alias{reload}
 \title{reload-methods}
 \usage{
 \S4method{reload}{RnBDiffMeth}(object, save.file, disk.path = tempfile(pattern
@@ -48,4 +48,3 @@ dm.new <- reload(dm,fn.save.tabs)
 \author{
 Fabian Mueller
 }
-

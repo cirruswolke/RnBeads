@@ -6,4 +6,3 @@
 \description{
 Convert a \code{\linkS4class{RnBeadSet}} object to \code{\linkS4class{MethyLumiSet}}
 }
-

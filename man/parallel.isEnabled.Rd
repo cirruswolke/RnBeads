@@ -24,4 +24,3 @@ parallel.isEnabled()
 \author{
 Fabian Mueller
 }
-

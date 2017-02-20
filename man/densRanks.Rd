@@ -23,4 +23,3 @@ as Kernel Density estimates. The method and parameters are implemented in analog
 \author{
 Fabian Mueller
 }
-

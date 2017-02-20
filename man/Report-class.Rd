@@ -40,7 +40,7 @@ Handler of a generated HTML report. Reports are initialized using the function \
        a footer notice and closing the \code{<body>} and \code{<html>} tags.}
 }
 }
+
 \author{
 Yassen Assenov
 }
-

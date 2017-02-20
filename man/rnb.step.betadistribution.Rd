@@ -37,7 +37,7 @@ N_1,...,N_K, and the target number of points per group T: the total number of po
 Afterwards the proportions p_k = N_k/N is computed and from each group, S_k = p_k*(K*T) observations
 are randomly selected from all observations belonging to group k.
 }
+
 \author{
 Fabian Mueller
 }
-

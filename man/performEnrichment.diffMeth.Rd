@@ -44,4 +44,3 @@ res <- performEnrichment.diffMeth(rnb.set.example,dm)
 \author{
 Fabian Mueller
 }
-

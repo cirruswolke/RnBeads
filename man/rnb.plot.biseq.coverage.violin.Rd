@@ -34,4 +34,3 @@ Plots the violin plots of the coverage distribution
 \author{
 Fabian Mueller
 }
-

@@ -41,12 +41,11 @@ logger.start(fname=NA)
 rnb.set.norm<-rnb.execute.normalization(rnb.set.example, method="illumina", bgcorr.method="none")
 }
 }
-\author{
-Pavlo Lutsik
-}
 \references{
 1. Triche, Timothy J., Jr., Weisenberger, Daniel J., Van Den Berg, David, Laird, Peter W. and Siegmund, Kimberly D. (2013)
             Low-level processing of Illumina Infinium DNA Methylation BeadArrays.
             Nucleic Acids Research 41(7):e90-e90.
 }
-
+\author{
+Pavlo Lutsik
+}

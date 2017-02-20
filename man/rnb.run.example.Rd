@@ -29,10 +29,9 @@ rnb.run.example()
 }
 
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{rnb.run.analysis}} for starting the analysis pipeline from a local data source
 }
-
+\author{
+Yassen Assenov
+}

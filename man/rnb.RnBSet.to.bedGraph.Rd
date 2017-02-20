@@ -50,4 +50,3 @@ rnb.RnBSet.to.bedGraph(rnb.set.example,tempdir())
 \author{
 Fabian Mueller
 }
-

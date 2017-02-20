@@ -52,4 +52,3 @@ Performs Beta-mixture quantile normalization, adjusting for type II bias in Infi
 \author{
 Andrew Teschendorff and Steve Horvath; with minor modifications by Yassen Assenov
 }
-

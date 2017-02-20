@@ -40,11 +40,10 @@ trait. Every report plot consists of two files. File names are formed by appendi
 \code{fileprefix}. Thus, the suffixes appended are \code{"_1.pdf"}, \code{"_1.png"}, \code{"_2.pdf"},
 \code{"_2.png"}, ... Existing files with the generated filenames are overwritten.
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{rnb.sample.groups}} for identifying traits in the annotation table that define sample subgroups;
          \code{\link{createReportPlot}} for the allowed symbols to be used in \code{fileprefix}
 }
-
+\author{
+Yassen Assenov
+}

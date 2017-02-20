@@ -24,4 +24,3 @@ by users. Please refer to the documentation of \code{\link{rnb.options}} for acc
 Yassen Assenov
 }
 \keyword{datasets}
-

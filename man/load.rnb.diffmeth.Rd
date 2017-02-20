@@ -18,4 +18,3 @@ load a saved \code{\linkS4class{RnBDiffMeth}} object from disk
 \author{
 Fabian Mueller
 }
-

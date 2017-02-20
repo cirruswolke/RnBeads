@@ -30,10 +30,9 @@ the syntax of the XML configuration file.
 The sample annotation table must be stored as a file in \code{data.source}. For more information about the required
 parameters, see the documentation of \code{\link{rnb.run.analysis}}, which is called by this function.
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{rnb.run.analysis}} for starting an analysis pipeline
 }
-
+\author{
+Yassen Assenov
+}

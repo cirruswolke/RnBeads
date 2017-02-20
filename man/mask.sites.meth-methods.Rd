@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBSet-class.R
 \docType{methods}
 \name{mask.sites.meth,RnBSet-method}
-\alias{mask.sites.meth}
 \alias{mask.sites.meth,RnBSet-method}
+\alias{mask.sites.meth}
 \title{mask.sites.meth-methods}
 \usage{
 \S4method{mask.sites.meth}{RnBSet}(object, mask, verbose = FALSE)
@@ -22,4 +22,3 @@ The modified dataset.
 Given a logical matrix, sets corresponding entries in the methylation table to NA (masking).
 Low memory footprint
 }
-

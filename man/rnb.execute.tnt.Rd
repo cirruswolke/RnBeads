@@ -39,4 +39,3 @@ rnb.execute.tnt(rnb.set.example,tempdir())
 \author{
 Fabian Mueller
 }
-

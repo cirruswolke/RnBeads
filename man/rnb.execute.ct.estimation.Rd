@@ -37,4 +37,3 @@ The only supported method is the one from Houseman et al BMC Bioinformatics 2012
 \author{
 Pavlo Lutsik
 }
-

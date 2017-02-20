@@ -19,4 +19,3 @@ Initialize an ClusterArchitecture object
 \author{
 Fabian Mueller
 }
-

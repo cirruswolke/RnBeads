@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBeadRawSet-class.R
 \docType{methods}
 \name{M,RnBeadRawSet-method}
-\alias{M}
 \alias{M,RnBeadRawSet-method}
+\alias{M}
 \title{M-methods}
 \usage{
 \S4method{M}{RnBeadRawSet}(object, row.names = FALSE)
@@ -28,4 +28,3 @@ head(M.intensity)
 } 
 
 }
-

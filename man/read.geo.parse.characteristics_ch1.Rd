@@ -16,10 +16,9 @@ Phenotypic data frame with parsed sample information instead of \code{characteri
 Parses the sample information in all of the \code{characteristics_ch1} columns from a phenoData data frame as
 obtained from \code{getGEO}.
 }
-\author{
-Fabian Mueller
-}
 \seealso{
 \code{\link[GEOquery]{getGEO}} in package \pkg{GEOquery}
 }
-
+\author{
+Fabian Mueller
+}

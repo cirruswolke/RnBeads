@@ -16,4 +16,3 @@ an NxK matrix of K cell types contributions for N samples of the \code{rnb.set}.
 \description{
 Retrieves an NxK matrix of cell type contributions stored in an RnBSet for a given target variable
 }
-

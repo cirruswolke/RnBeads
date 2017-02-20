@@ -32,4 +32,3 @@ result <- rnb.RnBSet.to.GRangesList(rnb.set.example)
 \author{
 Fabian Mueller
 }
-

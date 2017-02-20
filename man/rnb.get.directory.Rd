@@ -28,10 +28,9 @@ report <- createReport("example.html", "Example", init.configuration = TRUE)
 rnb.get.directory(report, "data")
 }
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\linkS4class{Report}} for functions adding contents to an HTML report
 }
-
+\author{
+Yassen Assenov
+}

@@ -24,4 +24,3 @@ Filters a data matrix executing the given number of iterations of Greedycut.
 \author{
 Yassen Assenov
 }
-

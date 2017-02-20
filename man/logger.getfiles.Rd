@@ -20,11 +20,10 @@ if (NA \%in\% logger.getfiles())
   cat("Console logger is enabled\\n")
 }
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{logger.isinitialized}} to check if logging is activated;
   \code{\link{logger.start}} for initializing a logger or starting a section
 }
-
+\author{
+Yassen Assenov
+}

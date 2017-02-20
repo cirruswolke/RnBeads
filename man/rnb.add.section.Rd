@@ -34,10 +34,9 @@ report <- createReport("example.html", "Example", init.configuration = TRUE)
 report <- rnb.add.section(report, "Introduction", "This is how it's done.")
 }
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\linkS4class{Report}} for other functions adding contents to an HTML report
 }
-
+\author{
+Yassen Assenov
+}

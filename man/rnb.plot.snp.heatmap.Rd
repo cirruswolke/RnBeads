@@ -32,4 +32,3 @@ rnb.plot.snp.heatmap(rnb.set.example)
 \author{
 Pavlo Lutsik
 }
-

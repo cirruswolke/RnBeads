@@ -39,10 +39,9 @@ sample.groups <- rnb.sample.groups(rnb.set.example)[[1]]
 rnb.plot.betadistribution.sampleGroups(meth.mat,sample.groups)
 }
 }
-\author{
-Fabian Mueller
-}
 \seealso{
 rnb.plot.betadistribution.probeCategories
 }
-
+\author{
+Fabian Mueller
+}

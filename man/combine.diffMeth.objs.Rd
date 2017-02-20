@@ -18,4 +18,3 @@ and vary only in their indexing of region types and comparisons
 \author{
 Fabian Mueller
 }
-

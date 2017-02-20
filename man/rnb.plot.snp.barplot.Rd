@@ -39,4 +39,3 @@ rnb.plot.snp.barplot(rnb.set.example, samp)
 \author{
 Pavlo Lutsik
 }
-

@@ -50,4 +50,3 @@ logger.close()
 \author{
 Yassen Assenov
 }
-

@@ -48,4 +48,3 @@ dm.promoters <- computeDiffTab.default.region(dm.sites,map.regions.to.sites)
 \author{
 Fabian Mueller
 }
-

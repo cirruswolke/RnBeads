@@ -2,8 +2,8 @@
 % Please edit documentation in R/clusterArchitecture.R
 \docType{methods}
 \name{getExecutable,ClusterArchitecture,character-method}
-\alias{getExecutable}
 \alias{getExecutable,ClusterArchitecture,character-method}
+\alias{getExecutable}
 \title{getExecutable-methods}
 \usage{
 \S4method{getExecutable}{ClusterArchitecture,character}(object, exec.name)
@@ -22,4 +22,3 @@ Retrieves the executable associated with a name/identifier
 \author{
 Fabian Mueller
 }
-

@@ -2,8 +2,8 @@
 % Please edit documentation in R/differentialMethylation.R
 \name{computeDiffTab.default.site}
 \alias{computeDiffTab.default.site}
-\alias{computeDiffTab.extended.site}
 \alias{computeDiffTab.site}
+\alias{computeDiffTab.extended.site}
 \title{computeDiffTab.site}
 \usage{
 computeDiffTab.default.site(X, inds.g1, inds.g2,
@@ -78,4 +78,3 @@ summary(dm)
 \author{
 Fabian Mueller
 }
-

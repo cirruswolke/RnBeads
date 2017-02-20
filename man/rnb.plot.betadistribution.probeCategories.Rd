@@ -42,10 +42,9 @@ probe.types <- annotation(rnb.set.example)[, "Design"]
 rnb.plot.betadistribution.probeCategories(meth.mat,probe.types,annotation="Infinium probe type")
 }
 }
-\author{
-Fabian Mueller
-}
 \seealso{
 rnb.plot.betadistribution.sampleGroups
 }
-
+\author{
+Fabian Mueller
+}

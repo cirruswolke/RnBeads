@@ -35,4 +35,3 @@ rnb.plot.negative.boxplot(rnb.set.example)
 \author{
 Pavlo Lutsik
 }
-

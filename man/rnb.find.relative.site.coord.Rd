@@ -27,4 +27,3 @@ of sites in the assigned region
 \author{
 Fabian Mueller
 }
-

@@ -25,4 +25,3 @@ Computes CpG-related statistics for the specified regions.
 \author{
 Yassen Assenov
 }
-

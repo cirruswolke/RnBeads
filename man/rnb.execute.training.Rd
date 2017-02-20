@@ -17,4 +17,3 @@ Trains a new predictor on the specified data set and writes it to the given path
 \author{
 Michael Scherer
 }
-

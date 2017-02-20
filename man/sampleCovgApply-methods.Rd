@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBSet-class.R
 \docType{methods}
 \name{sampleCovgApply,RnBSet-method}
-\alias{sampleCovgApply}
 \alias{sampleCovgApply,RnBSet-method}
+\alias{sampleCovgApply}
 \title{sampleCovgApply-methods}
 \usage{
 \S4method{sampleCovgApply}{RnBSet}(object, fn, type = "sites", ...)
@@ -26,4 +26,3 @@ Applies a function over the coverage values for all samples in an \code{RnBSet} 
 \seealso{
 \code{\link[=meth,RnBSet-method]{covg}} Retrieving the matrix of coverage values
 }
-
