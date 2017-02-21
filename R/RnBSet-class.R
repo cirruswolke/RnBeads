@@ -205,20 +205,13 @@ setMethod("samples", signature(object="RnBSet"),
 				ids <- pheno.table[, id.column]
 			}
 
-			if (!is.null(ids)) {
-				if (any(is.na(ids)) || anyDuplicated(ids) != 0) {
-					ids <- NULL
-				}
-			}
-			if (is.null(ids)) {
+			if (is.null(ids) || any(is.na(ids)) || anyDuplicated(ids) != 0) {
 				rnb.warning("The supplied identifiers column is not found or is not suitable")
 			}
+			ids <- as.character(ids)
+		} else if (!is.null(colnames(object@meth.sites))) {
+			ids <- colnames(object@meth.sites)
 		} else {
-			if (!is.null(colnames(object@meth.sites))) {
-				ids <- colnames(object@meth.sites)
-			}
-		}
-		if (is.null(ids)) {
 			ids <- as.character(1:nrow(object@pheno))
 		}
 		ids
