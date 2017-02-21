@@ -321,6 +321,7 @@ rnb.xml2options <- function(fname,return.full.structure=FALSE) {
 	if (analysis.params.required && length(i.dir.reports) == 0) {
 		stop("invalid XML format; missing dir.reports")
 	}
+	i.save.rdata <- which(names(xml.options) == "save.rdata")
 	i <- anyDuplicated(names(xml.options))
 	if (i != 0) {
 		stop(paste("invalid XML format; duplicated", names(xml.options)[i]))
@@ -335,32 +336,35 @@ rnb.xml2options <- function(fname,return.full.structure=FALSE) {
 		option.values[i] <- list(NULL)
 	}
 
-	inds.rm.from.opts <- integer()
 	## Extract parameters for the analysis function
+	i <- integer() # indices of elements in option.values to be removed
 	if (length(i.data.source) != 0) {
 		val <- option.values[[i.data.source]]
 		val <- strsplit(val, ",", fixed = TRUE)[[1]]
 		result[["analysis.params"]][["data.source"]] <- val
-		inds.rm.from.opts <- c(inds.rm.from.opts,i.data.source)
+		i <- c(i, i.data.source)
 	}
 	if (length(i.dir.reports) != 0) {
 		result[["analysis.params"]][["dir.reports"]] <- option.values[[i.dir.reports]]
-		inds.rm.from.opts <- c(inds.rm.from.opts,i.dir.reports)
+		i <- c(i, i.dir.reports)
 	}
 	if (length(i.data.type) != 0) {
 		result[["analysis.params"]][["data.type"]] <- option.values[[i.data.type]]
-		inds.rm.from.opts <- c(inds.rm.from.opts,i.data.type)
+		i <- c(i, i.data.type)
+	}
+	if (length(i.save.rdata) != 0) {
+		result[["analysis.params"]][["data.type"]] <- tolower(option.values[[i.save.rdata]]) == "true"
+		i <- c(i, i.save.rdata)
 	}
 
 	## Extract specified file with R preanalysis script, e.g. setting plotting themes, user defined regions, etc.
 	i.preanalysis.script <- which(names(xml.options) == "preanalysis.script")
 	if (length(i.preanalysis.script) != 0) {
 		result[["preanalysis.script"]] <- option.values[[i.preanalysis.script]]
-		inds.rm.from.opts <- c(inds.rm.from.opts,i.preanalysis.script)
+		i <- c(i, i.preanalysis.script)
 	}
-
-	if (length(inds.rm.from.opts) > 0){
-		option.values <- option.values[-inds.rm.from.opts]
+	if (length(i) != 0){
+		option.values <- option.values[-i]
 	}
 
 	## Set RnBeads options
