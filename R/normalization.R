@@ -573,12 +573,12 @@ rnb.execute.normalization.bmiq <- function(object) {
 		beta.vals <- foreach(beta.v = as.data.frame(beta.vals), .combine = cbind, .packages = "RPMM",
 							 .export = c("BMIQ", "betaEst2", "blc2"),
 							 .noexport = c("bgcorr.method", "beta.names", "method", "object")) %dopar% {
-				i <- which(!is.na(beta.v))
-				if (length(i) != 0) {
-					p.design <- probe.design[i]
-					type1.count <- sum(p.design == 1L)
-					if (all(c(type1.count, length(p.design) - type1.count) >= 50000L)) {
-					beta.v[i] <- BMIQ(beta.v[i], p.design)$all
+			i <- which(!is.na(beta.v))
+			p.design <- probe.design[i]
+			if (all(tabulate(p.design, 2L) >= 50000L)) {
+				x <- BMIQ(beta.v[i], p.design)
+				if (!is.null(x)) {
+					beta.v[i] <- x$all
 				}
 			}
 			beta.v
@@ -588,23 +588,26 @@ rnb.execute.normalization.bmiq <- function(object) {
 	} else {
 		for (j in 1:ncol(beta.vals)) {
 			i <- which(!is.na(beta.vals[, j]))
-			if (length(i) != 0) {
-				p.design <- probe.design[i]
-				type1.count <- sum(p.design == 1L)
-				if (any(c(type1.count, length(p.design) - type1.count) < 50000L)) {
-					## There are not enough probes of types I and/or II
+			p.design <- probe.design[i]
+			if (any(tabulate(p.design, 2L) < 50000L)) {
+				## There are not enough probes of types I and/or II
+				samples.skipped <- c(samples.skipped, j)
+				rnb.status(c("Skipped sample", j))
+			} else {
+				x <- BMIQ(beta.vals[i, j], p.design)
+				if (is.null(x)) {
 					samples.skipped <- c(samples.skipped, j)
-					rnb.status(c("Skipped sample", j))
-					next
+					rnb.status(c("Could not normalize sample", j))
+				} else {
+					beta.vals[i, j] <- x$all
+					rnb.status(c("Normalized sample", j))
 				}
-				beta.vals[i, j] <- BMIQ(beta.vals[i, j], p.design)$all
 			}
-			rnb.status(c("Normalized sample", j))
 		}
-		suppressWarnings(rm(j, i, p.design, type1.count))
+		suppressWarnings(rm(j, i, p.design, x))
 	}
 	if (length(samples.skipped) != 0) {
-		## Some samples were skipped due to not enough observations
+		## Some samples were skipped due to not enough observations or unsuccessful fits
 		rnb.warning(c("The following samples were not normalized:", paste(samples.skipped, collapse = ", ")))
 	}
 	rm(probe.design, samples.skipped)

@@ -47,6 +47,11 @@ List with the following elements:
         }
 }
 \description{
+This function makes 3 indipendent attempts to fit a 3-state beta mixture model on the provided type I
+             probes. An attempt is successful if at least 4 probes are assigned to each level. In case all attempts
+             fail, the return value is \code{NULL}.
+}
+\details{
 Performs Beta-mixture quantile normalization, adjusting for type II bias in Infinium 450K data.
 }
 \author{
