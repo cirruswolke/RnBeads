@@ -48,4 +48,3 @@ rnb.plot.region.profiles(rnb.set.example,rnb.sample.groups(rnb.set.example)[[1]]
 \author{
 Fabian Mueller
 }
-

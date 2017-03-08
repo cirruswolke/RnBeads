@@ -24,4 +24,3 @@ rnb.message.plot("Missing data")
 \author{
 Yassen Assenov
 }
-

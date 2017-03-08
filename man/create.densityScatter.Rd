@@ -48,4 +48,3 @@ create.densityScatter(d,s)
 \author{
 Fabian Mueller
 }
-

@@ -31,4 +31,3 @@ rnb.export.all.annotation(tempdir(),c("genes","promoters"))
 \author{
 Fabian Mueller
 }
-

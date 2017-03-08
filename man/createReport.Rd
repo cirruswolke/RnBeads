@@ -77,10 +77,9 @@ Thus, all supporting directories that already exist and contain hidden files onl
 report <- createReport("example.html", "Example", init.configuration = TRUE)
 }
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\linkS4class{Report}} for functions adding contents to an HTML report
 }
-
+\author{
+Yassen Assenov
+}

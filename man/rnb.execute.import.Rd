@@ -72,12 +72,11 @@ data.source <- c(idat.dir, sample.annotation)
 rnb.set <- rnb.execute.import(data.source = data.source, data.type = "idat.dir")
 }
 }
-\author{
-Pavlo Lutsik
-}
 \seealso{
 \code{\link{read.data.dir}}, \code{\link{read.idat.files}}, \code{\link{read.GS.report}},
          \code{\link{read.geo}}, \code{\link{read.bed.files}}
 #'
 }
-
+\author{
+Pavlo Lutsik
+}

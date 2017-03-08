@@ -36,4 +36,3 @@ Plots the sequencing coverage of the RnBiseqSet object across the genomic coordi
 \author{
 Pavlo Lutsik
 }
-

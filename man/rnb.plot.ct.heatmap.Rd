@@ -28,4 +28,3 @@ The cell type contributions are visualized as a heatmap
 \author{
 Pavlo Lutsik
 }
-

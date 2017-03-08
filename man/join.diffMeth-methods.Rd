@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBDiffMeth-class.R
 \docType{methods}
 \name{join.diffMeth,RnBDiffMeth,RnBDiffMeth-method}
-\alias{join.diffMeth}
 \alias{join.diffMeth,RnBDiffMeth,RnBDiffMeth-method}
+\alias{join.diffMeth}
 \title{join.diffMeth-methods}
 \usage{
 \S4method{join.diffMeth}{RnBDiffMeth,RnBDiffMeth}(obj1, obj2)
@@ -45,4 +45,3 @@ is.valid(dm.join2)
 \author{
 Fabian Mueller
 }
-

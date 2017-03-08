@@ -55,4 +55,3 @@ Missing columns should be assigned with \code{NA}. In case \code{mean.meth.col} 
 \author{
 Pavlo Lutsik
 }
-

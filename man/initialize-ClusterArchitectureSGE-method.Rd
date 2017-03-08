@@ -21,4 +21,3 @@ Initialize an ClusterArchitecture object for a Sun Grid Engine (SGE)
 \author{
 Fabian Mueller
 }
-

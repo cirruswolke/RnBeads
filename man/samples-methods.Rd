@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBSet-class.R, R/clustering.R
 \docType{methods}
 \name{samples,RnBSet-method}
-\alias{samples}
 \alias{samples,RnBSet-method}
+\alias{samples}
 \alias{samples,RnBeadClustering-method}
 \title{samples-methods}
 \usage{
@@ -33,4 +33,3 @@ data(small.example.object)
 samples(rnb.set.example)
 }
 }
-

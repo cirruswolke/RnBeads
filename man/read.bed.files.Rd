@@ -69,4 +69,3 @@ To control the BED column assignment, one should also supply arguments to \code{
 \author{
 Pavlo Lutsik
 }
-

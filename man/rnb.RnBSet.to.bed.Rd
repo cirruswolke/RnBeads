@@ -49,4 +49,3 @@ rnb.RnBSet.to.bed(rnb.set.example,tempdir())
 \author{
 Fabian Mueller
 }
-

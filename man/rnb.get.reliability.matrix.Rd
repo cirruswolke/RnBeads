@@ -29,4 +29,3 @@ str(rnb.get.reliability.matrix(rnb.set.example))
 \author{
 Yassen Assenov
 }
-

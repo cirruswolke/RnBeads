@@ -35,4 +35,3 @@ Colnames in all files should match. They will be returned as the samples element
 \author{
 Pavlo Lutsik
 }
-

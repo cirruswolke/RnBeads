@@ -19,4 +19,3 @@
 \description{
 Extract parts of BigFfMat
 }
-

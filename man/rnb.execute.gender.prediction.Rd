@@ -28,4 +28,3 @@ table(rnb.set.example[, "Predicted Gender"])
 \author{
 Yassen Assenov
 }
-

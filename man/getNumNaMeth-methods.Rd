@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBSet-class.R
 \docType{methods}
 \name{getNumNaMeth,RnBSet-method}
-\alias{getNumNaMeth}
 \alias{getNumNaMeth,RnBSet-method}
+\alias{getNumNaMeth}
 \title{getNumNaMeth-methods}
 \usage{
 \S4method{getNumNaMeth}{RnBSet}(object, type = "sites", chunkSize = 1e+05,
@@ -25,4 +25,3 @@ vector containing the number of NAs per site/region
 for each site/region, the getNumNaMeth retrieves the number of NA values accross all samples.
 Does this efficiently by breaking down the methylation matrix into submatrices
 }
-

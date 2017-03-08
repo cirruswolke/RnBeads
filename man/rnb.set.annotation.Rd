@@ -55,11 +55,10 @@ txt <- "First exon of the BEND5 gene and an overlapping CpG island."
 rnb.set.annotation("my regions", my.regions, txt)
 }
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{rnb.get.annotation}} for extracting annotation;
   \code{\link{rnb.region.types}} for all loaded region types in a genome assembly
 }
-
+\author{
+Yassen Assenov
+}

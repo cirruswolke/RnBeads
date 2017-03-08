@@ -36,4 +36,3 @@ p.vals <- rowOneSampleTP(meth.mat,mu=0,alternative="greater")
 \author{
 Fabian Mueller
 }
-

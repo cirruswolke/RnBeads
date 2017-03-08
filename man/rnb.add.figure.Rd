@@ -28,11 +28,10 @@ The modified report.
 Generates HTML code for a figure in the specified report. A figure is a collection of images (plots), of which only
 one is visible at any given moment.
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{rnb.add.tables}} for adding a listing of tables; \code{\linkS4class{Report}} for other functions
   adding contents to an HTML report
 }
-
+\author{
+Yassen Assenov
+}

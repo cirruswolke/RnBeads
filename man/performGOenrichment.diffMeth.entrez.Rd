@@ -41,4 +41,3 @@ result <- performGOenrichment.diffMeth.entrez(hyper.promoters,all.promoters,"BP"
 \author{
 Fabian Mueller
 }
-

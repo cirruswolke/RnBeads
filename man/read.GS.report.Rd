@@ -30,4 +30,3 @@ MethylumiSet object with the data from the report
 \description{
 Reads in a Genome Studio report, exported as a single file.
 }
-

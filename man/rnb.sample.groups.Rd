@@ -44,4 +44,3 @@ str(rnb.sample.groups(rnb.set.example))
 \author{
 Yassen Assenov
 }
-

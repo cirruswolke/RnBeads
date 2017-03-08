@@ -26,7 +26,7 @@ A class for configuring and running RnBeads on a scientific compute cluster.
   \item{\code{\link{run,RnBClusterRun-method}}}{Submit the pipeline modules to the cluster}
 }
 }
+
 \author{
 Fabian Mueller
 }
-

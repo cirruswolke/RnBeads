@@ -77,11 +77,10 @@ print(rnb.plot.dreduction(rnb.set.example, point.colors="Sample_Group"))
 dev.off()
 }
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link[=summarized.regions,RnBSet-method]{summarized.regions}} for listing all region types summarized
          in a dataset
 }
-
+\author{
+Yassen Assenov
+}

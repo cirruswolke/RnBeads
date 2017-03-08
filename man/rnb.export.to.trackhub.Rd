@@ -42,4 +42,3 @@ rnb.export.to.trackhub(rnb.set.example,tempdir())
 \author{
 Fabian Mueller
 }
-

@@ -28,10 +28,9 @@ Creates one or more point-and-whisker plots showing beta value distributions at 
 If no additional parameters are specified, this function creates one PDF and one low-resolution PNG file for every
 generated plot.
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{rnb.plot.sentrix.distribution}} for creating a single plot for a specified slide number
 }
-
+\author{
+Yassen Assenov
+}

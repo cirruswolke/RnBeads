@@ -41,10 +41,9 @@ It can consist of the following symbols only: Latin letters, digits, dot (\code{
 must not include paths, that is, slash (\code{/}) or backslash (\code{\\}) cannot be used. In addition, it cannot be
 any of the recognized \pkg{RnBeads} report file names.
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{rnb.run.analysis}}, \code{\link{rnb.initialize.reports}}
 }
-
+\author{
+Yassen Assenov
+}

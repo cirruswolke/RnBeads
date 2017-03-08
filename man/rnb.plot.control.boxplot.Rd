@@ -41,4 +41,3 @@ rnb.plot.control.boxplot(rnb.set.example)
 \author{
 Pavlo Lutsik
 }
-

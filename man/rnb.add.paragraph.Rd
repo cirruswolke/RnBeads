@@ -34,10 +34,9 @@ txt <- c(txt, " <i>Don Marquis</i>")
 rnb.add.paragraph(report, txt)
 }
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\linkS4class{Report}} for other functions adding contents to an HTML report
 }
-
+\author{
+Yassen Assenov
+}

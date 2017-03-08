@@ -31,4 +31,3 @@ rnb.plot.snp.boxplot(rnb.set.example)
 \author{
 Pavlo Lutsik
 }
-

@@ -58,10 +58,9 @@ Invisibly, the loaded, normalized and/or possibly filtered dataset as an object 
 Starts the \pkg{RnBeads} analysis pipeline on the given dataset. It loads the dataset if it is specified as a
 location.
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \link[=rnb.run.import]{RnBeads modules}
 }
-
+\author{
+Yassen Assenov
+}

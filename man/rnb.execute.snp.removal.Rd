@@ -38,4 +38,3 @@ identical(meth(rnb.set.example), meth(rnb.set.filtered)) # FALSE
 \author{
 Yassen Assenov
 }
-

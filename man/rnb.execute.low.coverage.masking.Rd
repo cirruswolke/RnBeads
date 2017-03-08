@@ -29,4 +29,3 @@ Replaces all low coverage sites by \code{NA}.
 \author{
 Fabian Mueller
 }
-

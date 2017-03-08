@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBDiffMeth-class.R
 \docType{methods}
 \name{addDiffMethTable,RnBDiffMeth-method}
-\alias{addDiffMethTable}
 \alias{addDiffMethTable,RnBDiffMeth-method}
+\alias{addDiffMethTable}
 \title{addDiffMethTable-methods}
 \usage{
 \S4method{addDiffMethTable}{RnBDiffMeth}(object, dmt, comparison, region.type,
@@ -49,4 +49,3 @@ get.region.types(dm.add)
 \author{
 Fabian Mueller
 }
-

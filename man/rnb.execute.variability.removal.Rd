@@ -37,4 +37,3 @@ rnb.set.filtered <- rnb.execute.variability.removal(rnb.set.example, 0.01)
 \author{
 Yassen Assenov
 }
-

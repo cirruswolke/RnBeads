@@ -36,10 +36,9 @@ parsed from the downloaded series matrix file(s).}
 \description{
 Imports Infinium 450K data series from the Gene Expression Omnibus.
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{getGEO} in package \code{GEOquery}
 }
-
+\author{
+Yassen Assenov
+}

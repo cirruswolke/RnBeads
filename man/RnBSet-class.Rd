@@ -57,7 +57,7 @@ used: \code{\linkS4class{RnBeadRawSet}} and \code{\linkS4class{RnBeadSet}} for I
   \item{\code{\link[=rnb.sample.summary.table,RnBSet-method]{rnb.sample.summary.table}}}{Creates a sample summary table from an RnBSet object.}
 }
 }
+
 \author{
 Pavlo Lutsik
 }
-

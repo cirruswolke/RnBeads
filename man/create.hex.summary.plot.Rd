@@ -27,4 +27,3 @@ Creates a summary plot binning the data given by a certain quantity in heagonal 
 \author{
 Fabian Mueller
 }
-

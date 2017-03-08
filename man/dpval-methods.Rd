@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBeadSet-class.R
 \docType{methods}
 \name{dpval,RnBeadSet-method}
-\alias{dpval}
 \alias{dpval,RnBeadSet-method}
+\alias{dpval}
 \title{dpval-methods}
 \usage{
 \S4method{dpval}{RnBeadSet}(object, type = "sites", row.names = FALSE)
@@ -31,4 +31,3 @@ dp<-dpval(rnb.set.example, row.names=TRUE)
 head(dp)
 }
 }
-

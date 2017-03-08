@@ -20,4 +20,3 @@ or by the corresponding predefined predictor.
 \author{
 Michael Scherer
 }
-

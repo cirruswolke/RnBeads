@@ -44,4 +44,3 @@ greedy.result$iteration
 \author{
 Yassen Assenov
 }
-

@@ -37,4 +37,3 @@ Plots the histograms of the coverage
 \author{
 Pavlo Lutsik
 }
-

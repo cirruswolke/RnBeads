@@ -41,4 +41,3 @@ exportDMRs2regionFile(rnb.set.example,dm,tempfile(),get.comparisons(dm)[1],"prom
 \author{
 Fabian Mueller
 }
-

@@ -24,4 +24,3 @@ plot the number of sites vs median and other percentiles of coverage
 \author{
 Fabian Mueller
 }
-

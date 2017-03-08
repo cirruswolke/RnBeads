@@ -22,10 +22,9 @@ Calculates a table summarizing the effect of the applied filtering procedures.
 This function expects that the sites and samples in \code{new.set} are subsets of the sites and samples in
 \code{old.set}, respectively. If this is not the case, it exists with an error.
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{rnb.run.preprocessing}} for running the whole preprocessing module
 }
-
+\author{
+Yassen Assenov
+}

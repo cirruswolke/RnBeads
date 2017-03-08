@@ -29,4 +29,3 @@ Rearranges information from "M" and "U" slots of a RnBeadsRawSet object by color
 \author{
 Pavlo Lutsik
 }
-

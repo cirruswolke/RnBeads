@@ -245,7 +245,7 @@ RnBeadSet<-function(
 			assembly <- "hg19"
 		} else if(platform == "27k"){ 
 			target <- "probes27"
-			assembly <- "h19"
+			assembly <- "hg19"
 		}else{
 			stop("Invalid value for platform")
 		}
@@ -731,7 +731,7 @@ combine.sites<-function(sites1, sites2){
 		
 }
 ########################################################################################################################
-match.probes2annotation<-function(probes, target="probes450", assembly="h19"){
+match.probes2annotation<-function(probes, target="probes450", assembly="hg19"){
 	
 	if(!is.character(probes)){
 		stop("wrong value for probes")

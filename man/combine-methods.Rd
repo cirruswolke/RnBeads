@@ -43,4 +43,3 @@ sites.rem.c <- intersect(sites.rem.r1,sites.rem.r2)
 (nrow(meth(rnb.set.example))-length(sites.rem.c)) == nrow(meth(rc))
 }
 }
-

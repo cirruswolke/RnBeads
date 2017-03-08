@@ -2,8 +2,8 @@
 % Please edit documentation in R/clusterArchitecture.R
 \docType{methods}
 \name{getSubCmdTokens,ClusterArchitecture-method}
-\alias{getSubCmdTokens}
 \alias{getSubCmdTokens,ClusterArchitecture-method}
+\alias{getSubCmdTokens}
 \title{getSubCmdTokens-methods}
 \usage{
 \S4method{getSubCmdTokens}{ClusterArchitecture}(object, cmd.tokens, log,
@@ -36,4 +36,3 @@ For a concrete child class implementation for a sun grid architecture specificat
 \author{
 Fabian Mueller
 }
-

@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBDiffMeth-class.R
 \docType{methods}
 \name{is.valid,RnBDiffMeth-method}
-\alias{is.valid}
 \alias{is.valid,RnBDiffMeth-method}
+\alias{is.valid}
 \title{is.valid-methods}
 \usage{
 \S4method{is.valid}{RnBDiffMeth}(object, verbose = FALSE)
@@ -39,4 +39,3 @@ is.valid(dm.join2)
 \author{
 Fabian Mueller
 }
-

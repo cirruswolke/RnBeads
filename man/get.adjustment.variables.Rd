@@ -45,4 +45,3 @@ get.adjustment.variables(rnb.set.example,sample.groups[[1]],sample.groups[[2]],"
 \author{
 Fabian Mueller
 }
-

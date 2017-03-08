@@ -32,4 +32,3 @@ combineTestPvalsMeth(p.vals)
 \author{
 Fabian Mueller, Christoph Bock
 }
-

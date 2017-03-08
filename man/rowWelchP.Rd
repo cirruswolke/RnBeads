@@ -42,4 +42,3 @@ p.vals <- rowWelchP(meth.mat,sample.groups[[1]],sample.groups[[2]])
 \author{
 Fabian Mueller
 }
-

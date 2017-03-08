@@ -50,4 +50,3 @@ Computes methylation distributions for various region types and sample groups
 \author{
 Fabian Mueller
 }
-

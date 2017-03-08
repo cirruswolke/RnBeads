@@ -33,10 +33,9 @@ if (!rnb.initialize.reports(dir.reports)) {
 }
 
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{createReport}} for initializing an HTML report
 }
-
+\author{
+Yassen Assenov
+}

@@ -35,10 +35,9 @@ data(mtcars)
 rnb.write.table(mtcars,tempfile(pattern="cars",fileext=".csv"))
 }
 }
-\author{
-Fabian Mueller
-}
 \seealso{
 \code{\link{write.table}}
 }
-
+\author{
+Fabian Mueller
+}

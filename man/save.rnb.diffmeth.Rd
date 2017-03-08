@@ -17,4 +17,3 @@ save an \code{\linkS4class{RnBDiffMeth}} object to disk
 \author{
 Fabian Mueller
 }
-

@@ -23,10 +23,9 @@ Gets the supported region annotations for a given genome assembly.
 }
 
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{rnb.get.annotation}}, \code{\link{rnb.set.annotation}}
 }
-
+\author{
+Yassen Assenov
+}

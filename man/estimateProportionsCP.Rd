@@ -50,12 +50,11 @@ less or equal to 1.
 \note{
 Requires the package \pkg{nlme}.
 }
-\author{
-Pavlo Lutsik
-}
 \references{
 1. Houseman, Eugene and Accomando, William and Koestler, Devin and Christensen, Brock and Marsit, Carmen and Nelson, 
 	Heather and Wiencke, John and Kelsey, Karl. DNA methylation arrays as surrogate measures of cell mixture distribution. 
  BMC Bioinformatics 2012, 13:86
 }
-
+\author{
+Pavlo Lutsik
+}

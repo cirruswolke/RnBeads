@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBDiffMeth-class.R
 \docType{methods}
 \name{get.table,RnBDiffMeth-method}
-\alias{get.table}
 \alias{get.table,RnBDiffMeth-method}
+\alias{get.table}
 \title{get.table-methods}
 \usage{
 \S4method{get.table}{RnBDiffMeth}(object, comparison, region.type,
@@ -40,4 +40,3 @@ summary(dm.promoters)
 \author{
 Fabian Mueller
 }
-

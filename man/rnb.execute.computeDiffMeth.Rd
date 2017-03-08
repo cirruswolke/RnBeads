@@ -70,4 +70,3 @@ get.comparisons(dm)
 \author{
 Fabian Mueller
 }
-

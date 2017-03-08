@@ -70,4 +70,3 @@ cmp.info[[1]]
 \author{
 Fabian Mueller
 }
-

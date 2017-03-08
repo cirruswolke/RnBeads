@@ -28,4 +28,3 @@ parallel.teardown()
 \author{
 Fabian Mueller
 }
-
