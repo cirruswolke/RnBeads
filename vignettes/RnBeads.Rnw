@@ -256,11 +256,11 @@ rnb.options(differential=FALSE)
 
 \section{Working with \cs{RnBSet} Objects}
 
-	Every analysis workflow in \cs{RnBeads} is centered around a dataset object, which is implemented as an R object of type \cs{RnBSet} (an \cs{S4} class). This object contains the sample annotation table, methylation values for individual sites and regions, as well as additional data related to the platform used for measuring DNA methylation. The function \cs{rnb.run.analysis}, introduced in the previous section, returns invisibly such an object containing the processed dataset. \cs{RnBeads} provides a multitude of functions operating on a dataset; some of these functions get information from the dataset, others create plots summarizing some of the data contained, or modify the methylation values or sample annotation. In this section, we introduce the \cs{RnBSet} class and show a few examples on how to work with these objects in an interactive R session. The following sections give more details by describing each of the \cs{RnBeads} modules. With the exception of the import module, which prepares such objects from input data files, all of these modules operate directly on \cs{RnBSet} objects.
+	Every analysis workflow in \cs{RnBeads} is centered around a dataset object, which is implemented as an R object of type \cs{RnBSet} (an \cs{S4} class). This object contains the sample annotation table, methylation values for individual sites and regions, as well as additional, platform-specific data. The function \cs{rnb.run.analysis}, introduced in the previous section, returns such an object (invisibly) which contains the processed dataset. \cs{RnBeads} provides a multitude of functions operating on a dataset; some of these functions retrieve information from the dataset, others create plots summarizing some of the data contained, or modify the methylation values or sample annotation. In this section, we introduce the \cs{RnBSet} class and show a few examples on how to work with these objects in an interactive R session. The following sections give more details by describing each of the \cs{RnBeads} modules. With the exception of the import module, which prepares such objects from input data files, all of these modules operate directly on \cs{RnBSet} objects.
 
 	\cs{RnBSet} objects come in different flavors (subclasses), depending on the data type that was used to create them: \cs{RnBeadSet} and \cs{RnBeadRawSet} objects are derived from processed and unprocessed array data respectively, while \cs{RnBiseqSet} objects result from processing bisulfite-sequencing data.
 
-	Here, we use a small example dataset accompanying the \cs{RnBeads} package. This dataset is contained in the \cs{RnBeads.hg19} package and comprises a subset of probes of the dataset introduced earlier in this vignette.
+	Here, we use a small example dataset which is contained in the \cs{RnBeads.hg19} package and comprises a subset of probes of the Infnium 450K dataset introduced earlier in this vignette.
 	Readers are encouraged to try the functions presented here on the full dataset or on their own datasets. As a first example, by printing a dataset you can see a summary of its type and size.
 
 <<>>=
@@ -269,7 +269,7 @@ data(small.example.object)
 rnb.set.example
 @
 
-	As shown in the code snippet above, the example dataset consists of 12 samples x 1,736 probes. In addition to measurements at individual CpGs, it has summarized the methylation state for 470 genomic tiling regions, 184 gene bodies, 184 gene promoters and 137 CpG islands. Notice the first line of printed for this dataset, it states that it is an object of type \cs{RnBeadRawSet}. These objects denote array-based datasets containing array-specific measurements, such as probe intensity values, detection p-values, and others.
+	As shown in the code snippet above, the example dataset consists of 12 samples $\times$ 1,736 probes. In addition to measurements at individual CpGs, it has summarized the methylation state for 470 genomic tiling regions, 184 gene bodies, 184 gene promoters and 137 CpG islands. Notice the first line of printed for this dataset, it states that it is an object of type \cs{RnBeadRawSet}. These objects denote array-based datasets containing array-specific measurements, such as probe intensity values, detection p-values, and others.
 
 	You can use the following functions in order to obtain the number of CpGs covered and the sample identifiers of the dataset:
 
@@ -354,27 +354,27 @@ pheno(rnb.set.example)[, c("Sample_ID", "Cell_Line", "is_hiPSC")]
 Since the example object was derived from an Infinium 450k experiment it also
 stores low-level information about the corresponding experiment, such as 
 measured intensities in each of the color channels, out-of-band intensities,
-number of beads, detection \textit{P}-values etc:
+number of beads, detection \textit{p}-values etc:
 
 <<>>=
 # Methylated ...
-Mint<-M(rnb.set.example, row.names=TRUE)
-head(Mint)
+Mint <- M(rnb.set.example, row.names=TRUE)
+Mint[1:5,1:3]
 # ...and unmethylated probe intensities
-Uint<-U(rnb.set.example, row.names=TRUE)
-head(Uint)
+Uint <- U(rnb.set.example, row.names=TRUE)
+Uint[1:5,1:3]
 # Infinium bead counts
-nbead<-covg(rnb.set.example, row.names=TRUE)
-head(nbead)
+nbead <- covg(rnb.set.example, row.names=TRUE)
+nbead[1:5,1:3]
 # detection P-values
-pvals<-dpval(rnb.set.example, row.names=TRUE)
-head(pvals)
+pvals <- dpval(rnb.set.example, row.names=TRUE)
+pvals[1:5,1:3]
 @
 
 Moreover, the object also contains quality control information. RnBeads offers a
 number of diagnostic plots visualizing this information:
 
-<<>>=
+<<fig.height=5>>=
 # boxplot of control probes
 rnb.plot.control.boxplot(rnb.set.example)
 # barplot of a selected control probe
