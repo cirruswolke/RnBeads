@@ -323,7 +323,16 @@ annot.promoters <- annotation(rnb.set.example, type="promoters")
 head(annot.promoters)
 @
 
-You can manipulate \cs{RnBSet} objects using several methods. Here, we show you how to remove samples and sites from the dataset and how to add columns to the sample annotation table:
+Furthermore, indices of overlapping regions can be added to each annotated
+methylation site.
+
+<<>>=
+annot.sites.with.rgns <- annotation(rnb.set.example, include.regions=TRUE)
+head(annot.sites.with.rgns)
+@
+
+You can manipulate \cs{RnBSet} objects using several methods. Here, we show you
+how to remove samples and sites from the dataset and how to add columns to the sample annotation table:
 
 <<>>=
 # Remove samples
@@ -343,8 +352,27 @@ pheno(rnb.set.example)[, c("Sample_ID", "Cell_Line", "is_hiPSC")]
 @
 
 Since the example object was derived from an Infinium 450k experiment it also
-stores respective quality control information. RnBeads offers a number of
-diagnostic plots visualizing this information:
+stores low-level information about the corresponding experiment, such as 
+measured intensities in each of the color channels, out-of-band intensities,
+number of beads, detection \textit{P}-values etc:
+
+<<>>=
+# Methylated ...
+Mint<-M(rnb.set.example, row.names=TRUE)
+head(Mint)
+# ...and unmethylated probe intensities
+Uint<-U(rnb.set.example, row.names=TRUE)
+head(Uint)
+# Infinium bead counts
+nbead<-covg(rnb.set.example, row.names=TRUE)
+head(nbead)
+# detection P-values
+pvals<-dpval(rnb.set.example, row.names=TRUE)
+head(pvals)
+@
+
+Moreover, the object also contains quality control information. RnBeads offers a
+number of diagnostic plots visualizing this information:
 
 <<>>=
 # boxplot of control probes
@@ -362,9 +390,9 @@ Finally, the full control probe intensities can be retrieved using method
 qc_data<-qc(rnb.set.example)
 @
 
-\cs{qc_data} is a list with elements \cs{Cy3} and \cs{Cy5} containing
+\cs{qc\_data} is a list with elements \cs{Cy3} and \cs{Cy5} containing
 all Infinium control probe intensities for the green and red color channels
-respectively. It can be used for any more advanced QC procedures.
+respectively. It can be used for more advanced QC procedures.
 
 
 \section{Tailored Analysis: \cs{RnBeads} Modules}
