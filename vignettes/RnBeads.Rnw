@@ -254,11 +254,14 @@ rnb.run.analysis(dir.reports=report.dir, sample.sheet=sample.annotation,
 rnb.options(differential=FALSE)
 @
 
-\section{Working with \cs{RnBSet}}
+\section{Working with \cs{RnBSet} Objects}
 
-	Every analysis workflow in \cs{RnBeads} evolves around a dataset object, which is implemented as an R object of type \cs{RnBSet}. The dataset contains the sample annotation table, methylation values for individual sites and regions, as well as additional data related to the platform used for measuring DNA methylation. The function \cs{rnb.run.analysis}, introduced in the previous section, returns invisibly such an object containing the processed dataset. \cs{RnBeads} provides a multitude of functions operating on a dataset; some of these functions get information from the dataset, others create plots summarizing some of the data contained, or modify the methylation values or sample annotation. In this section, we introduce the \cs{RnBSet} dataset and show a few simple examples on how this set can be used in an interactive R session. The following sections give more details by describing each of the \cs{RnBeads} modules and discussing other aspects of the analysis of methylation data.
+	Every analysis workflow in \cs{RnBeads} is centered around a dataset object, which is implemented as an R object of type \cs{RnBSet} (an \cs{S4} class). This object contains the sample annotation table, methylation values for individual sites and regions, as well as additional, platform-specific data. The function \cs{rnb.run.analysis}, introduced in the previous section, returns such an object (invisibly) which contains the processed dataset. \cs{RnBeads} provides a multitude of functions operating on a dataset; some of these functions retrieve information from the dataset, others create plots summarizing some of the data contained, or modify the methylation values or sample annotation. In this section, we introduce the \cs{RnBSet} class and show a few examples on how to work with these objects in an interactive R session. The following sections give more details by describing each of the \cs{RnBeads} modules. With the exception of the import module, which prepares such objects from input data files, all of these modules operate directly on \cs{RnBSet} objects.
 
-	Here, we use a small example dataset accompaying the \cs{RnBeads} package. Readers are encouraged to try the functions presented here on the datasets created from their own studies. As a first example, by printing a dataset you can see a summary of its type and size.
+	\cs{RnBSet} objects come in different flavors (subclasses), depending on the data type that was used to create them: \cs{RnBeadSet} and \cs{RnBeadRawSet} objects are derived from processed and unprocessed array data respectively, while \cs{RnBiseqSet} objects result from processing bisulfite-sequencing data.
+
+	Here, we use a small example dataset which is contained in the \cs{RnBeads.hg19} package and comprises a subset of probes of the Infnium 450K dataset introduced earlier in this vignette.
+	Readers are encouraged to try the functions presented here on the full dataset or on their own datasets. As a first example, by printing a dataset you can see a summary of its type and size.
 
 <<>>=
 library(RnBeads.hg19)
@@ -266,32 +269,140 @@ data(small.example.object)
 rnb.set.example
 @
 
-	As shown in the code snippet above, the example dataset consists of 12 samples x 1,736 probes. In addition to measurements at individual CpGs, it has summarized the methylation state for 470 genomic tiling regions, 184 gene bodies, 184 gene promoters and 137 CpG islands. Notice the first line of printed for this dataset, it states that it is an object of type \cs{RnBeadRawSet}. These objects denote array-based datasets containing array-specific measurements, such as probe intensity values, detection p-values, and others. The following command shows the the first 4 columns of the sample annotation table:
+	As shown in the code snippet above, the example dataset consists of 12 samples $\times$ 1,736 probes. In addition to measurements at individual CpGs, it has summarized the methylation state for 470 genomic tiling regions, 184 gene bodies, 184 gene promoters and 137 CpG islands. Notice the first line of printed for this dataset, it states that it is an object of type \cs{RnBeadRawSet}. These objects denote array-based datasets containing array-specific measurements, such as probe intensity values, detection p-values, and others.
+
+	You can use the following functions in order to obtain the number of CpGs covered and the sample identifiers of the dataset:
+
+<<>>=
+nsites(rnb.set.example)
+samples(rnb.set.example)
+@
+	The following command shows the the first 4 columns of the sample annotation table:
 
 <<>>=
 pheno(rnb.set.example)[, 1:4]
+@
+
+Methylation values for individual CpGs can be obtained using the \cs{meth} command:
+
+<<>>=
+mm <- meth(rnb.set.example)
+@
+
+Let's take look at the distribution of methylation values in sample number 5 of our dataset:
+
+<<fig.height=3>>=
+hist(mm[,5], col="steelblue", breaks=50)
+@
+
+\cs{RnBSet} objects also contain summarized methylation levels for various region types. To inspect which region types are represented in an object use \cs{summarized.regions}:
+
+<<>>=
+summarized.regions(rnb.set.example)
 @
 
 The next commands instruct \cs{RnBeads} that the first column in the annotation table denotes sample identifiers, and extract the methylation beta values at the first five gene promoters for the first three samples:
 
 <<>>=
 rnb.options(identifiers.column="Sample_ID")
-meth(rnb.set.example, "promoters", TRUE, i=1:5, j=1:3)
+meth(rnb.set.example, type="promoters", row.names=TRUE, i=1:5, j=1:3)
 @
 
 Similarly, the method \cs{mval} is used to extract M values:
 
 <<>>=
-mval(rnb.set.example, "promoters", TRUE)[1:5, 1:3]
+mval(rnb.set.example, type="promoters", row.names=TRUE)[1:5, 1:3]
 @
+
+To get the coordinates and additional annotation for sites or regions contained in the dataset, use the \cs{annotation} function:
+
+<<>>=
+annot.sites <- annotation(rnb.set.example)
+head(annot.sites)
+annot.promoters <- annotation(rnb.set.example, type="promoters")
+head(annot.promoters)
+@
+
+Furthermore, indices of overlapping regions can be added to each annotated
+methylation site.
+
+<<>>=
+annot.sites.with.rgns <- annotation(rnb.set.example, include.regions=TRUE)
+head(annot.sites.with.rgns)
+@
+
+You can manipulate \cs{RnBSet} objects using several methods. Here, we show you
+how to remove samples and sites from the dataset and how to add columns to the sample annotation table:
+
+<<>>=
+# Remove samples
+rnb.set2 <- remove.samples(rnb.set.example, samples(rnb.set.example)[c(2, 6, 10)])
+setdiff(samples(rnb.set.example), samples(rnb.set2))
+
+# Remove probes which are not in CpG context
+notCpG <- annot.sites[,"Context"]!="CG"
+rnb.set.example <- remove.sites(rnb.set.example, notCpG)
+nsites(rnb.set.example)
+
+# Add a sample annotation column indicating whether the given
+# sample represents an iPS cell line
+is.hiPSC <- pheno(rnb.set.example)[, "Sample_Group"]=="hiPSC"
+rnb.set.example <- addPheno(rnb.set.example, is.hiPSC, "is_hiPSC")
+pheno(rnb.set.example)[, c("Sample_ID", "Cell_Line", "is_hiPSC")]
+@
+
+Since the example object was derived from an Infinium 450k experiment it also
+stores low-level information about the corresponding experiment, such as 
+measured intensities in each of the color channels, out-of-band intensities,
+number of beads, detection \textit{p}-values etc:
+
+<<>>=
+# Methylated ...
+Mint <- M(rnb.set.example, row.names=TRUE)
+Mint[1:5,1:3]
+# ...and unmethylated probe intensities
+Uint <- U(rnb.set.example, row.names=TRUE)
+Uint[1:5,1:3]
+# Infinium bead counts
+nbead <- covg(rnb.set.example, row.names=TRUE)
+nbead[1:5,1:3]
+# detection P-values
+pvals <- dpval(rnb.set.example, row.names=TRUE)
+pvals[1:5,1:3]
+@
+
+Moreover, the object also contains quality control information. RnBeads offers a
+number of diagnostic plots visualizing this information:
+
+<<fig.height=5>>=
+# boxplot of control probes
+rnb.plot.control.boxplot(rnb.set.example)
+# barplot of a selected control probe
+control.meta.data <- rnb.get.annotation("controls450")
+ctrl.probe<-paste0(unique(control.meta.data[["Target"]])[4], ".1")
+rnb.plot.control.barplot(rnb.set.example, ctrl.probe)
+@
+
+Finally, the full control probe intensities can be retrieved using method
+\cs{qc}:
+
+<<>>=
+qc_data<-qc(rnb.set.example)
+@
+
+\cs{qc\_data} is a list with elements \cs{Cy3} and \cs{Cy5} containing
+all Infinium control probe intensities for the green and red color channels
+respectively. It can be used for more advanced QC procedures.
+
 
 \section{Tailored Analysis: \cs{RnBeads} Modules}
 
 	In this section, we show how the package's modules can be invoked individually given
- 	suitable options and input data. Some modules depend on data generated by
-	other modules (c.f. Figure~\ref{fig:modules}). We also introduce useful
+ 	suitable options and input data. Most modules operate on the \cs{RnBSet} objects introduced in the previous section. Some modules depend on data generated by other modules (c.f. Figure~\ref{fig:modules}). We also introduce useful
 	parameter settings and report-independent stand-alone methods for methylation
 	analysis.
+
+	Note that the examples in this section operate on the complete dataset and therefore potentially take longer to execute than the operations that were executed on the reduced dataset introduced in the previous section.
 
 	To get started, let us initialize a new report directory prior to our
 	analysis. Keep in mind that \cs{RnBeads} does not overwrite existing reports
@@ -349,11 +460,8 @@ rnb.set <- rnb.execute.import(data.source=data.source,
 	\cs{rnb.set} is an object of class \cs{RnBeadRawSet}. This S4 class inherits
 	from class \cs{RnBSet} which is the main data container class in \cs{RnBeads}
 	and serves as input for many methods of the analysis pipeline.
-	\cs{RnBeadRawSet} contains slots for sample annotation (\cs{pheno}),
-	raw microarray intensities (\cs{M} and \cs{U}), methylation
-	values of sites and predefined genomic regions (accessible by the \cs{meth}
-	function), detection p-values (\cs{dpval}),
-	and quality control information (\cs{qc}):
+	Just like other \cs{RnBSet} objects, the \cs{RnBeadRawSet} class contains slots for sample annotation (\cs{pheno}) and methylation
+	values of sites and predefined genomic regions (accessible by the \cs{meth} function). In addition, it contains raw microarray intensities (\cs{M} and \cs{U} functions), detection p-values (\cs{dpval}) and quality control information (\cs{qc}):
 <<eval=FALSE>>=
 rnb.set
 summary(pheno(rnb.set))
@@ -365,27 +473,6 @@ dim(meth(rnb.set, type="promoters"))
 summary(meth(rnb.set, type="promoters"))
 summary(dpval(rnb.set))
 str(qc(rnb.set))
-samples(rnb.set)
-# Visualize the bimodal distribution of beta values in sample 5
-hist(meth(rnb.set)[, 5])
-@
-
-	You can manipulate \cs{RnBSet} objects using several methods:
-<<eval=FALSE>>=
-# Remove samples
-rnb.set2 <- remove.samples(rnb.set, samples(rnb.set)[c(2, 6, 10)])
-setdiff(samples(rnb.set), samples(rnb.set2))
-
-# Remove probes with a p-value > 0.01 in any sample
-any.bad.p.val <- apply(dpval(rnb.set)>0.01, 1, any)
-rnb.set3 <- remove.sites(rnb.set, any.bad.p.val)
-nrow(meth(rnb.set3))
-
-# Add a sample annotation column indicating whether the given
-# sample represents an iPS cell line
-is.hiPSC <- pheno(rnb.set)[, "Sample_Group"]=="hiPSC"
-rnb.set <- addPheno(rnb.set, is.hiPSC, "is_hiPSC")
-pheno(rnb.set)
 @
 
 
