@@ -1,3 +1,9 @@
+RnBeads 1.7.5
+=============
+
+ * Several minor bugfixes and performance improvements
+ * added a vignette section on working with RnBSet objects 
+
 RnBeads 1.7.4
 =============
 
