@@ -69,7 +69,7 @@ License: GPL-3
 biocViews: DNAMethylation, MethylationArray, MethylSeq, Epigenetics,
     QualityControl, Preprocessing, BatchEffect, DifferentialMethylation,
     Sequencing, CpGIsland, TwoChannel, DataImport
-Collate:
+Collate: 
     'CNV.R'
     'Report-class.R'
     'Report-methods.R'
@@ -91,6 +91,7 @@ Collate:
     'clusterArchitecture.R'
     'clusterArchitectureSGE.R'
     'clustering.R'
+    'combining.R'
     'computeCluster.R'
     'controlPlots.R'
     'controlPlotsBiSeq.R'
