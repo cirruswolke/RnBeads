@@ -382,10 +382,7 @@ plot.heatmap.symm <- function(report, tbl.symm, tbl.failures = NULL, fname) {
 	## Create a data frame with tests/p-values
 	tbl <- tbl.symm
 	tbl[upper.tri(tbl)] <- NA
-	tbl <- tbl[-1, -ncol(tbl)]
-	if (nrow(tbl.symm) == 2) {
-		tbl <- matrix(tbl, nrow = 1, ncol = 1, dimnames = list(rownames(tbl.symm)[2], colnames(tbl.symm)[1]))
-	}
+	tbl <- tbl[-1, -ncol(tbl), drop = FALSE]
 	tbl.melt <- melt(tbl, varnames = c("x", "y"))
 	colnames(tbl.melt)[3] <- "test"
 	if (do.tests) {
@@ -407,7 +404,7 @@ plot.heatmap.symm <- function(report, tbl.symm, tbl.failures = NULL, fname) {
 		## Create a data frame with test failures
 		tbl <- tbl.failures
 		tbl[upper.tri(tbl)] <- NA
-		tbl <- tbl[-1, -ncol(tbl)]
+		tbl <- tbl[-1, -ncol(tbl), drop = FALSE]
 		tbl.f.melt <- melt(tbl, varnames = c("x", "y"))
 		colnames(tbl.f.melt)[3] <- "failure"
 		tbl.f.melt[[1]] <- factor(as.character(tbl.f.melt[[1]]), levels = levels(tbl.melt[[1]]))
