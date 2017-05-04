@@ -975,7 +975,7 @@ rnb.run.qc <- function(rnb.set, dir.reports, init.configuration = !file.exists(f
 		if (inherits(rnb.set, "RnBeadRawSet")) {
 			signal.increases <- rnb.get.XY.shifts(rnb.set)
 		} else {
-			signal.increases <- NULL
+			signal.increases <- rnb.get.XY.shifts.biseq(rnb.set)
 		}
 		report <- rnb.section.gender.prediction(rnb.set, signal.increases, report)
 	}
