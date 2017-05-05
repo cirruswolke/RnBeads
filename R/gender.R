@@ -3,7 +3,7 @@
 ## created: 2014-02-28
 ## creator: Yassen Assenov
 ## ---------------------------------------------------------------------------------------------------------------------
-## Functions to infer gender from Infinium 450k data, and to visualize the results.
+## Functions to infer gender from Infinium 450k, EPIC and bisulfite sequencing data, and to visualize the results.
 ########################################################################################################################
 
 ## G L O B A L S #######################################################################################################
@@ -15,7 +15,7 @@ RNB.COLUMNS.PREDICTED.GENDER <- c("Predicted Male Probability", "Predicted Gende
 RNB.GENDER.COEFFICIENTS <- c(-3, 3, -1)
 
 ## Coefficients of a logistic regression model to predict gender based different coverages on the sex chromosomes
-RNB.GENDER.COEFFICIENTS.BISEQ <- c(3, 3, -0.2)
+RNB.GENDER.COEFFICIENTS.BISEQ <- c(5, 5, -0.5)
 
 ## F U N C T I O N S ###################################################################################################
 
@@ -174,7 +174,7 @@ rnb.set.update.predicted.gender <- function(rnb.set, shifts, pr.coefficients = R
 
 #' rnb.execute.gender.prediction
 #'
-#' Infers the gender of every sample in the given Infinium 450k dataset, based on average signal intensity values on
+#' Infers the gender of every sample in the given dataset, based on average signal intensity values on
 #' the autosomes and the sex chromosomes.
 #'
 #' @param rnb.set Methylation dataset as an object of type \code{\linkS4class{RnBeadRawSet}}.
@@ -297,14 +297,18 @@ rnb.section.gender.prediction <- function(rnb.set, shifts, report) {
 			}
 			if(inherits(rnb.set,'RnBeadRawSet')){
 			  xslope <- -RNB.GENDER.COEFFICIENTS[2] / RNB.GENDER.COEFFICIENTS[3]
-			  pp <- pp + ggplot2::geom_abline(intercept = RNB.GENDER.COEFFICIENTS[1], slope = xslope) +
+			  intc <- -RNB.GENDER.COEFFICIENTS[1] / RNB.GENDER.COEFFICIENTS[3]
+			  pp <- pp + ggplot2::geom_abline(intercept = intc, slope = xslope) +
 			    ggplot2::theme(plot.margin = unit(0.1 + c(0, 1, 0, 0), "in")) +
 			    ggplot2::theme(legend.position = c(1, 0.5), legend.justification = c(0, 0.5))
 			} else {
 			  xslope <- -RNB.GENDER.COEFFICIENTS.BISEQ[2] / RNB.GENDER.COEFFICIENTS.BISEQ[3]
-			  pp <- pp + ggplot2::geom_abline(intercept = RNB.GENDER.COEFFICIENTS.BISEQ[1], slope = xslope) +
+			  intc <- -RNB.GENDER.COEFFICIENTS.BISEQ[1] / RNB.GENDER.COEFFICIENTS.BISEQ[3]
+			  pp <- pp + ggplot2::geom_abline(intercept = intc, slope = xslope) +
 			    ggplot2::theme(plot.margin = unit(0.1 + c(0, 1, 0, 0), "in")) +
-			    ggplot2::theme(legend.position = c(1, 0.5), legend.justification = c(0, 0.5))
+			    ggplot2::theme(legend.position = c(1, 0.5), legend.justification = c(0, 0.5))+
+			    ggplot2::xlab('Mean coverage increase in the X chromosome')+
+			    ggplot2::ylab('Mean coverage increase in the Y chromosome')
 			}
 			fname <- paste0("gender_prediction_signals_", s.coloring)
 			rplot <- createReportPlot(fname, report, width = 8.2, height = 7.2)
