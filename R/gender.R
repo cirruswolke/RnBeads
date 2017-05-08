@@ -139,7 +139,10 @@ rnb.get.XY.shifts.biseq <- function(rnb.set) {
     c(t.signals[1], t.signals[2]) - t.signals[3]
   })
   )
-  return(shifts)
+  ## Scale the shifts for coverage differences, the number is the average coverage of the data
+  ## set on which logistic regression coefficients were calculated
+  scale <- mean(rowMeans(rnb.set@covg.sites[, , drop=FALSE],na.rm=TRUE),na.rm=TRUE)/7.5
+  return(shifts / scale)
 }
 
 ########################################################################################################################
