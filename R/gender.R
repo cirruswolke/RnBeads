@@ -103,7 +103,10 @@ rnb.get.XY.shifts <- function(rnb.set, signal.type = "raw") {
 #' @noRd
 rnb.get.XY.shifts.biseq <- function(rnb.set) {
   
-  probes.bad <- rnb.get.annotation('CpG', rnb.set@assembly)
+  #probes.bad <- rnb.get.annotation('CpG', rnb.set@assembly)
+  probes.bad <- annotation(rnb.set)
+  probes.bad <- GRanges(Rle(probes.bad$Chromosome),IRanges(start = probes.bad$Start,end = probes.bad$End),strand=Rle(probes.bad$Strand),probes.bad[,-(1:4)])
+  probes.bad <- split(probes.bad,seqnames(probes.bad))
   probes.max <- sapply(probes.bad, length)
   probes.bad <- lapply(probes.bad, function(x) { which((mcols(x)[, "SNPs"] != 0)) })
   probes.max <- probes.max - sapply(probes.bad, length)
@@ -125,7 +128,7 @@ rnb.get.XY.shifts.biseq <- function(rnb.set) {
   
   ## Validate that not too many sites are missing
   probes.max <- c(probes.max[gender.chroms], sum(probes.max) - sum(probes.max[gender.chroms]))
-  min.fraction <- 0.01
+  min.fraction <- 0.1
   if (!all(sapply(ii, length) / probes.max >= min.fraction)) {
     return(NULL)
   }
