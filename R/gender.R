@@ -15,7 +15,7 @@ RNB.COLUMNS.PREDICTED.GENDER <- c("Predicted Male Probability", "Predicted Gende
 RNB.GENDER.COEFFICIENTS <- c(-3, 3, -1)
 
 ## Coefficients of a logistic regression model to predict gender based different coverages on the sex chromosomes
-RNB.GENDER.COEFFICIENTS.BISEQ <- c(5, 5, -0.5)
+RNB.GENDER.COEFFICIENTS.BISEQ <- c(3.5, 2.7, -0.4)
 
 ## F U N C T I O N S ###################################################################################################
 

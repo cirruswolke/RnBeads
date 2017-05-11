@@ -403,6 +403,8 @@ rnb.plot.control.barplot<-function(
 	#get full set of probes
 	full.probe.set<-control.meta.data[[id.col]][control.meta.data[[target.col]] %in% rnb.infinium.control.targets(rnb.set@target)[targets]]
 	
+	probe.name<-gsub(" ", ".", probe)
+
 	if(! id %in% rownames(green)){
 		
 		plot.obj<-rnb.message.plot(sprintf("Box plot for control type %s not available", type))
@@ -432,7 +434,6 @@ rnb.plot.control.barplot<-function(
 		meta<-subset(control.meta.data, Address==id)
 	}
 
-	probe.name<-gsub(" ", ".", probe)
 
 	plot.name<-paste('ControlBarPlot', name.prefix, ifelse(numeric.names, 
 					match(id, full.probe.set), 
