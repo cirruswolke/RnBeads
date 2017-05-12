@@ -17,6 +17,25 @@ Combined dataset as an object of type inheriting \code{\linkS4class{RnBeadSet}}.
 \description{
 Concatenates two array-based datasets focusing on the common probes.
 }
+\details{
+\describe{
+  \item{Sample annotation tables}{This method expects that the sample annotation tables of the two datasets have
+     identical structures.}
+  \item{Genome assembly}{This method expects that the two datasets target the same genome assembly.}
+  \item{Platform}{The platform of the combined dataset is the most recent among the platforms of the input datasets.}
+  \item{Intensity values}{The combined dataset is of type \code{\linkS4class{RnBeadRawSet}} only when both input
+     datasets are of this type. Otherwise, any intensity value data is ignored.}
+  \item{Probes}{Only the common probes are included in the resulting dataset.}
+  \item{Regions}{Regions summarized in any of the input datasets are ignored. In the resulting dataset, regions are
+     summarized as specified in the analysis option \code{"region.types"}.}
+  \item{Quality control data}{QC data in the input datasets is ignored. The combined dataset includes no data on QC
+     probe intensities.}
+  \item{Infered covariates}{Inferred covariates in the input datasets are ignored. The combined dataset includes no
+     data on inferred covariates.}
+  \item{Disk dumping}{The combined dataset stores big tables on disk when the analysis option
+     \code{"disk.dump.big.matrices"} is enabled.}
+}
+}
 \author{
 Yassen Assenov
 }
