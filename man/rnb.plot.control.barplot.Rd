@@ -38,9 +38,9 @@ Per-sample bar plots of Illumina HumanMethylation control probes
 library(RnBeads.hg19)
 data(small.example.object)
 control.meta.data <- rnb.get.annotation("controls450")
-ctrl.probe<-paste0(unique(control.meta.data[["Target"]])[4], ".5")
-print(ctrl.probe) # EXTENSION.5
-rnb.control.barplot(rnb.set.example, ctrl.probe)
+ctrl.probe<-paste0(unique(control.meta.data[["Target"]])[4], ".3")
+print(ctrl.probe) # EXTENSION.3
+rnb.plot.control.barplot(rnb.set.example, ctrl.probe)
 }
 
 }
