@@ -104,7 +104,7 @@ rnb.combine.pheno <- function(dataset1, dataset2) {
 #'   \item{Genome assembly}{This method expects that the two datasets target the same genome assembly.}
 #'   \item{Platform}{The platform of the combined dataset is the most recent among the platforms of the input datasets.}
 #'   \item{Intensity values}{The combined dataset is of type \code{\linkS4class{RnBeadRawSet}} only when both input
-#'      datasets are of this type. Otherwise, any intensity value data is ignored.
+#'      datasets are of this type. Otherwise, any intensity value data is ignored.}
 #'   \item{Probes}{Only the common probes are included in the resulting dataset.}
 #'   \item{Regions}{Regions summarized in any of the input datasets are ignored. In the resulting dataset, regions are
 #'      summarized as specified in the analysis option \code{"region.types"}.}
