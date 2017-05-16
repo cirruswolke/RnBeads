@@ -12,7 +12,7 @@
 
 #' Combine dataset slots
 #' 
-#' Combines the data matrices of two datasets into a single one
+#' Combines the data matrices of two datasets into a single one.
 #' 
 #' @param m1    Matrix of the first dataset. Set this to \code{NULL} if the first dataset does not contain this slot.
 #' @param m2    Matrix of the second dataset. Set this to \code{NULL} if the second dataset does not contain this slot.
@@ -60,6 +60,32 @@ rnb.combine.matrices <- function(m1, m2, ii, nn, useff = rnb.getOption("disk.dum
 		}
 	}
 	mm
+}
+
+########################################################################################################################
+
+#' Combine pheno tables
+#' 
+#' Combines two sample annotation tables.
+#' 
+#' @param dataset1 First input dataset as an object of type inheriting \code{\linkS4class{RnBeadSet}}.
+#' @param dataset2 Second input dataset as an object of type inheriting \code{\linkS4class{RnBeadSet}}.
+#' @return Combined sample annotation table as a \code{data.frame}.
+#' 
+#' @author Yassen Assenov
+#' @noRd
+rnb.combine.pheno <- function(dataset1, dataset2) {
+	tbl1 <- dataset1@pheno
+	tbl2 <- dataset2@pheno
+	if (!identical(sapply(tbl1, class), sapply(tbl2, class))) {
+		stop("Mismatch in sample annotation tables")
+	}
+	for (i in which(sapply(tbl1, class) == "factor")) {
+		if (!identical(levels(tbl1[, i]), levels(tbl2[, i]))) {
+			stop("Mismatch in sample annotation tables")
+		}
+	}
+	rbind(tbl1, tbl2)
 }
 
 ########################################################################################################################
@@ -113,21 +139,11 @@ rnb.combine.arrays <- function(dataset1, dataset2) {
 	common.platform <- common.platform[intersect(names(common.platform), unique(i))]
 	common.platform <- unname(common.platform[1])
 	is.raw <- (inherits(dataset1, "RnBeadRawSet") && inherits(dataset2, "RnBeadRawSet"))
-	
+
 	## Combine sample annotation tables
-	tbl1 <- dataset1@pheno
-	tbl2 <- dataset2@pheno
-	if (!identical(sapply(tbl1, class), sapply(tbl2, class))) {
-		stop("Mismatch in sample annotation tables")
-	}
-	for (i in which(sapply(tbl1, class) == "factor")) {
-		if (!identical(levels(tbl1[, i]), levels(tbl2[, i]))) {
-			stop("Mismatch in sample annotation tables")
-		}
-	}
-	nn <- c(nrow(tbl1), nrow(tbl2))
-	rm(tbl1, tbl2)
-	
+	tbl <- rnb.combine.pheno(dataset1, dataset2)
+	nn <- c(nrow(dataset1@pheno), nrow(dataset2@pheno))
+
 	## Identify common probes
 	common.sites <- intersect(rownames(dataset1@sites), rownames(dataset2@sites))
 	if (length(common.sites) == 0) {
@@ -140,7 +156,7 @@ rnb.combine.arrays <- function(dataset1, dataset2) {
 	
 	## Combine the data matrices
 	result <- list(
-		"pheno" = rbind(tbl1, tbl2),
+		"pheno" = tbl,
 		"probes" = common.sites,
 		"platform" = common.platform,
 		"region.types" = rnb.region.types.for.analysis(dataset1@assembly),
@@ -166,8 +182,8 @@ rnb.combine.arrays <- function(dataset1, dataset2) {
 	
 	## Construct the resulting object
 	result <- do.call(ifelse(is.raw, "RnBeadRawSet", "RnBeadSet"), result)
-	rm(i, common.platform, is.raw, nn, common.sites, ii, useff, slot.names, slot.name, s.name)
-	
+	rm(tbl, i, common.platform, is.raw, nn, common.sites, ii, useff, slot.names, slot.name, s.name)
+
 	## Set normalization and background subtraction methods
 	if (dataset1@status$normalized == dataset2@status$normalized) {
 		result@status$normalized <- dataset1@status$normalized
