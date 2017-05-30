@@ -15,7 +15,7 @@ RNB.COLUMNS.PREDICTED.GENDER <- c("Predicted Male Probability", "Predicted Gende
 RNB.GENDER.COEFFICIENTS <- c(-3, 3, -1)
 
 ## Coefficients of a logistic regression model to predict gender based different coverages on the sex chromosomes
-RNB.GENDER.COEFFICIENTS.BISEQ <- c(3.5, 2.7, -0.4)
+RNB.GENDER.COEFFICIENTS.BISEQ <- c(2.06, 1.66, -0.23)
 
 ## F U N C T I O N S ###################################################################################################
 
@@ -131,19 +131,39 @@ rnb.get.XY.shifts.biseq <- function(rnb.set) {
   min.fraction <- 0.1
   if (!all(sapply(ii, length) / probes.max >= min.fraction)) {
     return(NULL)
-  }
+}
   
   ## Calculate signal shifts
-  shifts <- t(apply(rnb.set@covg.sites[, , drop = FALSE], 2, function(x) {
-    t.signals <- sapply(ii, function(i) { mean(x[i], na.rm = TRUE) })
-    c(t.signals[1], t.signals[2]) - t.signals[3]
-  })
-  )
+#  shifts <- t(apply(rnb.set@covg.sites[, , drop = FALSE], 2, function(x) {
+#    t.signals <- sapply(ii, function(i) { mean(x[i], na.rm = TRUE) })
+#    c(t.signals[1], t.signals[2]) - t.signals[3]
+#  })
+#  )
+  # Use the resource saving version
+  shifts <- t(sampleCovgApply(rnb.set,fn=function(x){
+	t.signals <- sapply(ii, function(i) { mean(x[i], na.rm = TRUE) })
+   c(t.signals[1], t.signals[2]) - t.signals[3]
+ }))
   ## Scale the shifts for coverage differences, the number is the average coverage of the data
   ## set on which logistic regression coefficients were calculated
-  scale <- mean(rowMeans(rnb.set@covg.sites[, , drop=FALSE],na.rm=TRUE),na.rm=TRUE)/7.5
-  return(shifts / scale)
+  scale <- mean(sampleCovgApply(rnb.set,function(x)mean(x,na.rm=TRUE)),na.rm=TRUE)
+  return(shifts/(scale/10))
 }
+
+sampleCovgApply <- function(object, fn, type="sites", ...) {
+		if (!(is.character(type) && length(type) == 1 && (!is.na(type)))) {
+			stop("invalid value for type")
+		}
+		if (type %in% c("sites", object@target)) {
+			result <- nrow(object@covg.sites)
+		} else if (!(type %in% names(object@regions))) {
+			stop("unsupported region type")
+		}
+		res <- sapply(1:length(samples(object)), FUN=function(j){
+			fn(covg(object, type=type, j=j), ...)
+		})
+		return(res)
+	}
 
 ########################################################################################################################
 
