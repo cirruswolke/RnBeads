@@ -1078,7 +1078,7 @@ simpleGlmnetBiseq <- function(trainRnBSet,filePath=""){
 run.cross.validation <- function(rnbSet,report){
 	logger.start("10-fold Cross Validation")
 	if(length(samples(rnbSet))<30){
-		txt <- "ATTETION: Cross-validated correlation result might be misleading, since there are less than 3 samples per fold."
+		txt <- "ATTENTION: Cross-validated correlation result might be misleading, since there are less than 3 samples per fold."
 		logger.warning(txt)
 		report <- rnb.add.paragraph(report,txt)
 	}
