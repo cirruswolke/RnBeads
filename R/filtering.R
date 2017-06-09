@@ -1014,7 +1014,7 @@ rnb.section.high.coverage.removal.internal <- function(report, dataset.class, fi
 		fname <- rnb.save.removed.sites(anno.table[filtered, ], report, fname)
 
 		txt <- length(filtered)
-		txt <- c(ifelse(txt == 1, paste("One", txt.site), paste(txt, txt.sites)), " was detected as a high coverage ",
+		txt <- c(ifelse(txt == 1, paste("One", txt.site, "was"), paste(txt, txt.sites, "were")), " detected as high coverage ",
 			"outlier in at least one sample and removed at this step. An outlier site is defined as one whose ",
 			"coverage exceeds ", HIGH.COVER.OUTLIER.FACTOR, " times the ", HIGH.COVER.OUTLIER.QUANTILE, "-quantile ",
 			"of coverage values in its sample. The list of removed ", txt.sites, " is available in a <a href=\"", fname,
