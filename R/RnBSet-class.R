@@ -2256,7 +2256,7 @@ setMethod("sampleCovgApply", signature(object = "RnBSet"),
 			stop("invalid value for type")
 		}
 		if (type %in% c("sites", object@target)) {
-			result <- nrow(object@meth.sites)
+			result <- nrow(object@covg.sites)
 		} else if (!(type %in% names(object@regions))) {
 			stop("unsupported region type")
 		}

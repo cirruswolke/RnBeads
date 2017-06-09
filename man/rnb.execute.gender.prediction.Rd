@@ -14,7 +14,7 @@ The possibly modified dataset. If gender could be predicted, the sample annotati
 two more columns - \code{"Predicted Male Probability"} and \code{"Predicted Gender"}.
 }
 \description{
-Infers the gender of every sample in the given Infinium 450k dataset, based on average signal intensity values on
+Infers the gender of every sample in the given dataset, based on average signal intensity values on
 the autosomes and the sex chromosomes.
 }
 \examples{

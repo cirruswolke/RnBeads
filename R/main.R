@@ -974,8 +974,8 @@ rnb.run.qc <- function(rnb.set, dir.reports, init.configuration = !file.exists(f
 	if (.hasSlot(rnb.set, "inferred.covariates") && isTRUE(rnb.set@inferred.covariates$gender)) {
 		if (inherits(rnb.set, "RnBeadRawSet")) {
 			signal.increases <- rnb.get.XY.shifts(rnb.set)
-		} else {
-			signal.increases <- NULL
+		} else if (inherits(rnb.set, "RnBiseqSet")) {
+			signal.increases <- rnb.get.XY.shifts.biseq(rnb.set)
 		}
 		report <- rnb.section.gender.prediction(rnb.set, signal.increases, report)
 	}
