@@ -167,7 +167,7 @@ rnb.combine.arrays <- function(dataset1, dataset2) {
 	if (is.raw) {
 		slot.names <- c(slot.names, "M", "U", "M0", "U0", "bead.counts.M", "bead.counts.U")
 	} else {
-		slot.names <- c(slot.names, "betas", "bead.counts")
+		slot.names <- c(slot.names, "betas")
 	}
 	for (slot.name in slot.names) {
 		if (slot.name == "p.values") {
