@@ -100,7 +100,7 @@ performGOenrichment.diffMeth.entrez <- function(gids,uids,ontology,assembly="hg1
 #' }
 performGoEnrichment.diffMeth <- function(rnbSet,diffmeth,ontologies=c("BP","MF"),rank.cuts.region=c(100,500,1000),add.auto.rank.cut=TRUE,rerank=TRUE,verbose=TRUE,...){
 	gene.id.col <- "entrezID"
-	logger.start("Differential Methylation Enrichment Analysis")
+	logger.start("Differential Methylation GO Enrichment Analysis")
 	if (!is.element(assembly(rnbSet),c("hg19","hg38","mm9","mm10","rn5","zv9"))){
 		logger.warning(c("Enrichment analysis currently not supported for genome assembly:",assembly(rnbSet),"--> skipping enrichment analysis"))
 		logger.completed()
