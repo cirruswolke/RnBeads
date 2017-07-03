@@ -1965,10 +1965,10 @@ rnb.section.diffMeth.site <- function(rnbSet,diffmeth,report,gzTable=FALSE){
 ### @aliases rnb.section.diffMeth.region
 ### @param diffmeth RnBDiffMeth object. See \code{\link{RnBDiffMeth-class}} for details.
 ### @param report report object to which the content is added
-### @param dm.enrich If enrichment analysis reports are desired this argument should not be \code{NULL} (which is the default value
-###                  it should be an object of type \code{DiffMeth.enrich} (see \code{performEnrichment.diffMeth()} for details)
+### @param dm.go.enrich If enrichment analysis reports are desired this argument should not be \code{NULL} (which is the default value
+###                  it should be an object of type \code{DiffMeth.go.enrich} (see \code{performGoEnrichment.diffMeth()} for details)
 ### @return the updated report object
-rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gzTable=FALSE){
+rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL,gzTable=FALSE){
 	if (length(get.comparisons(diffmeth))<1){
 		stop("no valid comparisons")
 	}
@@ -2185,16 +2185,16 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 	logger.completed()
 	
 	sectionText <- "No Enrichment Analysis was conducted"
-	if (class(dm.enrich)=="DiffMeth.enrich" & length(dm.enrich$region)>0){
+	if (class(dm.go.enrich)=="DiffMeth.go.enrich" & length(dm.go.enrich$region)>0){
 		sectionText <- "Enrichment Analysis was conducted. The wordclouds and tables below contains significant GO terms as determined by a hypergeometric test."
 	}
 	report <- rnb.add.section(report, 'Enrichment Analysis', sectionText, level = 2)
-	if (class(dm.enrich)=="DiffMeth.enrich" && length(dm.enrich$region)>0){
+	if (class(dm.go.enrich)=="DiffMeth.go.enrich" && length(dm.go.enrich$region)>0){
 		logger.start("Adding enrichment analysis results")
 		rnb.require("annotate")
-		comps <- names(dm.enrich$region)
+		comps <- names(dm.go.enrich$region)
 		names(comps) <- paste("comp",1:length(comps),sep="")
-		ontol <- names(dm.enrich$region[[1]])
+		ontol <- names(dm.go.enrich$region[[1]])
 		names(ontol) <- paste("ontol",1:length(ontol),sep="")
 		names(reg.types) <- paste("reg",1:length(reg.types),sep="")
 		hyper.hypo <- c("hypermethylated","hypomethylated")
@@ -2206,9 +2206,9 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 		}
 		rank.cuts <- paste("combined rank among the ",diffRegionRankCut," best ranking regions",sep="")
 		rank.cuts <- c(rank.cuts,paste("automatically selected rank cutoff"))
-		rank.cuts.names.dm.enrich <-  paste("rankCut_",c(diffRegionRankCut,"autoSelect"),sep="")
+		rank.cuts.names.dm.go.enrich <-  paste("rankCut_",c(diffRegionRankCut,"autoSelect"),sep="")
 		names(rank.cuts) <- c(paste("rc",1:length(diffRegionRankCut),sep=""),"rcAuto")
-		names(rank.cuts.names.dm.enrich) <- c(paste("rc",1:length(diffRegionRankCut),sep=""),"rcAuto")
+		names(rank.cuts.names.dm.go.enrich) <- c(paste("rc",1:length(diffRegionRankCut),sep=""),"rcAuto")
 		setting.names <- list(
 				'comparison' = comps,
 				'Hypermethylation/hypomethylation' = hyper.hypo,
@@ -2223,9 +2223,9 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 			hh <- hyper.hypo[hhn]
 			oo <- ontol[oon]
 			rr <- reg.types[rrn]
-			rc <- rank.cuts.names.dm.enrich[rcn]
+			rc <- rank.cuts.names.dm.go.enrich[rcn]
 
-			ee <- dm.enrich$region[[cc]][[oo]][[rr]][[rc]][[hhn]]
+			ee <- dm.go.enrich$region[[cc]][[oo]][[rr]][[rc]][[hhn]]
 			kk <- paste(c(ccn,hhn,oon,rrn,rcn),collapse="_")
 			if (!is.null(ee)){
 				if (length(sigCategories(ee))>0){
@@ -2245,9 +2245,9 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 			hh <- hyper.hypo[hhn]
 			oo <- ontol[oon]
 			rr <- reg.types[rrn]
-			rc <- rank.cuts.names.dm.enrich[rcn]
+			rc <- rank.cuts.names.dm.go.enrich[rcn]
 
-			ee <- dm.enrich$region[[cc]][[oo]][[rr]][[rc]][[hhn]]
+			ee <- dm.go.enrich$region[[cc]][[oo]][[rr]][[rc]][[hhn]]
 							
 			kk <- paste(c(ccn,hhn,oon,rrn,rcn),collapse="_")
 			figName <- paste("enrichGOwordcloud_",kk,sep="")

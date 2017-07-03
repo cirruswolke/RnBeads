@@ -75,7 +75,7 @@ performGOenrichment.diffMeth.entrez <- function(gids,uids,ontology,assembly="hg1
 	return(hgOver)
 }
 
-#' performEnrichment.diffMeth
+#' performGoEnrichment.diffMeth
 #'
 #' performs Geno Ontology (GO) enrichment analysis for a given differential methylation table.
 #' @author Fabian Mueller
@@ -87,7 +87,7 @@ performGOenrichment.diffMeth.entrez <- function(gids,uids,ontology,assembly="hg1
 #' @param rerank For deterimining differential methylation: should the ranks be ranked again or should the absolute ranks be used.
 #' @param verbose Enable for detailed status report
 #' @param ... arguments passed on to the parameters of \code{GOHyperGParams} from the \code{GOstats} package
-#' @return a DiffMeth.enrich object (S3) containing the following attributes
+#' @return a DiffMeth.go.enrich object (S3) containing the following attributes
 #' \item{region}{Enrichment information for differential methylation on the region level. See \code{GOHyperGresult} from the \code{GOstats} package for furthert details}
 #' @export
 #' @examples
@@ -96,9 +96,9 @@ performGOenrichment.diffMeth.entrez <- function(gids,uids,ontology,assembly="hg1
 #' data(small.example.object)
 #' logger.start(fname=NA)
 #' dm <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Sample_Group","Treatment"))
-#' res <- performEnrichment.diffMeth(rnb.set.example,dm)
+#' res <- performGoEnrichment.diffMeth(rnb.set.example,dm)
 #' }
-performEnrichment.diffMeth <- function(rnbSet,diffmeth,ontologies=c("BP","MF"),rank.cuts.region=c(100,500,1000),add.auto.rank.cut=TRUE,rerank=TRUE,verbose=TRUE,...){
+performGoEnrichment.diffMeth <- function(rnbSet,diffmeth,ontologies=c("BP","MF"),rank.cuts.region=c(100,500,1000),add.auto.rank.cut=TRUE,rerank=TRUE,verbose=TRUE,...){
 	gene.id.col <- "entrezID"
 	logger.start("Differential Methylation Enrichment Analysis")
 	if (!is.element(assembly(rnbSet),c("hg19","hg38","mm9","mm10","rn5","zv9"))){
@@ -111,11 +111,11 @@ performEnrichment.diffMeth <- function(rnbSet,diffmeth,ontologies=c("BP","MF"),r
 	skipSites <- !includes.sites(diffmeth)
 	diff.col.reg <- "mean.mean.diff"
 	if (skipSites) diff.col.reg <- "mean.diff"
-	dm.enrich <- list(probe=list(),region=list())
+	dm.go.enrich <- list(probe=list(),region=list())
 	for (cc in comps){
 		logger.start(c("Comparison: ",cc))
-		dm.enrich$probe[[cc]] <- list()
-		dm.enrich$region[[cc]] <- list()
+		dm.go.enrich$probe[[cc]] <- list()
+		dm.go.enrich$region[[cc]] <- list()
 		for (oo in ontologies){
 			logger.start(c("Ontology: ",oo))
 			logger.start("Region Level")
@@ -198,13 +198,13 @@ performEnrichment.diffMeth <- function(rnbSet,diffmeth,ontologies=c("BP","MF"),r
 				names(dm.en.region.list.list)[length(dm.en.region.list.list)] <- rt
 				logger.completed()
 			}
-			dm.enrich$region[[cc]][[oo]] <- dm.en.region.list.list
+			dm.go.enrich$region[[cc]][[oo]] <- dm.en.region.list.list
 			logger.completed()
 			logger.completed()
 		}
 		logger.completed()
 	}
-	class(dm.enrich) <- "DiffMeth.enrich"
+	class(dm.go.enrich) <- "DiffMeth.go.enrich"
 	logger.completed()
-	return(dm.enrich)
+	return(dm.go.enrich)
 }

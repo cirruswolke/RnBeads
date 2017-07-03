@@ -743,9 +743,9 @@ rnb.run.analysis <- function(dir.reports, data.source=NULL, sample.sheet=NULL, d
 			if (!is.null(result.diffmeth) && !is.null(result.diffmeth$diffmeth)){
 				diffmeth.path <- file.path(dir.reports, "differential_rnbDiffMeth")
 				save.rnb.diffmeth(result.diffmeth$diffmeth, diffmeth.path)
-				diffmeth.enrichment <- result.diffmeth$dm.enrich
-				if (!is.null(diffmeth.enrichment)){
-					save(diffmeth.enrichment, file=file.path(diffmeth.path, "enrichment.RData"))
+				diffmeth.go.enrichment <- result.diffmeth$dm.go.enrich
+				if (!is.null(diffmeth.go.enrichment)){
+					save(diffmeth.go.enrichment, file=file.path(diffmeth.path, "enrichment_go.RData"))
 				}
 			} else {
 				logger.warning("Differential methylation object not saved")
@@ -1491,10 +1491,10 @@ rnb.run.differential <- function(rnb.set, dir.reports,
 		)
 		rnb.cleanMem()
 		if (!is.null(diffmeth) && rnb.getOption("differential.enrichment") && (length(reg.types)>0)){
-			dm.enrich <- performEnrichment.diffMeth(rnb.set,diffmeth,verbose=TRUE)
+			dm.go.enrich <- performGoEnrichment.diffMeth(rnb.set,diffmeth,verbose=TRUE)
 			rnb.cleanMem()
 		} else {
-			dm.enrich <- NULL
+			dm.go.enrich <- NULL
 			logger.info(c("Skipping enrichment analysis of differentially methylated regions"))
 		}
 	logger.completed()
@@ -1511,13 +1511,13 @@ rnb.run.differential <- function(rnb.set, dir.reports,
 			report <- rnb.section.diffMeth.site(rnb.set,diffmeth,report,gzTable=gz)
 		}
 		if (length(get.region.types(diffmeth))>0){
-			report <- rnb.section.diffMeth.region(rnb.set,diffmeth,report,dm.enrich=dm.enrich,gzTable=gz)
+			report <- rnb.section.diffMeth.region(rnb.set,diffmeth,report,dm.go.enrich=dm.go.enrich,gzTable=gz)
 		}
 	}
 	logger.completed()
 
 	module.complete(report, close.report, show.report)
-	invisible(list(report=report,diffmeth=diffmeth,dm.enrich=dm.enrich))
+	invisible(list(report=report,diffmeth=diffmeth,dm.go.enrich=dm.go.enrich))
 }
 
 ########################################################################################################################

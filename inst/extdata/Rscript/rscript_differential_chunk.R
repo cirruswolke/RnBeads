@@ -97,18 +97,18 @@ logger.start("Differential Methylation")
 			# disk.dump=disk.dump,disk.dump.dir=paste0(cmdArgs$output,"_diffMethTableDir"))
 			disk.dump=disk.dump,disk.dump.dir=paste0(tempfile(pattern=""),"_diffMethTableDir"))
 	if (rnb.getOption("differential.enrichment")){
-		dm.enrich <- performEnrichment.diffMeth(rnb.set,diffmeth,verbose=FALSE)
+		dm.go.enrich <- performGoEnrichment.diffMeth(rnb.set,diffmeth,verbose=FALSE)
 	} else {
-		dm.enrich <- NULL
+		dm.go.enrich <- NULL
 		logger.info(c("Skipping enrichment analysis of differentially methylated regions"))
 	}
 
 	logger.start("Saving")
 		diffmeth.path <- file.path(cmdArgs$output,paste0(module.name,"_",chunk.id,"_rnbDiffMeth"))
 		save.rnb.diffmeth(diffmeth, diffmeth.path)
-		diffmeth.enrichment <- dm.enrich
-		if (!is.null(diffmeth.enrichment)){
-			save(diffmeth.enrichment, file=file.path(diffmeth.path, "enrichment.RData"))
+		diffmeth.go.enrichment <- dm.go.enrich
+		if (!is.null(diffmeth.go.enrichment)){
+			save(diffmeth.go.enrichment, file=file.path(diffmeth.path, "enrichment_go.RData"))
 		}
 	logger.completed()
 logger.completed()

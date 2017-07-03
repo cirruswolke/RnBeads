@@ -574,7 +574,7 @@ logger.machine.name <- function(){
 #' combine.diffMeth.objs
 #'
 #' combine differential methylation objects (output from \code{rnb.run.differential}).
-#' To be more precise, the \code{diffmeth} and \code{dm.enrich} are merged.
+#' To be more precise, the \code{diffmeth} and \code{dm.go.enrich} are merged.
 #' individual objects that are merged are assumed to belong to the same analysis
 #' and vary only in their indexing of region types and comparisons
 #' @param obj.list a list containing outputs from \code{rnb.run.differential}
@@ -589,7 +589,7 @@ combine.diffMeth.objs <- function(obj.list){
 	ontologies <- c("BP","MF")
 	ontol.list.empty <- rep(list(list()),length(ontologies))
 	names(ontol.list.empty) <- ontologies
-	dm.enrich.comb <- list(probe=list(),region=list())
+	dm.go.enrich.comb <- list(probe=list(),region=list())
 	
 	diffmeth <- obj.list[[1]]$diffmeth
 	for (i in 1:length(obj.list)){
@@ -598,24 +598,24 @@ combine.diffMeth.objs <- function(obj.list){
 			diffmeth <- join.diffMeth(diffmeth,dm)
 		}
 		
-		#merge dm.enrich parts
+		#merge dm.go.enrich parts
 		new.comps <- get.comparisons(dm)
 		if (i > 1){
 			new.comps <- new.comps[!(new.comps %in% get.comparisons(diffmeth))]
 		}
 		n.new.comps <- length(new.comps)
-		if (!is.null(obj.list[[i]]$dm.enrich)) {
-			dmer <- obj.list[[i]]$dm.enrich$region
+		if (!is.null(obj.list[[i]]$dm.go.enrich)) {
+			dmer <- obj.list[[i]]$dm.go.enrich$region
 			#add empty lists for new comparisons
 			new.comp.list.empty <- rep(list(ontol.list.empty),n.new.comps)
 			names(new.comp.list.empty) <- new.comps
-			dm.enrich.comb$region <- c(dm.enrich.comb$region,new.comp.list.empty)
+			dm.go.enrich.comb$region <- c(dm.go.enrich.comb$region,new.comp.list.empty)
 			#fill in the empty entries with the new entries
 			for (cc in names(dmer)){
 				for (oo in names(dmer[[cc]])){
 					for (rr in names(dmer[[cc]][[oo]])){
-						if (!is.element(rr,names(dm.enrich.comb$region[[cc]][[oo]]))){
-							dm.enrich.comb$region[[cc]][[oo]][[rr]] <- dmer[[cc]][[oo]][[rr]]
+						if (!is.element(rr,names(dm.go.enrich.comb$region[[cc]][[oo]]))){
+							dm.go.enrich.comb$region[[cc]][[oo]][[rr]] <- dmer[[cc]][[oo]][[rr]]
 						}
 					}
 				}
@@ -624,12 +624,12 @@ combine.diffMeth.objs <- function(obj.list){
 	}
 	
 	#set emtpy enrichment analysis to NULL object
-	if (length(dm.enrich.comb$region)==0){
-		dm.enrich.comb <- NULL
+	if (length(dm.go.enrich.comb$region)==0){
+		dm.go.enrich.comb <- NULL
 	} else {
-		class(dm.enrich.comb) <- "DiffMeth.enrich"
+		class(dm.go.enrich.comb) <- "DiffMeth.go.enrich"
 	}
 
-	res <- list(report=NULL,diffmeth=diffmeth,dm.enrich=dm.enrich.comb)
+	res <- list(report=NULL,diffmeth=diffmeth,dm.go.enrich=dm.go.enrich.comb)
 	return(res)
 }
