@@ -343,6 +343,7 @@ performLolaEnrichment.diffMeth <- function(rnbSet, diffmeth, lolaDbPaths, rank.c
 		dm.lola.enrich$probe[[cc]] <- list()
 		dm.lola.enrich$region[[cc]] <- list()
 	}
+	logger.start("Differential Methylation LOLA Enrichment Analysis")
 	for (rt in region.types){
 		logger.start(c("Region Type:",rt))
 			annot <- annotation(rnbSet, type=rt)
