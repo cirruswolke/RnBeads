@@ -1,11 +1,14 @@
 ########################################################################################################################
 ## differentialMethylation.R
-## created: 2012-09-03
+## created: 2017-07-04
 ## creator: Fabian Mueller
 ## ---------------------------------------------------------------------------------------------------------------------
 ## Methods for enrichment analysis.
 ########################################################################################################################
 
+################################################################################
+# GO enrichment analyses
+################################################################################
 #' performGOenrichment.diffMeth.entrez
 #'
 #' performs Gene Ontology (GO) enrichment analysis for a list of Entrez identifiers
@@ -207,4 +210,230 @@ performGoEnrichment.diffMeth <- function(rnbSet,diffmeth,ontologies=c("BP","MF")
 	class(dm.go.enrich) <- "DiffMeth.go.enrich"
 	logger.completed()
 	return(dm.go.enrich)
+}
+
+################################################################################
+# LOLA enrichment analyses
+################################################################################
+#' downloadLolaDbs
+#' 
+#' Downloading prepared LOLA DBs from server
+#' @param dest    destination directory
+#' @param dbs     vector of names of LOLA DBs to be downloaded. Currently 'LOLACore' and 'LOLAExt'
+#'                are supported
+#' @details
+#' Requires a stable internet connection. Could take a while depending on the size of the database and the internet connection
+#' @return a list containing vectors of directory names for each available genome assembly
+#' @author Fabian Mueller
+#' @noRd
+#' @examples
+#' \donttest{
+#' lolaDest <- tempfile()
+#' dir.create(lolaDest)
+#' lolaDirs <- downloadLolaDbs(lolaDest, dbs="LOLACore")
+#' }
+downloadLolaDbs <- function(dest, dbs=c("LOLACore")){
+	res <- list()
+	for (dbName in dbs){
+		dbDownloadLink <- NULL
+		if (dbName == "LOLACore"){
+			dbDownloadLink <- "http://regiondb.s3.amazonaws.com/LOLACoreCaches_170206.tgz"
+		} else if (dbName == "LOLAExt"){
+			dbDownloadLink <- "http://regiondb.s3.amazonaws.com/LOLAExtCaches_170206.tgz"
+		}
+		if (is.null(dbDownloadLink)){
+			logger.error(c("Invalid DB name:", dbName))
+		}
+
+		dbDir <- file.path(dest, dbName)
+		if (dir.exists(dbDir)){
+			logger.warning(c("Directory", dbDir, "already existing --> skipping download"))
+		} else {
+			tmpFn <- tempfile(fileext=".tgz")
+			logger.start(c("Downloading from", dbDownloadLink))
+			download.file(dbDownloadLink, destfile=tmpFn, mode = "wb")
+			exDir <- tempfile()
+			untar(tmpFn, exdir=exDir)
+			baseDir <- grep(paste0(dbName, "$"), list.dirs(exDir, recursive=TRUE), value=TRUE)
+			if (length(baseDir) < 1) logger.error(c("Downloaded archive does not contain a subdirectory", dbName))
+			dir.create(dbDir)
+			file.copy(baseDir, dest, recursive=TRUE)
+			unlink(c(tmpFn, exDir), recursive=TRUE) # remove temp files
+			logger.completed()
+		}
+		assemblies <- list.dirs(dbDir, full.names=FALSE, recursive=FALSE)
+		for (aa in assemblies){
+			res[[aa]] <- c(res[[aa]], file.path(dbDir, aa))
+		}
+	}
+	return(res)
+}
+
+#' loadLolaDbs
+#' 
+#' Load LOLA databeses from disk and merge them
+#' @param lolaDbPaths  vector of names of LOLA DB paths to be loaded
+#' 
+#' @return LOLA DB list as returned by \code{LOLA::loadRegionDB}
+#' @author Fabian Mueller
+#' @noRd
+#' @examples
+#' \donttest{
+#' # download LOLA DB
+#' lolaDest <- tempfile()
+#' dir.create(lolaDest)
+#' lolaDirs <- downloadLolaDbs(lolaDest, dbs="LOLACore")
+#' lolaDb <- loadLolaDbs(lolaDirs[["hg19"]])
+#' }
+loadLolaDbs <- function(lolaDbPaths){
+	require(data.table) #explicitely load data.table to adress LOLA namespace issues
+	require(LOLA)
+	require(simpleCache) # TODO: include requirement in dependencies
+	logger.start("Loading LOLA DBs")
+		lolaDb <- loadRegionDB(lolaDbPaths[1])
+		if (length(lolaDbPaths)>1){
+			for (i in 2:length(lolaDbPaths)){
+				lolaDb <- mergeRegionDBs(lolaDb, loadRegionDB(lolaDbPaths[i]))
+			}
+		}
+	logger.completed()
+	return(lolaDb)
+}
+
+#' performLolaEnrichment.diffMeth
+#'
+#' performs LOLA enrichment analysis for a given differential methylation table.
+#' @author Fabian Mueller
+#' @param rnbSet RnBSet object for which dirrential methylation was computed
+#' @param diffmeth RnBDiffMeth object. See \code{\link{RnBDiffMeth-class}} for details.
+#' @param lolaDbPaths LOLA database paths
+#' @param rank.cuts.region Cutoffs for combined ranking that are used to determine differentially methylated regions
+#' @param add.auto.rank.cut flag indicating whether an automatically computed cut-off should also be considered.
+#' @param rerank For deterimining differential methylation: should the ranks be ranked again or should the absolute ranks be used.
+#' @param verbose Enable for detailed status report
+#' @param ... arguments passed on to the parameters of \code{GOHyperGParams} from the \code{LOLA} package
+#' @return a DiffMeth.lola.enrich object (S3) containing the following attributes
+#' \item{region}{Enrichment information for differential methylation on the region level. A \code{data.table} object
+#' as returned by the \code{runLOLA} function from the \code{LOLA} package for furthert details. Each element will contain different
+#' user sets for different rank cutoffs and hyper/hypomethylation events(\code{userSet} column)}
+#' \item{lolaDb}{The loaded \code{lolaDb} object containing the merged databases as returned by \code{LOLA::loadRegionDB}}
+#' @export
+#' @examples
+#' \donttest{
+#' library(RnBeads.hg19)
+#' data(small.example.object)
+#' logger.start(fname=NA)
+#' # compute differential methylation
+#' dm <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Sample_Group","Treatment"))
+#' # download LOLA DB
+#' lolaDest <- tempfile()
+#' dir.create(lolaDest)
+#' lolaDirs <- downloadLolaDbs(lolaDest, dbs="LOLACore")
+#' # perform enrichment analysis
+#' res <- performLolaEnrichment.diffMeth(rnb.set.example,dm,lolaDirs[["hg19"]])
+#' }
+performLolaEnrichment.diffMeth <- function(rnbSet, diffmeth, lolaDbPaths, rank.cuts.region=c(100,500,1000), add.auto.rank.cut=TRUE, rerank=TRUE, verbose=TRUE){
+	nCores <- ifelse(parallel.isEnabled(), parallel.getNumWorkers(), 1)
+	lolaDb <- loadLolaDbs(lolaDbPaths)
+	comps <- get.comparisons(diffmeth)
+	region.types <- get.region.types(diffmeth)
+	diff.col.reg <- "mean.mean.diff"
+	dm.lola.enrich <- list(probe=list(),region=list())
+	for (cc in comps){
+		dm.lola.enrich$probe[[cc]] <- list()
+		dm.lola.enrich$region[[cc]] <- list()
+	}
+	for (rt in region.types){
+		logger.start(c("Region Type:",rt))
+			annot <- annotation(rnbSet, type=rt)
+			# convert annotaiton to GRanges object
+			univGr <- data.frame2GRanges(annot, chrom.column="Chromosome", start.column="Start", end.column="End", assembly=assembly(rnbSet), sort.result=FALSE)
+
+			lolaUserSets <- list()
+
+			i <- 0
+			userSetNames <- list()
+			for (cc in comps){
+				logger.start(c("Comparison: ",cc))
+					userSetNames[[cc]] <- list()
+
+					dmt <- get.table(diffmeth,cc,rt,undump=TRUE,return.data.frame=TRUE)
+
+					rrs <- dmt[,"combinedRank"]
+					rrs.hyper <- rrs
+					rrs.hypo <- rrs
+					rrs.hyper[dmt[,diff.col.reg] <= 0] <- NA
+					rrs.hypo[dmt[,diff.col.reg] >= 0] <- NA
+					#automatically select rank cutoff
+					rc.auto <- 0L
+					if (add.auto.rank.cut){
+						rc.auto <- as.integer(auto.select.rank.cut(dmt$comb.p.adj.fdr,dmt$combinedRank))
+					}
+
+					if (rerank){
+						rrs <- rank(rrs,na.last="keep",ties.method="min")
+						rrs.hyper <- rank(rrs.hyper,na.last="keep",ties.method="min")
+						rrs.hypo <- rank(rrs.hypo,na.last="keep",ties.method="min")
+						if (add.auto.rank.cut && rc.auto > 0L){
+							rc.auto <- na.omit(rrs[dmt[,"combinedRank"]==rc.auto])[1] #arbitrarily select the first rerank if the rank cut threshold is occupied by multiple ranks
+						}
+					}
+
+					rank.cuts <- rank.cuts.region
+					if (add.auto.rank.cut){
+						rank.cuts <- c(rank.cuts,"autoSelect")
+					}
+					for (j in 1:length(rank.cuts)){
+						rcn <- paste("rankCut_", rank.cuts[j] ,sep="")
+						userSetNames[[cc]][[rcn]] <- list()
+
+						rc <- rank.cuts[j]
+						if (rc == "autoSelect") {
+							rc <- rc.auto
+							if (verbose) logger.info(c("Rank cutoff:",rc,"(auto-select)"))
+						} else {
+							rc <- as.integer(rc)
+							if (verbose) logger.info(c("Rank cutoff:",rc))
+						}
+						is.dmr.hyper <- rrs.hyper <= rc
+						is.dmr.hyper[is.na(is.dmr.hyper)] <- FALSE
+						is.dmr.hypo <- rrs.hypo <= rc
+						is.dmr.hypo[is.na(is.dmr.hypo)] <- FALSE
+
+						lolaUserSets <- c(lolaUserSets, list(univGr[is.dmr.hyper]), list(univGr[is.dmr.hypo]))
+						i <- i + 1
+						userSetNames[[cc]][[rcn]][["hyper"]] <- paste0("set", i)
+						i <- i + 1
+						userSetNames[[cc]][[rcn]][["hypo"]]  <- paste0("set", i)
+
+					}
+				logger.completed()
+			}
+
+			lolaUserSets <- GRangesList(lolaUserSets)
+			names(lolaUserSets) <- paste0("set", 1:length(lolaUserSets))
+			logger.start("Running LOLA")
+				lolaRes <- runLOLA(lolaUserSets, univGr, lolaDb, cores=nCores)
+			logger.completed()
+
+			for (cc in comps){
+				userSetNamesMap <- c()
+				for (j in 1:length(rank.cuts)){
+					rcn <- paste("rankCut_", rank.cuts[j] ,sep="")
+					userSetNamesMap.add <- paste0(rcn, "_", c("hyper", "hypo"))
+					names(userSetNamesMap.add) <- c(userSetNames[[cc]][[rcn]][["hyper"]], userSetNames[[cc]][[rcn]][["hypo"]])
+					userSetNamesMap <- c(userSetNamesMap, userSetNamesMap.add)
+				}
+				curUserSetNames <- sort(unlist(userSetNames[[cc]], use.names=FALSE))
+				lolaRes.cur <- lolaRes[lolaRes[["userSet"]] %in% curUserSetNames,]
+				lolaRes.cur[["userSet"]] <- userSetNamesMap[lolaRes.cur[["userSet"]]]
+				dm.lola.enrich$region[[cc]][[rt]] <- lolaRes.cur
+			}
+
+		logger.completed()
+	}
+	dm.lola.enrich[["lolaDb"]] <- lolaDb
+	class(dm.lola.enrich) <- "DiffMeth.lola.enrich"
+	logger.completed()
+	return(dm.lola.enrich)
 }
