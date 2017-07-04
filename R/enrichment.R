@@ -351,12 +351,10 @@ performLolaEnrichment.diffMeth <- function(rnbSet, diffmeth, lolaDbPaths, rank.c
 
 			lolaUserSets <- list()
 
-			i <- 0
-			userSetNames <- list()
-			for (cc in comps){
+			for (i in 1:length(comps)){
+				cc <- comps[i]
+				compKey <- paste0("comp", i)
 				logger.start(c("Comparison: ",cc))
-					userSetNames[[cc]] <- list()
-
 					dmt <- get.table(diffmeth,cc,rt,undump=TRUE,return.data.frame=TRUE)
 
 					rrs <- dmt[,"combinedRank"]
@@ -385,7 +383,6 @@ performLolaEnrichment.diffMeth <- function(rnbSet, diffmeth, lolaDbPaths, rank.c
 					}
 					for (j in 1:length(rank.cuts)){
 						rcn <- paste("rankCut_", rank.cuts[j] ,sep="")
-						userSetNames[[cc]][[rcn]] <- list()
 
 						rc <- rank.cuts[j]
 						if (rc == "autoSelect") {
@@ -401,32 +398,23 @@ performLolaEnrichment.diffMeth <- function(rnbSet, diffmeth, lolaDbPaths, rank.c
 						is.dmr.hypo[is.na(is.dmr.hypo)] <- FALSE
 
 						lolaUserSets <- c(lolaUserSets, list(univGr[is.dmr.hyper]), list(univGr[is.dmr.hypo]))
-						i <- i + 1
-						userSetNames[[cc]][[rcn]][["hyper"]] <- paste0("set", i)
-						i <- i + 1
-						userSetNames[[cc]][[rcn]][["hypo"]]  <- paste0("set", i)
-
+						N <- length(lolaUserSets)
+						names(lolaUserSets)[c(N-1,N)] <- paste(compKey, rcn, c("hyper", "hypo"), sep="_")
 					}
 				logger.completed()
 			}
 
 			lolaUserSets <- GRangesList(lolaUserSets)
-			names(lolaUserSets) <- paste0("set", 1:length(lolaUserSets))
 			logger.start("Running LOLA")
 				lolaRes <- runLOLA(lolaUserSets, univGr, lolaDb, cores=nCores)
 			logger.completed()
 
-			for (cc in comps){
-				userSetNamesMap <- c()
-				for (j in 1:length(rank.cuts)){
-					rcn <- paste("rankCut_", rank.cuts[j] ,sep="")
-					userSetNamesMap.add <- paste0(rcn, "_", c("hyper", "hypo"))
-					names(userSetNamesMap.add) <- c(userSetNames[[cc]][[rcn]][["hyper"]], userSetNames[[cc]][[rcn]][["hypo"]])
-					userSetNamesMap <- c(userSetNamesMap, userSetNamesMap.add)
-				}
-				curUserSetNames <- sort(unlist(userSetNames[[cc]], use.names=FALSE))
-				lolaRes.cur <- lolaRes[lolaRes[["userSet"]] %in% curUserSetNames,]
-				lolaRes.cur[["userSet"]] <- userSetNamesMap[lolaRes.cur[["userSet"]]]
+			for (i in 1:length(comps)){
+				cc <- comps[i]
+				curPat <- paste0("^comp",i,"_")
+				curSubset <- grepl(curPat, lolaRes[["userSet"]])
+				lolaRes.cur <- lolaRes[curSubset,]
+				lolaRes.cur[["userSet"]] <- gsub(curPat, "", lolaRes.cur[["userSet"]])
 				dm.lola.enrich$region[[cc]][[rt]] <- lolaRes.cur
 			}
 
