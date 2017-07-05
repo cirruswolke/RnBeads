@@ -387,9 +387,16 @@ is available (see below). Attempting to get or set the value of a non-existing o
        It will only have an effect if the corresponding inference option is enabled (see \code{inference.reference.methylome.column}
 	  option for details). Currently this is only supported for \code{differential.site.test.method=="limma"}.
        }
-  \item{\bold{\code{differential.enrichment}}\code{ = FALSE}}{
+  \item{\bold{\code{differential.enrichment.go}}\code{ = FALSE}}{
        Flag indicating whether \href{http://www.geneontology.org/}{Gene Ontology} (GO)-enrichment analysis is to be
        conducted on the identified differentially methylated regions.}
+  \item{\bold{\code{differential.enrichment.lola}}\code{ = FALSE}}{
+       Flag indicating whether \code{LOLA}-enrichment analysis is to be
+       conducted on the identified differentially methylated regions.}
+  \item{\bold{\code{differential.enrichment.lola.dbs}}\code{ = c("${LOLACore}")}}{
+       Vector of directories containing LOLA databases. The following placeholders are allowed which will
+       automatically download corresponding databases from the internet: \code{"${LOLACore}"} and \code{"${LOLAExt}"}
+       for the Core and Extended LOLA Databases respectively.}
   \item{\bold{\code{differential.report.sites}}\code{ = TRUE}}{
        Flag indicating whether a section corresponding to differential site methylation should be added to the report.
        Has no effect on the actual analysis, just the report. To disable differential site methylation analysis entirely
