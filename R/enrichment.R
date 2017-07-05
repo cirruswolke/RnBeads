@@ -269,6 +269,36 @@ downloadLolaDbs <- function(dest, dbs=c("LOLACore")){
 	return(res)
 }
 
+#' prepLolaDbPaths
+#' 
+#' prepare LOLA Database paths from options
+#' @param assembly name of the assembly/subdirectory of the DB path
+#' @param dbs  LOLA database paths, potentially containing placeholders
+#' @param downloadDir directory where default LOLA DBs corresponding to placeholders will be downloaded to
+#'             (provided that placeholders are contained in \code{dbs})
+#' 
+#' @return vector of LOLA DB paths
+#' @author Fabian Mueller
+#' @noRd
+prepLolaDbPaths <- function(assembly, dbs=rnb.getOption("differential.enrichment.lola.dbs"), downloadDir=tempdir()){
+	#download DBs for placeholders
+	phPattern <- "^\\$\\{(.+)\\}$"
+	isPh <- grepl(phPattern, dbs)
+	res <- file.path(dbs[!isPh], assembly)
+	if (any(isPh)){
+		logger.start("Downloading LOLA databases")
+			downloadDbs <- gsub(phPattern, "\\1", dbs[isPh])
+			downloadedPaths <- downloadLolaDbs(downloadDir, dbs=downloadDbs)
+		logger.completed()
+		res <- c(res, downloadedPaths[[assembly]])
+	}
+	nonExisting <- !dir.exists(res)
+	if (any(nonExisting)){
+		logger.error(c("The following LOLA DB directories are missing:", paste(res[nonExisting], collapse="; ")))
+	}
+	return(res)
+}
+
 #' loadLolaDbs
 #' 
 #' Load LOLA databeses from disk and merge them

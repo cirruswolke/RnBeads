@@ -63,6 +63,12 @@ logger.start("Configuring Analysis")
 	}
 	logger.info(c("Number of cores:", ncores))
 	rm(aname, ncores)
+
+	lolaDbPaths <- NULL
+	if(rnb.getOption("differential.enrichment.lola")){
+		lolaDbPaths <- readRDS(file.path(cmdArgs$output, "lolaDbPaths.rds"))
+		logger.info(c("Successfully loaded LOLA DB paths"))
+	}
 logger.completed()
 
 logger.start("Loading RnBSet")
@@ -96,12 +102,19 @@ logger.start("Differential Methylation")
 			skip.sites=!rnb.getOption("analyze.sites"),
 			# disk.dump=disk.dump,disk.dump.dir=paste0(cmdArgs$output,"_diffMethTableDir"))
 			disk.dump=disk.dump,disk.dump.dir=paste0(tempfile(pattern=""),"_diffMethTableDir"))
-	if (rnb.getOption("differential.enrichment")){
+	if (rnb.getOption("differential.enrichment.go")){
 		dm.go.enrich <- performGoEnrichment.diffMeth(rnb.set,diffmeth,verbose=FALSE)
 	} else {
 		dm.go.enrich <- NULL
-		logger.info(c("Skipping enrichment analysis of differentially methylated regions"))
+		logger.info(c("Skipping GO enrichment analysis of differentially methylated regions"))
 	}
+	if (rnb.getOption("differential.enrichment.lola")){
+		dm.lola.enrich <- performLolaEnrichment.diffMeth(rnb.set,diffmeth,lolaDbPaths,verbose=FALSE)
+	} else {
+		dm.lola.enrich <- NULL
+		logger.info(c("Skipping LOLA enrichment analysis of differentially methylated regions"))
+	}
+
 
 	logger.start("Saving")
 		diffmeth.path <- file.path(cmdArgs$output,paste0(module.name,"_",chunk.id,"_rnbDiffMeth"))
@@ -109,6 +122,10 @@ logger.start("Differential Methylation")
 		diffmeth.go.enrichment <- dm.go.enrich
 		if (!is.null(diffmeth.go.enrichment)){
 			save(diffmeth.go.enrichment, file=file.path(diffmeth.path, "enrichment_go.RData"))
+		}
+		diffmeth.lola.enrichment <- dm.lola.enrich
+		if (!is.null(diffmeth.lola.enrichment)){
+			save(diffmeth.lola.enrichment, file=file.path(diffmeth.path, "enrichment_lola.RData"))
 		}
 	logger.completed()
 logger.completed()

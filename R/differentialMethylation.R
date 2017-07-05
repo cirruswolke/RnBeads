@@ -1965,10 +1965,12 @@ rnb.section.diffMeth.site <- function(rnbSet,diffmeth,report,gzTable=FALSE){
 ### @aliases rnb.section.diffMeth.region
 ### @param diffmeth RnBDiffMeth object. See \code{\link{RnBDiffMeth-class}} for details.
 ### @param report report object to which the content is added
-### @param dm.go.enrich If enrichment analysis reports are desired this argument should not be \code{NULL} (which is the default value
+### @param dm.go.enrich If GO enrichment analysis reports are desired this argument should not be \code{NULL} (which is the default value
 ###                  it should be an object of type \code{DiffMeth.go.enrich} (see \code{performGoEnrichment.diffMeth()} for details)
+### @param dm.lola.enrich If LOLA enrichment analysis reports are desired this argument should not be \code{NULL} (which is the default value
+###                  it should be an object of type \code{DiffMeth.lola.enrich} (see \code{performLolaEnrichment.diffMeth()} for details)
 ### @return the updated report object
-rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL,gzTable=FALSE){
+rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL,dm.lola.enrich=NULL,gzTable=FALSE){
 	if (length(get.comparisons(diffmeth))<1){
 		stop("no valid comparisons")
 	}

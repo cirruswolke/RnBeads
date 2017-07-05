@@ -73,6 +73,10 @@ logger.start("Saving")
 	if (!is.null(diffmeth.go.enrichment)){
 		save(diffmeth.go.enrichment, file=file.path(diffmeth.path, "enrichment_go.RData"))
 	}
+	diffmeth.lola.enrichment <- result.diffmeth$dm.lola.enrich
+	if (!is.null(diffmeth.lola.enrichment)){
+		save(diffmeth.lola.enrichment, file=file.path(diffmeth.path, "enrichment_lola.RData"))
+	}
 logger.completed()
 
 logger.status(c("...Completed module:",module.name))
