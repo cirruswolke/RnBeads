@@ -6,6 +6,76 @@
 ## Methods for LOLA enrichment analysis
 ########################################################################################################################
 
+#' getCellTypesFromLolaDb
+#'
+#' retrieve or guess cell types from a LOLA DB object
+#'
+#' @param lolaDb   LOLA DB object as returned by \code{LOLA::loadRegionDB} or \code{RnBeads:::loadLolaDbs}
+#' @return character vector with cell types
+#'
+#' @author Fabian Mueller
+#' @noRd
+getCellTypesFromLolaDb <- function(lolaDb){
+	tt <- data.frame(lolaDb$regionAnno)
+	res <- tt$cellType
+
+	# special treatment for "sheffield_dnase" from LOLACore
+	isInCollection <- tt$collection=="sheffield_dnase"
+	if (sum(isInCollection) > 0) res[isInCollection] <- tt$description[isInCollection]
+
+	# special treatment for "roadmap_epigenomics" from LOLAExt
+	isInCollection <- tt$collection=="roadmap_epigenomics"
+	if (sum(isInCollection) > 0){
+		res[isInCollection] <- gsub("^(.+)-(.+)$", "\\1", tt$filename[isInCollection])
+	}
+
+	return(res)
+}
+
+#' getTargetFromLolaDb
+#'
+#' retrieve or guess the target from a LOLA DB object. Here, target typically
+#' refers to antibodies for ChIP-seq experiments, but could also refer to other annotations
+#' (e.g. motifs in TF motif databases, annotation according to UCSC features etc.)
+#'
+#' @param lolaDb   LOLA DB object as returned by \code{LOLA::loadRegionDB} or \code{RnBeads:::loadLolaDbs}
+#' @return character vector with targets
+#'
+#' @author Fabian Mueller
+#' @noRd
+getTargetFromLolaDb <- function(lolaDb){
+	tt <- data.frame(lolaDb$regionAnno)
+	res <- tt$antibody
+
+	# special treatment for "ucsc_features" from LOLACore
+	isInCollection <- tt$collection=="ucsc_features"
+	if (sum(isInCollection) > 0) res[isInCollection] <- gsub("^UCSC ", "", tt$description[isInCollection])
+
+	# special treatment for "sheffield_dnase" from LOLACore
+	isInCollection <- tt$collection=="sheffield_dnase"
+	if (sum(isInCollection) > 0) res[isInCollection] <- "DNase"
+
+	# special treatment for "encode_segmentation" from LOLACore
+	isInCollection <- tt$collection=="encode_segmentation"
+	if (sum(isInCollection) > 0){
+		res[isInCollection] <- gsub(" Segments$", "", tt$description[isInCollection])
+	}
+
+	# special treatment for "jaspar_motifs" from LOLAExt
+	isInCollection <- tt$collection=="jaspar_motifs"
+	if (sum(isInCollection) > 0) res[isInCollection] <- gsub("\\.bed$", "", tt$filename[isInCollection])
+
+	# special treatment for "roadmap_epigenomics" from LOLAExt
+	isInCollection <- tt$collection=="roadmap_epigenomics"
+	if (sum(isInCollection) > 0){
+		res[isInCollection] <- gsub("(\\.(hotspot\\.(fdr0\\.01|all)|macs2))?\\.(peaks\\.bed|narrowPeak)$", "", 
+			gsub("^(.+)-(.+)$", "\\2", tt$filename[isInCollection])
+		)
+	}
+
+	return(res)
+}
+
 #' getNamesFromLolaDb
 #'
 #' get human readable names from a LOLA DB object
@@ -21,31 +91,16 @@ getNamesFromLolaDb <- function(lolaDb, addCollectionNames=FALSE, addDbId=TRUE){
 	tt <- data.frame(lolaDb$regionAnno)
 	res <- paste0(tt$description)
 
-	# trim the following names from the start of the description
-	# trimNamesPattern.start <- paste0("^(", paste(c("ChIP", "UCSC", "cistrome_cistrome", "cistrome_epigenome"), collapse="|"), ")")
-	trimNamesPattern.start <- paste0("^(", paste(c("UCSC"), collapse="|"), ")")
-	res <- gsub(trimNamesPattern.start, "", res)
+	cellTypes <- getCellTypesFromLolaDb(lolaDb)
+	targets <- getTargetFromLolaDb(lolaDb)
 
-	# if both cellType and antibody annotation are present, construct a name from them
-	hasDesc <- !is.na(tt$cellType) & !is.na(tt$antibody)
-	if (sum(hasDesc) > 0) res[hasDesc] <- paste0(tt$antibody[hasDesc], " - ", tt$cellType[hasDesc])
+	# if there is a valid "target" (see getTargetFromLolaDb) inferred from the annotation, construct a name from it
+	hasDesc <- !is.na(targets)
+	if (sum(hasDesc) > 0) res[hasDesc] <- targets[hasDesc]
 
-	# special treatment for "encode_segmentation" from LOLACore
-	isInCollection <- tt$collection=="encode_segmentation"
-	if (sum(isInCollection) > 0){
-		res[isInCollection] <- paste0(
-			gsub(" Segments$", "", tt$description[isInCollection]),
-			" - ", tt$cellType[isInCollection]
-		)
-	}
-
-	# special treatment for "jaspar_motifs" from LOLAExt
-	isInCollection <- tt$collection=="jaspar_motifs"
-	if (sum(isInCollection) > 0) res[isInCollection] <- gsub("\\.bed$", "", tt$filename[isInCollection])
-
-	# special treatment for "roadmap_epigenomics" from LOLAExt
-	isInCollection <- tt$collection=="roadmap_epigenomics"
-	if (sum(isInCollection) > 0) res[isInCollection] <- gsub("\\.(peaks\\.bed|narrowPeak)$", "", tt$filename[isInCollection])
+	# if both cellType and target annotation were inferred, construct a name from them
+	hasDesc <- !is.na(cellTypes) & !is.na(targets)
+	if (sum(hasDesc) > 0) res[hasDesc] <- paste0(targets[hasDesc], " - ", cellTypes[hasDesc])
 
 	# add suffixes if requested
 	if (addCollectionNames){
