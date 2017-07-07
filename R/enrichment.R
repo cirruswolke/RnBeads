@@ -301,12 +301,12 @@ prepLolaDbPaths <- function(assembly, dbs=rnb.getOption("differential.enrichment
 
 #' loadLolaDbs
 #' 
-#' Load LOLA databeses from disk and merge them
+#' Load LOLA databases from disk and merge them
 #' @param lolaDbPaths  vector of names of LOLA DB paths to be loaded
 #' 
 #' @return LOLA DB list as returned by \code{LOLA::loadRegionDB}
 #' @author Fabian Mueller
-#' @noRd
+#' @export
 #' @examples
 #' \donttest{
 #' # download LOLA DB
@@ -341,12 +341,11 @@ loadLolaDbs <- function(lolaDbPaths){
 #' @param add.auto.rank.cut flag indicating whether an automatically computed cut-off should also be considered.
 #' @param rerank For deterimining differential methylation: should the ranks be ranked again or should the absolute ranks be used.
 #' @param verbose Enable for detailed status report
-#' @param ... arguments passed on to the parameters of \code{GOHyperGParams} from the \code{LOLA} package
 #' @return a DiffMeth.lola.enrich object (S3) containing the following attributes
 #' \item{region}{Enrichment information for differential methylation on the region level. A \code{data.table} object
 #' as returned by the \code{runLOLA} function from the \code{LOLA} package for furthert details. Each element will contain different
 #' user sets for different rank cutoffs and hyper/hypomethylation events(\code{userSet} column)}
-#' \item{lolaDb}{The loaded \code{lolaDb} object containing the merged databases as returned by \code{LOLA::loadRegionDB}}
+#' \item{lolaDb}{The loaded \code{lolaDb} object containing the merged databases as returned by \link{\code{loadLolaDbs}}}
 #' @export
 #' @examples
 #' \donttest{

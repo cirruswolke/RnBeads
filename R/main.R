@@ -747,6 +747,10 @@ rnb.run.analysis <- function(dir.reports, data.source=NULL, sample.sheet=NULL, d
 				if (!is.null(diffmeth.go.enrichment)){
 					save(diffmeth.go.enrichment, file=file.path(diffmeth.path, "enrichment_go.RData"))
 				}
+				diffmeth.lola.enrichment <- result.diffmeth$dm.lola.enrich
+				if (!is.null(diffmeth.lola.enrichment)){
+					save(diffmeth.lola.enrichment, file=file.path(diffmeth.path, "enrichment_lola.RData"))
+				}
 			} else {
 				logger.warning("Differential methylation object not saved")
 			}

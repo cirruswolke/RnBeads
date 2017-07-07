@@ -473,6 +473,8 @@ rnb.process.sitelist <- function(fname, anno.table) {
 	result
 }
 
+########################################################################################################################
+
 #' trimChar
 #'
 #' trim a character vector to have a desired length by taking the beginning of the string
