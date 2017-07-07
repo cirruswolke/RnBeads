@@ -1008,7 +1008,7 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 	o.greedycut.threshold <- ifelse(inherits(rnb.set, "RnBeadSet"), "filtering.greedycut.pvalue.threshold",
 		"filtering.coverage.threshold")
 	optionlist <- rnb.options("filtering.whitelist", "filtering.blacklist", "filtering.snp",
-		"filtering.cross.reactive", "filtering.greedycut", o.greedycut.threshold, "filtering.greedycut.rc.ties")
+		"filtering.cross.reactive", "filtering.greedycut", o.greedycut.threshold, "filtering.greedycut.rc.ties","imputation.method")
 	attr.vec <- c(TRUE, TRUE, TRUE, TRUE, TRUE,
 		optionlist[["filtering.greedycut"]] || inherits(rnb.set, "RnBiseqSet"), optionlist[["filtering.greedycut"]])
 	if (!inherits(rnb.set, "RnBeadSet")) {
@@ -1150,6 +1150,13 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 		whitelist <- rnb.process.sitelist(rnb.getOption("filtering.whitelist"), anno.table)
 		removed.samples <- integer()
 		removed.sites <- whitelist
+	}
+	if(!(rnb.getOption("imputation.method")%in%c("mean.cpgs","mean.samples","random","knn"))){
+	  logger.info("Imputation was skipped, data set may still contain missing methylation values")
+	}else{
+	  imputation.result <- rnb.step.imputation(rnb.set,report)
+	  rnb.set <- imputation.result$dataset
+	  report <- imputation.result$report
 	}
 
 	## Postfiltering

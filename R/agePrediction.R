@@ -233,7 +233,7 @@ rnb.step.ageprediction <- function(object,report){
 #' Performs age prediction by either the specified predictor in the option \code{inference.age.prediction.predictor}
 #' or by the corresponding predefined predictor.
 #'
-#' @param object	a \code{\linkS4class{RnBSet}} object for which age prediction should
+#' @param object  a \code{\linkS4class{RnBSet}} object for which age prediction should
 #' 			be performed
 #'
 #' @return	modified  \code{\linkS4class{RnBSet}} object
@@ -255,17 +255,19 @@ rnb.execute.age.prediction <- function(object){
 }
 
 #######################################################################################################################
-#' rnb.execute.age.training
+#' rnb.execute.training
 #'
-#' Trains a new predictor on the specified data set and writes it to the given path.
+#' Trains a new age predictor on the specified data set and writes it to the given path. Elastic net regression is
+#' to fit the input ages to the methylation values .
 #'
 #' @param object	a \code{\linkS4class{RnBSet}} object on which a new predictor should be created
 #' @param path		path to which the predictor should be written out
+#' @param alpha     alpha parameter used in the elastic net regression
 #'
 #' @author Michael Scherer
 #' @export
 
-rnb.execute.training <- function(object,path=""){
+rnb.execute.training <- function(object,path="",alpha=0.8){
 	if(path==""){
 		stop("A path to store the predictor has to be specified.")
 	}else{
@@ -274,7 +276,7 @@ rnb.execute.training <- function(object,path=""){
 		if(!(age %in% colnames(pheno(object)))){
 			logger.warning("No Age information available, training not successful")
 		}else{
-			prediction_path <- trainPredictor(object,path)
+			prediction_path <- trainPredictor(object,path,alpha=0.8)
 		}
 		logger.completed()
 	}
@@ -878,6 +880,7 @@ agePredictorBiseq <- function(rnbSet, path){
 #' @param rnbSet	An \code{RnBSet} object containing the methylation info on which
 #'			the new predictor should be trained
 #' @param data.dir	directory to which the resulting predictor should be written out
+#' @param alpha     alpha parameter used in the elastic net regression
 #'
 #' @return	absolute path to the corresponding predictor. The path is also set as the
 #'		option \code{inference.age.prediction.predictor}
@@ -885,7 +888,7 @@ agePredictorBiseq <- function(rnbSet, path){
 #' @author	Michael Scherer
 #' @noRd
 
-trainPredictor <- function(rnbSet,data.dir){
+trainPredictor <- function(rnbSet,data.dir,alpha=0.8){
 	if(!file.exists(data.dir)){
 		stop("The specified directory does not exist!")
 	}
@@ -895,7 +898,7 @@ trainPredictor <- function(rnbSet,data.dir){
 			logger.warning("No Age information available, training not successful.")
 			return("")
 		}
-		path <- simpleGlmnet(rnbSet,file.path(data.dir,"trained_predictor.csv"))
+		path <- simpleGlmnet(rnbSet,file.path(data.dir,"trained_predictor.csv"),alpha=alpha)
 		if(!is.null(path)&&path!=""){
 			rnb.options(inference.age.prediction.predictor=path)
 		}else{
@@ -906,7 +909,7 @@ trainPredictor <- function(rnbSet,data.dir){
 			logger.warning("No Age information available, training not successful.")
 			return("")
 		}
-		path <- simpleGlmnetBiseq(rnbSet,file.path(data.dir,"trained_predictor_Biseq.csv"))
+		path <- simpleGlmnetBiseq(rnbSet,file.path(data.dir,"trained_predictor_Biseq.csv"),alpha=alpha)
 		if(!is.null(path)&&path!=""){
 			rnb.options(inference.age.prediction.predictor=path)
 		}else{
@@ -926,6 +929,7 @@ trainPredictor <- function(rnbSet,data.dir){
 #' @param trainRnBSet	a \code{RnBeadSet} object containing the methylation info on which
 #'			the new predictor should be trained
 #' @param filePath	path to which the new predictor should be written out
+#' @param alpha     alpha parameter used in the elastic net regression
 #'
 #' @return	absolute path to the corresponding predictor. \code{NULL} if the function was
 #'		unable to create such an predictor.
@@ -933,7 +937,7 @@ trainPredictor <- function(rnbSet,data.dir){
 #' @author	Michael Scherer
 #' @noRd
 
-simpleGlmnet <- function(trainRnBSet,filePath=""){
+simpleGlmnet <- function(trainRnBSet,filePath="",alpha=0.8){
 	rnb.require("glmnet")
 	rnb.require("impute")
 	methData <- meth(trainRnBSet)
@@ -972,7 +976,7 @@ simpleGlmnet <- function(trainRnBSet,filePath=""){
 		methData <- methData[!missingAges,]
 		ages <- ages[!missingAges]
 		cv <- cv.glmnet(methData,ages,parallel=TRUE)
-		model <- glmnet(methData,ages,alpha=0.8,lambda=cv$lambda.min)
+		model <- glmnet(methData,ages,alpha=alpha,lambda=cv$lambda.min)
 		coeffs <- as.matrix(coef(model))
 		names <- row.names(coeffs)
 		non_zero <- which(coeffs!=0)
@@ -996,6 +1000,7 @@ simpleGlmnet <- function(trainRnBSet,filePath=""){
 #' @param trainRnBSet	a \code{RnBiseqSet} object containing the methylation info on which
 #'			the new predictor should be trained
 #' @param filePath	path to which the new predictor should be written out
+#' @param alpha     alpha parameter used in the elastic net regression
 #'
 #' @return	absolute path to the corresponding predictor. \code{NULL} if the function was
 #'		unable to create such an predictor.
@@ -1003,7 +1008,7 @@ simpleGlmnet <- function(trainRnBSet,filePath=""){
 #' @author	Michael Scherer
 #' @noRd
 
-simpleGlmnetBiseq <- function(trainRnBSet,filePath=""){
+simpleGlmnetBiseq <- function(trainRnBSet,filePath="",alpha=0.8){
 	rnb.require("glmnet")
 	methData <- meth(trainRnBSet)
 	anno <- annotation(trainRnBSet)
@@ -1044,7 +1049,7 @@ simpleGlmnetBiseq <- function(trainRnBSet,filePath=""){
 		methData <- methData[!missingAges,]
 		ages <- ages[!missingAges]
 		cv <- cv.glmnet(methData,ages)
-		model <- glmnet(methData,ages,alpha=0.8,lambda=cv$lambda.min)
+		model <- glmnet(methData,ages,alpha=alpha,lambda=cv$lambda.min)
 		coeffs <- as.matrix(coef(model))
 		names <- row.names(coeffs)
 		non_zero <- which(coeffs!=0)
@@ -1069,13 +1074,14 @@ simpleGlmnetBiseq <- function(trainRnBSet,filePath=""){
 #' @param rnbSet	a \code{RnBSet} object containing the methylation info and ages on which
 #'			the new predictor should be trained
 #' @param report	report to which the table should be added
+#' @param alpha alpha parameter used in the elastic net regression
 #'
 #' @return	modified report object
 #'
 #' @author	Michael Scherer
 #' @export
 
-run.cross.validation <- function(rnbSet,report){
+run.cross.validation <- function(rnbSet,report,alpha=0.8){
 	logger.start("10-fold Cross Validation")
 	if(length(samples(rnbSet))<30){
 		txt <- "ATTENTION: Cross-validated correlation result might be misleading, since there are less than 3 samples per fold."
@@ -1086,7 +1092,7 @@ run.cross.validation <- function(rnbSet,report){
 	cvalues <- rep(rnb.getOption("colors.category"))
 	descr <- "Boxplot for the two error measures Mean and Median absolute Error. Each Boxplot consists of 10 different points for each cross-validation fold, respectively."
 	if(inherits(rnbSet,"RnBeadSet")){
-		result <- cv.array(rnbSet)
+		result <- cv.array(rnbSet,alpha = alpha)
 		if(is.null(result)){
 			text <- "Problem when performing age prediction."
 			report <- rnb.add.paragraph(report,text)
@@ -1106,7 +1112,7 @@ run.cross.validation <- function(rnbSet,report){
 		report.plot <- off(report.plot)
 		report <- rnb.add.figure(report,descr,report.plot)
 	}else if(inherits(rnbSet,"RnBiseqSet")){
-		result <- cv.biseq(rnbSet)
+		result <- cv.biseq(rnbSet,alpha=alpha)
 		if(is.null(result)){
 			text <- "Problem when performing age prediction."
 			report <- rnb.add.paragraph(report,text)
@@ -1141,6 +1147,7 @@ run.cross.validation <- function(rnbSet,report){
 #' @param	ages		the ages to be trained on
 #' @param	methData	input methylation matrix
 #' @param	k		the fold parameter
+#' @param alpha     alpha parameter used in the elastic net regression
 #'
 #' @return	a matrix that contains the summarized quality measures for
 #'		the predictor which are:
@@ -1159,7 +1166,7 @@ run.cross.validation <- function(rnbSet,report){
 #' @author	Michael Scherer
 #' @noRd
 
-general.cv <- function(fitFunction,ages,methData,k=10){
+general.cv <- function(fitFunction,ages,methData,k=10,alpha=0.8){
 	nSamples <- length(ages)
 	size <- nSamples%/%k
 	count <- 1
@@ -1172,7 +1179,7 @@ general.cv <- function(fitFunction,ages,methData,k=10){
 		notChosen <- !choose
 		trainSet <- methData[,notChosen]
 		trainAges <- ages[notChosen]
-		predictor <- fitFunction(trainSet,trainAges)
+		predictor <- fitFunction(trainSet,trainAges,alpha)
 		predictedAges <- predictor(testSet)
 		cor <- cor(predictedAges,testAges)
 		cor <- round(cor,2)
@@ -1200,13 +1207,14 @@ general.cv <- function(fitFunction,ages,methData,k=10){
 #' BeadChip arrays
 #'
 #' @param	rnbSet	\code{RnBeadSet} object on which the cross validation should be perfomed
+#' @param alpha     alpha parameter used in the elastic net regression
 #'
 #' @return	the result of the cross validation in a data.frame format
 #'
 #' @author	Michael Scherer
 #' @noRd
 
-cv.array <- function(rnbSet){
+cv.array <- function(rnbSet,alpha=0.8){
 	ph <- pheno(rnbSet)
 	age <- rnb.getOption("inference.age.column")
 	if(age %in% colnames(ph)){
@@ -1245,7 +1253,7 @@ cv.array <- function(rnbSet){
 		dummy <- capture.output(methData <- (impute.knn(methData,colmax=1))$data)
 		options(warn=1)
 		rm(dummy)
-		result <- general.cv(simpleGlmnetEvaluate,ages,methData)
+		result <- general.cv(simpleGlmnetEvaluate,ages,methData,alpha=alpha)
 		result <- as.data.frame(result)
 		return(result)
 	}
@@ -1260,13 +1268,14 @@ cv.array <- function(rnbSet){
 #' bisulfite sequencing
 #'
 #' @param	rnbSet	\code{RnBiseqSet} object on which the cross validation should be perfomed
+#' @param alpha     alpha parameter used in the elastic net regression
 #'
 #' @return	the result of the cross validation in a data.frame format
 #'
 #' @author	Michael Scherer
 #' @noRd
 
-cv.biseq <- function(rnbSet){
+cv.biseq <- function(rnbSet,alpha=0.8){
 	ph <- pheno(rnbSet)
 	age <- rnb.getOption("inference.age.column")
 	if(age %in% colnames(ph)){
@@ -1306,7 +1315,7 @@ cv.biseq <- function(rnbSet){
 		methData <- methData[!Ychrom,]
 		anno <- anno[!Ychrom,]
 		methData <- imputeBiseq(methData)
-		result <- general.cv(simpleGlmnetEvaluate,ages,methData)
+		result <- general.cv(simpleGlmnetEvaluate,ages,methData,alpha=alpha)
 		result <- as.data.frame(result)
 		return(result)
 	}
@@ -1322,19 +1331,20 @@ cv.biseq <- function(rnbSet){
 #'
 #' @param	methData input methylation data as a data.frame for age prediction
 #' @param	ages	  training ages
+#' @param alpha   alpha parameter used in the elastic net regression
 #'
 #' @return	the age prediction function to be applied in each fold
 #'
 #' @author	Michael Scherer
 #' @noRd
 
-simpleGlmnetEvaluate <- function(methData,ages){
+simpleGlmnetEvaluate <- function(methData,ages,alpha=0.8){
 	methData <- t(methData)
 	missingAges <- is.na(ages)
 	methData <- methData[!missingAges,]
 	ages <- ages[!missingAges]
 	cv <- cv.glmnet(methData,ages,parallel=TRUE)
-	model <- glmnet(methData,ages,alpha=0.8,lambda=cv$lambda.min)
+	model <- glmnet(methData,ages,alpha=alpha,lambda=cv$lambda.min)
 	finalModel <- createPredictor(model,lambda=cv$lambda.min)
 	return(finalModel)
 }

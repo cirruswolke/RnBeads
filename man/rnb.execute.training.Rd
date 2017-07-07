@@ -2,17 +2,20 @@
 % Please edit documentation in R/agePrediction.R
 \name{rnb.execute.training}
 \alias{rnb.execute.training}
-\title{rnb.execute.age.training}
+\title{rnb.execute.training}
 \usage{
-rnb.execute.training(object, path = "")
+rnb.execute.training(object, path = "", alpha = 0.8)
 }
 \arguments{
 \item{object}{a \code{\linkS4class{RnBSet}} object on which a new predictor should be created}
 
 \item{path}{path to which the predictor should be written out}
+
+\item{alpha}{alpha parameter used in the elastic net regression}
 }
 \description{
-Trains a new predictor on the specified data set and writes it to the given path.
+Trains a new age predictor on the specified data set and writes it to the given path. Elastic net regression is
+to fit the input ages to the methylation values .
 }
 \author{
 Michael Scherer
