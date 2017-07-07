@@ -225,7 +225,7 @@ performGoEnrichment.diffMeth <- function(rnbSet,diffmeth,ontologies=c("BP","MF")
 #' Requires a stable internet connection. Could take a while depending on the size of the database and the internet connection
 #' @return a list containing vectors of directory names for each available genome assembly
 #' @author Fabian Mueller
-#' @noRd
+#' @export
 #' @examples
 #' \donttest{
 #' lolaDest <- tempfile()
