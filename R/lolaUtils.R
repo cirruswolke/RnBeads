@@ -290,9 +290,168 @@ lolaBarPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol
 	pp <- ggplot(df2p) + aesObj + geom_col() + 
 		  scale_x_discrete(name="") + 
 		  theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5))
+
 	if (length(colorpanel) > 0){
-		cpanel <- rep(colorpanel, length.out=nlevels(df2p[["target"]]))
-		names(cpanel) <- levels(df2p[["target"]])
+		# check if the defined color panel already contains a mapping of targets to colors
+		# otherwise create an arbitrary mapping
+		if (!is.null(names(colorpanel)) && all(levels(df2p[["target"]]) %in% names(colorpanel))){
+			cpanel <- colorpanel
+		} else {
+			cpanel <- rep(colorpanel, length.out=nlevels(df2p[["target"]]))
+			names(cpanel) <- levels(df2p[["target"]])
+		}
+		pp <- pp + scale_fill_manual(na.value="#C0C0C0", values=cpanel, guide=FALSE)
+	}
+
+	if (groupByCollection){
+		pp <- pp + facet_grid(. ~ collection, scales = "free", space = "free")
+	}
+	return(pp)
+}
+
+#' lolaBarPlot.hyp
+#'
+#' Adaptation of  \link{\code{lolaBarPlot}} to plot hypo and hpermethylated regions side by side
+#' Hyper-/hypomethylation is assumed to be annotated in the userSet column of lolaRes
+#'
+#' @param lolaDb   LOLA DB object as returned by \code{LOLA::loadRegionDB} or \link{\code{loadLolaDbs}}
+#' @param lolaRes  LOLA enrichment result as returned by the \code{runLOLA} function from the \code{LOLA} package
+#' @param scoreCol column name in \code{lolaRes} to be plotted
+#' @param orderCol column name in \code{lolaRes} which is used for sorting the results
+#' @param includedCollections vector of collection names to be included in the plot. If empty (default), all collections are used
+#' @param pvalCut.neglog p-value cutoff (natural logarithm) to be employed for filtering the results
+#' @param maxTerms maximum number of items to be included in the plot
+#' @param colorpanel colors to be used for coloring the bars according to "target" (see \link{\code{getTargetFromLolaDb}}). An empty
+#'                 vector indicates that black will be used for all bars.
+#' @param groupByCollection facet the plot by collection
+#' @param change.pval.base change p-value to base 10 (instead of base e)
+#' @param orderDecreasing flag indicating whether the value in \code{orderCol} should be considered as decreasing (as opposed
+#'                 to increasing). \code{NULL} (default) for automatic determination.
+#' @return ggplot object containing the plot
+#'
+#' @author Fabian Mueller
+#' @noRd
+lolaBarPlot.hyp <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol, includedCollections=c(), pvalCut.neglog=-log(0.01), maxTerms=50, colorpanel=c("#a6611a", "#018571"), groupByCollection=TRUE, change.pval.base=TRUE, orderDecreasing=NULL){
+	isHypo  <- grepl("hypo", lolaRes[["userSet"]], ignore.case=TRUE)
+	isHyper <- grepl("hyper", lolaRes[["userSet"]], ignore.case=TRUE)
+	if (sum(isHypo) < 1) logger.error("LOLA Result does not contain hypOmethylated userSet")
+	if (sum(isHyper) < 1) logger.error("LOLA Result does not contain hypERmethylated userSet")
+	lolaRes$userSet[isHypo]  <- "hypomethylated"
+	lolaRes$userSet[isHyper] <- "hypermethylated"
+	if (sum(isHypo) + sum(isHyper) != nrow(lolaRes)){
+		lolaRes <- lolaRes[isHypo | isHyper,]
+		logger.warning("LOLA Result contains userSets not annotated as hyper or hypo")
+	}
+	#prepare data.frame for plotting
+	df2p <- lolaPrepareDataFrameForPlot(lolaDb, lolaRes, scoreCol=scoreCol, orderCol=orderCol, includedCollections=includedCollections, pvalCut.neglog=pvalCut.neglog, maxTerms=maxTerms, perUserSet=TRUE, groupByCollection=groupByCollection, change.pval.base=change.pval.base, orderDecreasing=orderDecreasing)
+
+	cpanel <- c(hypomethylated=colorpanel[1], hypermethylated=colorpanel[2])
+	aesObj <- aes_string("term", scoreCol, fill="userSet")
+
+	pp <- ggplot(df2p) + aesObj + geom_col(position="dodge") + 
+		  scale_x_discrete(name="") + 
+		  scale_fill_manual(values=cpanel) +
+		  theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5))
+
+	if (groupByCollection){
+		pp <- pp + facet_grid(. ~ collection, scales = "free", space = "free")
+	}
+	return(pp)
+}
+
+#' lolaBoxPlotPerTarget
+#'
+#' plot a boxplot showing LOLA enrichment results per "target" group (see \link{\code{getTargetFromLolaDb}} for an explanation of
+#' "target").
+#'
+#' @param lolaDb   LOLA DB object as returned by \code{LOLA::loadRegionDB} or \link{\code{loadLolaDbs}}
+#' @param lolaRes  LOLA enrichment result as returned by the \code{runLOLA} function from the \code{LOLA} package
+#' @param scoreCol column name in \code{lolaRes} to be plotted
+#' @param orderCol column name in \code{lolaRes} which is used for sorting the results
+#' @param includedCollections vector of collection names to be included in the plot. If empty (default), all collections are used
+#' @param pvalCut.neglog p-value cutoff (natural logarithm) to be employed for filtering the results
+#' @param maxTerms maximum number of items to be included in the plot
+#' @param colorpanel colors to be used for coloring the bars according to "target" (see \link{\code{getTargetFromLolaDb}}). An empty
+#'                 vector indicates that black will be used for all bars.
+#' @param groupByCollection facet the plot by collection
+#' @param change.pval.base change p-value to base 10 (instead of base e)
+#' @param orderDecreasing flag indicating whether the value in \code{orderCol} should be considered as decreasing (as opposed
+#'                 to increasing). \code{NULL} (default) for automatic determination.
+#' @param scoreDecreasing flag indicating whether the value in \code{scoreCol} should be considered as decreasing (as opposed
+#'                 to increasing). \code{NULL} (default) for automatic determination.
+#' @return ggplot object containing the plot
+#'
+#' @author Fabian Mueller
+#' @export
+#' @examples
+#' \donttest{
+#' library(RnBeads.hg19)
+#' data(small.example.object)
+#' logger.start(fname=NA)
+#' # compute differential methylation
+#' dm <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Sample_Group","Treatment"))
+#' # download LOLA DB
+#' lolaDest <- tempfile()
+#' dir.create(lolaDest)
+#' lolaDirs <- downloadLolaDbs(lolaDest, dbs="LOLACore")
+#' # perform enrichment analysis
+#' res <- performLolaEnrichment.diffMeth(rnb.set.example,dm,lolaDirs[["hg19"]])
+#' # select the 500 most hypermethylated tiling regions in ESCs compared to iPSCs
+#' # in the example dataset
+#' lolaRes <- res$region[["hESC vs. hiPSC (based on Sample_Group)"]][["tiling"]]
+#' lolaRes <- lolaRes[lolaRes$userSet=="rankCut_500_hyper",]
+#' # plot
+#' lolaBoxPlotPerTarget(res$lolaDb, lolaRes, scoreCol="logOddsRatio", orderCol="maxRnk", pvalCut.neglog=-log(0.05))
+#' }
+lolaBoxPlotPerTarget <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol, includedCollections=c(), pvalCut.neglog=-log(0.01), maxTerms=50, colorpanel=c(), groupByCollection=TRUE, change.pval.base=TRUE, orderDecreasing=NULL, scoreDecreasing=NULL){
+	if (length(unique(lolaRes[["userSet"]])) > 1){
+		logger.warning("Multiple userSets contained in LOLA result object")
+	}
+	# detect by column name whether decreasing order needs to be used for the score column
+	if (is.null(scoreDecreasing)){
+		oset.dec <- c("pValueLog", "logOddsRatio")
+		oset.inc <- c("maxRnk", "meanRnk")
+		if (!is.element(scoreCol, c(oset.dec, oset.inc))){
+			logger.error(c("Could not determine whether to use increasing or decreasing order for score column:", scoreCol))
+		}
+		scoreDecreasing <- is.element(scoreCol, oset.dec)
+	}
+
+	#prepare data.frame for plotting
+	df2p <- lolaPrepareDataFrameForPlot(lolaDb, lolaRes, scoreCol=scoreCol, orderCol=orderCol, includedCollections=includedCollections, pvalCut.neglog=pvalCut.neglog, maxTerms=Inf, perUserSet=FALSE, groupByCollection=groupByCollection, change.pval.base=change.pval.base, orderDecreasing=orderDecreasing)
+
+	# maxTerms now applies to the targets, not to LOLA DB items
+	if (nlevels(df2p$target) > maxTerms){
+		# if there are too many targets, select the targets from the top of the ordered table
+		targets2keep <- unique(as.character(df2p$target))[1:maxTerms]
+		df2p <- df2p[df2p$target %in% targets2keep,]
+		df2p[["target"]] <- factor(as.character(df2p[["target"]]))
+		logger.info(c("Reduced the number of targets in the plot to", maxTerms))
+	}
+
+	# sort targets by median score
+	targetScore <- tapply(df2p[[scoreCol]], df2p[["target"]], FUN=function(x){median(x, na.rm=TRUE)})
+	df2p[["target"]] <- factor(as.character(df2p[["target"]]),
+		levels=names(targetScore)[order(targetScore, decreasing=scoreDecreasing)]
+	)
+
+	aesObj <- aes_string("target", scoreCol)
+	if (length(colorpanel) > 0) aesObj <- aes_string("target", scoreCol, fill="target")
+
+	pp <- ggplot(df2p) + aesObj + geom_boxplot(outlier.shape=NA) +
+		  geom_dotplot(aes(fill=NULL), binaxis="y", stackdir="center") +
+		  scale_x_discrete(name="") + 
+		  theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5))
+
+	if (length(colorpanel) > 0){
+		# check if the defined color panel already contains a mapping of targets to colors
+		# otherwise create an arbitrary mapping
+		if (!is.null(names(colorpanel)) && all(levels(df2p[["target"]]) %in% names(colorpanel))){
+			cpanel <- colorpanel
+		} else {
+			cpanel <- rep(colorpanel, length.out=nlevels(df2p[["target"]]))
+			names(cpanel) <- levels(df2p[["target"]])
+		}
 		pp <- pp + scale_fill_manual(na.value="#C0C0C0", values=cpanel, guide=FALSE)
 	} 
 	if (groupByCollection){
