@@ -139,10 +139,9 @@ getNamesFromLolaDb <- function(lolaDb, addCollectionNames=FALSE, addDbId=TRUE){
 	return(res)
 }
 
-
-#' lolaBarPlot
+#' lolaPrepareDataFrameForPlot
 #'
-#' plot a barplot of LOLA enrichment results
+#' Helper function for preparing a data.frame for multiple LOLA plots
 #'
 #' @param lolaDb   LOLA DB object as returned by \code{LOLA::loadRegionDB} or \link{\code{loadLolaDbs}}
 #' @param lolaRes  LOLA enrichment result as returned by the \code{runLOLA} function from the \code{LOLA} package
@@ -160,24 +159,8 @@ getNamesFromLolaDb <- function(lolaDb, addCollectionNames=FALSE, addDbId=TRUE){
 #' @return ggplot object containing the plot
 #'
 #' @author Fabian Mueller
-#' @export
-#' @examples
-#' \donttest{
-#' library(RnBeads.hg19)
-#' data(small.example.object)
-#' logger.start(fname=NA)
-#' # compute differential methylation
-#' dm <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Sample_Group","Treatment"))
-#' # download LOLA DB
-#' lolaDest <- tempfile()
-#' dir.create(lolaDest)
-#' lolaDirs <- downloadLolaDbs(lolaDest, dbs="LOLACore")
-#' # perform enrichment analysis
-#' res <- performLolaEnrichment.diffMeth(rnb.set.example,dm,lolaDirs[["hg19"]])
-#' # plot
-#' lolaBarPlot(res$lolaDb, ...)
-#' }
-lolaBarPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol, includedCollections=c(), pvalCut.neglog=-log(0.01), maxTerms=50, colorpanel=sample(rainbow(maxTerms,v=0.5)), groupByCollection=TRUE, change.pval.base=TRUE, orderDecreasing=NULL){
+#' @noRd
+lolaPrepareDataFrameForPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol, includedCollections=c(), pvalCut.neglog=-log(0.01), maxTerms=50, perUserSet=FALSE, groupByCollection=TRUE, change.pval.base=TRUE, orderDecreasing=NULL){
 	#dedect by column name whether decreasing order needs to be used
 	if (is.null(orderDecreasing)){
 		oset.dec <- c("pValueLog", "logOddsRatio")
@@ -225,8 +208,18 @@ lolaBarPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol
 	df2p <- lolaRes.signif
 	dbSets2keep <- unique(df2p[["dbSet"]])
 	if (length(dbSets2keep) > maxTerms){
-		logger.info(c("Reduced the number of region sets in the plot to", maxTerms))
-		dbSets2keep <- dbSets2keep[1:maxTerms]
+		if (perUserSet){
+			logger.info(c("Reduced the number of region sets in the plot to", maxTerms, "per userSet"))
+			uSetF <- factor(lolaRes[["userSet"]])
+			dbSets2keep <- c()
+			for (ss in levels(uSetF)){
+				dbSets.cur <- unique(df2p[uSetF==ss,"dbSet"])
+				dbSets2keep <- union(dbSets2keep, dbSets.cur[1:min(maxTerms, length(dbSets.cur))])
+			}
+		} else {
+			logger.info(c("Reduced the number of region sets in the plot to", maxTerms))
+			dbSets2keep <- dbSets2keep[1:maxTerms]
+		}
 		df2p <- df2p[df2p[["dbSet"]] %in% dbSets2keep, ]
 	}
 
@@ -239,6 +232,57 @@ lolaBarPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol
 	df2p[[scoreCol]][df2p[[scoreCol]]>cutVal] <- cutVal
 	cutVal <- min(scoresFinite, na.rm=TRUE)
 	df2p[[scoreCol]][df2p[[scoreCol]]<cutVal] <- cutVal
+
+	return(df2p)
+}
+
+#' lolaBarPlot
+#'
+#' plot a barplot of LOLA enrichment results
+#'
+#' @param lolaDb   LOLA DB object as returned by \code{LOLA::loadRegionDB} or \link{\code{loadLolaDbs}}
+#' @param lolaRes  LOLA enrichment result as returned by the \code{runLOLA} function from the \code{LOLA} package
+#' @param scoreCol column name in \code{lolaRes} to be plotted
+#' @param orderCol column name in \code{lolaRes} which is used for sorting the results
+#' @param includedCollections vector of collection names to be included in the plot. If empty (default), all collections are used
+#' @param pvalCut.neglog p-value cutoff (natural logarithm) to be employed for filtering the results
+#' @param maxTerms maximum number of items to be included in the plot
+#' @param colorpanel colors to be used for coloring the bars according to "target" (see \link{\code{getTargetFromLolaDb}}). An empty
+#'                 vector indicates that black will be used for all bars.
+#' @param groupByCollection facet the plot by collection
+#' @param change.pval.base change p-value to base 10 (instead of base e)
+#' @param orderDecreasing flag indicating whether the value in \code{orderCol} should be considered as decreasing (as opposed
+#'                 to increasing). \code{NULL} (default) for automatic determination.
+#' @return ggplot object containing the plot
+#'
+#' @author Fabian Mueller
+#' @export
+#' @examples
+#' \donttest{
+#' library(RnBeads.hg19)
+#' data(small.example.object)
+#' logger.start(fname=NA)
+#' # compute differential methylation
+#' dm <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Sample_Group","Treatment"))
+#' # download LOLA DB
+#' lolaDest <- tempfile()
+#' dir.create(lolaDest)
+#' lolaDirs <- downloadLolaDbs(lolaDest, dbs="LOLACore")
+#' # perform enrichment analysis
+#' res <- performLolaEnrichment.diffMeth(rnb.set.example,dm,lolaDirs[["hg19"]])
+#' # select the 500 most hypermethylated tiling regions in ESCs compared to iPSCs
+#' # in the example dataset
+#' lolaRes <- res$region[["hESC vs. hiPSC (based on Sample_Group)"]][["tiling"]]
+#' lolaRes <- lolaRes[lolaRes$userSet=="rankCut_500_hyper",]
+#' # plot
+#' lolaBarPlot(res$lolaDb, lolaRes, scoreCol="logOddsRatio", orderCol="maxRnk", pvalCut.neglog=-log(0.05))
+#' }
+lolaBarPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol, includedCollections=c(), pvalCut.neglog=-log(0.01), maxTerms=50, colorpanel=sample(rainbow(maxTerms,v=0.5)), groupByCollection=TRUE, change.pval.base=TRUE, orderDecreasing=NULL){
+	if (length(unique(lolaRes[["userSet"]])) > 1){
+		logger.warning("Multiple userSets contained in LOLA result object")
+	}
+	#prepare data.frame for plotting
+	df2p <- lolaPrepareDataFrameForPlot(lolaDb, lolaRes, scoreCol=scoreCol, orderCol=orderCol, includedCollections=includedCollections, pvalCut.neglog=pvalCut.neglog, maxTerms=maxTerms, perUserSet=FALSE, groupByCollection=groupByCollection, change.pval.base=change.pval.base, orderDecreasing=orderDecreasing)
 
 	aesObj <- aes_string("term", scoreCol)
 	if (length(colorpanel) > 0) aesObj <- aes_string("term", scoreCol, fill="target")
