@@ -153,14 +153,13 @@ getNamesFromLolaDb <- function(lolaDb, addCollectionNames=FALSE, addDbId=TRUE){
 #' @param colorpanel colors to be used for coloring the bars according to "target" (see \link{\code{getTargetFromLolaDb}}). An empty
 #'                 vector indicates that black will be used for all bars.
 #' @param groupByCollection facet the plot by collection
-#' @param change.pval.base change p-value to base 10 (instead of base e)
 #' @param orderDecreasing flag indicating whether the value in \code{orderCol} should be considered as decreasing (as opposed
 #'                 to increasing). \code{NULL} (default) for automatic determination.
 #' @return ggplot object containing the plot
 #'
 #' @author Fabian Mueller
 #' @noRd
-lolaPrepareDataFrameForPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol, includedCollections=c(), pvalCut.neglog=-log(0.01), maxTerms=50, perUserSet=FALSE, groupByCollection=TRUE, change.pval.base=TRUE, orderDecreasing=NULL){
+lolaPrepareDataFrameForPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol, includedCollections=c(), pvalCut.neglog=-log10(0.01), maxTerms=50, perUserSet=FALSE, groupByCollection=TRUE, orderDecreasing=NULL){
 	#dedect by column name whether decreasing order needs to be used
 	if (is.null(orderDecreasing)){
 		oset.dec <- c("pValueLog", "logOddsRatio")
@@ -187,11 +186,6 @@ lolaPrepareDataFrameForPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", o
 		lolaRes <- lolaRes[lolaRes[["collection"]] %in% includedCollections,]
 	}
 
-	if (change.pval.base) {
-		# change the base from the natural logarithm to log10
-		lolaRes$pValueLog <- lolaRes$pValueLog / log(10)
-		pvalCut.neglog <- pvalCut.neglog / log(10)
-	}
 	calledSignif <- lolaRes$pValueLog > pvalCut.neglog
 	lolaRes$pvalLab <- format(exp(-lolaRes$pValueLog), digits=2)
 
@@ -250,7 +244,6 @@ lolaPrepareDataFrameForPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", o
 #' @param colorpanel colors to be used for coloring the bars according to "target" (see \link{\code{getTargetFromLolaDb}}). An empty
 #'                 vector indicates that black will be used for all bars.
 #' @param groupByCollection facet the plot by collection
-#' @param change.pval.base change p-value to base 10 (instead of base e)
 #' @param orderDecreasing flag indicating whether the value in \code{orderCol} should be considered as decreasing (as opposed
 #'                 to increasing). \code{NULL} (default) for automatic determination.
 #' @return ggplot object containing the plot
@@ -277,12 +270,12 @@ lolaPrepareDataFrameForPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", o
 #' # plot
 #' lolaBarPlot(res$lolaDb, lolaRes, scoreCol="logOddsRatio", orderCol="maxRnk", pvalCut.neglog=-log(0.05))
 #' }
-lolaBarPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol, includedCollections=c(), pvalCut.neglog=-log(0.01), maxTerms=50, colorpanel=sample(rainbow(maxTerms,v=0.5)), groupByCollection=TRUE, change.pval.base=TRUE, orderDecreasing=NULL){
+lolaBarPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol, includedCollections=c(), pvalCut.neglog=-log10(0.01), maxTerms=50, colorpanel=sample(rainbow(maxTerms,v=0.5)), groupByCollection=TRUE, orderDecreasing=NULL){
 	if (length(unique(lolaRes[["userSet"]])) > 1){
 		logger.warning("Multiple userSets contained in LOLA result object")
 	}
 	#prepare data.frame for plotting
-	df2p <- lolaPrepareDataFrameForPlot(lolaDb, lolaRes, scoreCol=scoreCol, orderCol=orderCol, includedCollections=includedCollections, pvalCut.neglog=pvalCut.neglog, maxTerms=maxTerms, perUserSet=FALSE, groupByCollection=groupByCollection, change.pval.base=change.pval.base, orderDecreasing=orderDecreasing)
+	df2p <- lolaPrepareDataFrameForPlot(lolaDb, lolaRes, scoreCol=scoreCol, orderCol=orderCol, includedCollections=includedCollections, pvalCut.neglog=pvalCut.neglog, maxTerms=maxTerms, perUserSet=FALSE, groupByCollection=groupByCollection, orderDecreasing=orderDecreasing)
 
 	if (is.null(df2p)){
 		return(rnb.message.plot("No significant association found"))
@@ -328,14 +321,13 @@ lolaBarPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol
 #' @param colorpanel colors to be used for coloring the bars according to "target" (see \link{\code{getTargetFromLolaDb}}). An empty
 #'                 vector indicates that black will be used for all bars.
 #' @param groupByCollection facet the plot by collection
-#' @param change.pval.base change p-value to base 10 (instead of base e)
 #' @param orderDecreasing flag indicating whether the value in \code{orderCol} should be considered as decreasing (as opposed
 #'                 to increasing). \code{NULL} (default) for automatic determination.
 #' @return ggplot object containing the plot
 #'
 #' @author Fabian Mueller
 #' @noRd
-lolaBarPlot.hyp <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol, includedCollections=c(), pvalCut.neglog=-log(0.01), maxTerms=50, colorpanel=c("#a6611a", "#018571"), groupByCollection=TRUE, change.pval.base=TRUE, orderDecreasing=NULL){
+lolaBarPlot.hyp <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol, includedCollections=c(), pvalCut.neglog=-log10(0.01), maxTerms=50, colorpanel=c("#a6611a", "#018571"), groupByCollection=TRUE, orderDecreasing=NULL){
 	isHypo  <- grepl("hypo", lolaRes[["userSet"]], ignore.case=TRUE)
 	isHyper <- grepl("hyper", lolaRes[["userSet"]], ignore.case=TRUE)
 	if (sum(isHypo) < 1) logger.error("LOLA Result does not contain hypOmethylated userSet")
@@ -347,7 +339,7 @@ lolaBarPlot.hyp <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scor
 		logger.warning("LOLA Result contains userSets not annotated as hyper or hypo")
 	}
 	#prepare data.frame for plotting
-	df2p <- lolaPrepareDataFrameForPlot(lolaDb, lolaRes, scoreCol=scoreCol, orderCol=orderCol, includedCollections=includedCollections, pvalCut.neglog=pvalCut.neglog, maxTerms=maxTerms, perUserSet=TRUE, groupByCollection=groupByCollection, change.pval.base=change.pval.base, orderDecreasing=orderDecreasing)
+	df2p <- lolaPrepareDataFrameForPlot(lolaDb, lolaRes, scoreCol=scoreCol, orderCol=orderCol, includedCollections=includedCollections, pvalCut.neglog=pvalCut.neglog, maxTerms=maxTerms, perUserSet=TRUE, groupByCollection=groupByCollection, orderDecreasing=orderDecreasing)
 
 	if (is.null(df2p)){
 		return(rnb.message.plot("No significant association found"))
@@ -382,7 +374,6 @@ lolaBarPlot.hyp <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scor
 #' @param colorpanel colors to be used for coloring the bars according to "target" (see \link{\code{getTargetFromLolaDb}}). An empty
 #'                 vector indicates that black will be used for all bars.
 #' @param groupByCollection facet the plot by collection
-#' @param change.pval.base change p-value to base 10 (instead of base e)
 #' @param orderDecreasing flag indicating whether the value in \code{orderCol} should be considered as decreasing (as opposed
 #'                 to increasing). \code{NULL} (default) for automatic determination.
 #' @param scoreDecreasing flag indicating whether the value in \code{scoreCol} should be considered as decreasing (as opposed
@@ -411,7 +402,7 @@ lolaBarPlot.hyp <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scor
 #' # plot
 #' lolaBoxPlotPerTarget(res$lolaDb, lolaRes, scoreCol="logOddsRatio", orderCol="maxRnk", pvalCut.neglog=-log(0.05))
 #' }
-lolaBoxPlotPerTarget <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol, includedCollections=c(), pvalCut.neglog=-log(0.01), maxTerms=50, colorpanel=c(), groupByCollection=TRUE, change.pval.base=TRUE, orderDecreasing=NULL, scoreDecreasing=NULL){
+lolaBoxPlotPerTarget <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol, includedCollections=c(), pvalCut.neglog=-log10(0.01), maxTerms=50, colorpanel=c(), groupByCollection=TRUE, orderDecreasing=NULL, scoreDecreasing=NULL){
 	if (length(unique(lolaRes[["userSet"]])) > 1){
 		logger.warning("Multiple userSets contained in LOLA result object")
 	}
@@ -426,7 +417,7 @@ lolaBoxPlotPerTarget <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol
 	}
 
 	#prepare data.frame for plotting
-	df2p <- lolaPrepareDataFrameForPlot(lolaDb, lolaRes, scoreCol=scoreCol, orderCol=orderCol, includedCollections=includedCollections, pvalCut.neglog=pvalCut.neglog, maxTerms=Inf, perUserSet=FALSE, groupByCollection=groupByCollection, change.pval.base=change.pval.base, orderDecreasing=orderDecreasing)
+	df2p <- lolaPrepareDataFrameForPlot(lolaDb, lolaRes, scoreCol=scoreCol, orderCol=orderCol, includedCollections=includedCollections, pvalCut.neglog=pvalCut.neglog, maxTerms=Inf, perUserSet=FALSE, groupByCollection=groupByCollection, orderDecreasing=orderDecreasing)
 
 	if (is.null(df2p)){
 		return(rnb.message.plot("No significant association found"))

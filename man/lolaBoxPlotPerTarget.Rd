@@ -6,9 +6,9 @@
 \usage{
 lolaBoxPlotPerTarget(lolaDb, lolaRes, scoreCol = "pValueLog",
   orderCol = scoreCol, includedCollections = c(),
-  pvalCut.neglog = -log(0.01), maxTerms = 50, colorpanel = c(),
-  groupByCollection = TRUE, change.pval.base = TRUE,
-  orderDecreasing = NULL, scoreDecreasing = NULL)
+  pvalCut.neglog = -log10(0.01), maxTerms = 50, colorpanel = c(),
+  groupByCollection = TRUE, orderDecreasing = NULL,
+  scoreDecreasing = NULL)
 }
 \arguments{
 \item{lolaDb}{LOLA DB object as returned by \code{LOLA::loadRegionDB} or \link{\code{loadLolaDbs}}}
@@ -29,8 +29,6 @@ lolaBoxPlotPerTarget(lolaDb, lolaRes, scoreCol = "pValueLog",
 vector indicates that black will be used for all bars.}
 
 \item{groupByCollection}{facet the plot by collection}
-
-\item{change.pval.base}{change p-value to base 10 (instead of base e)}
 
 \item{orderDecreasing}{flag indicating whether the value in \code{orderCol} should be considered as decreasing (as opposed
 to increasing). \code{NULL} (default) for automatic determination.}
