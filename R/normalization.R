@@ -1153,15 +1153,23 @@ rnb.execute.imputation <- function(rnb.set,method=rnb.getOption("imputation.meth
   }
   if(!(method%in%c('mean.cpgs','mean.samples','random','knn'))){
     if(method=='none'){
-      logger.info('No imputation method selected, skipped imputation')
-      return(rnb.set)
+      if(inherits(rnb.set,"RnBeadSet")){
+        logger.info("No imputation method selected, 'knn' method used.")
+        rnb.options(imputation.method='knn')
+        method = 'knn'
+      }else if (inherits(rnb.set,"RnBiseqSet")){
+        logger.info("No imputation method selected, 'mean.samples' method used.")
+        rnb.options(imputation.method='mean.samples')
+        method = 'mean.samples'
+      }
+    }else{
+      stop("Invalid option for imputation method, has to be one of 'mean.cpgs','mean.samples','random','knn'")
     }
-    stop("Invalid option for imputation method, has to be one of 'mean.cpgs','mean.samples','random','knn'")
   }
   if(inherits(rnb.set,"RnBiseqSet") && rnb.getOption("imputation.method")=="knn"){
     rnb.options("imputation.method"="mean.samples")
     method = "mean.samples"
-    logger.info("Knn imputation not applicable to sequencing data sets, switched to mean.samples method")
+    logger.info("Knn imputation not applicable to sequencing data sets, switched to 'mean.samples' method")
   }
   logger.start(sprintf("Imputation procedure %s ",method))
   if(method=='mean.cpgs'){
@@ -1217,16 +1225,23 @@ rnb.section.imputation <- function(report,rnb.set,old.values){
              " the euclidean distance.\n")
   }
   new.values <- meth(rnb.set)
+  missing.values <- apply(old.values,2,function(x)sum(is.na(x)))
+  median <- median(missing.values)
+  txt <- c(txt," Imputation replaced a median of ",median," missing values per sample by estimations.")
+  report <- rnb.add.section(report,'Imputation',txt)
   if(sum(is.na(new.values))==sum(is.na(old.values))){
     txt <- "Imputation failed, see logger output for more information."
-    report <- rnb.add.section(report,'Imputation',txt)
+    report <- rnb.add.paragraph(report,txt)
     return(report)
   }
-  txt <- c(txt," Imputation replaced ",sum(is.na(old.values))," missing values by estimations.")
-  report <- rnb.add.section(report,'Imputation',txt)
+  #old.values <- na.omit(old.values)
+  old.values <- melt(old.values)
+  old.values <- old.values$value
   old.values <- na.omit(old.values)
+  new.values <- melt(new.values)
+  new.values <- new.values$value
   min.observations <- 501L
-  beta.values <- list("NAs omitted" = old.values, "After imputation" = new.values)
+  beta.values <- list("NAs removed" = old.values, "After imputation" = new.values)
   report.plot <- rnb.plot.beta.comparison(beta.values, "imputation_comparison", report, min.observations)
   setting.names <- list("Plot type" =
                           c("density" = "density estimation", "histogram" = "histograms", "qq" = "quantile-quantile plot"))

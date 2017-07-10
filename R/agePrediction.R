@@ -1215,6 +1215,7 @@ general.cv <- function(fitFunction,ages,methData,k=10,alpha=0.8){
 #' @noRd
 
 cv.array <- function(rnbSet,alpha=0.8){
+	rnb.require("impute")
 	ph <- pheno(rnbSet)
 	age <- rnb.getOption("inference.age.column")
 	if(age %in% colnames(ph)){
