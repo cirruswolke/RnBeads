@@ -5,7 +5,7 @@
 \title{lolaBarPlot}
 \usage{
 lolaBarPlot(lolaDb, lolaRes, scoreCol = "pValueLog", orderCol = scoreCol,
-  includedCollections = c(), pvalCut.neglog = -log10(0.01), maxTerms = 50,
+  includedCollections = c(), pvalCut = 0.01, maxTerms = 50,
   colorpanel = sample(rainbow(maxTerms, v = 0.5)), groupByCollection = TRUE,
   orderDecreasing = NULL)
 }
@@ -20,7 +20,7 @@ lolaBarPlot(lolaDb, lolaRes, scoreCol = "pValueLog", orderCol = scoreCol,
 
 \item{includedCollections}{vector of collection names to be included in the plot. If empty (default), all collections are used}
 
-\item{pvalCut.neglog}{p-value cutoff (natural logarithm) to be employed for filtering the results}
+\item{pvalCut}{p-value cutoff to be employed for filtering the results}
 
 \item{maxTerms}{maximum number of items to be included in the plot}
 
@@ -56,7 +56,7 @@ res <- performLolaEnrichment.diffMeth(rnb.set.example,dm,lolaDirs[["hg19"]])
 lolaRes <- res$region[["hESC vs. hiPSC (based on Sample_Group)"]][["tiling"]]
 lolaRes <- lolaRes[lolaRes$userSet=="rankCut_500_hyper",]
 # plot
-lolaBarPlot(res$lolaDb, lolaRes, scoreCol="logOddsRatio", orderCol="maxRnk", pvalCut.neglog=-log(0.05))
+lolaBarPlot(res$lolaDb, lolaRes, scoreCol="logOddsRatio", orderCol="maxRnk", pvalCut=0.05)
 }
 }
 \author{

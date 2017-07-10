@@ -5,10 +5,9 @@
 \title{lolaBoxPlotPerTarget}
 \usage{
 lolaBoxPlotPerTarget(lolaDb, lolaRes, scoreCol = "pValueLog",
-  orderCol = scoreCol, includedCollections = c(),
-  pvalCut.neglog = -log10(0.01), maxTerms = 50, colorpanel = c(),
-  groupByCollection = TRUE, orderDecreasing = NULL,
-  scoreDecreasing = NULL)
+  orderCol = scoreCol, includedCollections = c(), pvalCut = 0.01,
+  maxTerms = 50, colorpanel = c(), groupByCollection = TRUE,
+  orderDecreasing = NULL, scoreDecreasing = NULL)
 }
 \arguments{
 \item{lolaDb}{LOLA DB object as returned by \code{LOLA::loadRegionDB} or \link{\code{loadLolaDbs}}}
@@ -21,7 +20,7 @@ lolaBoxPlotPerTarget(lolaDb, lolaRes, scoreCol = "pValueLog",
 
 \item{includedCollections}{vector of collection names to be included in the plot. If empty (default), all collections are used}
 
-\item{pvalCut.neglog}{p-value cutoff (natural logarithm) to be employed for filtering the results}
+\item{pvalCut}{p-value cutoff to be employed for filtering the results}
 
 \item{maxTerms}{maximum number of items to be included in the plot}
 
@@ -61,7 +60,7 @@ res <- performLolaEnrichment.diffMeth(rnb.set.example,dm,lolaDirs[["hg19"]])
 lolaRes <- res$region[["hESC vs. hiPSC (based on Sample_Group)"]][["tiling"]]
 lolaRes <- lolaRes[lolaRes$userSet=="rankCut_500_hyper",]
 # plot
-lolaBoxPlotPerTarget(res$lolaDb, lolaRes, scoreCol="logOddsRatio", orderCol="maxRnk", pvalCut.neglog=-log(0.05))
+lolaBoxPlotPerTarget(res$lolaDb, lolaRes, scoreCol="logOddsRatio", orderCol="maxRnk", pvalCut=0.05)
 }
 }
 \author{
