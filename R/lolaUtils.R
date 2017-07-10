@@ -196,9 +196,9 @@ lolaPrepareDataFrameForPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", o
 	lolaRes$pvalLab <- format(exp(-lolaRes$pValueLog), digits=2)
 
 	if (sum(calledSignif) < 1){
-		lolaRes.signif <- lolaRes
+		# lolaRes.signif <- lolaRes
 		logger.warning("No significant association found")
-		return(rnb.message.plot("No significant association found"))
+		return(NULL)
 	} else {
 		lolaRes.signif <- lolaRes[calledSignif,]
 	}
@@ -284,6 +284,10 @@ lolaBarPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol
 	#prepare data.frame for plotting
 	df2p <- lolaPrepareDataFrameForPlot(lolaDb, lolaRes, scoreCol=scoreCol, orderCol=orderCol, includedCollections=includedCollections, pvalCut.neglog=pvalCut.neglog, maxTerms=maxTerms, perUserSet=FALSE, groupByCollection=groupByCollection, change.pval.base=change.pval.base, orderDecreasing=orderDecreasing)
 
+	if (is.null(df2p)){
+		return(rnb.message.plot("No significant association found"))
+	}
+
 	aesObj <- aes_string("term", scoreCol)
 	if (length(colorpanel) > 0) aesObj <- aes_string("term", scoreCol, fill="target")
 
@@ -344,6 +348,10 @@ lolaBarPlot.hyp <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scor
 	}
 	#prepare data.frame for plotting
 	df2p <- lolaPrepareDataFrameForPlot(lolaDb, lolaRes, scoreCol=scoreCol, orderCol=orderCol, includedCollections=includedCollections, pvalCut.neglog=pvalCut.neglog, maxTerms=maxTerms, perUserSet=TRUE, groupByCollection=groupByCollection, change.pval.base=change.pval.base, orderDecreasing=orderDecreasing)
+
+	if (is.null(df2p)){
+		return(rnb.message.plot("No significant association found"))
+	}
 
 	cpanel <- c(hypomethylated=colorpanel[1], hypermethylated=colorpanel[2])
 	aesObj <- aes_string("term", scoreCol, fill="userSet")
@@ -419,6 +427,10 @@ lolaBoxPlotPerTarget <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol
 
 	#prepare data.frame for plotting
 	df2p <- lolaPrepareDataFrameForPlot(lolaDb, lolaRes, scoreCol=scoreCol, orderCol=orderCol, includedCollections=includedCollections, pvalCut.neglog=pvalCut.neglog, maxTerms=Inf, perUserSet=FALSE, groupByCollection=groupByCollection, change.pval.base=change.pval.base, orderDecreasing=orderDecreasing)
+
+	if (is.null(df2p)){
+		return(rnb.message.plot("No significant association found"))
+	}
 
 	# maxTerms now applies to the targets, not to LOLA DB items
 	if (nlevels(df2p$target) > maxTerms){

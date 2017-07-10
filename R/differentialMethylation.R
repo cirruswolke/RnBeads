@@ -2186,13 +2186,13 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 	rnb.add.table(report,file.tab)
 	logger.completed()
 	
-	sectionText <- "No Enrichment Analysis was conducted"
+	sectionText <- "No GO Enrichment Analysis was conducted"
 	if (class(dm.go.enrich)=="DiffMeth.go.enrich" & length(dm.go.enrich$region)>0){
-		sectionText <- "Enrichment Analysis was conducted. The wordclouds and tables below contains significant GO terms as determined by a hypergeometric test."
+		sectionText <- "GO Enrichment Analysis was conducted. The wordclouds and tables below contains significant GO terms as determined by a hypergeometric test."
 	}
-	report <- rnb.add.section(report, 'Enrichment Analysis', sectionText, level = 2)
+	report <- rnb.add.section(report, 'GO Enrichment Analysis', sectionText, level = 2)
 	if (class(dm.go.enrich)=="DiffMeth.go.enrich" && length(dm.go.enrich$region)>0){
-		logger.start("Adding enrichment analysis results")
+		logger.start("Adding GO enrichment analysis results")
 		rnb.require("annotate")
 		comps <- names(dm.go.enrich$region)
 		names(comps) <- paste("comp",1:length(comps),sep="")
@@ -2277,10 +2277,91 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 		report <- rnb.add.tables(report, tabs2write, setting.names, row.names = FALSE)
 		logger.completed()
 	}
+
+	sectionText <- "No LOLA Enrichment Analysis was conducted"
+	lolaDone <- class(dm.lola.enrich)=="DiffMeth.lola.enrich" && length(dm.lola.enrich$region)>0
+	if (lolaDone){
+		sectionText <- "LOLA Enrichment Analysis was conducted. The plots and tables below show enrichments across annotations in the supplied LOLA reference databases fo the following collections:"
+	}
+	report <- rnb.add.section(report, 'LOLA Enrichment Analysis', sectionText, level = 2)
+	if (lolaDone){
+		logger.start("Adding LOLA enrichment analysis results")
+		lolaDb <- dm.lola.enrich$lolaDb
+		rnb.add.list(report, as.list(lolaDb$collectionAnno[["collectionname"]]))
+
+		comps <- names(dm.lola.enrich$region)
+		names(comps) <- paste("comp",1:length(comps),sep="")
+		reg.types <- get.region.types(diffmeth)
+		names(reg.types) <- paste("reg",1:length(reg.types),sep="")
+		hyper.hypo <- c("hypermethylated","hypomethylated")
+		names(hyper.hypo) <- c("hyper","hypo")
+
+		rank.cuts <- paste("combined rank among the ",diffRegionRankCut," best ranking regions",sep="")
+		rank.cuts <- c(rank.cuts,paste("automatically selected rank cutoff"))
+		rank.cuts.names.dm.lola.enrich <-  paste("rankCut_",c(diffRegionRankCut,"autoSelect"),sep="")
+		names(rank.cuts) <- c(paste("rc",1:length(diffRegionRankCut),sep=""),"rcAuto")
+		names(rank.cuts.names.dm.lola.enrich) <- c(paste("rc",1:length(diffRegionRankCut),sep=""),"rcAuto")
+		setting.names <- list(
+				'comparison' = comps,
+				'Hypermethylation/hypomethylation' = hyper.hypo,
+				'regions' = reg.types,
+				'differential methylation measure' = rank.cuts)
+
+		lolaTargets <- sort(unique(getTargetFromLolaDb(lolaDb)))
+		targetColors <- sample(rainbow(length(lolaTargets), v=0.5))
+		names(targetColors) <- lolaTargets
+
+		lolaBarPlots <- list()
+		lolaBoxPlots <- list()
+		for (ccn in names(comps)){
+			cc <- comps[ccn]
+			for (rrn in names(reg.types)){
+				rr <- reg.types[rrn]
+				dmRes <- dm.lola.enrich$region[[cc]][[rr]]
+				for (rcn in names(rank.cuts.names.dm.lola.enrich)){
+					rc <- rank.cuts.names.dm.lola.enrich[rcn]
+					# dmTab.hh <- dmRes[grepl(paste0("^", rc), dmRes[["userSet"]]),]
+					for (hhn in names(hyper.hypo)){
+						hh <- hyper.hypo[hhn]
+						kk <- paste(c(ccn,hhn,rrn,rcn),collapse="_")
+						dmTab <- dmRes[dmRes[["userSet"]]==paste(rc, hhn, sep="_"),]
+						# print(dmTab)
+
+						figName <- paste("lolaBox_", kk, sep="")
+						pp <- lolaBoxPlotPerTarget(lolaDb, dmTab, scoreCol="logOddsRatio", orderCol="maxRnk", pvalCut.neglog=-log(0.01), colorpanel=targetColors, maxTerms=100)
+						rPlot <- createReportGgPlot(pp, figName, report, create.pdf=TRUE, width=20, height=5)
+						lolaBoxPlots[[kk]] <- off(rPlot, handle.errors=TRUE)
+
+						figName <- paste("lolaBar_", kk, sep="")
+						pp <- lolaBarPlot(lolaDb, dmTab, scoreCol="logOddsRatio", orderCol="maxRnk", pvalCut.neglog=-log(0.01), colorpanel=targetColors, maxTerms=100)
+						rPlot <- createReportGgPlot(pp, figName, report, create.pdf=TRUE, width=20, height=5)
+						lolaBarPlots[[kk]] <- off(rPlot, handle.errors=TRUE)
+					}
+				}
+			}
+		}
+
+		desc <- c(
+			"Boxplots showing log-odds ratios from LOLA enrichment analysis. Shown are those groups of terms  per category ",
+			"that share the same putative target. Only terms that exhibit statistical significance (p-value < 0.01) are included ",
+			"If more than 100 terms are enriched, the 100 terms receiving the highest joined ",
+			"LOLA ranks are shown. Coloring of the bars reflects the putative targets of the terms."
+		)
+		report <- rnb.add.figure(report, desc, lolaBoxPlots, setting.names)
+
+		desc <- c(
+			"Barplots showing log-odds ratios from LOLA enrichment analysis. Shown are those terms that exhibit statistical ",
+			"significance (p-value < 0.01). If more than 100 terms are enriched, the 100 terms receiving the highest joined ",
+			"LOLA ranks are shown. Coloring of the bars reflects the putative targets of the terms."
+		)
+		report <- rnb.add.figure(report, desc, lolaBarPlots, setting.names)
+		logger.completed()
+	}
 	
 	logger.completed()
 	return(report)
 }
+
 #' get.adjustment.variables
 #'
 #' Given indices for two groups of samples for comparison, this function
