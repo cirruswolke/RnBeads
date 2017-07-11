@@ -1455,7 +1455,7 @@ rnb.run.differential <- function(rnb.set, dir.reports,
 	report <- init.pipeline.report("differential_methylation", dir.reports, init.configuration)
 	optionlist <- rnb.options("analyze.sites", "differential.report.sites", "region.types", "differential.permutations", "differential.comparison.columns",
 		"differential.comparison.columns.all.pairwise","columns.pairing","differential.site.test.method","covariate.adjustment.columns",
-		"differential.adjustment.sva","differential.adjustment.celltype","differential.enrichment.go","differential.enrichment.lola")
+		"differential.adjustment.sva","differential.adjustment.celltype","differential.enrichment.go","differential.enrichment.lola","differential.enrichment.lola.dbs")
 	report <- rnb.add.optionlist(report, optionlist)
 	permutations <- rnb.getOption("differential.permutations")
 

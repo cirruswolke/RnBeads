@@ -2281,7 +2281,13 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 	sectionText <- "No LOLA Enrichment Analysis was conducted"
 	lolaDone <- class(dm.lola.enrich)=="DiffMeth.lola.enrich" && length(dm.lola.enrich$region)>0
 	if (lolaDone){
-		sectionText <- "LOLA Enrichment Analysis was conducted. The plots and tables below show enrichments across annotations in the supplied LOLA reference databases fo the following collections:"
+		refText.lola <- c("Sheffield, N. C., & Bock, C. (2016). LOLA: enrichment analysis for genomic region sets and regulatory elements in R and Bioconductor. ",
+			"<i>Bioinformatics</i>, <b>32</b>(4), 587–589")
+		report <- rnb.add.reference(report, refText.lola)
+		sectionText <- c("LOLA Enrichment Analysis ", rnb.get.reference(report, refText.lola),
+		 " was conducted. The plots and tables below show enrichments across annotations in the supplied LOLA ",
+		 "reference databases for the following collections:"
+		)
 	}
 	report <- rnb.add.section(report, 'LOLA Enrichment Analysis', sectionText, level = 2)
 	if (lolaDone){
@@ -2328,12 +2334,13 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 						# print(dmTab)
 
 						figName <- paste("lolaBox_", kk, sep="")
-						pp <- lolaBoxPlotPerTarget(lolaDb, dmTab, scoreCol="logOddsRatio", orderCol="maxRnk", pvalCut.neglog=-log(0.01), colorpanel=targetColors, maxTerms=100)
+						pp <- lolaBoxPlotPerTarget(lolaDb, dmTab, scoreCol="logOddsRatio", orderCol="maxRnk", pvalCut=0.01, colorpanel=targetColors, maxTerms=100)
 						rPlot <- createReportGgPlot(pp, figName, report, create.pdf=TRUE, width=20, height=5)
-						lolaBoxPlots[[kk]] <- off(rPlot, handle.errors=TRUE)
+						# lolaBoxPlots[[kk]] <- off(rPlot, handle.errors=TRUE)
+						lolaBoxPlots[[kk]] <- suppressMessages(off(rPlot, handle.errors=TRUE))
 
 						figName <- paste("lolaBar_", kk, sep="")
-						pp <- lolaBarPlot(lolaDb, dmTab, scoreCol="logOddsRatio", orderCol="maxRnk", pvalCut.neglog=-log(0.01), colorpanel=targetColors, maxTerms=100)
+						pp <- lolaBarPlot(lolaDb, dmTab, scoreCol="logOddsRatio", orderCol="maxRnk", pvalCut=0.01, colorpanel=targetColors, maxTerms=100)
 						rPlot <- createReportGgPlot(pp, figName, report, create.pdf=TRUE, width=20, height=5)
 						lolaBarPlots[[kk]] <- off(rPlot, handle.errors=TRUE)
 					}
@@ -2343,7 +2350,7 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 
 		desc <- c(
 			"Boxplots showing log-odds ratios from LOLA enrichment analysis. Shown are those groups of terms  per category ",
-			"that share the same putative target. Only terms that exhibit statistical significance (p-value < 0.01) are included ",
+			"that share the same putative target. Only terms that exhibit statistical significance (p-value < 0.01) are included. ",
 			"If more than 100 terms are enriched, the 100 terms receiving the highest joined ",
 			"LOLA ranks are shown. Coloring of the bars reflects the putative targets of the terms."
 		)

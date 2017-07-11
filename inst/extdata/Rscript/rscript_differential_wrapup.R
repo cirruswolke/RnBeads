@@ -150,7 +150,7 @@ logger.start("Differential Methylation")
 		report <- RnBeads:::init.pipeline.report("differential_methylation", report.dir, init.configuration)
 		optionlist <- rnb.options("analyze.sites","region.types", "differential.permutations", "differential.comparison.columns",
 			"differential.comparison.columns.all.pairwise","columns.pairing","differential.site.test.method","covariate.adjustment.columns",
-			"differential.adjustment.sva","differential.adjustment.celltype","differential.enrichment.go","differential.enrichment.lola")
+			"differential.adjustment.sva","differential.adjustment.celltype","differential.enrichment.go","differential.enrichment.lola", "differential.enrichment.lola.dbs")
 		report <- RnBeads:::rnb.add.optionlist(report, optionlist)
 		
 		if (is.null(diffmeth)){
