@@ -108,8 +108,12 @@ rnb.get.XY.shifts.biseq <- function(rnb.set) {
   probes.bad <- GRanges(Rle(probes.bad$Chromosome),IRanges(start = probes.bad$Start,end = probes.bad$End),strand=Rle(probes.bad$Strand),probes.bad[,-(1:4)])
   probes.bad <- split(probes.bad,seqnames(probes.bad))
   probes.max <- sapply(probes.bad, length)
-  probes.bad <- lapply(probes.bad, function(x) { which((mcols(x)[, "SNPs"] != 0)) })
-  probes.max <- probes.max - sapply(probes.bad, length)
+  if("SNPs"%in%colnames(mcols(probes.bad[[1]]))){
+    probes.bad <- lapply(probes.bad, function(x) { which((mcols(x)[, "SNPs"] != 0)) })
+    probes.max <- probes.max - sapply(probes.bad, length)
+  }else{
+    probes.bad <- lapply(probes.bad,function(x)which(!is.null(mcols(x))))
+  }
   
   ## Identify the indices of sites on the sex chromosomes and autosomes
   gender.chroms <- c("X" = "chrX", "Y" = "chrY")
