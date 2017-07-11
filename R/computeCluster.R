@@ -439,7 +439,11 @@ setMethod("run",
 						logger.start(c("Checking/Downloading LOLA databases"))
 							dbDownloadDir <- file.path(cluster.dir,paste0("lolaDbs"))
 							lolaDbPaths <- prepLolaDbPaths(rnb.getOption("assembly"), downloadDir=dbDownloadDir)
-							saveRDS(lolaDbPaths, file.path(cluster.dir, "lolaDbPaths.rds"))
+							if (length(lolaDbPaths) > 0){
+								saveRDS(lolaDbPaths, file.path(cluster.dir, "lolaDbPaths.rds"))
+							} else {
+								logger.warning(c("No LOLA DB found for assembly", rnb.getOption("assembly"), "--> continuing without LOLA enrichment"))
+							}
 						logger.completed()
 					}
 					logger.start(c("Running chunks"))

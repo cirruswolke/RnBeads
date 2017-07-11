@@ -1504,8 +1504,12 @@ rnb.run.differential <- function(rnb.set, dir.reports,
 			}
 			if (rnb.getOption("differential.enrichment.lola")){
 				lolaDbPaths <- prepLolaDbPaths(assembly(rnb.set), downloadDir=rnb.get.directory(report, "data", absolute=TRUE))
-				dm.lola.enrich <- performLolaEnrichment.diffMeth(rnb.set, diffmeth, lolaDbPaths, verbose=TRUE)
-				rnb.cleanMem()
+				if (length(lolaDbPaths) > 0){
+					dm.lola.enrich <- performLolaEnrichment.diffMeth(rnb.set, diffmeth, lolaDbPaths, verbose=TRUE)
+					rnb.cleanMem()
+				} else {
+					logger.warning(c("No LOLA DB found for assembly", assembly(rnb.set), "--> continuing without LOLA enrichment"))
+				}
 			}
 		} else {
 			logger.info(c("Skipping enrichment analysis of differentially methylated regions"))

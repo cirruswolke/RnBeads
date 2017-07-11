@@ -65,9 +65,15 @@ logger.start("Configuring Analysis")
 	rm(aname, ncores)
 
 	lolaDbPaths <- NULL
+	savedLolaDbPath <- file.path(cmdArgs$output, "lolaDbPaths.rds")
 	if(rnb.getOption("differential.enrichment.lola")){
-		lolaDbPaths <- readRDS(file.path(cmdArgs$output, "lolaDbPaths.rds"))
-		logger.info(c("Successfully loaded LOLA DB paths"))
+		if (file.exists(savedLolaDbPath)){
+			lolaDbPaths <- readRDS(savedLolaDbPath)
+			logger.info(c("Successfully loaded LOLA DB paths"))
+		} else{
+			logger.info(c("No LOLA DB file found"))
+		}
+		
 	}
 logger.completed()
 
@@ -108,7 +114,7 @@ logger.start("Differential Methylation")
 		dm.go.enrich <- NULL
 		logger.info(c("Skipping GO enrichment analysis of differentially methylated regions"))
 	}
-	if (rnb.getOption("differential.enrichment.lola")){
+	if (rnb.getOption("differential.enrichment.lola") && !is.null(lolaDbPaths)){
 		dm.lola.enrich <- performLolaEnrichment.diffMeth(rnb.set,diffmeth,lolaDbPaths,verbose=FALSE)
 	} else {
 		dm.lola.enrich <- NULL
