@@ -2,7 +2,7 @@
 % Please edit documentation in R/normalization.R
 \name{rnb.execute.imputation}
 \alias{rnb.execute.imputation}
-\title{rnb.execute.imptutation}
+\title{rnb.execute.imputation}
 \usage{
 rnb.execute.imputation(rnb.set, method = rnb.getOption("imputation.method"),
   ...)
@@ -20,6 +20,19 @@ The modified rnb.set object without missing methylation values.
 }
 \description{
 Removes missing methylation values in the methylation matrix of the given object
+}
+\details{
+Imputes missing values by applying on the following methods:
+         \describe{
+           \item{mean.cpgs:}{missing values are inferred as the average methylation value from all other 
+           (non-mising) CpGs in this sample}
+           \item{mean.samples:}{missing values are inferred as the average methylation value from all other 
+           (non-mising) values at this CpG sites in all other samples}
+           \item{random:}{missing values are inferred by randomly selecting a (non-missing) methylation value
+           from any other sample at this CpG site}
+           \item{knn:}{missing values are inferred by k-nearest neighbors imputation (see \pkg{impute})}
+           \item{none:}{imputation should not be performed}
+         }
 }
 \author{
 Michael Scherer

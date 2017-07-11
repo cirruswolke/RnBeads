@@ -1084,7 +1084,7 @@ mean.imputation <- function(rnb.set,way=1){
 
 #' mean.imputation
 #'
-#' Performs random imputation by replacing missing values with randomly selected (with replacement) from the same CpG site in the samples
+#' Performs random imputation by replacing missing values with randomly selecting (with replacement) from the same CpG site in the samples
 #' that do not contain missing values.
 #'
 #'@param rnb.set Object containing the methylation information to be changed. Has to be of
@@ -1114,7 +1114,7 @@ random.imputation <- function(rnb.set){
 #' knn.imputation
 #'
 #' This function performns k nearest neighbors imputation by calling the \code{impute.knn} function from the
-#' \code{impute} package.
+#' \pkg{impute} package.
 #'
 #'@param rnb.set Object containing the methylation information to be changed. Has to be of
 #'               type \code{\linkS4class{RnBeadSet}} or \code{\linkS4class{RnBiseqSet}}.
@@ -1134,7 +1134,7 @@ knn.imputation <- function(rnb.set,k=10){
 
 #######################################################################################################################
 
-#' rnb.execute.imptutation
+#' rnb.execute.imputation
 #'
 #' Removes missing methylation values in the methylation matrix of the given object
 #'
@@ -1143,6 +1143,18 @@ knn.imputation <- function(rnb.set,k=10){
 #'                \code{"random"}, \code{"knn"} or \code{"none"}.
 #' @param ... Optional arguments passed to knn.imputation
 #' @return The modified rnb.set object without missing methylation values.
+#' 
+#' @details Imputes missing values by applying on the following methods:
+#'          \describe{
+#'            \item{mean.cpgs:}{missing values are inferred as the average methylation value from all other 
+#'            (non-mising) CpGs in this sample}
+#'            \item{mean.samples:}{missing values are inferred as the average methylation value from all other 
+#'            (non-mising) values at this CpG sites in all other samples}
+#'            \item{random:}{missing values are inferred by randomly selecting a (non-missing) methylation value
+#'            from any other sample at this CpG site}
+#'            \item{knn:}{missing values are inferred by k-nearest neighbors imputation (see \pkg{impute})}
+#'            \item{none:}{imputation should not be performed}
+#'          }
 #'
 #' @author Michael Scherer
 #'
@@ -1190,14 +1202,13 @@ rnb.execute.imputation <- function(rnb.set,method=rnb.getOption("imputation.meth
 
 #######################################################################################################################
 
-#' rnb.section.imptutation
+#' rnb.section.imputation
 #'
 #' Adds information and plots describing the effect of imputation on the dataset
 #'
 #' @param report Report to which the information should be added (\code{\linkS4class{Report}}).
 #' @param rnb.set Dataset on which imputation was performed (\code{\linkS4class{RnBSet}}).
-#' @param missing.values Number of missing values before imputation.
-#' @param old.values CpG-wise averages in the methylation matrix before imputation.
+#' @param old.values Methylation matrix before imputation procedure.
 #'
 #' @return The modified report object
 #' @author Michael Scherer
@@ -1234,7 +1245,6 @@ rnb.section.imputation <- function(report,rnb.set,old.values){
     report <- rnb.add.paragraph(report,txt)
     return(report)
   }
-  #old.values <- na.omit(old.values)
   old.values <- melt(old.values)
   old.values <- old.values$value
   old.values <- na.omit(old.values)
@@ -1263,7 +1273,7 @@ rnb.section.imputation <- function(report,rnb.set,old.values){
 #'
 #' @return List with two elements:
 #'         \describe{
-#'           \item{\code{dataset}}{Dataset as an object of type \code{\linkS4class{RnBeadSet}}
+#'           \item{\code{dataset}}{Dataset as an object of type \code{\linkS4class{RnBSet}}
 #'                 containing the imputed methylation matrix.}
 #'           \item{\code{report}}{the modified report.}
 #'         }
