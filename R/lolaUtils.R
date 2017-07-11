@@ -276,6 +276,7 @@ lolaVolcanoPlot <- function(lolaDb, lolaRes, includedCollections=c(), signifCol=
 	# adjust maxTerms, pvalCut to not filter anything
 	df2p <- lolaPrepareDataFrameForPlot(lolaDb, lolaRes, scoreCol="pValueLog", orderCol="maxRnk", includedCollections=includedCollections, pvalCut=1.1, maxTerms=Inf, perUserSet=FALSE, groupByCollection=TRUE, orderDecreasing=NULL)
 	#reverse the order of points s.t. the plot looks nice
+	df2p <- df2p[nrow(df2p):1,]
 
 	if (signifCol == "qValue"){
 		df2p[["qValueLog"]] <- -log10(df2p[["qValue"]])
