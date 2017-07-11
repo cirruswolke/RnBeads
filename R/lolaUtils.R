@@ -232,6 +232,62 @@ lolaPrepareDataFrameForPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", o
 	return(df2p)
 }
 
+
+#' lolaVolcanoPlot
+#'
+#' plot a volcano plot showing LOLA enrichment results: LOLA p-value against the log-odds score. Colored by rank
+#'
+#' @param lolaDb   LOLA DB object as returned by \code{LOLA::loadRegionDB} or \link{\code{loadLolaDbs}}
+#' @param lolaRes  LOLA enrichment result as returned by the \code{runLOLA} function from the \code{LOLA} package
+#' @param includedCollections vector of collection names to be included in the plot. If empty (default), all collections are used
+#' @return ggplot object containing the plot
+#'
+#' @author Fabian Mueller
+#' @export
+#' @examples
+#' \donttest{
+#' library(RnBeads.hg19)
+#' data(small.example.object)
+#' logger.start(fname=NA)
+#' # compute differential methylation
+#' dm <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Sample_Group","Treatment"))
+#' # download LOLA DB
+#' lolaDest <- tempfile()
+#' dir.create(lolaDest)
+#' lolaDirs <- downloadLolaDbs(lolaDest, dbs="LOLACore")
+#' # perform enrichment analysis
+#' res <- performLolaEnrichment.diffMeth(rnb.set.example,dm,lolaDirs[["hg19"]])
+#' # select the 500 most hypermethylated tiling regions in ESCs compared to iPSCs
+#' # in the example dataset
+#' lolaRes <- res$region[["hESC vs. hiPSC (based on Sample_Group)"]][["tiling"]]
+#' lolaRes <- lolaRes[lolaRes$userSet=="rankCut_500_hyper",]
+#' # plot
+#' lolaVolcanoPlot(res$lolaDb, lolaRes, signifCol="qValue")
+#' }
+lolaVolcanoPlot <- function(lolaDb, lolaRes, includedCollections=c(), signifCol="pValueLog"){
+	if (length(unique(lolaRes[["userSet"]])) > 1){
+		logger.warning("Multiple userSets contained in LOLA result object")
+	}
+	if (!is.element(signifCol, c("pValueLog", "qValue"))){
+		logger.error(c("Invalid significance column name:", signifCol))
+	}
+
+	#prepare data.frame for plotting
+	# adjust maxTerms, pvalCut to not filter anything
+	df2p <- lolaPrepareDataFrameForPlot(lolaDb, lolaRes, scoreCol="pValueLog", orderCol="maxRnk", includedCollections=includedCollections, pvalCut=1.1, maxTerms=Inf, perUserSet=FALSE, groupByCollection=TRUE, orderDecreasing=NULL)
+	#reverse the order of points s.t. the plot looks nice
+
+	if (signifCol == "qValue"){
+		df2p[["qValueLog"]] <- -log10(df2p[["qValue"]])
+		signifCol <- "qValueLog"
+	}
+
+	pp <- ggplot(df2p) + aes_string("logOddsRatio", signifCol, color="maxRnk") +
+		scale_color_gradientn(colors=rev(rnb.getOption("colors.gradient"))) +
+		geom_point()
+	return(pp)
+}
+
 #' lolaBarPlot
 #'
 #' plot a barplot of LOLA enrichment results
