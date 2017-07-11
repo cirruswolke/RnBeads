@@ -4,13 +4,15 @@
 \alias{run.cross.validation}
 \title{run.cross.validation}
 \usage{
-run.cross.validation(rnbSet, report)
+run.cross.validation(rnbSet, report, alpha = 0.8)
 }
 \arguments{
 \item{rnbSet}{a \code{RnBSet} object containing the methylation info and ages on which
 the new predictor should be trained}
 
 \item{report}{report to which the table should be added}
+
+\item{alpha}{alpha parameter used in the elastic net regression}
 }
 \value{
 modified report object
