@@ -41,7 +41,6 @@ Suggests:
     wordcloud,
     argparse,
     glmnet,
-    impute,
     GLAD,
     IlluminaHumanMethylation450kanno.ilmn12.hg19,
     scales
