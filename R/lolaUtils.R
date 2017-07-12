@@ -285,6 +285,10 @@ lolaVolcanoPlot <- function(lolaDb, lolaRes, includedCollections=c(), signifCol=
 	#reverse the order of points s.t. the plot looks nice
 	df2p <- df2p[nrow(df2p):1,]
 
+	if (signifCol == "qValue"){
+		signifCol <- "qValueLog"
+	}
+
 	is.color.gradient <- FALSE
 	is.color.discrete <- FALSE
 	if (!is.null(colorBy) && nchar(colorBy) > 0 && !is.element(colorBy, colnames(df2p))){
