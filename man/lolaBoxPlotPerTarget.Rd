@@ -5,9 +5,10 @@
 \title{lolaBoxPlotPerTarget}
 \usage{
 lolaBoxPlotPerTarget(lolaDb, lolaRes, scoreCol = "pValueLog",
-  orderCol = scoreCol, includedCollections = c(), pvalCut = 0.01,
-  maxTerms = 50, colorpanel = c(), groupByCollection = TRUE,
-  orderDecreasing = NULL, scoreDecreasing = NULL)
+  orderCol = scoreCol, signifCol = "qValue", includedCollections = c(),
+  pvalCut = 0.01, maxTerms = 50, colorpanel = c(),
+  groupByCollection = TRUE, orderDecreasing = NULL,
+  scoreDecreasing = NULL)
 }
 \arguments{
 \item{lolaDb}{LOLA DB object as returned by \code{LOLA::loadRegionDB} or \link{\code{loadLolaDbs}}}
@@ -17,6 +18,8 @@ lolaBoxPlotPerTarget(lolaDb, lolaRes, scoreCol = "pValueLog",
 \item{scoreCol}{column name in \code{lolaRes} to be plotted}
 
 \item{orderCol}{column name in \code{lolaRes} which is used for sorting the results}
+
+\item{signifCol}{column name of the significance score in \code{lolaRes}. Should be one of \code{c("pValueLog", "qValue")}}
 
 \item{includedCollections}{vector of collection names to be included in the plot. If empty (default), all collections are used}
 

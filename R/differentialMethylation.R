@@ -2317,6 +2317,10 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 		targetColors <- sample(rainbow(length(lolaTargets), v=0.5))
 		names(targetColors) <- lolaTargets
 
+		volcano.colorBy <- c("maxRnk"="combined LOLA rank", "target"="target", "collection"="LOLA DB collection")
+		setting.names.volcano <- c(setting.names, list('color'=volcano.colorBy))
+
+		lolaVolcanoPlots <- list()
 		lolaBarPlots <- list()
 		lolaBoxPlots <- list()
 		for (ccn in names(comps)){
@@ -2333,6 +2337,18 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 						dmTab <- dmRes[dmRes[["userSet"]]==paste(rc, hhn, sep="_"),]
 						# print(dmTab)
 
+						for (vcbn in names(volcano.colorBy)){
+							kkk <- paste(kk, vcbn, sep="_")
+							figName <- paste("lolaVolcano_", kkk, sep="")
+							pp <- lolaVolcanoPlot(lolaDb, dmTab, signifCol="qValue", colorBy=vcbn)
+							if (vcbn == "target"){
+								pp <- pp + guides(color=FALSE)
+							}
+							rPlot <- createReportGgPlot(pp, figName, report, create.pdf=FALSE, high.png=200)
+							lolaVolcanoPlots[[kkk]] <- off(rPlot, handle.errors=TRUE)
+						}
+						
+
 						figName <- paste("lolaBox_", kk, sep="")
 						pp <- lolaBoxPlotPerTarget(lolaDb, dmTab, scoreCol="logOddsRatio", orderCol="maxRnk", pvalCut=0.01, colorpanel=targetColors, maxTerms=100)
 						rPlot <- createReportGgPlot(pp, figName, report, create.pdf=TRUE, width=20, height=5)
@@ -2347,6 +2363,12 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 				}
 			}
 		}
+
+		desc <- c(
+			"Scatter plot showing the effect size (log-odds ratio) vs. the significance (-log10(q-value)), similar to a 'volcano plot' ",
+			"as it is called in other contexts."
+		)
+		report <- rnb.add.figure(report, desc, lolaVolcanoPlots, setting.names.volcano)
 
 		desc <- c(
 			"Boxplots showing log-odds ratios from LOLA enrichment analysis. Shown are those groups of terms  per category ",

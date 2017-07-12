@@ -147,6 +147,7 @@ getNamesFromLolaDb <- function(lolaDb, addCollectionNames=FALSE, addDbId=TRUE){
 #' @param lolaRes  LOLA enrichment result as returned by the \code{runLOLA} function from the \code{LOLA} package
 #' @param scoreCol column name in \code{lolaRes} to be plotted
 #' @param orderCol column name in \code{lolaRes} which is used for sorting the results
+#' @param signifCol column name of the significance score in \code{lolaRes}. Should be one of \code{c("pValueLog", "qValue")}.
 #' @param includedCollections vector of collection names to be included in the plot. If empty (default), all collections are used
 #' @param pvalCut p-value cutoff to be employed for filtering the results
 #' @param maxTerms maximum number of items to be included in the plot
@@ -159,20 +160,28 @@ getNamesFromLolaDb <- function(lolaDb, addCollectionNames=FALSE, addDbId=TRUE){
 #'
 #' @author Fabian Mueller
 #' @noRd
-lolaPrepareDataFrameForPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol, includedCollections=c(), pvalCut=0.01, maxTerms=50, perUserSet=FALSE, groupByCollection=TRUE, orderDecreasing=NULL){
+lolaPrepareDataFrameForPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol, signifCol="qValue", includedCollections=c(), pvalCut=0.01, maxTerms=50, perUserSet=FALSE, groupByCollection=TRUE, orderDecreasing=NULL){
 	#dedect by column name whether decreasing order needs to be used
 	if (is.null(orderDecreasing)){
-		oset.dec <- c("pValueLog", "logOddsRatio")
-		oset.inc <- c("maxRnk", "meanRnk")
+		oset.dec <- c("pValueLog", "qValueLog", "logOddsRatio")
+		oset.inc <- c("maxRnk", "meanRnk", "qValue")
 		if (!is.element(orderCol, c(oset.dec, oset.inc))){
 			logger.error(c("Could not determine whether to use increasing or decreasing order for column:", orderCol))
 		}
 		orderDecreasing <- is.element(orderCol, oset.dec)
 	}
 
-	pvalCut.neglog <- -log10(pvalCut)
+	if (!is.element(signifCol, c("pValueLog", "qValue"))){
+		logger.error(c("Invalid significance column name:", signifCol))
+	}
 
 	lolaRes <- as.data.frame(lolaRes)
+
+	if (signifCol == "qValue"){
+		lolaRes[["qValueLog"]] <- -log10(lolaRes[["qValue"]])
+		signifCol <- "qValueLog"
+	}
+
 	lolaRes$name <- getNamesFromLolaDb(lolaDb, addCollectionNames=!groupByCollection)[lolaRes$dbSet]
 	lolaRes$name <- trimChar(lolaRes$name, len.out=50, trim.str="...", len.pref=30)
 	lolaRes$target <- getTargetFromLolaDb(lolaDb)[lolaRes$dbSet]
@@ -188,8 +197,7 @@ lolaPrepareDataFrameForPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", o
 		lolaRes <- lolaRes[lolaRes[["collection"]] %in% includedCollections,]
 	}
 
-	calledSignif <- lolaRes$pValueLog > pvalCut.neglog
-	lolaRes$pvalLab <- format(exp(-lolaRes$pValueLog), digits=2)
+	calledSignif <- lolaRes[[signifCol]] > -log10(pvalCut)
 
 	if (sum(calledSignif) < 1){
 		# lolaRes.signif <- lolaRes
@@ -240,6 +248,8 @@ lolaPrepareDataFrameForPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", o
 #' @param lolaDb   LOLA DB object as returned by \code{LOLA::loadRegionDB} or \link{\code{loadLolaDbs}}
 #' @param lolaRes  LOLA enrichment result as returned by the \code{runLOLA} function from the \code{LOLA} package
 #' @param includedCollections vector of collection names to be included in the plot. If empty (default), all collections are used
+#' @param signifCol column name of the significance score in \code{lolaRes}. Should be one of \code{c("pValueLog", "qValue")}.
+#' @param colorBy  annotation/column in the the LOLA DB that should be used for point coloring
 #' @return ggplot object containing the plot
 #'
 #' @author Fabian Mueller
@@ -264,28 +274,44 @@ lolaPrepareDataFrameForPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", o
 #' # plot
 #' lolaVolcanoPlot(res$lolaDb, lolaRes, signifCol="qValue")
 #' }
-lolaVolcanoPlot <- function(lolaDb, lolaRes, includedCollections=c(), signifCol="pValueLog"){
+lolaVolcanoPlot <- function(lolaDb, lolaRes, includedCollections=c(), signifCol="qValue", colorBy="maxRnk"){
 	if (length(unique(lolaRes[["userSet"]])) > 1){
 		logger.warning("Multiple userSets contained in LOLA result object")
-	}
-	if (!is.element(signifCol, c("pValueLog", "qValue"))){
-		logger.error(c("Invalid significance column name:", signifCol))
 	}
 
 	#prepare data.frame for plotting
 	# adjust maxTerms, pvalCut to not filter anything
-	df2p <- lolaPrepareDataFrameForPlot(lolaDb, lolaRes, scoreCol="pValueLog", orderCol="maxRnk", includedCollections=includedCollections, pvalCut=1.1, maxTerms=Inf, perUserSet=FALSE, groupByCollection=TRUE, orderDecreasing=NULL)
+	df2p <- lolaPrepareDataFrameForPlot(lolaDb, lolaRes, scoreCol="pValueLog", signifCol=signifCol, orderCol="maxRnk", includedCollections=includedCollections, pvalCut=1.1, maxTerms=Inf, perUserSet=FALSE, groupByCollection=TRUE, orderDecreasing=NULL)
 	#reverse the order of points s.t. the plot looks nice
 	df2p <- df2p[nrow(df2p):1,]
 
-	if (signifCol == "qValue"){
-		df2p[["qValueLog"]] <- -log10(df2p[["qValue"]])
-		signifCol <- "qValueLog"
+	is.color.gradient <- FALSE
+	is.color.discrete <- FALSE
+	if (!is.null(colorBy) && nchar(colorBy) > 0 && !is.element(colorBy, colnames(df2p))){
+		logger.warning(c("Invalid colorBy argument:", colorBy, "--> using black as color"))
+	} else {
+		is.color.gradient <- is.numeric(df2p[[colorBy]])
+		is.color.discrete <- !is.color.gradient
 	}
 
-	pp <- ggplot(df2p) + aes_string("logOddsRatio", signifCol, color="maxRnk") +
-		scale_color_gradientn(colors=rev(rnb.getOption("colors.gradient"))) +
-		geom_point()
+	pp <- ggplot(df2p) + aes_string("logOddsRatio", signifCol, color=colorBy) + geom_point()
+	if (is.color.gradient){
+		pp <- pp + scale_color_gradientn(colors=rev(rnb.getOption("colors.gradient")))
+	}
+	if (is.color.discrete){
+		if (is.factor(df2p[[colorBy]])){
+			cpanel <- rep(rnb.getOption("colors.category"), length.out=nlevels(df2p[[colorBy]]))
+			names(cpanel) <- levels(df2p[[colorBy]])
+		} else if (is.character(df2p[[colorBy]])){
+			cpanel.names <- unique(df2p[[colorBy]])
+			cpanel <- rep(rnb.getOption("colors.category"), length.out=length(cpanel.names))
+			names(cpanel) <- cpanel.names
+		} else {
+			logger.error("invalid discrete coloring column type")
+		}
+		pp <- pp + scale_color_manual(na.value="#C0C0C0", values=cpanel)
+	}
+		
 	return(pp)
 }
 
@@ -297,6 +323,7 @@ lolaVolcanoPlot <- function(lolaDb, lolaRes, includedCollections=c(), signifCol=
 #' @param lolaRes  LOLA enrichment result as returned by the \code{runLOLA} function from the \code{LOLA} package
 #' @param scoreCol column name in \code{lolaRes} to be plotted
 #' @param orderCol column name in \code{lolaRes} which is used for sorting the results
+#' @param signifCol column name of the significance score in \code{lolaRes}. Should be one of \code{c("pValueLog", "qValue")}
 #' @param includedCollections vector of collection names to be included in the plot. If empty (default), all collections are used
 #' @param pvalCut p-value cutoff to be employed for filtering the results
 #' @param maxTerms maximum number of items to be included in the plot
@@ -329,12 +356,12 @@ lolaVolcanoPlot <- function(lolaDb, lolaRes, includedCollections=c(), signifCol=
 #' # plot
 #' lolaBarPlot(res$lolaDb, lolaRes, scoreCol="logOddsRatio", orderCol="maxRnk", pvalCut=0.05)
 #' }
-lolaBarPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol, includedCollections=c(), pvalCut=0.01, maxTerms=50, colorpanel=sample(rainbow(maxTerms,v=0.5)), groupByCollection=TRUE, orderDecreasing=NULL){
+lolaBarPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol, signifCol="qValue", includedCollections=c(), pvalCut=0.01, maxTerms=50, colorpanel=sample(rainbow(maxTerms,v=0.5)), groupByCollection=TRUE, orderDecreasing=NULL){
 	if (length(unique(lolaRes[["userSet"]])) > 1){
 		logger.warning("Multiple userSets contained in LOLA result object")
 	}
 	#prepare data.frame for plotting
-	df2p <- lolaPrepareDataFrameForPlot(lolaDb, lolaRes, scoreCol=scoreCol, orderCol=orderCol, includedCollections=includedCollections, pvalCut=pvalCut, maxTerms=maxTerms, perUserSet=FALSE, groupByCollection=groupByCollection, orderDecreasing=orderDecreasing)
+	df2p <- lolaPrepareDataFrameForPlot(lolaDb, lolaRes, scoreCol=scoreCol, orderCol=orderCol, signifCol=signifCol, includedCollections=includedCollections, pvalCut=pvalCut, maxTerms=maxTerms, perUserSet=FALSE, groupByCollection=groupByCollection, orderDecreasing=orderDecreasing)
 
 	if (is.null(df2p)){
 		return(rnb.message.plot("No significant association found"))
@@ -374,6 +401,7 @@ lolaBarPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol
 #' @param lolaRes  LOLA enrichment result as returned by the \code{runLOLA} function from the \code{LOLA} package
 #' @param scoreCol column name in \code{lolaRes} to be plotted
 #' @param orderCol column name in \code{lolaRes} which is used for sorting the results
+#' @param signifCol column name of the significance score in \code{lolaRes}. Should be one of \code{c("pValueLog", "qValue")}
 #' @param includedCollections vector of collection names to be included in the plot. If empty (default), all collections are used
 #' @param pvalCut p-value cutoff (negative log10) to be employed for filtering the results
 #' @param maxTerms maximum number of items to be included in the plot
@@ -386,7 +414,7 @@ lolaBarPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol
 #'
 #' @author Fabian Mueller
 #' @noRd
-lolaBarPlot.hyp <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol, includedCollections=c(), pvalCut=0.01, maxTerms=50, colorpanel=c("#a6611a", "#018571"), groupByCollection=TRUE, orderDecreasing=NULL){
+lolaBarPlot.hyp <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol, signifCol="qValue", includedCollections=c(), pvalCut=0.01, maxTerms=50, colorpanel=c("#a6611a", "#018571"), groupByCollection=TRUE, orderDecreasing=NULL){
 	isHypo  <- grepl("hypo", lolaRes[["userSet"]], ignore.case=TRUE)
 	isHyper <- grepl("hyper", lolaRes[["userSet"]], ignore.case=TRUE)
 	if (sum(isHypo) < 1) logger.error("LOLA Result does not contain hypOmethylated userSet")
@@ -398,7 +426,7 @@ lolaBarPlot.hyp <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scor
 		logger.warning("LOLA Result contains userSets not annotated as hyper or hypo")
 	}
 	#prepare data.frame for plotting
-	df2p <- lolaPrepareDataFrameForPlot(lolaDb, lolaRes, scoreCol=scoreCol, orderCol=orderCol, includedCollections=includedCollections, pvalCut=pvalCut, maxTerms=maxTerms, perUserSet=TRUE, groupByCollection=groupByCollection, orderDecreasing=orderDecreasing)
+	df2p <- lolaPrepareDataFrameForPlot(lolaDb, lolaRes, scoreCol=scoreCol, orderCol=orderCol, signifCol=signifCol, includedCollections=includedCollections, pvalCut=pvalCut, maxTerms=maxTerms, perUserSet=TRUE, groupByCollection=groupByCollection, orderDecreasing=orderDecreasing)
 
 	if (is.null(df2p)){
 		return(rnb.message.plot("No significant association found"))
@@ -427,6 +455,7 @@ lolaBarPlot.hyp <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scor
 #' @param lolaRes  LOLA enrichment result as returned by the \code{runLOLA} function from the \code{LOLA} package
 #' @param scoreCol column name in \code{lolaRes} to be plotted
 #' @param orderCol column name in \code{lolaRes} which is used for sorting the results
+#' @param signifCol column name of the significance score in \code{lolaRes}. Should be one of \code{c("pValueLog", "qValue")}
 #' @param includedCollections vector of collection names to be included in the plot. If empty (default), all collections are used
 #' @param pvalCut  p-value cutoff to be employed for filtering the results
 #' @param maxTerms maximum number of items to be included in the plot
@@ -461,7 +490,7 @@ lolaBarPlot.hyp <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scor
 #' # plot
 #' lolaBoxPlotPerTarget(res$lolaDb, lolaRes, scoreCol="logOddsRatio", orderCol="maxRnk", pvalCut=0.05)
 #' }
-lolaBoxPlotPerTarget <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol, includedCollections=c(), pvalCut=0.01, maxTerms=50, colorpanel=c(), groupByCollection=TRUE, orderDecreasing=NULL, scoreDecreasing=NULL){
+lolaBoxPlotPerTarget <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol, signifCol="qValue", includedCollections=c(), pvalCut=0.01, maxTerms=50, colorpanel=c(), groupByCollection=TRUE, orderDecreasing=NULL, scoreDecreasing=NULL){
 	if (length(unique(lolaRes[["userSet"]])) > 1){
 		logger.warning("Multiple userSets contained in LOLA result object")
 	}
@@ -476,7 +505,7 @@ lolaBoxPlotPerTarget <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol
 	}
 
 	#prepare data.frame for plotting
-	df2p <- lolaPrepareDataFrameForPlot(lolaDb, lolaRes, scoreCol=scoreCol, orderCol=orderCol, includedCollections=includedCollections, pvalCut=pvalCut, maxTerms=Inf, perUserSet=FALSE, groupByCollection=groupByCollection, orderDecreasing=orderDecreasing)
+	df2p <- lolaPrepareDataFrameForPlot(lolaDb, lolaRes, scoreCol=scoreCol, orderCol=orderCol, signifCol=signifCol, includedCollections=includedCollections, pvalCut=pvalCut, maxTerms=Inf, perUserSet=FALSE, groupByCollection=groupByCollection, orderDecreasing=orderDecreasing)
 
 	if (is.null(df2p)){
 		return(rnb.message.plot("No significant association found"))
