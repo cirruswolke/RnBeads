@@ -5,7 +5,7 @@
 \title{lolaVolcanoPlot}
 \usage{
 lolaVolcanoPlot(lolaDb, lolaRes, includedCollections = c(),
-  signifCol = "qValue", colorBy = "maxRnk")
+  signifCol = "qValue", colorBy = "maxRnk", colorpanel = c())
 }
 \arguments{
 \item{lolaDb}{LOLA DB object as returned by \code{LOLA::loadRegionDB} or \link{\code{loadLolaDbs}}}
@@ -17,6 +17,8 @@ lolaVolcanoPlot(lolaDb, lolaRes, includedCollections = c(),
 \item{signifCol}{column name of the significance score in \code{lolaRes}. Should be one of \code{c("pValueLog", "qValue")}.}
 
 \item{colorBy}{annotation/column in the the LOLA DB that should be used for point coloring}
+
+\item{colorpanel}{colors to be used for coloring the points}
 }
 \value{
 ggplot object containing the plot

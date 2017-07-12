@@ -250,6 +250,7 @@ lolaPrepareDataFrameForPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", o
 #' @param includedCollections vector of collection names to be included in the plot. If empty (default), all collections are used
 #' @param signifCol column name of the significance score in \code{lolaRes}. Should be one of \code{c("pValueLog", "qValue")}.
 #' @param colorBy  annotation/column in the the LOLA DB that should be used for point coloring
+#' @param colorpanel colors to be used for coloring the points
 #' @return ggplot object containing the plot
 #'
 #' @author Fabian Mueller
@@ -274,7 +275,7 @@ lolaPrepareDataFrameForPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", o
 #' # plot
 #' lolaVolcanoPlot(res$lolaDb, lolaRes, signifCol="qValue")
 #' }
-lolaVolcanoPlot <- function(lolaDb, lolaRes, includedCollections=c(), signifCol="qValue", colorBy="maxRnk"){
+lolaVolcanoPlot <- function(lolaDb, lolaRes, includedCollections=c(), signifCol="qValue", colorBy="maxRnk", colorpanel=c()){
 	if (length(unique(lolaRes[["userSet"]])) > 1){
 		logger.warning("Multiple userSets contained in LOLA result object")
 	}
@@ -299,20 +300,28 @@ lolaVolcanoPlot <- function(lolaDb, lolaRes, includedCollections=c(), signifCol=
 	}
 
 	pp <- ggplot(df2p) + aes_string("logOddsRatio", signifCol, color=colorBy) + geom_point()
+	cpanel <- colorpanel
+	if (length(cpanel) < 1){
+		if (is.color.gradient){
+			cpanel <- rev(rnb.getOption("colors.gradient"))
+		}
+		if (is.color.discrete){
+			if (is.factor(df2p[[colorBy]])){
+				cpanel <- rep(rnb.getOption("colors.category"), length.out=nlevels(df2p[[colorBy]]))
+				names(cpanel) <- levels(df2p[[colorBy]])
+			} else if (is.character(df2p[[colorBy]])){
+				cpanel.names <- unique(df2p[[colorBy]])
+				cpanel <- rep(rnb.getOption("colors.category"), length.out=length(cpanel.names))
+				names(cpanel) <- cpanel.names
+			} else {
+				logger.error("invalid discrete coloring column type")
+			}
+		}
+	}
 	if (is.color.gradient){
-		pp <- pp + scale_color_gradientn(colors=rev(rnb.getOption("colors.gradient")))
+		pp <- pp + scale_color_gradientn(colors=cpanel)
 	}
 	if (is.color.discrete){
-		if (is.factor(df2p[[colorBy]])){
-			cpanel <- rep(rnb.getOption("colors.category"), length.out=nlevels(df2p[[colorBy]]))
-			names(cpanel) <- levels(df2p[[colorBy]])
-		} else if (is.character(df2p[[colorBy]])){
-			cpanel.names <- unique(df2p[[colorBy]])
-			cpanel <- rep(rnb.getOption("colors.category"), length.out=length(cpanel.names))
-			names(cpanel) <- cpanel.names
-		} else {
-			logger.error("invalid discrete coloring column type")
-		}
 		pp <- pp + scale_color_manual(na.value="#C0C0C0", values=cpanel)
 	}
 		

@@ -2317,6 +2317,10 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 		targetColors <- sample(rainbow(length(lolaTargets), v=0.5))
 		names(targetColors) <- lolaTargets
 
+		collectionNames <- unique(lolaDb$collectionAnno[["collectionname"]])
+		collectionColors <- rep(rnb.getOption("colors.category"), length.out=length(collectionNames))
+		names(collectionColors) <- collectionNames
+
 		volcano.colorBy <- c("maxRnk"="combined LOLA rank", "target"="target", "collection"="LOLA DB collection")
 		setting.names.volcano <- c(setting.names, list('color'=volcano.colorBy))
 
@@ -2340,10 +2344,11 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 						for (vcbn in names(volcano.colorBy)){
 							kkk <- paste(kk, vcbn, sep="_")
 							figName <- paste("lolaVolcano_", kkk, sep="")
-							pp <- lolaVolcanoPlot(lolaDb, dmTab, signifCol="qValue", colorBy=vcbn)
-							if (vcbn == "target"){
-								pp <- pp + guides(color=FALSE)
-							}
+							cpanel <- c()
+							if (vcbn == "target")     cpanel <- targetColors
+							if (vcbn == "collection") cpanel <- collectionColors
+							pp <- lolaVolcanoPlot(lolaDb, dmTab, signifCol="qValue", colorBy=vcbn, colorpanel=cpanel)
+							if (vcbn == "target") pp <- pp + guides(color=FALSE)
 							rPlot <- createReportGgPlot(pp, figName, report, create.pdf=FALSE, high.png=200)
 							lolaVolcanoPlots[[kkk]] <- off(rPlot, handle.errors=TRUE)
 						}
