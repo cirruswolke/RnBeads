@@ -287,6 +287,7 @@ prepLolaDbPaths <- function(assembly, dbs=rnb.getOption("differential.enrichment
 	res <- file.path(dbs[!isPh], assembly)
 	if (any(isPh)){
 		logger.start("Downloading LOLA databases")
+			if (!dir.exists(downloadDir)) dir.create(downloadDir)
 			downloadDbs <- gsub(phPattern, "\\1", dbs[isPh])
 			downloadedPaths <- downloadLolaDbs(downloadDir, dbs=downloadDbs)
 		logger.completed()
