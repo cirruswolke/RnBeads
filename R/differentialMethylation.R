@@ -2282,7 +2282,7 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 	lolaDone <- class(dm.lola.enrich)=="DiffMeth.lola.enrich" && length(dm.lola.enrich$region)>0
 	if (lolaDone){
 		refText.lola <- c("Sheffield, N. C., & Bock, C. (2016). LOLA: enrichment analysis for genomic region sets and regulatory elements in R and Bioconductor. ",
-			"<i>Bioinformatics</i>, <b>32</b>(4), 587–589")
+			"<i>Bioinformatics</i>, <b>32</b>(4), 587-589")
 		report <- rnb.add.reference(report, refText.lola)
 		sectionText <- c("LOLA Enrichment Analysis ", rnb.get.reference(report, refText.lola),
 		 " was conducted. The plots and tables below show enrichments across annotations in the supplied LOLA ",
