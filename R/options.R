@@ -697,6 +697,9 @@ rnb.is.option <- function(txt) {
 #'        Method to be used for calculating p-values on the site level. Currently supported options are "ttest" for a (paired)
 #'        t-test and "limma" for a linear modeling approach implemented in the \code{limma} package for differential expression
 #'        in microarrays.}
+#'   \item{\bold{\code{differential.variability.method}}\code{ = "diffVar"}}{
+#'        Method to be used for calculating p-values on the differential varible sites. Currently supported options are "diffVar"
+#'        implemented in the \code{missMethyl} package and "iEVORA".}      
 #'   \item{\bold{\code{differential.permutations}}\code{ = 0}}{
 #'        Number of permutation tests performed to compute the p-value of rank permutation tests in the differential
 #'        methylation analysis. This must be a non-negative \code{integer}. Setting this option to \code{0} (default)
