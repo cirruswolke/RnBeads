@@ -1234,7 +1234,7 @@ read.bed.files<-function(base.dir=NULL,
 				if(useff){
 					open(data.matrices[[indx]])
 				}
-				if (verbose) rnb.status(c("Reading data matrix", indx))
+				# if (verbose) rnb.status(c("Reading data matrix", indx))
 				dm<-data.matrices[[indx]]
 				#dm.rows2<-intersect(all.sites, rownames(dm))
 				#dm.rows<-match(all.sites, rownames(dm))
@@ -1373,6 +1373,8 @@ read.single.bed<-function(file,
 
 	if(!is.character(file) || length(file)!=1)
 		stop("Invalid file name")
+
+	rnb.info(c("Reading BED file:", file))
 
 	## read top of the file to determine the column classes
 	if(ffread){

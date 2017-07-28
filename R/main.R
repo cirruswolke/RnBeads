@@ -1210,14 +1210,6 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 			report, section.name=sn, section.order=so)
 	logger.completed()
 
-	#DEBUG
-	if (TRUE){
-		fn <- file.path(rnb.get.directory(report, "data", absolute=TRUE), "filterData.RData")
-		logger.status(c("DEBUG: Saving filtering data to", fn))
-		save(removed.samples, removed.sites, mask, file=fn)
-	}
-
-
 	rnb.set <- rnb.filter.dataset(rnb.set, removed.samples, removed.sites, mask)
 
 	if (rnb.getOption("region.subsegments") > 1L) {
