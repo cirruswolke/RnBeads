@@ -999,12 +999,16 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 	module.start.log("Preprocessing")
 
 	do.normalization <- rnb.getOption("normalization")
+	do.greedycut <- rnb.getOption("filtering.greedycut")
 
 	if (is.null(do.normalization)) {
 		do.normalization <- inherits(rnb.set, "RnBeadSet")
 	} else if (do.normalization && inherits(rnb.set, "RnBiseqSet")) {
 		logger.warning("Skipped normalization module for sequencing data.")
 		do.normalization <- FALSE
+	}
+	if (is.null(do.greedycut)) {
+		do.greedycut <- inherits(rnb.set, "RnBeadSet")
 	}
 
 	## Option list
@@ -1098,7 +1102,7 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 		report <- result$report
 		removed.sites <- sort(c(removed.sites, result$filtered))
 	}
-	if (rnb.getOption("filtering.greedycut")) {
+	if (do.greedycut) {
 		result <- rnb.step.greedycut.internal(rnb.set, removed.sites, report, anno.table)
 		report <- result$report
 		removed.sites <- sort(c(removed.sites, result$sites))
