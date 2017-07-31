@@ -562,8 +562,10 @@ rnb.is.option <- function(txt) {
 #'        Flag indicating if the removal of potentially cross-reactive probes should be performed as a filtering step
 #'        in the preprocessing module. A probes whose sequence maps to multiple genomic locations (allowing up to 3
 #'        mismatches) is cross-reactive.}
-#'   \item{\bold{\code{filtering.greedycut}}\code{ = TRUE}}{
-#'        Flag indicating if the Greedycut procedure should be run as a filtering step in the preprocessing module.}
+#'   \item{\bold{\code{filtering.greedycut}}\code{ = NULL}}{
+#'        Flag indicating if the Greedycut procedure should be run as a filtering step in the preprocessing module.
+#'        \code{NULL} (default) indicates that Greedycut will be run for array-based datasets, but not for
+#'        sequencing-based datasets.}
 #'   \item{\bold{\code{filtering.greedycut.pvalue.threshold}}\code{ = 0.05}}{
 #'        Threshold for the detection p-value to be used in Greedycut. This is a value between 0 and 1. This option has
 #'        effect only when \code{filtering.greedycut} is \code{TRUE}.}

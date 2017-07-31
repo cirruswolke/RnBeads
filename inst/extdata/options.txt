@@ -53,7 +53,7 @@ filtering.blacklist	character	no	yes		NULL
 filtering.context.removal	character.vector	no	yes	(CC,CG,CAG,CAH,CTG,CTH,Other)	(CC,CAG,CAH,CTG,CTH,Other)
 filtering.snp	character	no	no	(no,3,5,any,yes)	3
 filtering.cross.reactive	logical	no	no		FALSE
-filtering.greedycut	logical	no	no		TRUE
+filtering.greedycut	logical	no	yes		NULL
 filtering.greedycut.pvalue.threshold	double	no	no	[0,1]	0.05
 filtering.greedycut.rc.ties	character	no	no	(any,column,row)	row
 filtering.sex.chromosomes.removal	logical	no	no		FALSE
