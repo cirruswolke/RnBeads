@@ -144,7 +144,7 @@ logger.start("Differential Methylation")
 
 		diffmeth <- diffmeth.res$diffmeth
 		dm.go.enrich <- diffmeth.res$dm.go.enrich
-		dm.lola.enrich <- <- diffmeth.res$dm.lola.enrich
+		dm.lola.enrich <- diffmeth.res$dm.lola.enrich
 
 		init.configuration <- !file.exists(file.path(report.dir, "configuration"))
 		report <- RnBeads:::init.pipeline.report("differential_methylation", report.dir, init.configuration)
