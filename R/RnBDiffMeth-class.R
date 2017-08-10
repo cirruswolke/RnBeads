@@ -33,7 +33,8 @@ setClassUnion("characterOrNULL", c("character", "NULL"))
 #'   \item{\code{includesSites}}{Logical indicating whether the object contains site-level differential methylation information.}
 #'   \item{\code{site.test.method}}{method which was applied to obtain the site-level p-values.}
 #'   \item{\code{hasVariability}}{Logical indicating whether the object contains differential variability information.}
-#'   \item{\code{covg.thres}}{coverage threshold. Important for certain columns of the differential methylation tables.
+#'   \item{\code{variability.method}}{Method to be used for differential variability analysis. "diffVar" or "iEVORA".}
+#'   \item{\code{covg.thres}}{coverage threshold. Important for certain columns of the differential methylation tables.}
 #'   \item{\code{disk.dump}}{Flag indicating whether the tables should be stored on disk rather than in the main memory}
 #'   \item{\code{disk.path}}{path on the disk for DMTs.Only meaningful if \code{disk.dump} is \code{TRUE}}
 #' }
@@ -46,6 +47,7 @@ setClassUnion("characterOrNULL", c("character", "NULL"))
 #'   \item{\code{\link{get.comparison.grouplabels,RnBDiffMeth-method}}}{Gets all comparison group names as a matrix}
 #'   \item{\code{\link{get.covg.thres,RnBDiffMeth-method}}}{Gets the coverage threshold employed for obtaining statistics in the differential methylation tables}
 #'   \item{\code{\link{get.table,RnBDiffMeth-method}}}{Gets a differential methylation table}
+#'   \item{\code{\link{get.variability.table,RnBDiffMeth-method}}}{Gets a differential variability table}
 #'   \item{\code{\link{addDiffMethTable,RnBDiffMeth-method}}}{Adds a differential methylation table}
 #' 	 \item{\code{\link{reload,RnBDiffMeth-method}}}{relink disk dumped tables. Useful if the files are manually copied or if the object is loaded again}
 #'   \item{\code{\link{save.tables,RnBDiffMeth-method}}}{save disk dumped tables as binaries and zip them.
@@ -69,7 +71,7 @@ setClass("RnBDiffMeth",
 		includesSites="logical",
 		site.test.method="characterOrNULL",
 		hasVariability="logical",
-		variability.method="charaterOrNULL",
+		variability.method="characterOrNULL",
 		covg.thres="integer",
 		disk.dump="logical",
 		disk.path="characterOrNULL"
@@ -77,14 +79,14 @@ setClass("RnBDiffMeth",
 	prototype = prototype(
 		sites=list(),
 		regions=list(),
-		variable.site=list(),
+		variable.sites=list(),
 		comparisons=character(),
 		region.types=character(),
 		comparison.grouplabels=matrix(ncol=2,nrow=0),
 		comparison.info=list(),
 		includesSites=FALSE,
 		site.test.method=NULL,
-		hasVariabilty=FALSE,
+		hasVariability=FALSE,
 		variability.method=NULL,
 		covg.thres=-1L,
 		disk.dump=FALSE,
@@ -100,6 +102,8 @@ setClass("RnBDiffMeth",
 #' @param site.test.method method which was applied to obtain the site-level p-values.
 #' @param covg.thres  coverage threshold. Important for certain columns of the differential methylation tables.
 #' 					  See \code{computeDiffMeth.bin.site} and \code{computeDiffMeth.bin.region} for details.
+#' @param variability.method method to be used to calculate differentially variable sites. Has to be one of: `diffVar' or 
+#'            `iEVORA'.
 #' @param disk.dump   Flag indicating whether the tables should be stored on disk rather than in the main memory
 #' @param disk.path   Path on the disk for DMTs.Only meaningful if \code{disk.dump} is \code{TRUE}
 #'
@@ -129,7 +133,7 @@ setMethod("initialize", "RnBDiffMeth",
 			.Object@comparison.grouplabels <- matrix(ncol=2,nrow=0)
 			.Object@includesSites <- FALSE
 			.Object@site.test.method <- site.test.method
-			.Object@variability.metho <- variability.method
+			.Object@variability.method <- variability.method
 			.Object@covg.thres <- covg.thres
 			.Object@comparison.info <- list()
 			.Object@disk.dump <- disk.dump
@@ -343,8 +347,7 @@ if (!isGeneric("get.variability.method")) setGeneric("get.variability.method", f
 #' @aliases get.variability.method
 #' @aliases get.variability.method,RnBDiffMeth-method
 #' @export
-#' @examples
-setMethod("get.varibility.method", signature(object="RnBDiffMeth"),
+setMethod("get.variability.method", signature(object="RnBDiffMeth"),
           function(object){
             if (.hasSlot(object,"variability.method")) { 
               return(object@variability.method)
@@ -433,7 +436,7 @@ setMethod("hasVariability", signature(object="RnBDiffMeth"),
             if (.hasSlot(object,"hasVariability")) {
               return(object@hasVariability)
             } else {
-              return(all(sapply(object@variability.sites,is.null)))
+              return(all(sapply(object@variable.sites,is.null)))
             }
           }
 )
@@ -507,7 +510,6 @@ if (!isGeneric("get.variability.table")) setGeneric("get.variability.table", fun
 #' @aliases get.variability.table
 #' @aliases get.variability.table,RnBDiffMeth-method
 #' @export
-#' @examples
 setMethod("get.variability.table", signature(object="RnBDiffMeth"),
           function(object,comparison,undump=TRUE,return.data.frame=FALSE){
             if(!.hasSlot(object,'hasVariability')){
@@ -518,7 +520,7 @@ setMethod("get.variability.table", signature(object="RnBDiffMeth"),
             if (!is.element(comparison,object@comparisons)) {
               stop(paste("invalid comparison:",comparison))
             }
-            res <- object@variability.sites[[comparison]]
+            res <- object@variable.sites[[comparison]]
             if (object@disk.dump && undump && !is.null(res)){
               res <- res[,]
             }
@@ -676,7 +678,7 @@ setMethod("addDiffVarTable", signature(object="RnBDiffMeth"),
             disk.dump <- object@disk.dump
             disk.path <- object@disk.path
             
-            if (!is.null(object@variability.sites[[comparison]])) {
+            if (!is.null(object@variable.sites[[comparison]])) {
               warning(paste("DiffVarTable already exists for combination:",comparison," , sites . Returning unmodified object"))
               return(object)
             }
@@ -692,8 +694,8 @@ setMethod("addDiffVarTable", signature(object="RnBDiffMeth"),
               object@comparison.info <- c(object@comparison.info,list(NULL))
               names(object@comparison.info)[cmp.i] <- comparison
               #append the comparison to all sites and regions objects
-              object@variability.sites <- c(object@variability.sites,list(NULL))
-              names(object@variability.sites)[cmp.i] <- comparison
+              object@variable.sites <- c(object@variable.sites,list(NULL))
+              names(object@variable.sites)[cmp.i] <- comparison
             }
             cmp.i <- which(object@comparisons == comparison) #index of the comparison
             cmp.fname <- paste0("cmp",cmp.i)
@@ -706,7 +708,7 @@ setMethod("addDiffVarTable", signature(object="RnBDiffMeth"),
               fileN <- paste0(paste("sites",cmp.fname,sep="_"),".ff")
               table.obj <- ff(table.obj,dim=dim(table.obj),dimnames=dimnames(table.obj),filename=file.path(disk.path,fileN))
             }
-            object@variability.sites[[comparison]] <- table.obj
+            object@variable.sites[[comparison]] <- table.obj
             object@hasVariability <- TRUE
             return(object)
           }
@@ -759,8 +761,8 @@ setMethod("save.tables", signature(object="RnBDiffMeth"),
 					}
 				}
 				if(hasVariability(object)){
-				  if(!is.null(object@varibility.sites[[cci]])){
-				    ee[[paste("variability.sites",ccn,sep=".")]] <- object@variability.sites[[cci]
+				  if(!is.null(object@variable.sites[[cci]])){
+				    ee[[paste("variable.sites",ccn,sep=".")]] <- object@variable.sites[[cci]]
 				  }
 				}
 			}
@@ -850,10 +852,10 @@ setMethod("reload", signature(object="RnBDiffMeth"),
 					object@regions[[rri]][cci] <- list(NULL)
 				}
 			}
-			var.name <- paste("variability.sites",ccn,sep=".")
+			var.name <- paste("variable.sites",ccn,sep=".")
 			if(hasVariability(object)){
 			  if(exists(var.name,ee)){
-			    object@variability.sites[[cci]] <- get(var.name,ee)
+			    object@variable.sites[[cci]] <- get(var.name,ee)
 			  }else{
 			    logger.warning(c("Could not relink:","varibility sites","--",cc))
 			    object@sites[cci] <- list(NULL)
@@ -1054,8 +1056,8 @@ setMethod("join.diffMeth", signature(obj1="RnBDiffMeth",obj2="RnBDiffMeth"),
 			}
 		}
 		#variability
-		is.var.obj1 <- !vapply(obj1@variability.sites[comps.intersect],is.null,FALSE)
-		is.var.obj2 <- !vapply(obj2@variability.sites[comps.intersect],is.null,FALSE)
+		is.var.obj1 <- !vapply(obj1@variable.sites[comps.intersect],is.null,FALSE)
+		is.var.obj2 <- !vapply(obj2@variable.sites[comps.intersect],is.null,FALSE)
 		is.var.both <- (is.var.obj1+is.var.obj2)>1
 		if(any(is.var.both)){
 		  warning(paste("Join RnBDiffMeth: Comparison on differential varibility defined in both objects."))
@@ -1067,7 +1069,7 @@ setMethod("join.diffMeth", signature(obj1="RnBDiffMeth",obj2="RnBDiffMeth"),
 		for (rr in obj1@region.types){
 			res@regions[[rr]] <- c(res@regions[[rr]],new.comp.list) 
 		}
-		if(hasVariability(obj1)) res@varibility.sites <- c(res@variability.sites,new.comp.list)
+		if(hasVariability(obj1)) res@varibility.sites <- c(res@variable.sites,new.comp.list)
 		n.all.comps <- length(res@comparisons)
 		new.reg.list <- rep(list(NULL),n.all.comps)
 		names(new.reg.list) <- res@comparisons
@@ -1107,14 +1109,14 @@ setMethod("join.diffMeth", signature(obj1="RnBDiffMeth",obj2="RnBDiffMeth"),
 					}
 				}
 			}
-			if (!is.null(obj2@variability.sites[[cc]]) && is.null(res@variability.sites[[cc]])) {
+			if (!is.null(obj2@variable.sites[[cc]]) && is.null(res@variable.sites[[cc]])) {
 			  #if dumped, copy the matrix of obj2 to the location of obj1
 			  if (obj2@disk.dump) {
 			    base.path <- res@disk.path
 			    fileN <- paste0(paste("sites",cmp.fname,sep="_"),".ff")
-			    res@variability.sites[[cc]] <- clone(obj2@variability.sites[[cc]],vmode=vmode(obj2@variability.sites[[cc]]),filename=file.path(base.path,fileN))
+			    res@variable.sites[[cc]] <- clone(obj2@variable.sites[[cc]],vmode=vmode(obj2@variable.sites[[cc]]),filename=file.path(base.path,fileN))
 			  } else {
-			    res@variability.sites[[cc]] <- obj2@variability.sites[[cc]]
+			    res@variable.sites[[cc]] <- obj2@variable.sites[[cc]]
 			  }
 			}
 		}
@@ -1191,14 +1193,14 @@ setMethod("is.valid", signature(object="RnBDiffMeth"),
 				}
 			}
 			if (hasVariability(object)){ #.hasSlot for backwards compatibility
-			  if (is.null(object@variability.sites[[cc]])){
+			  if (is.null(object@variable.sites[[cc]])){
 			    if (verbose) logger.info(paste0("No table found for comparison '",cc,"' (variability sites)"))
 			    return(FALSE)
 			  }
 			  if (object@disk.dump){
 			    fileN <- file.path(object@disk.path,paste0(paste("variabiliy.sites",ccn,sep="_"),".ff"))
 			    if (!file.exists(fileN)){
-			      if (verbose) logger.info(paste0("Disk dump file ['",fileN,"'] not found for comparison '",cc,"' (variability.sites)"))
+			      if (verbose) logger.info(paste0("Disk dump file ['",fileN,"'] not found for comparison '",cc,"' (variable.sites)"))
 			      return(FALSE)
 			    }
 			  }

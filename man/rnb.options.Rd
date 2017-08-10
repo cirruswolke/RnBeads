@@ -125,8 +125,9 @@ is available (see below). Attempting to get or set the value of a non-existing o
   \item{\bold{\code{import.skip.object.check}}\code{ =  FALSE}}{
 	  Skip the check of the loaded RnBSet object after loading. Helps with keeping the memory profile down}
   \item{\bold{\code{import.gender.prediction}}\code{ = TRUE}}{
-       Flag indicating if gender prediction is to be performed. Gender prediction is only supported for Infinium 450k
-       datasets with signal intensity information. The value of this option is ignored for other datasets.}
+       Flag indicating if gender prediction is to be performed. Gender prediction is supported for Infinium 450k, EPIC
+       and bisulfite sequencing datasets with signal intensity or coverage information.
+       The value of this option is ignored for 27k datasets.}
   \item{\bold{\code{qc}}\code{ = TRUE}}{
        Flag indicating if the quality control module is to be executed.}
   \item{\bold{\code{qc.boxplots}}\code{ = TRUE}}{
@@ -351,6 +352,14 @@ is available (see below). Attempting to get or set the value of a non-existing o
        Method to be used for calculating p-values on the site level. Currently supported options are "ttest" for a (paired)
        t-test and "limma" for a linear modeling approach implemented in the \code{limma} package for differential expression
        in microarrays.}
+  \item{\bold{\code{differential.variability}}\code{ = FALSE}}{
+       Flag indicating if differential variability analysis is to be conducted. If TRUE, the method specified in 
+       \code{differential.variability.method} is applied to detect sites that show differential variability between the groups
+       that are specified.
+       }
+  \item{\bold{\code{differential.variability.method}}\code{ = "diffVar"}}{
+       Method to be used for calculating p-values on the differential varible sites. Currently supported options are "diffVar"
+       implemented in the \code{missMethyl} package and "iEVORA".}      
   \item{\bold{\code{differential.permutations}}\code{ = 0}}{
        Number of permutation tests performed to compute the p-value of rank permutation tests in the differential
        methylation analysis. This must be a non-negative \code{integer}. Setting this option to \code{0} (default)
@@ -359,7 +368,7 @@ is available (see below). Attempting to get or set the value of a non-existing o
   \item{\bold{\code{differential.comparison.columns}}\code{ = NULL}}{
        Column names or indices in the table of the sample annotation table to be used for group definition in the
        differential methylation analysis. The default value - \code{NULL} - indicates that columns should be
-       automatically selected. See\code{\link{rnb.sample.groups}} for how this is done. By default,
+       automatically selected. See \code{\link{rnb.sample.groups}} for how this is done. By default,
 	  the comparisons are done in a one vs. all manner if there are multiple
 	  groups defined in a column. }
   \item{\bold{\code{differential.comparison.columns.all.pairwise}}\code{ = NULL}}{

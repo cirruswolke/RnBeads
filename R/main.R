@@ -1457,7 +1457,8 @@ rnb.run.differential <- function(rnb.set, dir.reports,
 
 	report <- init.pipeline.report("differential_methylation", dir.reports, init.configuration)
 	optionlist <- rnb.options("analyze.sites", "differential.report.sites", "region.types", "differential.permutations", "differential.comparison.columns",
-		"differential.comparison.columns.all.pairwise","columns.pairing","differential.site.test.method","covariate.adjustment.columns",
+		"differential.comparison.columns.all.pairwise","columns.pairing","differential.site.test.method",
+		"differential.variability","differential.variability.method","covariate.adjustment.columns",
 		"differential.adjustment.sva","differential.adjustment.celltype","differential.enrichment")
 	report <- rnb.add.optionlist(report, optionlist)
 	permutations <- rnb.getOption("differential.permutations")
@@ -1497,6 +1498,12 @@ rnb.run.differential <- function(rnb.set, dir.reports,
 			disk.dump=disk.dump,disk.dump.dir=disk.dump.dir
 		)
 		rnb.cleanMem()
+		if(rnb.getOption("differential.variability")){
+		  diff.var <- rnb.execute.diffVar(rnb.set,cmp.cols,
+		                                  columns.adj=rnb.getOption("covariate.adjustment.columns"),
+		                                  adjust.celltype=rnb.getOption("differential.adjustment.celltype"),
+		                                  disk.dump=disk.dump)
+		}
 		if (!is.null(diffmeth) && rnb.getOption("differential.enrichment") && (length(reg.types)>0)){
 			dm.enrich <- performEnrichment.diffMeth(rnb.set,diffmeth,verbose=TRUE)
 			rnb.cleanMem()
@@ -1519,6 +1526,9 @@ rnb.run.differential <- function(rnb.set, dir.reports,
 		}
 		if (length(get.region.types(diffmeth))>0){
 			report <- rnb.section.diffMeth.region(rnb.set,diffmeth,report,dm.enrich=dm.enrich,gzTable=gz)
+		}
+		if(rnb.getOption("differential.variability")){
+		  report <- rnb.section.diffVar(rnb.set,diff.var,report,gzTable = gz)
 		}
 	}
 	logger.completed()

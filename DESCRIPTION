@@ -97,6 +97,7 @@ Collate:
     'dataExport.R'
     'dataImport.R'
     'differentialMethylation.R'
+    'differentialVariability.R'
     'enmix.R'
     'enrichment.R'
     'filtering.R'
