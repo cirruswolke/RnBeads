@@ -23,7 +23,9 @@ setClassUnion("characterOrNULL", c("character", "NULL"))
 #'   \item{\code{regions}}{List of lists of differential methylation tables on region levels (see \code{computeDiffMeth.bin.region} for details).
 #' 					Indexed by region type on the top level and comparison on the lower level.}
 #'   \item{\code{variable.sites}}{List of differential variablility tables on site level (see \code{computeDiffVar.bin} for details).
-#' 					Indexed by comparison.} 					 
+#' 					Indexed by comparison.}
+#'   \item{\code{variable.regions}}{List of lists of differential variable regions (see \code{computeDiffVar.bin.region} for details).
+#' 					Indexed by region type on the top level and comparison on the lower level.} 					 					 
 #'   \item{\code{comparisons}}{character vector of all comparisons stored in the objects. Vector indices correspond to indices in the \code{sites} and
 #' 					\code{regions} list slots.}
 #'   \item{\code{region.types}}{character vector of all region types stored in the objects. Vector indices correspond to indices in
@@ -67,6 +69,7 @@ setClass("RnBDiffMeth",
 		sites="list",
 		regions="list",
 		variable.sites="list",
+		variable.regions="list",
 		comparisons="character",
 		region.types="character",
 		comparison.grouplabels="matrix",
@@ -84,6 +87,7 @@ setClass("RnBDiffMeth",
 		sites=list(),
 		regions=list(),
 		variable.sites=list(),
+		variable.regions=list(),
 		comparisons=character(),
 		region.types=character(),
 		comparison.grouplabels=matrix(ncol=2,nrow=0),
@@ -138,6 +142,7 @@ setMethod("initialize", "RnBDiffMeth",
 			.Object@sites <- list()
 			.Object@regions <- list()
 			.Object@variable.sites <- list()
+			.Object@variable.regions <- list()
 			.Object@comparisons <- character()
 			.Object@region.types <- character()
 			.Object@comparison.grouplabels <- matrix(ncol=2,nrow=0)
@@ -186,6 +191,9 @@ setMethod("destroy", signature(object="RnBDiffMeth"),
 					rr <- object@region.types[rri]
 					if (!is.null(object@regions[[rri]][[cci]])){
 						delete(object@regions[[rri]][[cci]])
+					}
+					if(!is.null(object@variable.regions[[rri]][[cci]])){
+					  delete(object@variable.regions[[rri]][[cci]])
 					}
 				}
 			}
@@ -548,6 +556,7 @@ if (!isGeneric("get.variability.table")) setGeneric("get.variability.table", fun
 #'
 #' @param object \code{\linkS4class{RnBDiffMeth}} object
 #' @param comparison character or index of the comparison of the table to retrieve
+#' @param region.type region type to be returned, defaults to 'sites'
 #' @param undump Flag indicating whether to convert the table into a matrix instead of using the file descriptor.
 #' 		         Only meaningful if the if the objects's \code{disk.dump} slot is true.
 #' @param return.data.frame should a data.frame be returned instead of a matrix?
@@ -560,7 +569,7 @@ if (!isGeneric("get.variability.table")) setGeneric("get.variability.table", fun
 #' @aliases get.variability.table,RnBDiffMeth-method
 #' @export
 setMethod("get.variability.table", signature(object="RnBDiffMeth"),
-          function(object,comparison,undump=TRUE,return.data.frame=FALSE){
+          function(object,comparison,region.type="sites",undump=TRUE,return.data.frame=FALSE){
             if(!.hasSlot(object,'hasVariability')){
               if(!object@hasVariability){
                 stop("No differential variability present.")
@@ -569,7 +578,11 @@ setMethod("get.variability.table", signature(object="RnBDiffMeth"),
             if (!is.element(comparison,object@comparisons)) {
               stop(paste("invalid comparison:",comparison))
             }
-            res <- object@variable.sites[[comparison]]
+            if(region.type == "sites"){
+              res <- object@variable.sites[[comparison]]
+            } else {
+              res <- object@variable.regions[[region.type]][[comparison]]
+            }
             if (object@disk.dump && undump && !is.null(res)){
               res <- res[,]
             }
@@ -708,6 +721,7 @@ if (!isGeneric("addDiffVarTable")) setGeneric("addDiffVarTable", function(object
 #' @param object \code{\linkS4class{RnBDiffMeth}} object
 #' @param var.table    Differential variability table to add
 #' @param comparison character or index of the comparison of the table to retrieve
+#' @param region.type region type for which the table should be added, default to 'sites'
 #' @param grp.labs character vector of length 2 specifying the names of the groups being compared
 #' @return the updated RnBDiffMeth object
 #'
@@ -719,7 +733,7 @@ if (!isGeneric("addDiffVarTable")) setGeneric("addDiffVarTable", function(object
 #' @aliases addDiffVarTable,RnBDiffMeth-method
 #' @export
 setMethod("addDiffVarTable", signature(object="RnBDiffMeth"),
-          function(object,var.table,comparison,grp.labs=c("group1","group2")){
+          function(object,var.table,comparison,region.type="sites",grp.labs=c("group1","group2")){
             if(!(is.character(comparison) && length(comparison)==1)) stop("Invalid argument: comparison")
             if(!(is.character(grp.labs) && length(grp.labs)==2)) stop("Invalid argument: grp.labs")
             if(!(is.data.frame(var.table) || is.matrix(var.table))) stop("Invalid argument: var.table")
@@ -727,9 +741,16 @@ setMethod("addDiffVarTable", signature(object="RnBDiffMeth"),
             disk.dump <- object@disk.dump
             disk.path <- object@disk.path.DMVs
             
-            if (!is.null(object@variable.sites[[comparison]])) {
-              warning(paste("DiffVarTable already exists for combination:",comparison," , sites . Returning unmodified object"))
-              return(object)
+            if (region.type == "sites"){
+              if (!is.null(object@variable.sites[[comparison]])) {
+                warning(paste("DiffVarTable already exists for combination:",comparison," , sites . Returning unmodified object"))
+                return(object)
+              }
+            } else {
+              if (!is.null(object@variable.regions[[region.type]][[comparison]])) {
+                warning(paste("DiffVarTable already exists for combination:",comparison,",",region.type,". Returning unmodified object"))
+                return(object)
+              }
             }
             
             if(!is.element(comparison,object@comparisons)){
@@ -749,16 +770,40 @@ setMethod("addDiffVarTable", signature(object="RnBDiffMeth"),
             cmp.i <- which(object@comparisons == comparison) #index of the comparison
             cmp.fname <- paste0("cmp",cmp.i)
             
-            reg.i <- 0
-            table.obj <- as.matrix(var.table)
-            rownames(table.obj) <- NULL
-            if (disk.dump){
-              #create the ff matrix object
-              fileN <- paste0(paste("sites",cmp.fname,sep="_"),".ff")
-              table.obj <- ff(table.obj,dim=dim(table.obj),dimnames=dimnames(table.obj),filename=file.path(disk.path,fileN))
+            if (region.type == "sites"){
+              reg.i <- 0
+              table.obj <- as.matrix(var.table)
+              rownames(table.obj) <- NULL
+              if (disk.dump){
+                #create the ff matrix object
+                fileN <- paste0(paste("sites",cmp.fname,sep="_"),".ff")
+                table.obj <- ff(table.obj,dim=dim(table.obj),dimnames=dimnames(table.obj),filename=file.path(disk.path,fileN))
+              }
+              object@variable.sites[[comparison]] <- table.obj
+              object@hasVariability <- TRUE
+            } else {
+              #check if the region type is already there
+              if(!is.element(region.type,object@region.types)){
+                object@region.types <- c(object@region.types,region.type)
+                n.reg.types <- length(object@region.types)
+                names(object@region.types)[n.reg.types] <- paste0("reg",n.reg.types)
+                empty.cmp.list.4.regs <- rep(list(NULL),length(object@comparisons))#empty list of comparisons
+                names(empty.cmp.list.4.regs) <- object@comparisons
+                object@variable.regions <- c(object@variable.regions,list(empty.cmp.list.4.regs))
+                names(object@variable.regions)[length(object@variable.regions)] <- region.type
+              }
+              reg.i <- which(object@region.types == region.type)
+              reg.dir.name <- paste0("reg",reg.i)
+              table.obj <- as.matrix(var.table)
+              rownames(table.obj) <- NULL #make certain that rownames do not exist. they are inefficient when using ff
+              if (disk.dump){
+                #create the ff matrix object
+                fileN <- paste0(paste("regions",reg.dir.name,cmp.fname,sep="_"),".ff")
+                table.obj <- ff(table.obj,dim=dim(table.obj),dimnames=dimnames(table.obj),filename=file.path(disk.path,fileN))
+              }
+              object@variable.regions[[region.type]][[comparison]] <- table.obj
             }
-            object@variable.sites[[comparison]] <- table.obj
-            object@hasVariability <- TRUE
+            
             return(object)
           }
 )
