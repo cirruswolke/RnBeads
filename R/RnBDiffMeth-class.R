@@ -37,6 +37,7 @@ setClassUnion("characterOrNULL", c("character", "NULL"))
 #'   \item{\code{covg.thres}}{coverage threshold. Important for certain columns of the differential methylation tables.}
 #'   \item{\code{disk.dump}}{Flag indicating whether the tables should be stored on disk rather than in the main memory}
 #'   \item{\code{disk.path}}{path on the disk for DMTs.Only meaningful if \code{disk.dump} is \code{TRUE}}
+#'   \item{\code{disk.path.DMVs}}{path on the disk for DMVs.Only meaningful if \code{disk.dump} is \code{TRUE}}
 #' }
 #'
 #' @section Methods:
@@ -49,6 +50,8 @@ setClassUnion("characterOrNULL", c("character", "NULL"))
 #'   \item{\code{\link{get.table,RnBDiffMeth-method}}}{Gets a differential methylation table}
 #'   \item{\code{\link{get.variability.table,RnBDiffMeth-method}}}{Gets a differential variability table}
 #'   \item{\code{\link{addDiffMethTable,RnBDiffMeth-method}}}{Adds a differential methylation table}
+#'   \item{\code{\link{addDiffVarTable,RnBDiffMeth-method}}}{Adds a differential variability table}
+#'   \item{\code{\link{prepare.diff.var,RnBDiffMeth-method}}}{Prepares the object to contain differential variability}
 #' 	 \item{\code{\link{reload,RnBDiffMeth-method}}}{relink disk dumped tables. Useful if the files are manually copied or if the object is loaded again}
 #'   \item{\code{\link{save.tables,RnBDiffMeth-method}}}{save disk dumped tables as binaries and zip them.
 #' 						Useful if the files are copied or shared.}
@@ -74,7 +77,8 @@ setClass("RnBDiffMeth",
 		variability.method="characterOrNULL",
 		covg.thres="integer",
 		disk.dump="logical",
-		disk.path="characterOrNULL"
+		disk.path="characterOrNULL",
+		disk.path.DMVs="characterOrNULL"
 	),
 	prototype = prototype(
 		sites=list(),
@@ -90,7 +94,8 @@ setClass("RnBDiffMeth",
 		variability.method=NULL,
 		covg.thres=-1L,
 		disk.dump=FALSE,
-		disk.path=NULL
+		disk.path=NULL,
+		disk.path.DMVs=NULL
 	),
 	package = "RnBeads")
 
@@ -115,7 +120,7 @@ setMethod("initialize", "RnBDiffMeth",
 		site.test.method=rnb.getOption("differential.site.test.method"),
 		variability.method=rnb.getOption("differential.variability.method"),
 		covg.thres=rnb.getOption("filtering.coverage.threshold"),
-		disk.dump=FALSE,disk.path=NULL){
+		disk.dump=FALSE,disk.path=NULL,disk.path.DMVs=NULL){
 			#create directory in which to dump the matrices to file. must be a non-existing directory
 			if (disk.dump){
 				if (!is.null(disk.path)){
@@ -123,6 +128,11 @@ setMethod("initialize", "RnBDiffMeth",
 						stop(paste("Could not create directory (RnBDiffMeth):",disk.path))
 					}
 				}
+			  if(!is.null(disk.path.DMVs)){
+			    if(!create.path(disk.path.DMVs, FALSE, showWarnings = FALSE)){
+			      stop(paste("Could not create directory (RnBDiffMeth, differential variability):",disk.path.DMVs))
+			    }
+			  }
 			}
 			
 			.Object@sites <- list()
@@ -138,6 +148,7 @@ setMethod("initialize", "RnBDiffMeth",
 			.Object@comparison.info <- list()
 			.Object@disk.dump <- disk.dump
 			.Object@disk.path <- disk.path
+			.Object@disk.path.DMVs <- disk.path.DMVs
 			.Object
 	}
 )
@@ -179,6 +190,7 @@ setMethod("destroy", signature(object="RnBDiffMeth"),
 				}
 			}
 			unlink(object@disk.path,recursive=TRUE)
+			unlink(object@disk.path.DMVs,recursive=TRUE)
 			logger.completed()
 		}
 	}
@@ -357,6 +369,43 @@ setMethod("get.variability.method", signature(object="RnBDiffMeth"),
           }
 )
 
+if (!isGeneric("prepare.diff.var")) setGeneric("prepare.diff.var", function(object,...) standardGeneric("prepare.diff.var"))
+#' prepare.diff.var-methods
+#'
+#' Prepares the RnBDiffMeth object to now also contain variability information.
+#'
+#' @param object RnBDiffMeth object
+#' @param variability.method Character describing the variability method to be used, Should be one of 'diffVar' or 'iEVORA'.
+#' @param disk.dump Flag indicating if tables should be stored in disk.
+#' @param disk.path.DMVs Path to store the differential varibility tables on disk.
+#' @return The modified RnBDiffMeth object
+#'
+#' @rdname prepare.diff.var-RnBDiffMeth-methods
+#' @docType methods
+#' @author Michael Scherer
+#' @aliases prepare.diff.var
+#' @aliases prepare.diff.var,RnBDiffMeth-method
+#' @export
+setMethod("prepare.diff.var", signature(object="RnBDiffMeth"),
+          function(object,variability.method=rnb.getOption("differential.variabilit.method"),
+          disk.dump=FALSE,disk.path.DMVs=NULL){
+          if(.hasSlot(object,"variability.method")) {
+            if(variability.method%in%c('diffVar','iEVORA')){
+              object@variability.method <- variability.method
+              rnb.options("differential.variability.method"=variability.method)
+            }
+          }
+          if (disk.dump){
+            if(!is.null(disk.path.DMVs)){
+              if(!create.path(disk.path.DMVs, FALSE, showWarnings = FALSE)){
+                stop(paste("Could not create directory (RnBDiffMeth, differential variability):",disk.path.DMVs))
+              }
+            }
+          }
+          object@disk.path.DMVs <- disk.path.DMVs
+          return(object)
+         }
+)
 
 if (!isGeneric("get.covg.thres")) setGeneric("get.covg.thres", function(object) standardGeneric("get.covg.thres"))
 #' get.covg.thres-methods
@@ -676,7 +725,7 @@ setMethod("addDiffVarTable", signature(object="RnBDiffMeth"),
             if(!(is.data.frame(var.table) || is.matrix(var.table))) stop("Invalid argument: var.table")
             
             disk.dump <- object@disk.dump
-            disk.path <- object@disk.path
+            disk.path <- object@disk.path.DMVs
             
             if (!is.null(object@variable.sites[[comparison]])) {
               warning(paste("DiffVarTable already exists for combination:",comparison," , sites . Returning unmodified object"))

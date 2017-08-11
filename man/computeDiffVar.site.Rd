@@ -8,7 +8,7 @@
 \usage{
 computeDiffVar.default.site(meth.matrix, inds.g1, inds.g2,
   method = rnb.getOption("differential.variability.method"),
-  adjustment.table = NULL)
+  adjustment.table = NULL, eps = 0.01)
 
 computeDiffVar.extended.site(meth.matrix, inds.g1, inds.g2,
   method = rnb.getOption("differential.variability.method"),

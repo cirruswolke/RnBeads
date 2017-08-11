@@ -33,6 +33,7 @@ as R objects or on disk
   \item{\code{covg.thres}}{coverage threshold. Important for certain columns of the differential methylation tables.}
   \item{\code{disk.dump}}{Flag indicating whether the tables should be stored on disk rather than in the main memory}
   \item{\code{disk.path}}{path on the disk for DMTs.Only meaningful if \code{disk.dump} is \code{TRUE}}
+  \item{\code{disk.path.DMVs}}{path on the disk for DMVs.Only meaningful if \code{disk.dump} is \code{TRUE}}
 }
 }
 
@@ -47,6 +48,8 @@ as R objects or on disk
   \item{\code{\link{get.table,RnBDiffMeth-method}}}{Gets a differential methylation table}
   \item{\code{\link{get.variability.table,RnBDiffMeth-method}}}{Gets a differential variability table}
   \item{\code{\link{addDiffMethTable,RnBDiffMeth-method}}}{Adds a differential methylation table}
+  \item{\code{\link{addDiffVarTable,RnBDiffMeth-method}}}{Adds a differential variability table}
+  \item{\code{\link{prepare.diff.var,RnBDiffMeth-method}}}{Prepares the object to contain differential variability}
 	 \item{\code{\link{reload,RnBDiffMeth-method}}}{relink disk dumped tables. Useful if the files are manually copied or if the object is loaded again}
   \item{\code{\link{save.tables,RnBDiffMeth-method}}}{save disk dumped tables as binaries and zip them.
 						Useful if the files are copied or shared.}

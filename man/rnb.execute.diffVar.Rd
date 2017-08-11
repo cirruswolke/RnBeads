@@ -6,6 +6,7 @@
 \usage{
 rnb.execute.diffVar(rnb.set, pheno.cols,
   columns.adj = rnb.getOption("covariate.adjustment.columns"),
+  diff.meth = NULL,
   adjust.celltype = rnb.getOption("differential.adjustment.celltype"),
   disk.dump = rnb.getOption("disk.dump.big.matrices"),
   disk.dump.dir = tempfile(pattern = "diffVarTables_"))
@@ -17,6 +18,9 @@ rnb.execute.diffVar(rnb.set, pheno.cols,
 
 \item{columns.adj}{Column names or indices in the table of phenotypic information to be used for confounder adjustment in the
 differential variability analysis.}
+
+\item{diff.meth}{Object of type \code{\linkS4class{RnBDiffMeth}}, possibly containing information about differentially methylated
+sites. The differentially variable sites then are also added to this object instead of creating a new object.}
 
 \item{adjust.celltype}{Flag indicating whether the resulting table should also contain estimated celltype contributions.
 See \code{\link{rnb.execute.ct.estimation}} for details.}

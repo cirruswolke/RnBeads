@@ -202,7 +202,7 @@ doTT <- function(tmp.v,pheno.v){
 #' @aliases computeDiffVar.extended.site
 #'@export
 computeDiffVar.default.site <- function(meth.matrix,inds.g1,inds.g2,method=rnb.getOption('differential.variability.method'),
-                                adjustment.table=NULL){
+                                adjustment.table=NULL,eps=0.01){
   if (!(method %in% c("diffVar","iEVORA"))) {
     stop("Invalid method for differential varibility method")
   }
@@ -254,9 +254,10 @@ computeDiffVar.default.site <- function(meth.matrix,inds.g1,inds.g2,method=rnb.g
   var.g1 <- apply(meth.matrix[,inds.g1],1,var)
   var.g2 <- apply(meth.matrix[,inds.g2],1,var)
   var.diff <- var.g1-var.g2
+  var.log.ratio <- log2(var.g1+eps/var.g2+eps)
   neg.log10.p <- -log10(p.vals)
   neg.log10.fdr <- -log10(p.vals.adj)
-  tt <- data.frame(var.g1=var.g1,var.g2=var.g2,var.diff=var.diff,diffVar.p.val=p.vals,diffVar.p.adj.fdr=p.vals.adj,log10P=neg.log10.p,
+  tt <- data.frame(var.g1=var.g1,var.g2=var.g2,var.diff=var.diff,var.log.ratio=var.log.ratio,diffVar.p.val=p.vals,diffVar.p.adj.fdr=p.vals.adj,log10P=neg.log10.p,
                    log10FDR=neg.log10.fdr)
   return(tt)
 }
@@ -356,7 +357,8 @@ addReportPlot.diffVar.volcano <- function (report, var.table, comparison.name,
   
   fig.name <- paste("diffVar_volcano",comparison.name,"pVal",sep="_")
   if (!dont.plot.p.val){
-    pp <- ggplot(var.table) + aes(x=var.diff,y=log10P) + scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
+    pp <- ggplot(var.table) + aes(x=var.diff,y=log10P,color=log10(combined.rank.var)) + 
+      scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
       geom_point()
   } else {
     pp <- rnb.message.plot("No p-value available")
@@ -366,7 +368,7 @@ addReportPlot.diffVar.volcano <- function (report, var.table, comparison.name,
   ret <- c(ret,list(report.plot))
   
   fig.name <- paste("diffVar_volcano",comparison.name,"pValAdj",sep="_")
-  pp <- ggplot(var.table) + aes(x=var.diff,y=log10FDR) +
+  pp <- ggplot(var.table) + aes(x=var.diff,y=log10FDR,color=log10(combined.rank.var)) +
     scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient")))+
     geom_point()
   report.plot <- createReportGgPlot(pp,fig.name, report,create.pdf=FALSE,high.png=200)
@@ -375,6 +377,48 @@ addReportPlot.diffVar.volcano <- function (report, var.table, comparison.name,
   
   return(ret)
 }
+
+#' addReportPlot.diffVar.meth
+#' 
+#' This function compares differentially methylated sites (DMCs) with differentially variable sites (DMVs) in a scatterplot
+#' and colors significantly differential sites with different colors.
+#' 
+#' @param report Object of class \code{\linkS4class{Report}} to which the plot should be added.
+#' @param var.table Table containing the differentially variable sites.
+#' @param meth.table Table containing the differentially methylated sites.
+#' @param comparison.name Name of the comparison to be conducted.
+
+addReportPlot.diffVar.meth <- function(report, var.table, meth.table, comparison.name,
+                           group.name1,group.name2){
+  ret <- list()
+  dont.plot.p.val <- all(is.na(var.table[,"diffVar.p.adj.fdr"]))
+  dont.plot.p.val <- dont.plot.p.val && all(is.na(meth.table[,"diffmeth.p.adj.fdr"]))
+  
+  fig.name <- paste("diffVarMeth",comparison.name,sep="_")
+  if (!dont.plot.p.val){
+    toPlot <- data.frame(Meth.p=meth.table[,"diffmeth.p.adj.fdr"],Var.p=var.table[,"diffVar.p.adj.fdr"])
+    is.diff.meth <- toPlot$Meth.p < P.VAL.CUT
+    is.diff.var <- toPlot$Var.p < P.VAL.CUT
+    color.diff <- rep('Not Significant',dim(toPlot)[1])
+    color.diff[is.diff.meth] <- "DMR"
+    color.diff[is.diff.var] <- "DMV"
+    color.diff[is.diff.meth&is.diff.var] <- "Both"
+    toPlot <- data.frame(toPlot,Color.diff=color.diff)
+    toPlot <- toPlot[is.diff.meth|is.diff.var,]
+    pp <- ggplot(toPlot) + aes(x=-log10(Meth.p),y=-log10(Var.p),color=Color.diff) +
+          scale_color_manual(values = c("#AF648C","#A6CEE3","#FB9A99")) +
+          geom_vline(xintercept = -log10(P.VAL.CUT),linetype='dotted') + geom_hline(yintercept = -log10(P.VAL.CUT),linetype='dotted') +
+          geom_point()
+  } else {
+    pp <- rnb.message.plot("No p-values available")
+  }
+  report.plot <- createReportGgPlot(pp,fig.name, report,create.pdf=FALSE,high.png=200)
+  report.plot <- off(report.plot,handle.errors=TRUE)
+  ret <- c(ret,list(report.plot))
+  
+  return(ret)
+}
+
 
 #' create.diffvar.column.description
 #' 
@@ -392,10 +436,12 @@ create.diffvar.column.description <- function(includeCovg, covgThres=-1L){
     c("var.g1, var.g2: (g1 and g2 are replaced by the corrspondinhg group used in the differentiality analysis) ",
         "the variances found in the groups"),
     "var.diff: difference in variance values between the two groups g1 and g2 (=var.g1-var.g2)",
+    "var.log.ratio: Log2 of the ratio between the variances of the two groups g1 and g2 (=log2(var.g1+eps/var.g2+eps), default eps=0.01)",
     "diffvar.p.val: p-value resulting from applying the selected differentially variability method (diffVar or iEVORA)",
-    "diffvar.p.adj.fdr: FDR-adjusted p-value for differential variability",
+    "diffVar.p.adj.fdr: FDR-adjusted p-value for differential variability",
     "log10P: negative decadic logarithm of the p-value",
-    "log10FDR: negative decadic logarithmn of the FDR-adjusted p-value"
+    "log10FDR: negative decadic logarithmn of the FDR-adjusted p-value",
+    "combined.rank.var: combined rank consisting of the difference in variances, the log ration between the group variances and the p-value of the statistical test"
   )
   if (includeCovg){
     res <- c(res, list(
@@ -417,9 +463,9 @@ create.diffvar.column.description <- function(includeCovg, covgThres=-1L){
 get.diffvar.tab.annot.cols <- function(includeCovg, covgThres=-1L){
   res <- c()
   res <- c("var.g1","var.g2","var.diff",
-           "diffVar.p.val",
+           "var.log.ratio","diffVar.p.val",
            "diffVar.p.adj.fdr","log10P",
-           "log10FDR")
+           "log10FDR","combined.rank.var")
   if (includeCovg){
     res <- c(res,c("mean.covg.g1","mean.covg.g2",
                    "min.covg.g1","min.covg.g2","max.covg.g1","max.covg.g2",
@@ -439,7 +485,7 @@ get.diffvar.tab.annot.cols <- function(includeCovg, covgThres=-1L){
 #' @noRd  
 get.diffvar.tab.annot.colnames.pretty <- function(grp.name1, grp.name2, includeCovg, covgThres=-1L){
   res <- c(paste("var",grp.name1,sep="."),paste("var",grp.name2,sep="."),"var.diff",
-           "diffvar.p.val","diffvar.p.adj.fdr","log10P","log10FDR")
+           "var.log.ratio","diffvar.p.val","diffvar.p.adj.fdr","log10P","log10FDR","combined.rank.var")
   if (includeCovg){
     res <- c(res,c(paste("mean.covg",grp.name1,sep="."),paste("mean.covg",grp.name2,sep="."),
                    paste("min.covg",grp.name1,sep="."),paste("min.covg",grp.name2,sep="."),
@@ -490,7 +536,7 @@ rnb.section.diffVar <- function(rnb.set,diff.meth,report,gzTable=FALSE,different
       comp.name.allowed <- ifelse(is.valid.fname(comp.name),comp.name,paste("cmp",i,sep=""))
       grp.names <- get.comparison.grouplabels(diff.meth)[comp,]
       res <- addReportPlot.diffVar.scatter(report,var.table,comp.name.allowed,
-                                                      group.name1=grp.names[1],group2.name2=grp.names[2])
+                                                      group.name1=grp.names[1],group.name2=grp.names[2])
       rnb.cleanMem()
       res
     }
@@ -561,6 +607,46 @@ rnb.section.diffVar <- function(rnb.set,diff.meth,report,gzTable=FALSE,different
   description <- 'Volcano plot for differential variable sites.'
   report <- rnb.add.figure(report, description, plots, setting.names)
   logger.completed()
+  
+  #Comparing differentially methylated sites and differentially variable
+  logger.start("Comparing DMCs and DMVs")
+  rnb.cleanMem()
+  plots <- list()
+  if(parallel.isEnabled()){
+    plots <- foreach(i=1:length(get.comparisons(diff.meth)),.combine="c") %dopar% {
+      comp.name <- names(get.comparisons(diff.meth))[i]
+      comp <- get.comparisons(diff.meth)[comp.name]
+      var.table <- get.variability.table(diff.meth,comp,return.data.frame=TRUE)
+      meth.table <- get.table(diff.meth,comp,region.type="sites",return.data.frame=TRUE)
+      comp.name.allowed <- ifelse(is.valid.fname(comp.name),comp.name,paste("cmp",i,sep=""))
+      grp.names <- get.comparison.grouplabels(diff.meth)[comp,]
+      res <- addReportPlot.diffVar.meth(report, var.table, meth.table, comp.name.allowed,
+                                           group.name1=grp.names[1],group.name2=grp.names[2])
+      rnb.cleanMem()
+      res
+    }
+  } else {
+    for (i in 1:length(get.comparisons(diff.meth))){
+      comp.name <- names(get.comparisons(diff.meth))[i]
+      comp <- get.comparisons(diff.meth)[comp.name]
+      var.table <- get.variability.table(diff.meth,comp,return.data.frame=TRUE)
+      meth.table <- get.table(diff.meth,comp,region.type="sites",return.data.frame=TRUE)
+      comp.name.allowed <- ifelse(is.valid.fname(comp.name),comp.name,paste("cmp",i,sep=""))
+      grp.names <- get.comparison.grouplabels(diff.meth)[comp,]
+      res <- addReportPlot.diffVar.meth(report, var.table, meth.table, comp.name.allowed,
+                                        group.name1=grp.names[1],group.name2=grp.names[2])
+      rnb.cleanMem()
+      plots <- c(plots,res)
+    }
+  }
+  setting.names <- list(
+    'comparison' = comps)
+  description <- 'Scatterplot comparing differentially methylated and variable sites.'
+  report <- rnb.add.figure(report, description, plots, setting.names)
+  logger.completed()
+  
+  
+  #Tables
   logger.start("Adding tables")
   includeCovg <- hasCovg(rnb.set)
   
@@ -602,6 +688,20 @@ rnb.section.diffVar <- function(rnb.set,diff.meth,report,gzTable=FALSE,different
   logger.completed()
   return(report)
 }
+#' cols.to.rank.site
+#' 
+#' Return a matrix contianing the negative absolute values of the information used to rank the sites. Those are currently:
+#' the variance difference, the log ratio in variances and the p-value from the statistical test.
+#' 
+#' @param diff.var A differential variability table.
+#' @return A matrix with the absolute values of the relevant columns
+#' @author Michael Scherer
+#' @rdname cols.to.rank
+#' @aliases cols.to.rank.site
+#' @aliases cols.to.rank.region
+cols.to.rank.site <- function(diff.var){
+  return(cbind(-abs(diff.var$var.diff),-abs(diff.var$var.log.ratio),-abs(diff.var$diffVar.p.val)))
+}
 
 #' computeDiffVar.bin
 #' 
@@ -616,12 +716,14 @@ rnb.section.diffVar <- function(rnb.set,diff.meth,report,gzTable=FALSE,different
 #' @return A \code{data.frame} containing the information about the differential variability testing.
 #' @noRd
 computeDiffVar.bin <- function(meth.matrix,inds.g1,inds.g2,adjustment.table=NULL,...){
-  #ToDo
   if (length(union(inds.g1,inds.g2)) != (length(inds.g1)+length(inds.g2))){
     logger.error("Overlapping sample sets in differential variability analysis")
   }
   logger.start("Computing Differential Variability Table")
   diff.var <- computeDiffVar.extended.site(meth.matrix,inds.g1=inds.g1,inds.g2=inds.g2,...)
+  to.rank <- cols.to.rank.site(diff.var = diff.var)
+  ranks <- combinedRanking.tab(to.rank)
+  diff.var <- data.frame(diff.var,combined.rank.var=ranks)
   logger.completed()
   return(diff.var)
   #Perhaps add permutation tests here
@@ -636,6 +738,8 @@ computeDiffVar.bin <- function(meth.matrix,inds.g1,inds.g2,adjustment.table=NULL
 #' @param pheno.cols Column names used to define the classes, whose methylation variability should be compared with each other
 #' @param columns.adj Column names or indices in the table of phenotypic information to be used for confounder adjustment in the
 #'        differential variability analysis.
+#' @param diff.meth Object of type \code{\linkS4class{RnBDiffMeth}}, possibly containing information about differentially methylated
+#'        sites. The differentially variable sites then are also added to this object instead of creating a new object. 
 #' @param adjust.celltype Flag indicating whether the resulting table should also contain estimated celltype contributions.
 #' 				See \code{\link{rnb.execute.ct.estimation}} for details.
 #' @param disk.dump Flag indicating whether the resulting differential methylation object should be file backed, ie.e the matrices dumped to disk
@@ -643,6 +747,7 @@ computeDiffVar.bin <- function(meth.matrix,inds.g1,inds.g2,adjustment.table=NULL
 #' @return Object of type \code{\linkS4class{RnBDiffMeth}} containing information about the differential variability analysis.
 #' @export
 rnb.execute.diffVar <- function(rnb.set,pheno.cols,columns.adj=rnb.getOption("covariate.adjustment.columns"),
+                                diff.meth=NULL,
                                 adjust.celltype=rnb.getOption("differential.adjustment.celltype"),
                                 disk.dump=rnb.getOption("disk.dump.big.matrices"),
                                 disk.dump.dir=tempfile(pattern="diffVarTables_")){
@@ -658,7 +763,11 @@ rnb.execute.diffVar <- function(rnb.set,pheno.cols,columns.adj=rnb.getOption("co
   }
   
   variability.method <- rnb.getOption("differential.variability.method")
-  diff.meth <- new("RnBDiffMeth",variability.method=variability.method,disk.dump=disk.dump,disk.path=disk.dump.dir)
+  if(is.null(diff.meth)){
+    diff.meth <- new("RnBDiffMeth",variability.method=variability.method,disk.dump=disk.dump,disk.path.DMVs=disk.dump.dir)
+  }else{
+    diff.meth <- prepare.diff.var(diff.meth,variability.method=variability.method,disk.dump=disk.dump,disk.path.DMVs=disk.dump.dir)
+  }
   for(i in 1:length(cmp.info)){
     cmp.info.cur <- cmp.info[[i]]
     logger.start(c("Comparing ",cmp.info.cur$comparison))
@@ -670,7 +779,6 @@ rnb.execute.diffVar <- function(rnb.set,pheno.cols,columns.adj=rnb.getOption("co
     diff.meth <- addDiffVarTable(diff.meth,diffVar,cmp.info.cur$comparison,cmp.info.cur$group.names)
     logger.completed()
   }
-  
   diff.meth <- addComparisonInfo(diff.meth,cmp.info)
   logger.completed()
   return(diff.meth)
