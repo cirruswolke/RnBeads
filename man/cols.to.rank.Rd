@@ -2,9 +2,12 @@
 % Please edit documentation in R/differentialVariability.R
 \name{cols.to.rank.site}
 \alias{cols.to.rank.site}
+\alias{cols.to.rank.region}
 \title{cols.to.rank.site}
 \usage{
 cols.to.rank.site(diff.var)
+
+cols.to.rank.region(diff.var)
 }
 \arguments{
 \item{diff.var}{A differential variability table.}

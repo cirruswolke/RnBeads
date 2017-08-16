@@ -131,7 +131,7 @@ iEVORA <- function(data.m,pheno.v,thDV=0.001,thDM=0.05){
       rownames(topDVMC.m) <- rownames(statDMC.m)[tmp.s$ix[1:ntop]];
     }
     else {
-      logger.info("No DVMCs found.")
+      logger.info("No DVCs found.")
     }
   }
   else {
@@ -195,6 +195,9 @@ doTT <- function(tmp.v,pheno.v){
 #'@param inds.g2 Column indices of the second group.
 #'@param method Differrential analysis method to conduct. Possibilities are: "diffVar" and "iEVORA".
 #'@param adjustment.table A \code{data.frame} containing variables to adjust for in the testing
+#'@param eps Adjustment used in the log ratio calculation
+#'@param covg Coverage information about the dataset, if available
+#'@param covg.thres Coverage threshold used
 #'@return Differential Variability data frame for the analysis.
 #'@rdname computeDiffVar.site
 #' @aliases computeDiffVar.site
@@ -254,7 +257,7 @@ computeDiffVar.default.site <- function(meth.matrix,inds.g1,inds.g2,method=rnb.g
   var.g1 <- apply(meth.matrix[,inds.g1],1,var)
   var.g2 <- apply(meth.matrix[,inds.g2],1,var)
   var.diff <- var.g1-var.g2
-  var.log.ratio <- log2(var.g1+eps/var.g2+eps)
+  var.log.ratio <- ifelse(var.g1==0|var.g2==0,1,log2(var.g1/var.g2))
   neg.log10.p <- -log10(p.vals)
   neg.log10.fdr <- -log10(p.vals.adj)
   tt <- data.frame(var.g1=var.g1,var.g2=var.g2,var.diff=var.diff,var.log.ratio=var.log.ratio,diffVar.p.val=p.vals,diffVar.p.adj.fdr=p.vals.adj,log10P=neg.log10.p,
@@ -301,10 +304,12 @@ computeDiffVar.extended.site <- function(meth.matrix,inds.g1,inds.g2,method=rnb.
   return(matrix.default)  
 }
 #' Returns the colum names of the differential variability table.
+#' @param includeCovg Flag indicating if dataset contains coverage information
+#' @return Column names of the differential variability table
 get.table.ids <- function(includeCovg=FALSE){
   ret <- c("var.g1","var.g2","var.diff","var.log.ratio","diffVar.p.val")
   if(includeCovg){
-    ret <- c(ret,"mean.covg.g1","covg.thesh.nsamples.g1","mean.covg.g2","covg.thresh.nsamples.g2")
+    ret <- c(ret,"mean.covg.g1","covg.thresh.nsamples.g1","mean.covg.g2","covg.thresh.nsamples.g2")
   }
   return(ret)
 }
@@ -312,8 +317,9 @@ get.table.ids <- function(includeCovg=FALSE){
 #' 
 #' This function computes differnetially variable tables on the region level.
 #' @param var.table A differential variability table on the site level
-#' @param region2sites mapping from those sites to the region of interest
+#' @param regions2sites mapping from those sites to the region of interest
 #' @param includeCovg Flag indicating if data set contains coverage information.
+#' @return A differential variability table.
 computeDiffVar.region <- function(var.table,regions2sites,includeCovg=FALSE){
   if (length(regions2sites)<1){
     stop("Invalid region to sites mapping (length must be > 0)")
@@ -357,7 +363,7 @@ computeDiffVar.region <- function(var.table,regions2sites,includeCovg=FALSE){
       res <- combineTestPvalsMeth(na.omit(subtab[,5]),correlated=TRUE)
       p.vals <- NA
       if (length(res)>0) p.vals <- res
-      c(mean.g1, mean.g2, diff, quot, num.sites,
+      c(mean.var.g1, mean.var.g2, diff, quot, num.sites,
         mean.mean.covg.g1, mean.mean.covg.g2, mean.nsamples.covg.thresh.g1, mean.nsamples.covg.thresh.g2,
         p.vals)
     }
@@ -422,11 +428,14 @@ computeDiffVar.region <- function(var.table,regions2sites,includeCovg=FALSE){
 #' @param report Object of class \code{\linkS4class{Report}} to which the plot should be added
 #' @param var.table Variability table containing the relevant information to be put into the scatterplot
 #' @param comparison.name Comparison for which the scatterplot should be creaed
+#' @param rank.cutoffs.numbers Numbers to be used for plotting the best ranked sites
+#' @param auto.cutoff Auto selected cutoffs for the given comparison
 #' @param group.name1 Name of the first group of the comparison
 #' @param group.name2 Name of the second group of the comparison
 #' @return list of scatterplots
 #' @noRd
 addReportPlot.diffVar.scatter.site <- function (report, var.table, comparison.name,
+                              rank.cutoffs.numbers, auto.cutoff,
                               group.name1="Group1",group.name2="Group2"){
   ret <- list()
   sparse.points <- DENS.SCATTER.SPARSE.POINTS.PERC
@@ -444,7 +453,28 @@ addReportPlot.diffVar.scatter.site <- function (report, var.table, comparison.na
         xlab(paste("Variance",group.name1)) + ylab(paste("Variance",group.name2))
     comp.type <- "fdrAdjPval"
     fig.name <- paste("diffVar_site",comparison.name,comp.type,sep = "_")
-    plot <- createReportGgPlot(plot,fig.name,report=report,create.pdf = FALSE)
+    plot <- createReportGgPlot(plot,fig.name,report=report,create.pdf = FALSE, high.png = 200)
+    plot <- off(plot,handle.errors=TRUE)
+    ret <- c(ret,list(plot))
+  }
+  ranks <- var.table[,"combined.rank.var"]
+  for(i in 1:length(rank.cutoffs.numbers)){
+    number <- rank.cutoffs.numbers[i]
+    cutoff.name <- paste0("rc",i)
+    var.table$isDVC <- ranks < number
+    plot <- create.densityScatter(var.table[,c("var.g1","var.g2")], is.special = var.table$isDVC,dens.subsample=dens.subsample) +
+      xlab(paste("Variance",group.name1)) + ylab(paste("Variance",group.name2))
+    fig.name <- paste("diffVar_site",comparison.name,cutoff.name,sep="_")
+    plot <- createReportGgPlot(plot,fig.name,report=report,create.pdf = FALSE, high.png = 200)
+    plot <- off(plot,handle.errors=TRUE)
+    ret <- c(ret,list(plot))
+  }
+  if(is.integer(auto.cutoff)){
+    var.table$isDVC <- ranks < auto.cutoff
+    plot <- create.densityScatter(var.table[,c("var.g1","var.g2")], is.special = var.table$isDVC,dens.subsample=dens.subsample) +
+      xlab(paste("Variance",group.name1)) + ylab(paste("Variance",group.name2))
+    fig.name <- paste("diffVar_site",comparison.name,"rcAuto",sep="_")
+    plot <- createReportGgPlot(plot,fig.name,report=report,create.pdf = FALSE, high.png = 200)
     plot <- off(plot,handle.errors=TRUE)
     ret <- c(ret,list(plot))
   }
@@ -509,6 +539,8 @@ addReportPlot.diffVar.scatter.region <- function (report, var.table, comparison.
 #' @param comparison.name Comparison for which the scatterplot should be creaed
 #' @param group.name1 Name of the first group of the comparison
 #' @param group.name2 Name of the second group of the comparison
+#' @aliases addReportPlot.diffVar.volcano
+#' @aliases addReportPlot.diffVar.volcano.region
 #' @return list of volcano plots
 #' @noRd
 addReportPlot.diffVar.volcano <- function (report, var.table, comparison.name,
@@ -539,7 +571,7 @@ addReportPlot.diffVar.volcano <- function (report, var.table, comparison.name,
   return(ret)
 }
 #' addReportPlot.diffVar.volcano.region
-#' @rdname addReportPlot.diffVar.volcano
+#' @noRd
 addReportPlot.diffVar.volcano.region <- function(report, var.table,comparison.name,region.type,
                                                   group.name1,group.name2){
   cn.d <- "mean.var.diff"
@@ -615,7 +647,10 @@ addReportPlot.diffVar.volcano.region <- function(report, var.table,comparison.na
 #' @param var.table Table containing the differentially variable sites.
 #' @param meth.table Table containing the differentially methylated sites.
 #' @param comparison.name Name of the comparison to be conducted.
-
+#' @param group.name1 Name of the first group in the comparison
+#' @param group.name2 Name of the second group in the comparison
+#' @return The modified report
+#' @noRd
 addReportPlot.diffVar.meth <- function(report, var.table, meth.table, comparison.name,
                            group.name1,group.name2){
   ret <- list()
@@ -672,7 +707,7 @@ create.diffvar.column.description <- function(target="sites", includeCovg, covgT
       "diffVar.p.adj.fdr: FDR-adjusted p-value for differential variability",
       "log10P: negative decadic logarithm of the p-value",
       "log10FDR: negative decadic logarithmn of the FDR-adjusted p-value",
-      "combined.rank.var: combined rank consisting of the difference in variances, the log ration between the group variances and the p-value of the statistical test"
+      "combined.rank.var: var.diff, var.log.ratio and comb.p.val are ranked for all sites and the higher (=worst) rank is selected. "
     ))
     if (includeCovg){
       res <- c(res, list(
@@ -684,6 +719,7 @@ create.diffvar.column.description <- function(target="sites", includeCovg, covgT
     }
   } else {
     res <- c(res, list(
+      paste0("End: end coordinate of the ", target),
       "[symbol]: associated gene symbol to the given region [only valid for gene associated regions]",
       "[entrezID]: Entrez ID of the gene associated with the region [only valid for gene associated regions]",
       "mean.var.g1, mean.var.g2: Average variances found in the regions for the twp groups. g1 and g2 is replaced by the group name",
@@ -691,7 +727,7 @@ create.diffvar.column.description <- function(target="sites", includeCovg, covgT
       "mean.var.log.ratio: Region-wise average for the log2 ratio between the variances found in the two groups",
       "comb.p.val: Combined p-value aggregating p-values of all sites in the region using a generalization of Fisher's method ",
       "comb.p.adj.fdr: FDR adjusted combined p-value",
-      "combinedRank: mean.mean.diff, mean.mean.quot.log2 and comb.p.val are ranked for all regions. ",
+      "combined.rank.var: mean.var.diff, mean.var.log.ratio and comb.p.val are ranked for all regions and the higher (=worst) rank is selected. ",
       "num.sites: number of sites associated with the region"
     ))
     if (includeCovg){
@@ -755,11 +791,11 @@ get.diffvar.tab.annot.colnames.pretty <- function(grp.name1, grp.name2, includeC
     }
   } else {
     res <- c(paste("mean.var",grp.name1,sep="."),paste("mean.var",grp.name2,sep="."),"mean.var.diff",
-             "mean.var.log.ratio","comb.p.val","comb.p.adj.fdr","combined.rank.var","num,sites")
+             "mean.var.log.ratio","comb.p.val","comb.p.adj.fdr","combined.rank.var","num.sites")
     if (includeCovg){
-      res <- c(res,c(paste("mean.mean.covg",name.g1,sep="."),paste("mean.mean.covg",name.g2,sep="."),
-                     paste("mean.nsamples.covg",paste("thres",covgThres,sep=""),name.g1,sep="."),
-                     paste("mean.nsamples.covg",paste("thres",covgThres,sep=""),name.g2,sep=".")))
+      res <- c(res,c(paste("mean.mean.covg",grp.name1,sep="."),paste("mean.mean.covg",grp.name2,sep="."),
+                     paste("mean.nsamples.covg",paste("thres",covgThres,sep=""),grp.name1,sep="."),
+                     paste("mean.nsamples.covg",paste("thres",covgThres,sep=""),grp.name2,sep=".")))
     }
   }
   return(res)
@@ -781,6 +817,7 @@ rnb.section.diffVar <- function(rnb.set,diff.meth,report,gzTable=FALSE,different
     stop("no valid comparisons")
   }
   diff.var.cutoff <- 0.01
+  rank.cutoffs.numbers <- c(100,1000,10000,100000)
   logger.start("Adding Differential Variability Information")
   txt <- c("Differentially variable sites were computed with <code>", differentiality.method, "</code>.",
            " For more information about the method, have a look at the <a href=")
@@ -793,6 +830,27 @@ rnb.section.diffVar <- function(rnb.set,diff.meth,report,gzTable=FALSE,different
             "of the sites that were selected as differentially variable.")
   report <- rnb.add.section(report, 'Differential Variability', txt)
   
+  diffRegionRankCut <- c(100,500,1000)
+  comps <- get.comparisons(diff.meth)
+
+  logger.start("Selection of rank cutoffs")
+  rank.cuts.auto <- lapply(1:length(comps),FUN=function(i){
+    comp.name <- names(comps)[i]
+    comp <- comps[[i]]
+    var.table <- get.variability.table(diff.meth,comp,return.data.frame=TRUE)
+    res <- auto.select.rank.cut(var.table$diffVar.p.adj.fdr,var.table$combined.rank.var,alpha=0.1)
+    return(as.integer(res))
+  })
+  txt <- paste("The following rank cutoffs have been automatically selected for the analysis of differentially",
+               "variable sites:")
+  rnb.add.paragraph(report, txt)
+  
+  tt <- data.frame(matrix(unlist(rank.cuts.auto),ncol=1,nrow=length(comps),byrow=TRUE))
+  colnames(tt) <- "Rank Cutoff"
+  rownames(tt) <- comps
+  rnb.add.table(report,tt)
+  logger.completed()
+  
   #scatterplots
   logger.start("Adding scatterplots")
   rnb.cleanMem()
@@ -804,7 +862,10 @@ rnb.section.diffVar <- function(rnb.set,diff.meth,report,gzTable=FALSE,different
       var.table <- get.variability.table(diff.meth,comp,return.data.frame=TRUE)
       comp.name.allowed <- ifelse(is.valid.fname(comp.name),comp.name,paste("cmp",i,sep=""))
       grp.names <- get.comparison.grouplabels(diff.meth)[comp,]
+      selected.cutoff <- rank.cuts.auto[[i]]
       res <- addReportPlot.diffVar.scatter.site(report,var.table,comp.name.allowed,
+                                                      rank.cutoffs.numbers=rank.cutoffs.numbers,
+                                                      auto.cutoff=selected.cutoff,
                                                       group.name1=grp.names[1],group.name2=grp.names[2])
       rnb.cleanMem()
       res
@@ -816,7 +877,10 @@ rnb.section.diffVar <- function(rnb.set,diff.meth,report,gzTable=FALSE,different
       var.table <- get.variability.table(diff.meth,comp,return.data.frame=TRUE)
       comp.name.allowed <- ifelse(is.valid.fname(comp.name),comp.name,paste("cmp",i,sep=""))
       grp.names <- get.comparison.grouplabels(diff.meth)[comp,]
+      selected.cutoff <- rank.cuts.auto[[i]]
       res <- addReportPlot.diffVar.scatter.site(report,var.table,comp.name.allowed,
+                                                rank.cutoffs.numbers=rank.cutoffs.numbers,
+                                                auto.cutoff=selected.cutoff,
                                            group.name1=grp.names[1],group.name2=grp.names[2])
       rnb.cleanMem()
       plots <- c(plots,res)
@@ -824,8 +888,10 @@ rnb.section.diffVar <- function(rnb.set,diff.meth,report,gzTable=FALSE,different
   }
   
   comps <- get.comparisons(diff.meth)
-  diff.var.type = paste("FDR adjusted p-value &lt;",P.VAL.CUT)
-  names(diff.var.type) = "fdrAdjPval"
+  diff.var.type <- c(paste("FDR adjusted p-value &lt;",P.VAL.CUT),
+                     paste("combined rank among the",rank.cutoffs.numbers,"best ranking sites"),
+                     "automatically selected rank cutoff")
+  names(diff.var.type) <-  c("fdrAdjPval",paste0("rc",1:length(rank.cutoffs.numbers)),"rcAuto")
   setting.names <- list(
     'comparison' = comps,
     'differential variability measure' = diff.var.type)
@@ -998,7 +1064,7 @@ rnb.section.diffVar.region <- function(rnb.set,diff.meth,report,gzTable=FALSE){
       return(as.integer(res))
     })
   })
-  txt <- paste("The following rank cutfoffs have been automatically selected for the analysis of differentially",
+  txt <- paste("The following rank cutoffs have been automatically selected for the analysis of differentially",
                "variable regions:")
   rnb.add.paragraph(report, txt)
   
@@ -1125,7 +1191,7 @@ rnb.section.diffVar.region <- function(rnb.set,diff.meth,report,gzTable=FALSE){
   sectionText <- c("A tabular overview of measures for differential variability on the region level for the ",
                    "individual comparisons are provided in this section.")
   report <- rnb.add.section(report, "Differential Variability Tables", sectionText, level = 2)
-  sectionColDescList <- create.diffvar.column.description(target="regions", includeCovg=includeCovg, covgThres=get.covg.thres(diffmeth))
+  sectionColDescList <- create.diffvar.column.description(target="regions", includeCovg=includeCovg, covgThres=get.covg.thres(diff.meth))
   rnb.add.list(report, sectionColDescList)
 
   sectionText <- "The tables for the individual comparisons can be found here:"
@@ -1146,7 +1212,7 @@ rnb.section.diffVar.region <- function(rnb.set,diff.meth,report,gzTable=FALSE){
       reg.info <- reg.info[,region.info.cols.cur]
 
       annot.vec <- get.diffvar.tab.annot.cols(includeCovg, target="regions")
-      colname.vec <- get.diffvar.tab.annot.colnames.pretty(grp.labels[ic,1], grp.labels[ic,2], includeCovg, target="regions", covgThres=get.covg.thres(diffmeth))
+      colname.vec <- get.diffvar.tab.annot.colnames.pretty(grp.labels[ic,1], grp.labels[ic,2], includeCovg, target="regions", covgThres=get.covg.thres(diff.meth))
 
       var.table <- get.variability.table(diff.meth,cc,region.type=rr,return.data.frame=TRUE)[,annot.vec]
       colnames(var.table) <- colname.vec
@@ -1180,11 +1246,11 @@ rnb.section.diffVar.region <- function(rnb.set,diff.meth,report,gzTable=FALSE){
 #' @aliases cols.to.rank.site
 #' @aliases cols.to.rank.region
 cols.to.rank.site <- function(diff.var){
-  return(cbind(-abs(diff.var$var.diff),-abs(diff.var$var.log.ratio),diff.var$diffVar.p.val))
+  return(cbind(-abs(diff.var$var.diff), -abs(diff.var$var.log.ratio), diff.var$diffVar.p.val))
 }
 #' @rdname cols.to.rank
 cols.to.rank.region <- function(diff.var){
-  return(cbind(-abs(diff.var$mean.var.diff),-abs(diff.var$mean.var.log.ratio),diff.var$comb.p.val))
+  return(cbind(-abs(diff.var$mean.var.diff), -abs(diff.var$mean.var.log.ratio), diff.var$comb.p.val))
 }
 
 #' computeDiffVar.bin.site
@@ -1223,7 +1289,9 @@ computeDiffVar.bin.site <- function(meth.matrix,inds.g1,inds.g2,adjustment.table
 #' @param diffVar.tab Differential variability table for sites produced by \code{\link{computeDiffVar.bin.site}}
 #' @param inds.g1 Column indices of the first group
 #' @param inds.g2 Column indices of the second group
+#' @param region.types Region types to be used in the analysis as given by \link{rnb.region.types}
 #' @return The differential variability table on the region level
+#' @noRd
 computeDiffVar.bin.region <- function(rnb.set,diffVar.tab,inds.g1,inds.g2,region.types=rnb.region.types(assembly(rnb.set))){
   if (length(union(inds.g1,inds.g2)) != (length(inds.g1)+length(inds.g2))){
     logger.error("Overlapping sample sets in differential variability analysis")
@@ -1270,7 +1338,8 @@ computeDiffVar.bin.region <- function(rnb.set,diffVar.tab,inds.g1,inds.g2,region
 #' @param disk.dump.dir disk location for file backing of the resulting differential methylation object. Only meaningful if \code{disk.dump=TRUE}.
 #' @return Object of type \code{\linkS4class{RnBDiffMeth}} containing information about the differential variability analysis.
 #' @export
-rnb.execute.diffVar <- function(rnb.set,pheno.cols,columns.adj=rnb.getOption("covariate.adjustment.columns"),
+rnb.execute.diffVar <- function(rnb.set,pheno.cols=rnb.getOption("differential.comparison.columns"),
+                                columns.adj=rnb.getOption("covariate.adjustment.columns"),
                                 diff.meth=NULL,
                                 adjust.celltype=rnb.getOption("differential.adjustment.celltype"),
                                 disk.dump=rnb.getOption("disk.dump.big.matrices"),
@@ -1315,7 +1384,8 @@ rnb.execute.diffVar <- function(rnb.set,pheno.cols,columns.adj=rnb.getOption("co
     }
     logger.completed()
   }
-  diff.meth <- addComparisonInfo(diff.meth,cmp.info)
+  if(!all(get.comparisons(diff.meth)%in%names(cmp.info)))
+    diff.meth <- addComparisonInfo(diff.meth,cmp.info)
   logger.completed()
   return(diff.meth)
 }

@@ -7,12 +7,14 @@
 \title{get.varibility.table-methods}
 \usage{
 \S4method{get.variability.table}{RnBDiffMeth}(object, comparison,
-  undump = TRUE, return.data.frame = FALSE)
+  region.type = "sites", undump = TRUE, return.data.frame = FALSE)
 }
 \arguments{
 \item{object}{\code{\linkS4class{RnBDiffMeth}} object}
 
 \item{comparison}{character or index of the comparison of the table to retrieve}
+
+\item{region.type}{region type to be returned, defaults to 'sites'}
 
 \item{undump}{Flag indicating whether to convert the table into a matrix instead of using the file descriptor.
 Only meaningful if the if the objects's \code{disk.dump} slot is true.}

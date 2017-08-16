@@ -115,6 +115,7 @@ setClass("RnBDiffMeth",
 #'            `iEVORA'.
 #' @param disk.dump   Flag indicating whether the tables should be stored on disk rather than in the main memory
 #' @param disk.path   Path on the disk for DMTs.Only meaningful if \code{disk.dump} is \code{TRUE}
+#' @param disk.path.DMVs Path on disk to store differential variability tables.
 #'
 #' @export
 #' @author Fabian Mueller

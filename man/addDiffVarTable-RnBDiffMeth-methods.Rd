@@ -7,7 +7,7 @@
 \title{addDiffVarTable-methods}
 \usage{
 \S4method{addDiffVarTable}{RnBDiffMeth}(object, var.table, comparison,
-  grp.labs = c("group1", "group2"))
+  region.type = "sites", grp.labs = c("group1", "group2"))
 }
 \arguments{
 \item{object}{\code{\linkS4class{RnBDiffMeth}} object}
@@ -15,6 +15,8 @@
 \item{var.table}{Differential variability table to add}
 
 \item{comparison}{character or index of the comparison of the table to retrieve}
+
+\item{region.type}{region type for which the table should be added, default to 'sites'}
 
 \item{grp.labs}{character vector of length 2 specifying the names of the groups being compared}
 }

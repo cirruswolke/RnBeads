@@ -19,7 +19,9 @@ as R objects or on disk
   \item{\code{regions}}{List of lists of differential methylation tables on region levels (see \code{computeDiffMeth.bin.region} for details).
 					Indexed by region type on the top level and comparison on the lower level.}
   \item{\code{variable.sites}}{List of differential variablility tables on site level (see \code{computeDiffVar.bin} for details).
-					Indexed by comparison.} 					 
+					Indexed by comparison.}
+  \item{\code{variable.regions}}{List of lists of differential variable regions (see \code{computeDiffVar.bin.region} for details).
+					Indexed by region type on the top level and comparison on the lower level.} 					 					 
   \item{\code{comparisons}}{character vector of all comparisons stored in the objects. Vector indices correspond to indices in the \code{sites} and
 					\code{regions} list slots.}
   \item{\code{region.types}}{character vector of all region types stored in the objects. Vector indices correspond to indices in

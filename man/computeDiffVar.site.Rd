@@ -25,6 +25,12 @@ computeDiffVar.extended.site(meth.matrix, inds.g1, inds.g2,
 \item{method}{Differrential analysis method to conduct. Possibilities are: "diffVar" and "iEVORA".}
 
 \item{adjustment.table}{A \code{data.frame} containing variables to adjust for in the testing}
+
+\item{eps}{Adjustment used in the log ration calculation}
+
+\item{covg}{Coverage information about the dataset, if available}
+
+\item{covg.thres}{Coverage threshold used}
 }
 \value{
 Differential Variability data frame for the analysis.
