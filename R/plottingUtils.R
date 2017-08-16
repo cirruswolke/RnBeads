@@ -1480,7 +1480,7 @@ create.densityScatter <- function(df2p,is.special=NULL,dens.subsample=FALSE,dens
 		if (!is.null(is.special)){
 			df2p.special <- df2p[df2p$is.special,]
 			colors.dmp <- DENS.COLORS.LOW[2]
-			if (dens.special){
+			if (dens.special && nrow(df2p.special) > 1){
 				tryCatch(
 					colors.dmp   <- densCols(x=df2p.special[,1],y=df2p.special[,2],colramp = colorRampPalette(c(DENS.COLORS.LOW[2],DENS.COLORS.HIGH[2]))),
 					error=function(ee){
