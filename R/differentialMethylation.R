@@ -1000,7 +1000,7 @@ addReportPlots.diffMeth.bin.site.scatter <- function(report,dmt,cmpName,diffSite
 		sparse.points <- DENS.SCATTER.SPARSE.POINTS.MAX
 	}
 	dens.subsample <- FALSE
-	if (nrow(df2p) > dens.subsample){
+	if (nrow(df2p) > DENS.SCATTER.SUBSAMPLE.THRES){
 		dens.subsample <- DENS.SCATTER.SUBSAMPLE.THRES
 	}
 
@@ -1167,11 +1167,18 @@ addReportPlots.diffMeth.bin.region.scatter <- function(report,dmt,cmpName,regNam
 		al.x <- paste("mean.beta",grp1.name,sep=".")
 		al.y <- paste("mean.beta",grp2.name,sep=".")
 	}
+
+	#subsampling for the densitity estimation when there are too many regions
+	dens.subsample <- FALSE
+	if (nrow(df2p) > DENS.SCATTER.SUBSAMPLE.THRES){
+		dens.subsample <- DENS.SCATTER.SUBSAMPLE.THRES
+	}
+
 	#scatterplot based on adjusted p-value significance
 	if (is.element("comb.p.adj.fdr",colnames(dmt))){
 		df2p$isDMR <- df2p[,"comb.p.adj.fdr"] < P.VAL.CUT
 
-		pp <- create.densityScatter(df2p[,c(cn.x, cn.y)],is.special=df2p$isDMR,add.text.cor=TRUE) +
+		pp <- create.densityScatter(df2p[,c(cn.x, cn.y)],is.special=df2p$isDMR,dens.subsample=dens.subsample,add.text.cor=TRUE) +
 				labs(x=al.x, y=al.y) + coord_fixed()
 		cur.cut.name <- "fdrAdjPval"
 		figName <- paste("diffMeth_region",cmpName,regName,cur.cut.name,sep="_")
@@ -1187,7 +1194,7 @@ addReportPlots.diffMeth.bin.region.scatter <- function(report,dmt,cmpName,regNam
 		cur.cut.name <- paste("rc",i,sep="")
 		df2p$isDMR <- rrs < rc
 		
-		pp <- create.densityScatter(df2p[,c(cn.x, cn.y)],is.special=df2p$isDMR,add.text.cor=TRUE) +
+		pp <- create.densityScatter(df2p[,c(cn.x, cn.y)],is.special=df2p$isDMR,dens.subsample=dens.subsample,add.text.cor=TRUE) +
 				labs(x=al.x, y=al.y) + coord_fixed()
 		
 		figName <- paste("diffMeth_region",cmpName,regName,cur.cut.name,sep="_")
@@ -1198,7 +1205,7 @@ addReportPlots.diffMeth.bin.region.scatter <- function(report,dmt,cmpName,regNam
 	
 	if (is.integer(autoRankCut)){
 		df2p$isDMR <- dmt[,"combinedRank"] <= autoRankCut
-		pp <- create.densityScatter(df2p[,c(cn.x, cn.y)],is.special=df2p$isDMR,add.text.cor=TRUE) +
+		pp <- create.densityScatter(df2p[,c(cn.x, cn.y)],is.special=df2p$isDMR,dens.subsample=dens.subsample,add.text.cor=TRUE) +
 				labs(x=al.x, y=al.y) + coord_fixed()
 		figName <- paste("diffMeth_region",cmpName,regName,"rcAuto",sep="_")
 		report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
