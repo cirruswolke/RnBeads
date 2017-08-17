@@ -978,60 +978,6 @@ auto.select.rank.cut <- function(p,r,alpha=0.1){
 	return(res)
 }
 
-### create.diffMeth.bin.dens.dmp.scatter
-###
-### Helper function for addReportPlots.diffMeth.bin.site.scatter().
-### creates a plot that based on the categorization of Differentially Methylated Probes (DMPs) 
-### @author Fabian Mueller
-### @param df2p differential methylation table. Must contain the columns "mean.g1","mean.g2","isDMP"
-### @param grp1.name name as it appears on the x axis
-### @param grp2.name name as it appears on the y axis
-### @return ggplot2 plot
-create.diffMeth.bin.dens.dmp.scatter <- function(df2p,grp1.name,grp2.name){
-	n.points <- nrow(df2p)
-	#plot order: plot DMPs last
-	df2p$plotOrder <- NA
-	is.dmp <- df2p$isDMP
-	is.dmp[is.na(is.dmp)] <- FALSE
-	num.not.dmp <- sum(!is.dmp)
-	df2p$plotOrder[!is.dmp] <- seq_len(num.not.dmp)
-	df2p$plotOrder[is.dmp] <- seq((num.not.dmp+1),n.points)
-	
-	df2p <- na.omit(df2p[,c("mean.g1","mean.g2","isDMP","plotOrder")])
-	
-	df2p$color <- NA
-	if (sum(!df2p$isDMP)>1){
-		colors.nodmp <- DENS.COLORS.LOW[1]
-		tryCatch(
-			colors.nodmp <- densCols(x=df2p[!df2p$isDMP,"mean.g1"],y=df2p[!df2p$isDMP,"mean.g2"],colramp = colorRampPalette(c(DENS.COLORS.LOW[1],DENS.COLORS.HIGH[1]))),
-			error=function(ee){
-				logger.warning(c("Could not assess density colors using densCols:",ee$message))
-			}
-		)
-		df2p[!df2p$isDMP,"color"] <- colors.nodmp
-	} else if (sum(!df2p$isDMP)==1){
-		df2p[!df2p$isDMP,"color"] <- DENS.COLORS.LOW[1]
-	}
-	if (sum(df2p$isDMP)>1){
-		colors.dmp <- DENS.COLORS.LOW[2]
-		tryCatch(
-			colors.dmp   <- densCols(x=df2p[ df2p$isDMP,"mean.g1"],y=df2p[ df2p$isDMP,"mean.g2"],colramp = colorRampPalette(c(DENS.COLORS.LOW[2],DENS.COLORS.HIGH[2]))),
-			error=function(ee){
-				logger.warning(c("Could not assess density colors using densCols:",ee$message))
-			}
-		)
-		df2p[df2p$isDMP,"color"] <- colors.dmp
-	} else if (sum(df2p$isDMP)==1){
-		df2p[df2p$isDMP,"color"] <- DENS.COLORS.LOW[2]
-	}
-	
-	pp <- ggplot(df2p) + aes(mean.g1,mean.g2) +
-			labs(x=paste("mean.beta",grp1.name,sep="."),y=paste("mean.beta",grp2.name,sep=".")) + coord_fixed() +
-			geom_point(aes(color=color,order=plotOrder)) + scale_color_identity()
-	
-	return(pp)
-}
-
 ### addReportPlots.diffMeth.bin.site.scatter
 ###
 ### adds report scatterplots for differential methylation for the site level binary case to a report.
@@ -1188,60 +1134,6 @@ addReportPlots.diffMeth.bin.site.volcano <- function(report,dmt,cmpName,grp1.nam
 	figPlots <- c(figPlots,list(report.plot))
 	
 	return(figPlots)
-}
-
-### create.diffMeth.bin.dens.dmr.scatter
-###
-### Helper function for addReportPlots.diffMeth.bin.region.scatter().
-### creates a plot that based on the categorization of Differentially Methylated Regions (DMRs) 
-### @author Fabian Mueller
-### @param df2p differential methylation table. Must contain the columns "mean.mean.g1","mean.mean.g2","isDMR"
-### @param grp1.name name as it appears on the x axis
-### @param grp2.name name as it appears on the y axis
-### @return ggplot2 plot
-create.diffMeth.bin.dens.dmr.scatter <- function(df2p,grp1.name,grp2.name){
-	n.points <- nrow(df2p)
-	#plot order: plot DMRs last
-	df2p$plotOrder <- NA
-	is.dmr <- df2p$isDMR
-	is.dmr[is.na(is.dmr)] <- FALSE
-	num.not.dmr <- sum(!is.dmr)
-	df2p$plotOrder[!is.dmr] <- seq_len(num.not.dmr)
-	df2p$plotOrder[is.dmr] <- seq((num.not.dmr+1),n.points)
-	
-	df2p <- na.omit(df2p[,c("mean.mean.g1","mean.mean.g2","isDMR","plotOrder")])
-	
-	df2p$color <- NA
-	if (sum(!df2p$isDMR)>1){
-		colors.nodmr <- DENS.COLORS.LOW[1]
-		tryCatch(
-			colors.nodmr <- densCols(x=df2p[!df2p$isDMR,"mean.mean.g1"],y=df2p[!df2p$isDMR,"mean.mean.g2"],colramp = colorRampPalette(c(DENS.COLORS.LOW[1],DENS.COLORS.HIGH[1]))),
-			error=function(ee){
-				logger.warning(c("Could not assess density colors using densCols:",ee$message))
-			}
-		)
-		df2p[!df2p$isDMR,"color"] <- colors.nodmr
-	} else if (sum(!df2p$isDMR)==1){
-		df2p[!df2p$isDMR,"color"] <- DENS.COLORS.LOW[1]
-	}
-	if (sum(df2p$isDMR)>1){
-		colors.dmr <- DENS.COLORS.LOW[2]
-		tryCatch(
-			colors.dmr   <- densCols(x=df2p[ df2p$isDMR,"mean.mean.g1"],y=df2p[ df2p$isDMR,"mean.mean.g2"],colramp = colorRampPalette(c(DENS.COLORS.LOW[2],DENS.COLORS.HIGH[2]))),
-			error=function(ee){
-				logger.warning(c("Could not assess density colors using densCols:",ee$message))
-			}
-		)
-		df2p[df2p$isDMR,"color"] <- colors.dmr
-			
-	} else if (sum(df2p$isDMR)==1){
-		df2p[df2p$isDMR,"color"] <- DENS.COLORS.LOW[2]
-	}
-	pp <- ggplot(df2p) + aes(mean.mean.g1,mean.mean.g2) +
-			labs(x=paste("mean.mean.beta",grp1.name,sep="."),y=paste("mean.mean.beta",grp2.name,sep=".")) + coord_fixed() +
-			geom_point(aes(color=color,order=plotOrder)) + scale_color_identity()
-	
-	return(pp)
 }
 
 ### addReportPlots.diffMeth.bin.region.scatter
