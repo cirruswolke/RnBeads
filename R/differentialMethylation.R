@@ -1092,10 +1092,13 @@ addReportPlots.diffMeth.bin.site.volcano <- function(report,dmt,cmpName,grp1.nam
 	report.plot <- off(report.plot,handle.errors=TRUE)
 	figPlots <- c(figPlots,list(report.plot))
 	
+	#order the plotting data frame according to rank (descending order to plot best/lowest-ranking last)
+	df2p <- df2p[order(df2p[,"combinedRank"], na.last=FALSE, decreasing=TRUE),]
+
 	figName <- paste("diffMeth_site_volcano",cmpName,"quot","pVal",sep="_")
 	if (!dont.plot.p.val){
 		pp <- ggplot(df2p) + aes(mean.quot.log2,-log10(diffmeth.p.val),color=log10(combinedRank)) + scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-				geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))
+				geom_point()
 	} else {
 		pp <- rnb.message.plot("No p-value available")
 	}
@@ -1106,7 +1109,7 @@ addReportPlots.diffMeth.bin.site.volcano <- function(report,dmt,cmpName,grp1.nam
 	figName <- paste("diffMeth_site_volcano",cmpName,"diff","pValAdj",sep="_")
 	pp <- ggplot(df2p) + aes(mean.diff,-log10(diffmeth.p.adj.fdr),color=log10(combinedRank)) + 
 		  scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-		  geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))
+		  geom_point()
 	report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
 	report.plot <- off(report.plot,handle.errors=TRUE)
 	figPlots <- c(figPlots,list(report.plot))
@@ -1114,7 +1117,7 @@ addReportPlots.diffMeth.bin.site.volcano <- function(report,dmt,cmpName,grp1.nam
 	figName <- paste("diffMeth_site_volcano",cmpName,"quot","pValAdj",sep="_")
 	pp <- ggplot(df2p) + aes(mean.quot.log2,-log10(diffmeth.p.adj.fdr),color=log10(combinedRank)) + 
 		  scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-		  geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))
+		  geom_point()
 	report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
 	report.plot <- off(report.plot,handle.errors=TRUE)
 	figPlots <- c(figPlots,list(report.plot))
@@ -1122,7 +1125,7 @@ addReportPlots.diffMeth.bin.site.volcano <- function(report,dmt,cmpName,grp1.nam
 	#mean vs quotient plot
 	figName <- paste("diffMeth_site_volcano",cmpName,"diff","quotSig",sep="_")
 	pp <- ggplot(df2p) + aes(mean.diff,mean.quot.log2,color=log10(combinedRank)) + scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-			geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))
+			geom_point()
 	report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
 	report.plot <- off(report.plot,handle.errors=TRUE)
 	figPlots <- c(figPlots,list(report.plot))
@@ -1241,12 +1244,15 @@ addReportPlots.diffMeth.bin.region.volcano <- function(report,dmt,cmpName,regNam
 	df2p <- dmt #data frame to plot
 	figPlots <- list()
 	dont.plot.p.val <- all(is.na(df2p[,cn.p]))
+
+	#order the plotting data frame according to rank (descending order to plot best/lowest-ranking last)
+	df2p <- df2p[order(df2p[,"combinedRank"], na.last=FALSE, decreasing=TRUE),]
 	
 	figName <- paste("diffMeth_region_volcano",cmpName,regName,"diff","pVal",sep="_")
 	if (!dont.plot.p.val){
 		pp <- ggplot(df2p) + aes_string(cn.d, paste0("-log10(",cn.p,")"), color="log10(combinedRank)") +
 			scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-			geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))#(alpha=0.3)
+			geom_point()#(alpha=0.3)
 	} else {
 		pp <- rnb.message.plot("No p-value available")
 	}
@@ -1257,7 +1263,7 @@ addReportPlots.diffMeth.bin.region.volcano <- function(report,dmt,cmpName,regNam
 	figName <- paste("diffMeth_region_volcano",cmpName,regName,"diff","pValAdj",sep="_")
 	pp <- ggplot(df2p) + aes_string(cn.d, paste0("-log10(",cn.pa,")"), color="log10(combinedRank)") +
 		scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-		geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))#(alpha=0.3)
+		geom_point()#(alpha=0.3)
 	report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
 	report.plot <- off(report.plot,handle.errors=TRUE)
 	figPlots <- c(figPlots,list(report.plot))
@@ -1266,7 +1272,7 @@ addReportPlots.diffMeth.bin.region.volcano <- function(report,dmt,cmpName,regNam
 	if (!dont.plot.p.val){
 		pp <- ggplot(df2p) + aes_string(cn.q, paste0("-log10(",cn.p,")"), color="log10(combinedRank)") +
 			scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-			geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))#(alpha=0.3)
+			geom_point()#(alpha=0.3)
 	} else {
 		pp <- rnb.message.plot("No p-value available")
 	}
@@ -1277,7 +1283,7 @@ addReportPlots.diffMeth.bin.region.volcano <- function(report,dmt,cmpName,regNam
 	figName <- paste("diffMeth_region_volcano",cmpName,regName,"quot","pValAdj",sep="_")
 	pp <- ggplot(df2p) + aes_string(cn.q, paste0("-log10(",cn.pa,")"), color="log10(combinedRank)") +
 		scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-		geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))#(alpha=0.3)
+		geom_point()#(alpha=0.3)
 	report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
 	report.plot <- off(report.plot,handle.errors=TRUE)
 	figPlots <- c(figPlots,list(report.plot))
@@ -1285,7 +1291,7 @@ addReportPlots.diffMeth.bin.region.volcano <- function(report,dmt,cmpName,regNam
 	figName <- paste("diffMeth_region_volcano",cmpName,regName,"diff","quotSig",sep="_")
 	pp <- ggplot(df2p) + aes_string(cn.d, cn.q, color="log10(combinedRank)") +
 		scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-		geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))#(alpha=0.3)
+		geom_point()#(alpha=0.3)
 	report.plot <- createReportGgPlot(pp, figName, report,create.pdf=FALSE,high.png=200)
 	report.plot <- off(report.plot,handle.errors=TRUE)
 	figPlots <- c(figPlots,list(report.plot))
