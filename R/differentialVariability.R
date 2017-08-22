@@ -435,7 +435,7 @@ computeDiffVar.region <- function(var.table,regions2sites,includeCovg=FALSE){
 #' @return list of scatterplots
 #' @noRd
 addReportPlot.diffVar.scatter.site <- function (report, var.table, comparison.name,
-                              rank.cutoffs.numbers, auto.cutoff,
+                              rank.cutoffs.numbers, auto.cutoff, rerank=TRUE,
                               group.name1="Group1",group.name2="Group2"){
   ret <- list()
   sparse.points <- DENS.SCATTER.SPARSE.POINTS.PERC
@@ -458,6 +458,7 @@ addReportPlot.diffVar.scatter.site <- function (report, var.table, comparison.na
     ret <- c(ret,list(plot))
   }
   ranks <- var.table[,"combined.rank.var"]
+  if (rerank)	ranks <- rank(ranks,na.last="keep",ties.method="min")
   for(i in 1:length(rank.cutoffs.numbers)){
     number <- rank.cutoffs.numbers[i]
     cutoff.name <- paste0("rc",i)
@@ -865,7 +866,7 @@ rnb.section.diffVar <- function(rnb.set,diff.meth,report,gzTable=FALSE,different
       selected.cutoff <- rank.cuts.auto[[i]]
       res <- addReportPlot.diffVar.scatter.site(report,var.table,comp.name.allowed,
                                                       rank.cutoffs.numbers=rank.cutoffs.numbers,
-                                                      auto.cutoff=selected.cutoff,
+                                                      auto.cutoff=selected.cutoff, rerank = TRUE,
                                                       group.name1=grp.names[1],group.name2=grp.names[2])
       rnb.cleanMem()
       res
@@ -1095,7 +1096,7 @@ rnb.section.diffVar.region <- function(rnb.set,diff.meth,report,gzTable=FALSE){
       auto.rank.cut <- rank.cuts.auto[[i]][[j]]
       var.table <- get.variability.table(diff.meth,ccc,rr,return.data.frame=TRUE)
       res <- addReportPlot.diffVar.scatter.region(report,var.table,comparison.name=ccn,region.name=rrn,
-                                                  ranking.cutoffs = diffRegionRankCut,
+                                                  ranking.cutoffs = diffRegionRankCut, rerank=TRUE,
                                                   auto.cutoff = auto.rank.cut,group.name1 = grp.labels[ccc,1],group.name2 = grp.labels[ccc,2])
       rnb.cleanMem()
       res
