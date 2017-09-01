@@ -9,8 +9,8 @@ Authors@R: c(
     role = c("aut")),
     person("Fabian", "Mueller", email = "rnbeads@mpi-inf.mpg.de",
     role = c("aut", "cre")))
-Date: 2017-03-08
-Version: 1.7.5
+Date: 2017-05-16
+Version: 1.9.1
 Suggests:
     Category,
     GEOquery,
