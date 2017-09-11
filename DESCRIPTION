@@ -9,8 +9,8 @@ Authors@R: c(
     role = c("aut")),
     person("Fabian", "Mueller", email = "rnbeads@mpi-inf.mpg.de",
     role = c("aut", "cre")))
-Date: 2017-07-31
-Version: 1.9.2
+Date: 2017-09-11
+Version: 1.9.3
 Suggests:
     Category,
     GEOquery,
@@ -99,6 +99,7 @@ Collate:
     'differentialMethylation.R'
     'enmix.R'
     'enrichment.R'
+    'lolaUtils.R'
     'filtering.R'
     'filteringSummary.R'
     'gender.R'

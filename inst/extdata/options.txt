@@ -98,7 +98,9 @@ differential.comparison.columns.all.pairwise	integer.vector	no	yes		NULL
 covariate.adjustment.columns	integer.vector	no	yes		NULL
 differential.adjustment.sva	logical	no	no		TRUE
 differential.adjustment.celltype	logical	no	no		TRUE
-differential.enrichment	logical	no	no		FALSE
+differential.enrichment.go	logical	no	no		FALSE
+differential.enrichment.lola	logical	no	no		FALSE
+differential.enrichment.lola.dbs	character.vector	no	yes		(${LOLACore})
 differential.report.sites	logical	no	no		TRUE
 export.to.bed	logical	no	no		TRUE
 export.to.trackhub	character.vector	no	yes	(bigBed,bigWig)	(bigBed,bigWig)
