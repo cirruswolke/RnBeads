@@ -379,7 +379,7 @@ computeDiffTab.default.site <- function(X,inds.g1,inds.g2,
 	  p.vals.var <- rep(as.double(NA),nrow(X))
 	  do.p.vals <- ncol(tab.g1) > 1 || ncol(tab.g2) > 1
 	  if (do.p.vals) {
-	    if (method == "diffVar"){
+	    if (variability.method == "diffVar"){
 	      logger.info("Conducting differential variability using diffVar")
 	      tryCatch(
 	        p.vals.var <- diffVar(X,inds.g1,inds.g2,adjustment.table=adjustment.table),
@@ -387,7 +387,7 @@ computeDiffTab.default.site <- function(X,inds.g1,inds.g2,
 	          logger.warning(c("Could not compute p-values using diffVar:",ee$message))
 	        }
 	      )
-	    } else if (method == "iEVORA"){
+	    } else if (variability.method == "iEVORA"){
 	      logger.info("Conducting differential variability using iEVORA")
 	      tryCatch(
 	        p.vals.var <- apply.iEVORA(X,inds.g1,inds.g2),
@@ -662,11 +662,11 @@ computeDiffTab.default.region <- function(dmtp,regions2sites,includeCovg=FALSE){
 		col.vec <- c(col.vec,c(col.id.mean.covg.g1, col.id.mean.covg.g2, col.id.covg.thresh.ns.g1, col.id.covg.thresh.ns.g2))
 	}
 	if(rnb.getOption("differential.variability")){
-	  col.id.var.g1 <- "mean.var.g1"
-	  col.id.var.g2 <- "mean.var.g2"
-	  col.id.diff.var <- "diff.var"
-	  col.id.quot.var <- "quot.var"
-	  col.id.p.var <- "p.vals.var"
+	  col.id.var.g1 <- "var.g1"
+	  col.id.var.g2 <- "var.g2"
+	  col.id.diff.var <- "var.diff"
+	  col.id.quot.var <- "var.log.ratio"
+	  col.id.p.var <- "diffVar.p.val"
 	  mean.var.g1 <- rep(NA,n.regs.with.sites)
 	  mean.var.g2 <- rep(NA,n.regs.with.sites)
 	  diff.var <- rep(NA,n.regs.with.sites)
@@ -740,8 +740,7 @@ computeDiffTab.default.region <- function(dmtp,regions2sites,includeCovg=FALSE){
 		mean.var.g2                  <- dm[,14]
 		diff.var                     <- dm[,15]
 		quot.var                     <- dm[,16]
-		p.vals..var                  <- dm[,17]
-		
+		p.vals.var                  <- dm[,17]
 
 	} else {
 		dummy <- sapply(1:n.regs.with.sites,FUN=function(i){
@@ -756,15 +755,26 @@ computeDiffTab.default.region <- function(dmtp,regions2sites,includeCovg=FALSE){
 			num.sites[i] <<- length(pids)
 			mean.num.na.g1[i] <<- mean(subtab[,6])
 			mean.num.na.g2[i] <<- mean(subtab[,7])
+			var.start <- 8
 			if (includeCovg){
 				mean.mean.covg.g1[i] <<- mean(subtab[,8])
 				mean.mean.covg.g2[i] <<- mean(subtab[,9])
 				mean.nsamples.covg.thresh.g1[i] <<- mean(subtab[,10])
 				mean.nsamples.covg.thresh.g2[i] <<- mean(subtab[,11])
+				var.start <- 12
 			}
 					
 			res <- combineTestPvalsMeth(na.omit(subtab[,5]),correlated=TRUE)
 			if (length(res)>0) p.vals[i]  <<- res
+			if(rnb.getOption("differential.variability")){
+			  mean.var.g1 <<- mean(subtab[,var.start],na.rm=TRUE)
+			  mean.var.g2 <<- mean(subtab[,var.start+1],na.rm=TRUE)
+			  diff.var <<- mean(subtab[,var.start+2],na.rm=TRUE)
+			  quot.var <<- mean(subtab[,var.start+3],na.rm=TRUE)
+			  res <- combineTestPvalsMeth(na.omit(subtab[,var.start+4]),correlated=TRUE)
+			  if (length(res)>0) p.vals.var[i]  <<- res
+			}
+			
 			return(TRUE)
 		})
 	}
@@ -776,13 +786,24 @@ computeDiffTab.default.region <- function(dmtp,regions2sites,includeCovg=FALSE){
 		p.vals.na.adj[is.na(p.vals.na.adj)] <- 1
 	}
 	p.vals.adj <- p.adjust(p.vals.na.adj, method = "fdr")
-
+	
 	tt <- data.frame(mean.mean.g1=mean.g1,mean.mean.g2=mean.g2,mean.mean.diff=diff,mean.mean.quot.log2=quot,comb.p.val=p.vals,comb.p.adj.fdr=p.vals.adj,
 					 num.sites=num.sites,
 					 mean.num.na.g1=mean.num.na.g1,mean.num.na.g2=mean.num.na.g2)
 	if (includeCovg){
 		tt <- cbind(tt,data.frame(mean.mean.covg.g1=mean.mean.covg.g1,mean.mean.covg.g2=mean.mean.covg.g2,
 								  mean.nsamples.covg.thresh.g1=mean.nsamples.covg.thresh.g1,mean.nsamples.covg.thresh.g2=mean.nsamples.covg.thresh.g2))
+	}
+	if(rnb.getOption("differential.variability")){
+	  p.vals.var.na.adj <- p.vals.var
+	  p.vals.var.is.na <- is.na(p.vals.var)
+	  if (any(p.vals.var.is.na)){
+	    logger.info(c(sum(p.vals.var.is.na),"p-values are NA. They are treated as 1 in FDR adjustment"))
+	    p.valsvar.na.adj[is.na(p.valsvar..na.adj)] <- 1
+	  }
+	  p.vals.var.adj <- p.adjust(p.vals.var.na.adj, method = "fdr")
+	  tt <- cbind(tt,data.frame(mean.var.g1=mean.var.g1,mean.var.g2=mean.var.g2,mean.var.diff=diff.var,
+	                            mean.var.log.ratio=quot.var,comb.p.val.var=p.vals.var,comb.p.adj.var.fdr=p.vals.var.adj))
 	}
 	rownames(tt) <- names(regions2sites)
 	return(tt)
@@ -917,6 +938,11 @@ computeDiffMeth.bin.site <- function(b,inds.g1,inds.g2,n.perm=0,...){
 	diffmethTab4ranks <- extractRankingCols.site(diffmeth.tab)
 	combRank <- combinedRanking.tab(diffmethTab4ranks,rerank=FALSE)
 	diffmeth.tab$combinedRank <- combRank
+	if(rnb.getOption("differential.variability")){
+	  cols.rank.var <- cols.to.rank.site(diffmeth.tab)
+	  comb.rank.var <- combinedRanking.tab(cols.rank.var,rerank=FALSE)
+	  diffmeth.tab$combinedRank.var <- comb.rank.var
+	}
 	logger.completed()
 	if (n.perm > 0){
 		logger.start("Conducting Permutation Tests")
@@ -976,6 +1002,11 @@ computeDiffMeth.bin.region <- function(rnbSet,dmtp,inds.g1,inds.g2,region.types=
 			dmtr4ranks <- extractRankingCols.region(dmtr)
 			combRank <- combinedRanking.tab(dmtr4ranks,rerank=FALSE)
 			dmtr$combinedRank <- combRank
+			if(rnb.getOption("differential.variability")){
+			  diff.var.ranks <- cols.to.rank.region(dmtr)
+			  comb.rank.var <- combinedRanking.tab(diff.var.ranks,rerank=FALSE)
+			  dmtr$combinedRank.var <- comb.rank.var
+			}
 		}
 		diffmeth.tabs <- c(diffmeth.tabs,list(dmtr))
 		logger.status(c("Computed table for", rt))
@@ -1718,7 +1749,7 @@ rnb.section.replicate.concordance <- function(rnbSet,replicateList,types,report)
 	return(report)
 }
 
-get.diffmeth.tab.col.desc.list.txt <- function(target, includeCovg, covgThres=-1L, comb.p.ref.txt="", skipSites=FALSE){
+get.diffmeth.tab.col.desc.list.txt <- function(target, includeCovg, hasVariability, covgThres=-1L, comb.p.ref.txt="", skipSites=FALSE){
 	targ <- "site"
 	if (target=="regions") targ <- "region"
 
@@ -1758,6 +1789,20 @@ get.diffmeth.tab.col.desc.list.txt <- function(target, includeCovg, covgThres=-1
 				paste0("covg.thresh.nsamples.g1,covg.thresh.nsamples.g2: number of samples in group 1 and 2 respectively exceeding the coverage threshold (", covgThres, ") for this ", targ,".")
 			))
 		}
+		if(hasVariability){
+		  res <- c(res, list(
+		    "Strand: strand of the site",
+		    c("var.g1, var.g2: (g1 and g2 are replaced by the corrspondinhg group used in the differentiality analysis) ",
+		      "the variances found in the groups"),
+		    "var.diff: difference in variance values between the two groups g1 and g2 (=var.g1-var.g2)",
+		    "var.log.ratio: Log2 of the ratio between the variances of the two groups g1 and g2 (=log2(var.g1+eps/var.g2+eps), default eps=0.01)",
+		    "diffvar.p.val: p-value resulting from applying the selected differentially variability method (diffVar or iEVORA)",
+		    "diffVar.p.adj.fdr: FDR-adjusted p-value for differential variability",
+		    "log10P: negative decadic logarithm of the p-value",
+		    "log10FDR: negative decadic logarithmn of the FDR-adjusted p-value",
+		    "combinedRank.var: var.diff, var.log.ratio and comb.p.val.var are ranked for all sites and the higher (=worst) rank is selected. "
+		  ))
+		}
 	} else {
 		res <- c(res, list(
 			"[symbol]: associated gene symbol to the given region [only valid for gene associated regions]",
@@ -1777,6 +1822,19 @@ get.diffmeth.tab.col.desc.list.txt <- function(target, includeCovg, covgThres=-1
 			"mean.mean.covg.g1,mean.mean.covg.g2: Mean value of mean coverage values (across all samples in a group) across all sites in a region",
 			c("mean.nsamples.covg.thresh.g1,mean.nsamples.covg.thresh.g2: mean number of samples (accross all considered sites) that have a coverage larger than ", covgThres," for the site in group 1 and group 2 respectively")
 			))
+		}
+		if(hasVariability){
+		  res <- c(res, list(
+		    paste0("End: end coordinate of the ", target),
+		    "[symbol]: associated gene symbol to the given region [only valid for gene associated regions]",
+		    "[entrezID]: Entrez ID of the gene associated with the region [only valid for gene associated regions]",
+		    "mean.var.g1, mean.var.g2: Average variances found in the regions for the twp groups. g1 and g2 is replaced by the group name",
+		    "mean.var.diff: Average difference between the variances found in the two groups over the regions",
+		    "mean.var.log.ratio: Region-wise average for the log2 ratio between the variances found in the two groups",
+		    "comb.p.val.var: Combined p-value aggregating p-values of all sites in the region using a generalization of Fisher's method ",
+		    "comb.p.adj.var.fdr: FDR adjusted combined p-value",
+		    "combinedRank.var: mean.var.diff, mean.var.log.ratio and comb.p.val.var are ranked for all regions and the higher (=worst) rank is selected. "
+		  ))
 		}
 	}
 	return(res)
@@ -1807,7 +1865,7 @@ get.diffmeth.tab.col.desc.list.txt <- function(target, includeCovg, covgThres=-1
 		))
 	}
 }
-get.diffmeth.tab.annot.cols <- function(target, includeCovg, covgThres=-1L, skipSites=FALSE){
+get.diffmeth.tab.annot.cols <- function(target, includeCovg, hasVariability, covgThres=-1L, skipSites=FALSE){
 	res <- c()
 	if (target=="sites" || skipSites) {
 		res <- c("mean.g1","mean.g2","mean.diff","mean.quot.log2",
@@ -1820,6 +1878,12 @@ get.diffmeth.tab.annot.cols <- function(target, includeCovg, covgThres=-1L, skip
 							"min.covg.g1","min.covg.g2","max.covg.g1","max.covg.g2",
 							"covg.thresh.nsamples.g1","covg.thresh.nsamples.g2"))
 		}
+		if(hasVariability){
+		  res <- c(res,"var.g1","var.g2","var.diff",
+		           "var.log.ratio","diffVar.p.val",
+		           "diffVar.p.adj.fdr","log10P",
+		           "log10FDR","combinedRank.var")
+		}
 	} else {
 		res <- c("mean.mean.g1","mean.mean.g2",
 					"mean.mean.diff","mean.mean.quot.log2",
@@ -1828,6 +1892,10 @@ get.diffmeth.tab.annot.cols <- function(target, includeCovg, covgThres=-1L, skip
 		if (includeCovg){
 			res <- c(res,c("mean.mean.covg.g1","mean.mean.covg.g2",
 									   "mean.nsamples.covg.thresh.g1","mean.nsamples.covg.thresh.g2"))
+		}
+		if(hasVariability){
+		  res <- c(res,"mean.var.g1","mean.var.g2","mean.var.diff",
+		           "mean.var.log.ratio","comb.p.val.var","comb.p.adj.var.fdr","combinedRank.var")
 		}
 	}
 	return(res)
@@ -1846,6 +1914,11 @@ get.diffmeth.tab.annot.colnames.pretty <- function(target, name.g1, name.g2, inc
 										   paste("nsamples.covg",paste("thres",covgThres,sep=""),name.g1,sep="."),
 										   paste("nsamples.covg",paste("thres",covgThres,sep=""),name.g2,sep=".")))
 		}
+		if(hasVariability){
+		  res <- c(res,
+		           paste("var",grp.name1,sep="."),paste("var",grp.name2,sep="."),"var.diff",
+		           "var.log.ratio","diffvar.p.val","diffVar.p.adj.fdr","log10P","log10FDR","combinedRank.var")
+		}
 	} else {
 		res <- c(paste("mean.mean",name.g1,sep="."),paste("mean.mean",name.g2,sep="."),
 				"mean.mean.diff","mean.mean.quot.log2",
@@ -1855,6 +1928,11 @@ get.diffmeth.tab.annot.colnames.pretty <- function(target, name.g1, name.g2, inc
 			res <- c(res,c(paste("mean.mean.covg",name.g1,sep="."),paste("mean.mean.covg",name.g2,sep="."),
 										   paste("mean.nsamples.covg",paste("thres",covgThres,sep=""),name.g1,sep="."),
 										   paste("mean.nsamples.covg",paste("thres",covgThres,sep=""),name.g2,sep=".")))
+		}
+		if(hasVariability){
+		  res <- c(res,
+		           paste("mean.var",grp.name1,sep="."),paste("mean.var",grp.name2,sep="."),"mean.var.diff",
+		           "mean.var.log.ratio","comb.p.val.var","comb.p.adj.var.fdr","combinedRank.var")
 		}
 	}
 	return(res)
@@ -1999,12 +2077,13 @@ rnb.section.diffMeth.site <- function(rnbSet,diffmeth,report,gzTable=FALSE){
 	logger.completed()
 	logger.start("Adding tables")
 	includeCovg <- hasCovg(rnbSet)
+	hasVariability <- rnb.getOption("differential.variability")
 	
 	sectionText <- c("A tabular overview of measures for differential methylation on the site level for the individual comparisons are provided in this section.
 					  Below, a brief explanation of the different columns can be found:")
 	report <- rnb.add.section(report, "Differential Methylation Tables", sectionText, level = 2)
 
-	sectionColDescList <- get.diffmeth.tab.col.desc.list.txt("sites", includeCovg, covgThres=get.covg.thres(diffmeth), skipSites=FALSE)
+	sectionColDescList <- get.diffmeth.tab.col.desc.list.txt("sites", includeCovg, hasVariability,covgThres=get.covg.thres(diffmeth), skipSites=FALSE)
 	rnb.add.list(report, sectionColDescList)
 	
 
@@ -2019,8 +2098,8 @@ rnb.section.diffMeth.site <- function(rnbSet,diffmeth,report,gzTable=FALSE){
 	for (i in 1:length(comps)){
 		cc <- comps[i]
 		
-		annot.vec <- get.diffmeth.tab.annot.cols("sites", includeCovg)
-		colname.vec <- get.diffmeth.tab.annot.colnames.pretty("sites", grp.names[i,1], grp.names[i,2], includeCovg, covgThres=get.covg.thres(diffmeth), skipSites=FALSE)
+		annot.vec <- get.diffmeth.tab.annot.cols("sites", includeCovg, hasVariability)
+		colname.vec <- get.diffmeth.tab.annot.colnames.pretty("sites", grp.names[i,1], grp.names[i,2], includeCovg, hasVariability,covgThres=get.covg.thres(diffmeth), skipSites=FALSE)
 		dmt <- get.table(diffmeth,cc,"sites",return.data.frame=TRUE)[,annot.vec]		
 		colnames(dmt) <- colname.vec
 		dmt <- cbind(rownames(dmt),sites.info,dmt)
@@ -2038,6 +2117,9 @@ rnb.section.diffMeth.site <- function(rnbSet,diffmeth,report,gzTable=FALSE){
 	logger.completed()
 	
 	logger.completed()
+	if(rnb.getOption("differential.variability")){
+	  report <- rnb.section.diffVar(rnbSet,diffmeth,report,gzTable=gzTable)
+	}
 	return(report)
 }
 
@@ -2221,13 +2303,18 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 	report <- rnb.add.figure(report, description, addedPlots, setting.names)
 	logger.completed()
 
+	if(rnb.getOption("differential.variability")){
+	  report <- rnb.section.diffVar.region(rnbSet,diffmeth,report,gzTable=gzTable)
+	}
+	
 	logger.start("Adding tables")
 	includeCovg <- hasCovg(rnbSet)
+	hasVariability <- rnb.getOption("differnetial.variability")
 	sectionText <- c("A tabular overview of measures for differential methylation on the region level for the ",
 		"individual comparisons are provided in this section.")
 	report <- rnb.add.section(report, "Differential Methylation Tables", sectionText, level = 2)
 	#TODO: change section text when sites are skipped
-	sectionColDescList <- get.diffmeth.tab.col.desc.list.txt("regions", includeCovg, covgThres=get.covg.thres(diffmeth), comb.p.ref.txt=rnb.get.reference(report, refText), skipSites=skipSites)
+	sectionColDescList <- get.diffmeth.tab.col.desc.list.txt("regions", includeCovg, hasVariability, covgThres=get.covg.thres(diffmeth), comb.p.ref.txt=rnb.get.reference(report, refText), skipSites=skipSites)
 	rnb.add.list(report, sectionColDescList)
 
 	sectionText <- "The tables for the individual comparisons can be found here:"
@@ -2247,8 +2334,8 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 			region.info.cols.cur <- intersect(region.info.cols,colnames(reg.info))
 			reg.info <- reg.info[,region.info.cols.cur]
 			
-			annot.vec <- get.diffmeth.tab.annot.cols("regions", includeCovg, skipSites=skipSites)
-			colname.vec <- get.diffmeth.tab.annot.colnames.pretty("regions", grp.labels[ic,1], grp.labels[ic,2], includeCovg, covgThres=get.covg.thres(diffmeth), skipSites=skipSites)
+			annot.vec <- get.diffmeth.tab.annot.cols("regions", includeCovg, hasVariability, skipSites=skipSites)
+			colname.vec <- get.diffmeth.tab.annot.colnames.pretty("regions", grp.labels[ic,1], grp.labels[ic,2], includeCovg, hasVariability, covgThres=get.covg.thres(diffmeth), skipSites=skipSites)
 			
 			dmt <- get.table(diffmeth,cc,rr,return.data.frame=TRUE)[,annot.vec]
 			colnames(dmt) <- colname.vec
@@ -2743,6 +2830,7 @@ rnb.execute.computeDiffMeth <- function(x,pheno.cols,region.types=rnb.region.typ
 		return(NULL)
 	}
 
+	if(rnb.getOption("differential.variability") & !isImputed(x)) x <- rnb.execute.imputation(x)
 	diff.method <- rnb.getOption("differential.site.test.method")
 	variability.method <- rnb.getOption("differential.variability.method")
 	dot.args <- list(...)

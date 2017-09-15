@@ -4,7 +4,9 @@
 \alias{rnb.execute.diffVar}
 \title{rnb.execute.diffVar}
 \usage{
-rnb.execute.diffVar(rnb.set, pheno.cols,
+rnb.execute.diffVar(rnb.set,
+  pheno.cols = rnb.getOption("differential.comparison.columns"),
+  region.types = rnb.region.types.for.analysis(rnb.set),
   columns.adj = rnb.getOption("covariate.adjustment.columns"),
   diff.meth = NULL,
   adjust.celltype = rnb.getOption("differential.adjustment.celltype"),

@@ -25,8 +25,6 @@ See \code{computeDiffMeth.bin.site} and \code{computeDiffMeth.bin.region} for de
 \item{disk.dump}{Flag indicating whether the tables should be stored on disk rather than in the main memory}
 
 \item{disk.path}{Path on the disk for DMTs.Only meaningful if \code{disk.dump} is \code{TRUE}}
-
-\item{disk.path.DMVs}{Path on disk to store differential variability tables.}
 }
 \description{
 Initialize an RnBDiffMeth object

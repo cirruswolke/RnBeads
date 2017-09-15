@@ -8,10 +8,12 @@
 \usage{
 computeDiffTab.default.site(X, inds.g1, inds.g2,
   diff.method = rnb.getOption("differential.site.test.method"),
+  variability.method = rnb.getOption("differential.variability.method"),
   paired = FALSE, adjustment.table = NULL, eps = 0.01)
 
 computeDiffTab.extended.site(X, inds.g1, inds.g2,
   diff.method = rnb.getOption("differential.site.test.method"),
+  variability.method = rnb.getOption("differential.variability.method"),
   paired = FALSE, adjustment.table = NULL, eps = 0.01, covg = NULL,
   covg.thres = rnb.getOption("filtering.coverage.threshold"))
 }
@@ -74,6 +76,7 @@ sample.groups <- rnb.sample.groups(rnb.set.example)[[1]]
 dm <- computeDiffTab.extended.site(meth.mat,sample.groups[[1]],sample.groups[[2]])
 summary(dm)
 }
+Calculate the differential variability and add it to the diffMeth table, if the module is activated
 }
 \author{
 Fabian Mueller

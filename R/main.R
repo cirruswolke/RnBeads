@@ -1498,13 +1498,6 @@ rnb.run.differential <- function(rnb.set, dir.reports,
 			disk.dump=disk.dump,disk.dump.dir=disk.dump.dir
 		)
 		rnb.cleanMem()
-		if(rnb.getOption("differential.variability")){
-		  diffmeth <- rnb.execute.diffVar(rnb.set,cmp.cols,
-		                                  columns.adj=rnb.getOption("covariate.adjustment.columns"),
-		                                  diff.meth=diffmeth,
-		                                  adjust.celltype=rnb.getOption("differential.adjustment.celltype"),
-		                                  disk.dump=disk.dump)
-		}
 		if (!is.null(diffmeth) && rnb.getOption("differential.enrichment") && (length(reg.types)>0)){
 			dm.enrich <- performEnrichment.diffMeth(rnb.set,diffmeth,verbose=TRUE)
 			rnb.cleanMem()
@@ -1527,9 +1520,6 @@ rnb.run.differential <- function(rnb.set, dir.reports,
 		}
 		if (length(get.region.types(diffmeth))>0){
 			report <- rnb.section.diffMeth.region(rnb.set,diffmeth,report,dm.enrich=dm.enrich,gzTable=gz)
-		}
-		if(rnb.getOption("differential.variability")){
-		  report <- rnb.section.diffVar(rnb.set,diffmeth,report,gzTable = gz)
 		}
 	}
 	logger.completed()
