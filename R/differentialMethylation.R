@@ -306,6 +306,7 @@ limmaP <- function(X,inds.g1,inds.g2=-inds.g1,adjustment.table=NULL,fun.conversi
 #' }
 computeDiffTab.default.site <- function(X,inds.g1,inds.g2,
 		diff.method=rnb.getOption("differential.site.test.method"),
+		variability.method=rnb.getOption("differential.variability.method"),
 		paired=FALSE,adjustment.table=NULL,eps=0.01){
 	if (!(diff.method %in% c("ttest","limma","refFreeEWAS"))) {
 		stop("Invalid method for differential site methylation test method")
@@ -372,18 +373,65 @@ computeDiffTab.default.site <- function(X,inds.g1,inds.g2,
 		logger.warning("Skipping p-value computation due to insufficient sample numbers")
 	}
 	tt <- data.frame(mean.g1=mean.g1,mean.g2=mean.g2,mean.diff=mean.diff,mean.quot.log2=mean.quot.log2,diffmeth.p.val=p.vals)
+
+	#' Calculate the differential variability and add it to the diffMeth table, if the module is activated
+	if(rnb.getOption("differential.variability")){
+	  p.vals.var <- rep(as.double(NA),nrow(X))
+	  do.p.vals <- ncol(tab.g1) > 1 || ncol(tab.g2) > 1
+	  if (do.p.vals) {
+	    if (method == "diffVar"){
+	      logger.info("Conducting differential variability using diffVar")
+	      tryCatch(
+	        p.vals.var <- diffVar(X,inds.g1,inds.g2,adjustment.table=adjustment.table),
+	        error = function(ee) {
+	          logger.warning(c("Could not compute p-values using diffVar:",ee$message))
+	        }
+	      )
+	    } else if (method == "iEVORA"){
+	      logger.info("Conducting differential variability using iEVORA")
+	      tryCatch(
+	        p.vals.var <- apply.iEVORA(X,inds.g1,inds.g2),
+	        error = function(ee) {
+	          logger.warning(c("Could not compute p-values using iEVORA:",ee$message))
+	        }
+	      )
+	    }
+	  } else {
+	    logger.warning("Skipping p-value computation due to insufficient sample numbers")
+	  }
+	  p.vals.is.na <- is.na(p.vals.var)
+	  if (!all(p.vals.is.na)){
+	    if (any(p.vals.is.na)){
+	      logger.info(c(sum(p.vals.is.na),"p-values are NA. They are treated as 1 in FDR adjustment"))
+	      p.vals.var[is.na(p.vals.t.na.adj)] <- 1
+	    }
+	    p.vals.var.adj <- p.adjust(p.vals.var, method = "fdr")
+	  } else {
+	    p.vals.var.adj <- rep(NA,length(p.vals.var))
+	  }
+	  var.g1 <- apply(X[,inds.g1],1,var)
+	  var.g2 <- apply(X[,inds.g2],1,var)
+	  var.diff <- var.g1-var.g2
+	  var.log.ratio <- ifelse(var.g1==0|var.g2==0,1,log2(var.g1/var.g2))
+	  neg.log10.p <- -log10(p.vals.var)
+	  neg.log10.fdr <- -log10(p.vals.var.adj)
+	  tt <- data.frame(tt,var.g1=var.g1,var.g2=var.g2,var.diff=var.diff,var.log.ratio=var.log.ratio,diffVar.p.val=p.vals.var,diffVar.p.adj.fdr=p.vals.var.adj,log10P=neg.log10.p,
+	                   log10FDR=neg.log10.fdr)
+	}
 	return(tt)
 }
 #' @rdname computeDiffTab.site
 #' @export
 computeDiffTab.extended.site <- function(X,inds.g1,inds.g2,
 		diff.method=rnb.getOption("differential.site.test.method"),
+		variability.method=rnb.getOption("differential.variability.method"),
 		paired=FALSE,adjustment.table=NULL,
 		eps=0.01,covg=NULL,covg.thres=rnb.getOption("filtering.coverage.threshold")){
 	# require(matrixStats)
 	tt.basic <- computeDiffTab.default.site(
 		X,inds.g1=inds.g1,inds.g2=inds.g2,
-		diff.method=diff.method,paired=paired,
+		diff.method=diff.method,variability.method=variability.method,
+		paired=paired,
 		adjustment.table=adjustment.table,eps=eps
 	)
 	tab.g1 <- X[,inds.g1]
@@ -458,7 +506,6 @@ computeDiffTab.extended.site <- function(X,inds.g1,inds.g2,
 								  covg.thresh.nsamples.g1=covg.thresh.nsamples.g1,covg.thresh.nsamples.g2=covg.thresh.nsamples.g2)
 		tt.ext <- cbind(tt.ext,tt.ext.covg)	
 	}
-
 	tt <- cbind(tt.basic,tt.ext)
 	return(tt)
 }
@@ -614,6 +661,19 @@ computeDiffTab.default.region <- function(dmtp,regions2sites,includeCovg=FALSE){
 	if (includeCovg) {
 		col.vec <- c(col.vec,c(col.id.mean.covg.g1, col.id.mean.covg.g2, col.id.covg.thresh.ns.g1, col.id.covg.thresh.ns.g2))
 	}
+	if(rnb.getOption("differential.variability")){
+	  col.id.var.g1 <- "mean.var.g1"
+	  col.id.var.g2 <- "mean.var.g2"
+	  col.id.diff.var <- "diff.var"
+	  col.id.quot.var <- "quot.var"
+	  col.id.p.var <- "p.vals.var"
+	  mean.var.g1 <- rep(NA,n.regs.with.sites)
+	  mean.var.g2 <- rep(NA,n.regs.with.sites)
+	  diff.var <- rep(NA,n.regs.with.sites)
+	  quot.var <- rep(NA,n.regs.with.sites)
+	  p.vals.var <- rep(NA,n.regs.with.sites)
+	  col.vec <- c(col.vec, col.id.var.g1, col.id.var.g2, col.id.diff.var, col.id.quot.var, col.id.p.var)
+	}
 	dmt4fastProc <- dmtp[,col.vec] #not looking up the columns by name, but by index reduces runtime
 	
 	if(parallel.isEnabled()){
@@ -628,11 +688,13 @@ computeDiffTab.default.region <- function(dmtp,regions2sites,includeCovg=FALSE){
 			num.sites <- length(pids)
 			mean.num.na.g1 <- mean(subtab[,6])
 			mean.num.na.g2 <- mean(subtab[,7])
+			var.start <- 8
 			if (includeCovg){
 				mean.mean.covg.g1 <- mean(subtab[,8])
 				mean.mean.covg.g2 <- mean(subtab[,9])
 				mean.nsamples.covg.thresh.g1 <- mean(subtab[,10])
 				mean.nsamples.covg.thresh.g2 <- mean(subtab[,11])
+				var.start <- 12
 			} else {
 				mean.mean.covg.g1 <- NA
 				mean.mean.covg.g2 <- NA
@@ -643,9 +705,24 @@ computeDiffTab.default.region <- function(dmtp,regions2sites,includeCovg=FALSE){
 			res <- combineTestPvalsMeth(na.omit(subtab[,5]),correlated=TRUE)
 			p.vals <- NA
 			if (length(res)>0) p.vals <- res
+			if(rnb.getOption("differential.varibility")){
+			  mean.var.g1   <- mean(subtab[,var.start],na.rm=TRUE)
+			  mean.var.g2   <- mean(subtab[,var.start+1],na.rm=TRUE)
+			  diff.var      <- mean(subtab[,var.start+2],na.rm=TRUE)
+			  quot.var      <- mean(subtab[,var.start+3],na.rm=TRUE)
+			  res <- combineTestPvalsMeth(na.omit(subtab[,var.start+4]),correlated=TRUE)
+			  p.vals.var <- NA
+			  if (length(res)>0) p.vals.var <- res
+			}else{
+			  mean.var.g1 <- NA
+			  mean.var.g2 <- NA
+			  diff.var <- NA
+			  quot.var <- NA
+			  p.vals.var <- NA
+			}
 			c(mean.g1, mean.g2, diff, quot, num.sites, mean.num.na.g1, mean.num.na.g2,
 			  mean.mean.covg.g1, mean.mean.covg.g2, mean.nsamples.covg.thresh.g1, mean.nsamples.covg.thresh.g2,
-			  p.vals)
+			  p.vals,mean.var.g1,mean.var.g2,diff.var,quot.var,p.vals.var)
 		}
 		mean.g1                      <- dm[, 1]
 		mean.g2                      <- dm[, 2]
@@ -659,7 +736,13 @@ computeDiffTab.default.region <- function(dmtp,regions2sites,includeCovg=FALSE){
 		mean.nsamples.covg.thresh.g1 <- dm[,10]
 		mean.nsamples.covg.thresh.g2 <- dm[,11]
 		p.vals                       <- dm[,12]
+		mean.var.g1                  <- dm[,13]
+		mean.var.g2                  <- dm[,14]
+		diff.var                     <- dm[,15]
+		quot.var                     <- dm[,16]
+		p.vals..var                  <- dm[,17]
 		
+
 	} else {
 		dummy <- sapply(1:n.regs.with.sites,FUN=function(i){
 			pids <- regions2sites[[i]]
@@ -2661,9 +2744,13 @@ rnb.execute.computeDiffMeth <- function(x,pheno.cols,region.types=rnb.region.typ
 	}
 
 	diff.method <- rnb.getOption("differential.site.test.method")
+	variability.method <- rnb.getOption("differential.variability.method")
 	dot.args <- list(...)
 	if (is.element("diff.method",names(dot.args))){
 		diff.method <- dot.args[["diff.method"]]
+	}
+	if(is.element("variability.method",names(dot.args))){
+	  variability.method <- dot.args[["variability.method"]]
 	}
 	logger.start("Computing differential methylation tables")
 
