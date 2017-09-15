@@ -1,15 +1,11 @@
 ########################################################################################################################
 ## differentialVaribility.R
-## created: 2017-28-07
+## created: 2017-07-28
 ## creator: Michael Scherer
 ## ---------------------------------------------------------------------------------------------------------------------
 ## The differential variability analysis methods between sample groups.
 ########################################################################################################################
 
-P.VAL.CUT <- 0.05 #p-value cutoff to consider differentially variable sites as significant
-DENS.SCATTER.SUBSAMPLE.THRES <- 2e6 #threshold to induce subsampling
-DENS.SCATTER.SPARSE.POINTS.PERC <- 0.01 #percentage of points to plot in the sparsely populated regions
-DENS.SCATTER.SPARSE.POINTS.MAX <- 1e4 #maximum number of points to plot in the sparsely populated regions
 #' diffVar
 #' 
 #' This routine applies the diffVar method from the \code{missMethyl} package that determines sites exhibiting
@@ -443,7 +439,7 @@ addReportPlot.diffVar.scatter.site <- function (report, var.table, comparison.na
     sparse.points <- DENS.SCATTER.SPARSE.POINTS.MAX
   }
   dens.subsample <- FALSE
-  if (nrow(var.table) > dens.subsample){
+  if (nrow(var.table) > DENS.SCATTER.SUBSAMPLE.THRES){
     dens.subsample <- DENS.SCATTER.SUBSAMPLE.THRES
   }
   
@@ -489,9 +485,14 @@ addReportPlot.diffVar.scatter.region <- function (report, var.table, comparison.
   al.x <- paste("Mean Variance",group.name1,sep=".")
   al.y <- paste("Mean Variance",group.name2,sep=".")
   
+  dens.subsample <- FALSE
+  if(nrow(var.table) > DENS.SCATTER.SUBSAMPLE.THRES){
+    dens.subsample <- DENS.SCATTER.SUBSAMPLE.THRES
+  }
+  
   if("comb.p.adj.fdr" %in% colnames(var.table)){
     var.sites <- var.table[,"comb.p.adj.fdr"] < P.VAL.CUT
-    plot <- create.densityScatter(var.table[,c("mean.var.g1","mean.var.g2")],is.special=var.sites) +
+    plot <- create.densityScatter(var.table[,c("mean.var.g1","mean.var.g2")],is.special=var.sites,dens.subsample = dens.subsample) +
       xlab(al.x) + ylab(al.y)
     comp.type <- "fdrAdjPval"
     fig.name <- paste("diffVar_region",comparison.name,region.name,comp.type,sep = "_")
@@ -507,7 +508,8 @@ addReportPlot.diffVar.scatter.region <- function (report, var.table, comparison.
     cur.cut.name <- paste("rc",i,sep="")
     var.table$isDVR <- rrs < rc
     
-    pp <- create.densityScatter(var.table[,c("mean.var.g1","mean.var.g2")],is.special=var.table$isDVR,add.text.cor=TRUE) +
+    pp <- create.densityScatter(var.table[,c("mean.var.g1","mean.var.g2")],is.special=var.table$isDVR,
+                                dens.subsample = dens.subsample, add.text.cor=TRUE) +
       labs(x=al.x, y=al.y) + coord_fixed()
     
     figName <- paste("diffVar_region",comparison.name,region.name,cur.cut.name,sep="_")
@@ -518,7 +520,8 @@ addReportPlot.diffVar.scatter.region <- function (report, var.table, comparison.
   
   if (is.integer(auto.cutoff)){
     var.table$isDVR <- var.table[,"combined.rank.var"] <= auto.cutoff
-    pp <- create.densityScatter(var.table[,c("mean.var.g1","mean.var.g2")],is.special=var.table$isDVR,add.text.cor=TRUE) +
+    pp <- create.densityScatter(var.table[,c("mean.var.g1","mean.var.g2")],is.special=var.table$isDVR,
+                                dens.subsample = dens.subsample, add.text.cor=TRUE) +
       labs(x=al.x, y=al.y) + coord_fixed()
     figName <- paste("diffVar_region",comparison.name,region.name,"rcAuto",sep="_")
     report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
@@ -1340,6 +1343,7 @@ computeDiffVar.bin.region <- function(rnb.set,diffVar.tab,inds.g1,inds.g2,region
 #' @return Object of type \code{\linkS4class{RnBDiffMeth}} containing information about the differential variability analysis.
 #' @export
 rnb.execute.diffVar <- function(rnb.set,pheno.cols=rnb.getOption("differential.comparison.columns"),
+                                region.types=rnb.region.types.for.analysis(rnb.set),
                                 columns.adj=rnb.getOption("covariate.adjustment.columns"),
                                 diff.meth=NULL,
                                 adjust.celltype=rnb.getOption("differential.adjustment.celltype"),
@@ -1348,7 +1352,7 @@ rnb.execute.diffVar <- function(rnb.set,pheno.cols=rnb.getOption("differential.c
   
   logger.start("Differential Variability")
   logger.start("Retrieving comparison info")
-  cmp.info <- get.comparison.info(rnb.set, pheno.cols=pheno.cols, 
+  cmp.info <- get.comparison.info(rnb.set, pheno.cols=pheno.cols,region.types = region.types, 
                                   columns.adj=columns.adj,
                                   adjust.celltype=adjust.celltype)
   logger.completed()

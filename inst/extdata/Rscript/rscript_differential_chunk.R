@@ -96,6 +96,13 @@ logger.start("Differential Methylation")
 			skip.sites=!rnb.getOption("analyze.sites"),
 			# disk.dump=disk.dump,disk.dump.dir=paste0(cmdArgs$output,"_diffMethTableDir"))
 			disk.dump=disk.dump,disk.dump.dir=paste0(tempfile(pattern=""),"_diffMethTableDir"))
+	if(rnb.getOption("differential.variability")){
+	  diffmeth <- rnb.execute.diffVar(rnb.set,cmp.cols,region.types=reg.types,
+	                                  columns.adj=rnb.getOption("covariate.adjustment.columns"),
+	                                  diff.meth=diffmeth,
+	                                  adjust.celltype=rnb.getOption("differential.adjustment.celltype"),
+	                                  disk.dump=disk.dump,disk.dump.dir=paste0(tempfile(pattern=""),"_diffVarTableDir"))
+	}
 	if (rnb.getOption("differential.enrichment")){
 		dm.enrich <- performEnrichment.diffMeth(rnb.set,diffmeth,verbose=FALSE)
 	} else {
