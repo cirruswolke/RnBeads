@@ -1132,7 +1132,14 @@ rnb.load.annotation <- function(fname, type) {
 #' This function checks whether a region annotation is present in the RnBeads resources,
 #' downloads the corresponding annotation file(s) from the and then runs \code{\link{rnb.load.annotation}}
 #' to import the annotation.
-#'
+#' 
+#' @examples
+#' \donttest{
+#' rnb.region.types() 
+#' rnb.load.annotation.from.db(c("tiling1kb", "dynamicMethZiller2013"))
+#' rnb.region.types()
+#' }
+#' 
 #' @seealso \code{\link{rnb.load.annotation}} for loading annotation from a binary file
 #' @author Fabian Mueller
 #' @export
@@ -1147,7 +1154,13 @@ rnb.load.annotation.from.db <- function(types, assembly="hg19") {
 	for (tt in types){
 		fname <- paste0("annotation_", assembly, "_", tt, ".RData")
 		tmpFn <- tempfile(fileext=".RData")
-		download.file(paste(db.url, fname, sep="/"), destfile=tmpFn, mode = "wb")
+		success <- tryCatch(
+			download.file(paste(db.url, fname, sep="/"), destfile=tmpFn, mode = "wb"),
+			error = function(err) { return(-1) }
+		)
+		if (success != 0){
+			logger.error(c("Failed to download region set annotation:", tt))
+		}
 		rnb.load.annotation(tmpFn, tt)
 		unlink(tmpFn, recursive=FALSE) # remove temp files
 	}
