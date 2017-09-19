@@ -1118,6 +1118,57 @@ rnb.load.annotation <- function(fname, type) {
 
 ########################################################################################################################
 
+#' rnb.load.annotation.from.db
+#'
+#' Loads a previously region annotation from the RnBeads resource database
+#'
+#' @param type  One-element \code{character} vector giving the name of the region annotation. If this annotation
+#'              is already available, it will be overwritten for the current session.
+#' @param assembly Genome assembly of interest. See \code{\link{rnb.get.assemblies}} for the list of supported genomes.
+#' @return Invisibly, \code{TRUE} if the annotation was loaded successfully; an error message if the objects in the
+#'         given file do not encode an annotation.
+#'
+#' @details
+#' This function checks whether a region annotation is present in the RnBeads resources,
+#' downloads the corresponding annotation file(s) from the and then runs \code{\link{rnb.load.annotation}}
+#' to import the annotation.
+#' 
+#' @examples
+#' \donttest{
+#' rnb.region.types() 
+#' rnb.load.annotation.from.db(c("tiling1kb", "dynamicMethZiller2013"))
+#' rnb.region.types()
+#' }
+#' 
+#' @seealso \code{\link{rnb.load.annotation}} for loading annotation from a binary file
+#' @author Fabian Mueller
+#' @export
+rnb.load.annotation.from.db <- function(types, assembly="hg19") {
+	db.url <- "http://rnbeads.mpi-inf.mpg.de/publication//data/regiondb"
+	if (!(is.character(types) && length(types) > 0 && (!any(is.na(types))))) {
+		stop("invalid value for types")
+	}
+	if (!(is.character(assembly) && length(assembly) == 1 && (!is.na(assembly)))) {
+		stop("invalid value for assembly")
+	}
+	for (tt in types){
+		fname <- paste0("annotation_", assembly, "_", tt, ".RData")
+		tmpFn <- tempfile(fileext=".RData")
+		success <- tryCatch(
+			download.file(paste(db.url, fname, sep="/"), destfile=tmpFn, mode = "wb"),
+			error = function(err) { return(-1) }
+		)
+		if (success != 0){
+			logger.error(c("Failed to download region set annotation:", tt))
+		}
+		rnb.load.annotation(tmpFn, tt)
+		unlink(tmpFn, recursive=FALSE) # remove temp files
+	}
+	invisible(TRUE)
+}
+
+########################################################################################################################
+
 #' rnb.remove.annotation
 #'
 #' Deletes a region annotation table. Use this function with caution; its operation cannot be undone.

@@ -1,3 +1,8 @@
+RnBeads 1.9.4
+=============
+
+ * You can now retrieve custom region sets from the RnBeads resource using the rnb.load.annotation.from.db function
+
 RnBeads 1.9.3
 =============
 
