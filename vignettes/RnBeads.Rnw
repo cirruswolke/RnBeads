@@ -150,7 +150,7 @@ biocLite(c("RnBeads", "RnBeads.hg38"))
 		\item[Exploratory Analysis] Dimension reduction, statistical association tests and visualization techniques are applied in order to discover associations of the methylation data with various sample characteristics specified in the sample annotation sheet provided by the user. Methylation fingerprints of samples and sample groups are identified and presented. Unsupervised learning techniques (clustering) are applied.
 		\item[Differential Methylation Analysis] Provided with categorical sample, differentially methylated sites and genomic
 		regions are identified, their degree of differential methylation is quantified
-		and visualized. Furthermore, differentially methylated regions (DMRs) can be annotated, e.g. with Gene Ontology (GO) terms.
+		and visualized. Furthermore, differentially methylated regions (DMRs) can be annotated, e.g. with enrichment analysis.
 	\end{description}
 
 \subsection{Datasets}
@@ -1130,6 +1130,45 @@ diffmeth.adj <- rnb.execute.computeDiffMeth(rnb.set, cmp.cols,
     region.types=reg.types)
 @
 
+		\subsubsection{Enrichment Analysis of Differentially Methylated Regions}
+
+		\cs{RnBeads} allows you to characterize differentially methylated regions by computing enrichments for Gene Ontology (GO)\cite{Ashburner2000} terms and for custom genomic annotations using the \cs{LOLA} tool\cite{Sheffield2016}. You can active these analyses for your \cs{RnBeads} runs using the corresponding options:
+<<eval=FALSE>>=
+rnb.options("differential.enrichment.go"=TRUE)
+rnb.options("differential.enrichment.lola"=TRUE)
+@
+
+		If you want to manually extract the enrichment results, you can use the \cs{RnBeads}' build-in functions. To compute GO enrichments from the computed differential methylation results you can use the following commands (takes a while because an online GO database is queried for each comparison and different differential methylation rank cutoffs):
+
+<<eval=FALSE>>=
+enrich.go <- performGoEnrichment.diffMeth(rnb.set, diffmeth, verbose=TRUE)
+@
+		The result is a nested list storing enrichment tables for each comparison, ontology, differential methylation rank cutoff and direction of differential methylation. Each element in this nested list corresponds to a result computed using the \cs{GOStats} package\cite{Falcon2007}. It contains enrichment odds ratios and p-values. For instance, let us inspect the enrichment of the 500 highest ranking hypomethylated promoters (in ESCs compared to iPSCs) for biological process (BP) ontology terms:
+<<eval=FALSE>>=
+enrich.table.go <- enrich.go[["region"]][[comparison]][["BP"]][["promoters"]][["rankCut_500"]][["hypo"]]
+class(enrich.table.go)
+summary(enrich.table.go)
+@
+
+		In addition, \cs{RnBeads} supports enrichment analyses of differential methylation results using the \cs{LOLA} tool\cite{Sheffield2016}. This tool facilitates enrichment analyses of arbitrary genomic and epigenomic annotations using Fisher's exact test. To run a \cs{LOLA} analysis manually, you first need to obtain a corresponding database. For instance, to download the core database from the tool website to a temporary destination, you can use the following commands:
+<<eval=FALSE>>=
+lolaDest <- tempfile()
+dir.create(lolaDest)
+lolaDirs <- downloadLolaDbs(lolaDest, dbs="LOLACore")
+@
+		
+		This database currently contains annotations for transcription factor binding sites and motifs, DNase accessible regions and genomic features. For more detailed information on the \cs{LOLA} tool, available precomputed databases and instructions on how to assemble your own database, please be referred to the \cs{LOLA} documentation\footnote{\href{http://databio.org/lola/}{http://databio.org/lola/}}. You can now compute the enrichment of differentially methylated regions to reference region sets in the database:
+<<eval=FALSE>>=
+enrich.lola <- performLolaEnrichment.diffMeth(rnb.set, diffmeth, lolaDirs[["hg19"]])
+@
+		The result is a structured object containing enrichment tables for different comparisons, region types and rank cutoffs as well as information on the reference database. These objects are best explored using \cs{RnBeads}' utility functions. Here we plot the enrichment resultes of the 500 highest ranking hypermethylated promoter regions in ESCs compared to iPSCs:
+<<eval=FALSE>>=
+enrich.table.lola <- enrich.lola$region[[comparison]][["promoters"]]
+enrich.table.lola <- enrich.table.lola[enrich.table.lola$userSet=="rankCut_500_hyper",]
+lolaBarPlot(enrich.lola$lolaDb, enrich.table.lola, scoreCol="oddsRatio", orderCol="maxRnk", pvalCut=0.05)
+@
+
+
 \subsection{Tracks and Tables}
 
 	By default, methylation tracks are exported in \cs{bed} format. They contain genomic locations and beta values for each site in the filtered \cs{RnBSet} for each sample in the dataset. Additionally, track hubs\footnote{\href{http://genome.ucsc.edu/goldenPath/help/hgTrackHubHelp.html}{http://genome.ucsc.edu/goldenPath/help/hgTrackHubHelp.html}} for the UCSC or Ensembl Genome browsers can be generated. For using the track hubs in conjunction with a genome browser you will need a server that can be reached via a URL to provide the data. The command to convert the \cs{RnBSet} to the desired output and to generate the corresponding report is
@@ -2010,6 +2049,9 @@ draw.lotto()
       Greenwood, C.M.T., and Hansen, K. D. (2014) \emph{Functional normalization
       of 450k methylation array data improves replication in large cancer studies}.
       \newblock BioRxiv.
+      \bibitem{Ashburner2000} Ashburner, M., Ball, C. A., Blake, J. A., Botstein, D., Butler, H., Cherry, J. M., \emph{et al.} (2000). \newblock \emph{Gene ontology: tool for the unification of biology.}  \newblock Nature Genetics, 25(1), 25-29
+      \bibitem{Sheffield2016} Sheffield, N. C., and Bock, C. (2016). \newblock \emph{LOLA: enrichment analysis for genomic region sets and regulatory elements in R and Bioconductor}. \newblock Bioinformatics, 32(4), 587-589
+      \bibitem{Falcon2007} Falcon, S., & Gentleman, R. (2007). \newblock \emph{Using GOstats to test gene lists for GO term association}. \newblock Bioinformatics, 23(2), 257–258
 
 
 	\end{thebibliography}
