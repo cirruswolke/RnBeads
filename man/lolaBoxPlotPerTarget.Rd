@@ -63,7 +63,7 @@ res <- performLolaEnrichment.diffMeth(rnb.set.example,dm,lolaDirs[["hg19"]])
 lolaRes <- res$region[["hESC vs. hiPSC (based on Sample_Group)"]][["tiling"]]
 lolaRes <- lolaRes[lolaRes$userSet=="rankCut_500_hyper",]
 # plot
-lolaBoxPlotPerTarget(res$lolaDb, lolaRes, scoreCol="logOddsRatio", orderCol="maxRnk", pvalCut=0.05)
+lolaBoxPlotPerTarget(res$lolaDb, lolaRes, scoreCol="oddsRatio", orderCol="maxRnk", pvalCut=0.05)
 }
 }
 \author{

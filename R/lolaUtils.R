@@ -163,7 +163,7 @@ getNamesFromLolaDb <- function(lolaDb, addCollectionNames=FALSE, addDbId=TRUE){
 lolaPrepareDataFrameForPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol, signifCol="qValue", includedCollections=c(), pvalCut=0.01, maxTerms=50, perUserSet=FALSE, groupByCollection=TRUE, orderDecreasing=NULL){
 	#dedect by column name whether decreasing order needs to be used
 	if (is.null(orderDecreasing)){
-		oset.dec <- c("pValueLog", "qValueLog", "logOddsRatio")
+		oset.dec <- c("pValueLog", "qValueLog", "logOddsRatio", "oddsRatio")
 		oset.inc <- c("maxRnk", "meanRnk", "qValue")
 		if (!is.element(orderCol, c(oset.dec, oset.inc))){
 			logger.error(c("Could not determine whether to use increasing or decreasing order for column:", orderCol))
@@ -300,7 +300,15 @@ lolaVolcanoPlot <- function(lolaDb, lolaRes, includedCollections=c(), signifCol=
 		is.color.discrete <- !is.color.gradient
 	}
 
-	pp <- ggplot(df2p) + aes_string("logOddsRatio", signifCol, color=colorBy) + geom_point()
+	oddsRatioCol <- "oddsRatio"
+	if (!is.element(oddsRatioCol, colnames(df2p))){
+		#in older LOLA versions, this column was called "logOddsRatio"
+		oddsRatioCol <- "logOddsRatio"
+	}
+	if (!is.element(oddsRatioCol, colnames(df2p))){
+		logger.error("Invalid LOLA result. Could not find a valid column containing odds ratios.")
+	}
+	pp <- ggplot(df2p) + aes_string(oddsRatioCol, signifCol, color=colorBy) + geom_point()
 	cpanel <- colorpanel
 	if (length(cpanel) < 1){
 		if (is.color.gradient){
@@ -368,7 +376,7 @@ lolaVolcanoPlot <- function(lolaDb, lolaRes, includedCollections=c(), signifCol=
 #' lolaRes <- res$region[["hESC vs. hiPSC (based on Sample_Group)"]][["tiling"]]
 #' lolaRes <- lolaRes[lolaRes$userSet=="rankCut_500_hyper",]
 #' # plot
-#' lolaBarPlot(res$lolaDb, lolaRes, scoreCol="logOddsRatio", orderCol="maxRnk", pvalCut=0.05)
+#' lolaBarPlot(res$lolaDb, lolaRes, scoreCol="oddsRatio", orderCol="maxRnk", pvalCut=0.05)
 #' }
 lolaBarPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol, signifCol="qValue", includedCollections=c(), pvalCut=0.01, maxTerms=50, colorpanel=sample(rainbow(maxTerms,v=0.5)), groupByCollection=TRUE, orderDecreasing=NULL){
 	if (length(unique(lolaRes[["userSet"]])) > 1){
@@ -502,7 +510,7 @@ lolaBarPlot.hyp <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scor
 #' lolaRes <- res$region[["hESC vs. hiPSC (based on Sample_Group)"]][["tiling"]]
 #' lolaRes <- lolaRes[lolaRes$userSet=="rankCut_500_hyper",]
 #' # plot
-#' lolaBoxPlotPerTarget(res$lolaDb, lolaRes, scoreCol="logOddsRatio", orderCol="maxRnk", pvalCut=0.05)
+#' lolaBoxPlotPerTarget(res$lolaDb, lolaRes, scoreCol="oddsRatio", orderCol="maxRnk", pvalCut=0.05)
 #' }
 lolaBoxPlotPerTarget <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol, signifCol="qValue", includedCollections=c(), pvalCut=0.01, maxTerms=50, colorpanel=c(), groupByCollection=TRUE, orderDecreasing=NULL, scoreDecreasing=NULL){
 	if (length(unique(lolaRes[["userSet"]])) > 1){
@@ -510,7 +518,7 @@ lolaBoxPlotPerTarget <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol
 	}
 	# detect by column name whether decreasing order needs to be used for the score column
 	if (is.null(scoreDecreasing)){
-		oset.dec <- c("pValueLog", "logOddsRatio")
+		oset.dec <- c("pValueLog", "logOddsRatio", "oddsRatio")
 		oset.inc <- c("maxRnk", "meanRnk")
 		if (!is.element(scoreCol, c(oset.dec, oset.inc))){
 			logger.error(c("Could not determine whether to use increasing or decreasing order for score column:", scoreCol))
