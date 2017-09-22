@@ -1018,7 +1018,7 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 	optionlist <- rnb.options("filtering.whitelist", "filtering.blacklist", "filtering.snp",
 		"filtering.cross.reactive", "filtering.greedycut", o.greedycut.threshold, "filtering.greedycut.rc.ties","imputation.method")
 	attr.vec <- c(TRUE, TRUE, TRUE, TRUE, TRUE,
-		optionlist[["filtering.greedycut"]] || inherits(rnb.set, "RnBiseqSet"), optionlist[["filtering.greedycut"]])
+		ifelse(is.null(optionlist[["filtering.greedycut"]]), FALSE, optionlist[["filtering.greedycut"]]) || inherits(rnb.set, "RnBiseqSet"), optionlist[["filtering.greedycut"]])
 	if (!inherits(rnb.set, "RnBeadSet")) {
 		optionlist <- optionlist[-4]
 		attr.vec <- attr.vec[-4]
