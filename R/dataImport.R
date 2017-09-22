@@ -1534,11 +1534,7 @@ find.bed.column<-function(annotation,
 	potential.fnames<-which(classes%in%c("character","factor"))
 
 	candidate.fname<-sapply(potential.fnames, function(cix){
-
-				extensions<-sapply(strsplit(as.character(annotation[,cix]),"\\."),
-						function(spl) spl[length(spl)] %in% c("bed", "BED", "cov", "COV")
-				)
-
+				extensions<-grepl("\\.bed|\\.BED|\\.cov|\\.COV",annotation[,cix])
 				all(extensions)
 			})
 
