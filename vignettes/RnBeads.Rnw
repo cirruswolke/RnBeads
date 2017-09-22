@@ -1132,7 +1132,7 @@ diffmeth.adj <- rnb.execute.computeDiffMeth(rnb.set, cmp.cols,
 
 		\subsubsection{Enrichment Analysis of Differentially Methylated Regions}
 
-		\cs{RnBeads} allows you to characterize differentially methylated regions by computing enrichments for Gene Ontology (GO)\cite{Ashburner2000} terms and for custom genomic annotations using the \cs{LOLA} tool\cite{Sheffield2016}. You can active these analyses for your \cs{RnBeads} runs using the corresponding options:
+		\cs{RnBeads} allows you to characterize differentially methylated regions by computing enrichments for Gene Ontology (GO)~\cite{Ashburner2000} terms and for custom genomic annotations using the \cs{LOLA} tool~\cite{Sheffield2016}. You can active these analyses for your \cs{RnBeads} runs using the corresponding options:
 <<eval=FALSE>>=
 rnb.options("differential.enrichment.go"=TRUE)
 rnb.options("differential.enrichment.lola"=TRUE)
@@ -1143,7 +1143,7 @@ rnb.options("differential.enrichment.lola"=TRUE)
 <<eval=FALSE>>=
 enrich.go <- performGoEnrichment.diffMeth(rnb.set, diffmeth, verbose=TRUE)
 @
-		The result is a nested list storing enrichment tables for each comparison, ontology, differential methylation rank cutoff and direction of differential methylation. Each element in this nested list corresponds to a result computed using the \cs{GOStats} package\cite{Falcon2007}. It contains enrichment odds ratios and p-values. For instance, let us inspect the enrichment of the 500 highest ranking hypomethylated promoters (in ESCs compared to iPSCs) for biological process (BP) ontology terms:
+		The result is a nested list storing enrichment tables for each comparison, ontology, differential methylation rank cutoff and direction of differential methylation. Each element in this nested list corresponds to a result computed using the \cs{GOStats} package~\cite{Falcon2007}. It contains enrichment odds ratios and p-values. For instance, let us inspect the enrichment of the 500 highest ranking hypomethylated promoters (in ESCs compared to iPSCs) for biological process (BP) ontology terms:
 <<eval=FALSE>>=
 enrich.table.go <- 
     enrich.go[["region"]][[comparison]][["BP"]][["promoters"]][["rankCut_500"]][["hypo"]]
@@ -1151,7 +1151,7 @@ class(enrich.table.go)
 summary(enrich.table.go)
 @
 
-		In addition, \cs{RnBeads} supports enrichment analyses of differential methylation results using the \cs{LOLA} tool\cite{Sheffield2016}. This tool facilitates enrichment analyses of arbitrary genomic and epigenomic annotations using Fisher's exact test. To run a \cs{LOLA} analysis manually, you first need to obtain a corresponding database. For instance, to download the core database from the tool website to a temporary destination, you can use the following commands:
+		In addition, \cs{RnBeads} supports enrichment analyses of differential methylation results using the \cs{LOLA} tool~\cite{Sheffield2016}. This tool facilitates enrichment analyses of arbitrary genomic and epigenomic annotations using Fisher's exact test. To run a \cs{LOLA} analysis manually, you first need to obtain a corresponding database. For instance, to download the core database from the tool website to a temporary destination, you can use the following commands:
 <<eval=FALSE>>=
 lolaDest <- tempfile()
 dir.create(lolaDest)
