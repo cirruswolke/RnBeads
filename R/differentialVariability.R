@@ -1,15 +1,78 @@
 ########################################################################################################################
-## differentialVaribility.R
+## differentialvariability.R
 ## created: 2017-07-28
 ## creator: Michael Scherer
 ## ---------------------------------------------------------------------------------------------------------------------
 ## The differential variability analysis methods between sample groups.
 ########################################################################################################################
 
+#' rnb.execute.diffVar
+#' 
+#' This routine computes sites that are differentially variable between two sample groups specified as the column name 
+#' in the phenotypic table.
+#' 
+#' @author Michael Scherer
+#' @export
+#' @param rnb.set Object of type \code{\linkS4class{RnBSet}} on which differential variability analysis should be conducted
+#' @param pheno.cols Column names used to define the classes, whose methylation variability should be compared with each other
+#' @param region.types Regions types to be used for the analysis. Defaults to the results given by rnb.region.types.for.analysis of the given RnBSet.
+#' @param columns.adj Column names or indices in the table of phenotypic information to be used for confounder adjustment in the differential variability analysis.
+#' @param adjust.celltype Flag indicating whether the resulting table should also contain estimated celltype contributions. See \code{\link{rnb.execute.ct.estimation}} for details.
+#' @param disk.dump Flag indicating whether the resulting differential methylation object should be file backed, ie.e the matrices dumped to disk
+#' @param disk.dump.dir disk location for file backing of the resulting differential methylation object. Only meaningful if \code{disk.dump=TRUE}.
+#' @return Object of type \code{\linkS4class{RnBDiffMeth}} containing information about the differential variability analysis.
+rnb.execute.diffVar <- function(rnb.set,pheno.cols=rnb.getOption("differential.comparison.columns"),
+                                region.types=rnb.region.types.for.analysis(rnb.set),
+                                columns.adj=rnb.getOption("covariate.adjustment.columns"),
+                                adjust.celltype=rnb.getOption("differential.adjustment.celltype"),
+                                disk.dump=rnb.getOption("disk.dump.big.matrices"),
+                                disk.dump.dir=tempfile(pattern="diffMethTables_")){
+  logger.start("Differential Variability")
+  logger.start("Retrieving comparison info")
+  cmp.info <- get.comparison.info(rnb.set, pheno.cols=pheno.cols,region.types = region.types, 
+                                  columns.adj=columns.adj,
+                                  adjust.celltype=adjust.celltype)
+  logger.completed()
+  if (is.null(cmp.info)) {
+    return(NULL)
+  }
+  
+  variability.method <- rnb.getOption("differential.variability.method")
+  diff.meth <- new("RnBDiffMeth",variability.method=variability.method,disk.dump=disk.dump,disk.path=disk.dump.dir)
+
+  for(i in 1:length(cmp.info)){
+    cmp.info.cur <- cmp.info[[i]]
+    logger.start(c("Comparing ",cmp.info.cur$comparison))
+    if(!isImputed(rnb.set)) rnb.set <- rnb.execute.imputation(rnb.set)
+    meth.matrix <- meth(rnb.set)
+    diffVar <- computeDiffVar.bin.site(X=meth.matrix,inds.g1=cmp.info.cur$group.inds$group1,
+                                       inds.g2=cmp.info.cur$group.inds$group2, adjustment.table=cmp.info.cur$adjustment.table)
+
+    diff.meth <- addDiffMethTable(diff.meth,diffVar,comparison=cmp.info.cur$comparison,region.type="sites",grp.labs=cmp.info.cur$group.names)
+    rnb.cleanMem()
+    if (length(cmp.info.cur$region.types)>0){
+      diffVar.region <- computeDiffVar.bin.region(rnb.set,diffVar,
+                                                  inds.g1=cmp.info.cur$group.inds$group1,inds.g2=cmp.info.cur$group.inds$group2,
+                                                  region.types=cmp.info.cur$region.types
+      )
+      for(rt in region.types){
+        diff.meth <- addDiffMethTable(diff.meth,diffVar.region[[rt]],comparison=cmp.info.cur$comparison, 
+                                      region.type=rt, grp.labs=cmp.info.cur$group.names
+        )
+      }
+    }
+    logger.completed()
+  }
+  if(!all(get.comparisons(diff.meth)%in%names(cmp.info)))
+    diff.meth <- addComparisonInfo(diff.meth,cmp.info)
+  logger.completed()
+  return(diff.meth)
+}
+
 #' diffVar
 #' 
 #' This routine applies the diffVar method from the \code{missMethyl} package that determines sites exhibiting
-#' differential varibility between two sample groups
+#' differential variability between two sample groups
 #' 
 #' @author Michael Scherer
 #' @param meth.matrix Matrix containing the methylation information used to calculate differentially variable sites 
@@ -95,7 +158,7 @@ apply.iEVORA <- function(meth.matrix,inds.g1,inds.g2){
 #' @param data.m Methylation matrix with rows labeling features, and columns labeling samples. 
 #'               Rownames should be feature/probe IDs and should be provided.
 #' @param pheno.v Phenotype vector with entries either 0 or 1 correpsonding to the group assignment.
-#' @param thDV q-value threshold for the differntial varibility test. Default is 0.001.
+#' @param thDV q-value threshold for the differntial variability test. Default is 0.001.
 #' @param thDM p-value threshold for differntial methylation means. Default is 0.05.
 #' 
 #' @return A matrix of ranked differentially variable (DV) and differentially methylated CpGs (DVMCs), 
@@ -131,7 +194,7 @@ iEVORA <- function(data.m,pheno.v,thDV=0.001,thDM=0.05){
     }
   }
   else {
-    logger.info("No DVCs detected. Consider lowering the differential varibility threshold.");
+    logger.info("No DVCs detected. Consider lowering the differential variability threshold.");
   }
   logger.completed()
   return(topDVMC.m);
@@ -366,7 +429,7 @@ addReportPlot.diffVar.volcano.region <- function(report, var.table,comparison.na
   if (!dont.plot.p.val){
     pp <- ggplot(var.table) + aes_string(cn.d, paste0("-log10(",cn.p,")"), color="log10(combinedRank.var)") +
       scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-      geom_point(aes(order=plyr::desc(rank(combinedRank.var,ties.method="first",na.last=TRUE))))#(alpha=0.3)
+      geom_point()#(alpha=0.3)
   } else {
     pp <- rnb.message.plot("No p-value available")
   }
@@ -377,7 +440,7 @@ addReportPlot.diffVar.volcano.region <- function(report, var.table,comparison.na
   figName <- paste("diffVar_region_volcano",comparison.name,region.type,"diff","pValAdj",sep="_")
   pp <- ggplot(var.table) + aes_string(cn.d, paste0("-log10(",cn.pa,")"), color="log10(combinedRank.var)") +
     scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-    geom_point(aes(order=plyr::desc(rank(combinedRank.var,ties.method="first",na.last=TRUE))))#(alpha=0.3)
+    geom_point()#(alpha=0.3)
   report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
   report.plot <- off(report.plot,handle.errors=TRUE)
   figPlots <- c(figPlots,list(report.plot))
@@ -386,7 +449,7 @@ addReportPlot.diffVar.volcano.region <- function(report, var.table,comparison.na
   if (!dont.plot.p.val){
     pp <- ggplot(var.table) + aes_string(cn.q, paste0("-log10(",cn.p,")"), color="log10(combinedRank.var)") +
       scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-      geom_point(aes(order=plyr::desc(rank(combinedRank.var,ties.method="first",na.last=TRUE))))#(alpha=0.3)
+      geom_point()#(alpha=0.3)
   } else {
     pp <- rnb.message.plot("No p-value available")
   }
@@ -397,7 +460,7 @@ addReportPlot.diffVar.volcano.region <- function(report, var.table,comparison.na
   figName <- paste("diffVar_region_volcano",comparison.name,region.type,"quot","pValAdj",sep="_")
   pp <- ggplot(var.table) + aes_string(cn.q, paste0("-log10(",cn.pa,")"), color="log10(combinedRank.var)") +
     scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-    geom_point(aes(order=plyr::desc(rank(combinedRank.var,ties.method="first",na.last=TRUE))))#(alpha=0.3)
+    geom_point()#(alpha=0.3)
   report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
   report.plot <- off(report.plot,handle.errors=TRUE)
   figPlots <- c(figPlots,list(report.plot))
@@ -405,7 +468,7 @@ addReportPlot.diffVar.volcano.region <- function(report, var.table,comparison.na
   figName <- paste("diffVar_region_volcano",comparison.name,region.type,"diff","quotSig",sep="_")
   pp <- ggplot(var.table) + aes_string(cn.d, cn.q, color="log10(combinedRank.var)") +
     scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-    geom_point(aes(order=plyr::desc(rank(combinedRank.var,ties.method="first",na.last=TRUE))))#(alpha=0.3)
+    geom_point()#(alpha=0.3)
   report.plot <- createReportGgPlot(pp, figName, report,create.pdf=FALSE,high.png=200)
   report.plot <- off(report.plot,handle.errors=TRUE)
   figPlots <- c(figPlots,list(report.plot))
@@ -435,7 +498,7 @@ addReportPlot.diffVar.meth <- function(report, var.table, comparison.name,
                            group.name1,group.name2){
   ret <- list()
   dont.plot.p.val <- all(is.na(var.table[,"diffVar.p.adj.fdr"]))
-  dont.plot.p.val <- dont.plot.p.val && all(is.na(meth.table[,"diffmeth.p.adj.fdr"]))
+  dont.plot.p.val <- dont.plot.p.val && all(is.na(var.table[,"diffmeth.p.adj.fdr"]))
   
   fig.name <- paste("diffVarMeth_site",comparison.name,sep="_")
   if (!dont.plot.p.val){
@@ -662,13 +725,13 @@ rnb.section.diffVar.region <- function(rnb.set,diff.meth,report,gzTable=FALSE){
   }
 
   diffRegionRankCut <- c(100,500,1000)
-  logger.start("Adding Region Level Information")
+  logger.start("Adding Region Level Information (Differential Variability)")
 
-  sectionText <- c("Differential variability on the region level was computed based on a variety of metrics. ", 
-                   "Those metrics were similar to the ones used for differential variability, but the mean of variances, ",
+  sectionText <- c("Differential variability on the region level was computed similar to differential methylation, ", 
+                   "but the mean of variances, ",
                    "the log-ratio of the quotient of variances as well as the p-values from the differentiality test were ",
                    "employed. Ranking was performed in line with the ranking of differential methylation.")
-  report <- rnb.add.section(report, "Region Level", sectionText)
+  report <- rnb.add.section(report, "Region Level (Differential Variability)", sectionText)
   
   comps <- get.comparisons(diff.meth)
   reg.types <- get.region.types(diff.meth)
@@ -825,72 +888,140 @@ cols.to.rank.region <- function(diff.var){
   return(cbind(-abs(diff.var$mean.var.diff), -abs(diff.var$mean.var.log.ratio), diff.var$comb.p.adj.var.fdr))
 }
 
-#' rnb.execute.diffVar
-#' 
-#' This routine computes sites that are differentially variable between two sample groups specified as the column name 
-#' in the phenotypic table.
-#' @author Michael Scherer
-#' @param rnb.set Object of type \code{\linkS4class{RnBSet}} on which differential varibility analysis should be conducted
-#' @param pheno.cols Column names used to define the classes, whose methylation variability should be compared with each other
-#' @param columns.adj Column names or indices in the table of phenotypic information to be used for confounder adjustment in the
-#'        differential variability analysis.
-#' @param diff.meth Object of type \code{\linkS4class{RnBDiffMeth}}, possibly containing information about differentially methylated
-#'        sites. The differentially variable sites then are also added to this object instead of creating a new object. 
-#' @param adjust.celltype Flag indicating whether the resulting table should also contain estimated celltype contributions.
-#' 				See \code{\link{rnb.execute.ct.estimation}} for details.
-#' @param disk.dump Flag indicating whether the resulting differential methylation object should be file backed, ie.e the matrices dumped to disk
-#' @param disk.dump.dir disk location for file backing of the resulting differential methylation object. Only meaningful if \code{disk.dump=TRUE}.
-#' @return Object of type \code{\linkS4class{RnBDiffMeth}} containing information about the differential variability analysis.
-#' @export
-rnb.execute.diffVar <- function(rnb.set,pheno.cols=rnb.getOption("differential.comparison.columns"),
-                                region.types=rnb.region.types.for.analysis(rnb.set),
-                                columns.adj=rnb.getOption("covariate.adjustment.columns"),
-                                diff.meth=NULL,
-                                adjust.celltype=rnb.getOption("differential.adjustment.celltype"),
-                                disk.dump=rnb.getOption("disk.dump.big.matrices"),
-                                disk.dump.dir=tempfile(pattern="diffVarTables_")){
-  
-  logger.start("Differential Variability")
-  logger.start("Retrieving comparison info")
-  cmp.info <- get.comparison.info(rnb.set, pheno.cols=pheno.cols,region.types = region.types, 
-                                  columns.adj=columns.adj,
-                                  adjust.celltype=adjust.celltype)
-  logger.completed()
-  if (is.null(cmp.info)) {
-    return(NULL)
-  }
-  
-  variability.method <- rnb.getOption("differential.variability.method")
-  if(is.null(diff.meth)){
-    diff.meth <- new("RnBDiffMeth",variability.method=variability.method,disk.dump=disk.dump,disk.path.DMVs=disk.dump.dir)
-  }else{
-    diff.meth <- prepare.diff.var(diff.meth,variability.method=variability.method,disk.dump=disk.dump,disk.path.DMVs=disk.dump.dir)
-  }
-  for(i in 1:length(cmp.info)){
-    cmp.info.cur <- cmp.info[[i]]
-    logger.start(c("Comparing ",cmp.info.cur$comparison))
-    if(!isImputed(rnb.set)) rnb.set <- rnb.execute.imputation(rnb.set)
-    meth.matrix <- meth(rnb.set)
-    diffVar <- computeDiffVar.bin.site(meth.matrix=meth.matrix,inds.g1=cmp.info.cur$group.inds$group1,
-                                  inds.g2=cmp.info.cur$group.inds$group2, adjustment.table=cmp.info.cur$adjustment.table,
-                                  covg=covg(rnb.set))
-    diff.meth <- addDiffVarTable(diff.meth,diffVar,comparison=cmp.info.cur$comparison,grp.labs=cmp.info.cur$group.names)
-    rnb.cleanMem()
-    if (length(cmp.info.cur$region.types)>0){
-      diffVar.region <- computeDiffVar.bin.region(rnb.set,diffVar,
-                              inds.g1=cmp.info.cur$group.inds$group1,inds.g2=cmp.info.cur$group.inds$group2,
-                              region.types=cmp.info.cur$region.types
-        )
-      for (rt in cmp.info.cur$region.types){
-        diff.meth <- addDiffVarTable(diff.meth,diffVar.region[[rt]],comparison=cmp.info.cur$comparison, 
-                                     region.type=rt, grp.labs=cmp.info.cur$group.names
-        )
-      }
+#' computeDiffVar.bin.site
+#' @noRd
+computeDiffVar.bin.site <- function(X,inds.g1,inds.g2,
+                                    variability.method=rnb.getOption("differential.variability.method"),
+                                    adjustment.table=NULL){
+  p.vals.var <- rep(as.double(NA),nrow(X))
+  do.p.vals <- ncol(X[,inds.g1]) > 1 || ncol(X[inds.g2]) > 1
+  if (do.p.vals) {
+    if (variability.method == "diffVar"){
+      logger.info("Conducting differential variability using diffVar")
+      tryCatch(
+        p.vals.var <- diffVar(X,inds.g1,inds.g2,adjustment.table=adjustment.table),
+        error = function(ee) {
+          logger.warning(c("Could not compute p-values using diffVar:",ee$message))
+        }
+      )
+    } else if (variability.method == "iEVORA"){
+      logger.info("Conducting differential variability using iEVORA")
+      tryCatch(
+        p.vals.var <- apply.iEVORA(X,inds.g1,inds.g2),
+        error = function(ee) {
+          logger.warning(c("Could not compute p-values using iEVORA:",ee$message))
+        }
+      )
     }
-    logger.completed()
+  } else {
+    logger.warning("Skipping p-value computation due to insufficient sample numbers")
   }
-  if(!all(get.comparisons(diff.meth)%in%names(cmp.info)))
-    diff.meth <- addComparisonInfo(diff.meth,cmp.info)
+  p.vals.is.na <- is.na(p.vals.var)
+  if (!all(p.vals.is.na)){
+    if (any(p.vals.is.na)){
+      logger.info(c(sum(p.vals.is.na),"p-values are NA. They are treated as 1 in FDR adjustment"))
+      p.vals.var[is.na(p.vals.t.na.adj)] <- 1
+    }
+    p.vals.var.adj <- p.adjust(p.vals.var, method = "fdr")
+  } else {
+    p.vals.var.adj <- rep(NA,length(p.vals.var))
+  }
+  var.g1 <- apply(X[,inds.g1],1,var)
+  var.g2 <- apply(X[,inds.g2],1,var)
+  var.diff <- var.g1-var.g2
+  var.log.ratio <- ifelse(var.g1==0|var.g2==0,1,log2(var.g1/var.g2))
+  neg.log10.p <- -log10(p.vals.var)
+  neg.log10.fdr <- -log10(p.vals.var.adj)
+  tt <- data.frame(var.g1=var.g1,var.g2=var.g2,var.diff=var.diff,var.log.ratio=var.log.ratio,diffVar.p.val=p.vals.var,diffVar.p.adj.fdr=p.vals.var.adj,log10P=neg.log10.p,
+                   log10FDR=neg.log10.fdr)
+}
+
+#' computeDiffVar.default.region
+#' @noRd
+computeDiffVar.default.region <- function(dmtp,regions2sites){
+  n.regs.with.sites <- length(regions2sites)
+  col.id.var.g1 <- "var.g1"
+  col.id.var.g2 <- "var.g2"
+  col.id.diff.var <- "var.diff"
+  col.id.quot.var <- "var.log.ratio"
+  col.id.p.var <- "diffVar.p.val"
+  mean.var.g1 <- rep(NA,n.regs.with.sites)
+  mean.var.g2 <- rep(NA,n.regs.with.sites)
+  diff.var <- rep(NA,n.regs.with.sites)
+  quot.var <- rep(NA,n.regs.with.sites)
+  p.vals.var <- rep(NA,n.regs.with.sites)
+  col.vec <- c(col.id.var.g1, col.id.var.g2, col.id.diff.var, col.id.quot.var, col.id.p.var)
+  
+  dmt4fastProc <- dmtp[,col.vec]
+  if(parallel.isEnabled()){
+    dm <- foreach(i=1:n.regs.with.sites, .combine='rbind',.multicombine=TRUE,.maxcombine=200) %dopar% {
+      pids <- regions2sites[[i]]
+      subtab <- dmt4fastProc[pids,]#these lookups take up most of the time
+      
+      mean.var.g1   <- mean(subtab[,1],na.rm=TRUE)
+      mean.var.g2   <- mean(subtab[,2],na.rm=TRUE)
+      diff.var      <- mean(subtab[,3],na.rm=TRUE)
+      quot.var      <- mean(subtab[,4],na.rm=TRUE)
+      res <- combineTestPvalsMeth(na.omit(subtab[,5]),correlated=TRUE)
+      p.vals.var <- NA
+      if (length(res)>0) p.vals.var <- res
+      c(mean.var.g1,mean.var.g2,diff.var,quot.var,p.vals.var)
+    }
+    mean.var.g1                  <- dm[,1]
+    mean.var.g2                  <- dm[,2]
+    diff.var                     <- dm[,3]
+    quot.var                     <- dm[,4]
+    p.vals.var                  <- dm[,5]
+    } else {
+      dummy <- sapply(1:n.regs.with.sites,FUN=function(i){
+        pids <- regions2sites[[i]]
+        subtab <- dmt4fastProc[pids,]#these lookups take up most of the time
+        
+        mean.var.g1[i] <<- mean(subtab[,1],na.rm=TRUE)
+        mean.var.g2[i] <<- mean(subtab[,2],na.rm=TRUE)
+        diff.var[i] <<- mean(subtab[,3],na.rm=TRUE)
+        quot.var[i] <<- mean(subtab[,4],na.rm=TRUE)
+        res <- combineTestPvalsMeth(na.omit(subtab[,5]),correlated=TRUE)
+        if (length(res)>0) p.vals.var[i]  <<- res
+        return(TRUE)
+      })
+    }
+  p.vals.var.na.adj <- p.vals.var
+  p.vals.var.is.na <- is.na(p.vals.var)
+  if (any(p.vals.var.is.na)){
+    logger.info(c(sum(p.vals.var.is.na),"p-values are NA. They are treated as 1 in FDR adjustment"))
+    p.valsvar.na.adj[is.na(p.valsvar..na.adj)] <- 1
+  }
+  p.vals.var.adj <- p.adjust(p.vals.var.na.adj, method = "fdr")
+  tt <- cbind(data.frame(mean.var.g1=mean.var.g1,mean.var.g2=mean.var.g2,mean.var.diff=diff.var,
+                            mean.var.log.ratio=quot.var,comb.p.val.var=p.vals.var,comb.p.adj.var.fdr=p.vals.var.adj))
+  return(tt)
+}
+
+#' computeDiffVar.bin.region
+#' @noRd
+computeDiffVar.bin.region <- function(rnbSet,dmtp,inds.g1,inds.g2,region.types=rnb.region.types(assembly(rnbSet)), ...){
+  if (length(union(inds.g1,inds.g2)) != (length(inds.g1)+length(inds.g2))){
+    logger.error("Overlapping sample sets in differential methylation analysis")
+  }
+  logger.start('Computing Differential Variability Tables (Region Level)')
+
+  diffmeth.tabs <- list()
+  for (rt in region.types){
+    regions2sites <- regionMapping(rnbSet,rt)
+    regions2sites.is.all.na <- sapply(regions2sites,FUN=function(x){all(is.na(x))})
+    if (any(regions2sites.is.all.na)) {
+      stop(paste("Region mapping of RnBSet from sites to regions is inconsistent (",rt,")"))
+    }
+    dmtr <- computeDiffVar.default.region(dmtp,regions2sites)
+    diff.var.ranks <- cols.to.rank.region(dmtr)
+    comb.rank.var <- combinedRanking.tab(diff.var.ranks,rerank=FALSE)
+    dmtr$combinedRank.var <- comb.rank.var
+    
+    diffmeth.tabs <- c(diffmeth.tabs,list(dmtr))
+    logger.status(c("Computed table for", rt))
+  }
+  names(diffmeth.tabs) <- region.types
   logger.completed()
-  return(diff.meth)
+  return(diffmeth.tabs)
 }

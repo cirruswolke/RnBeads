@@ -1500,6 +1500,9 @@ rnb.run.differential <- function(rnb.set, dir.reports,
 		rnb.cleanMem()
 		if (!is.null(diffmeth) && rnb.getOption("differential.enrichment") && (length(reg.types)>0)){
 			dm.enrich <- performEnrichment.diffMeth(rnb.set,diffmeth,verbose=TRUE)
+			if(rnb.getOption("differential.variability")){
+			  dm.enrich <- performEnrichment.diffVar(rnb.set,diffmeth,enrich.diffMeth = dm.enrich)
+			}
 			rnb.cleanMem()
 		} else {
 			dm.enrich <- NULL

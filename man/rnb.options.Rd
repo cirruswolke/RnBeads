@@ -358,7 +358,7 @@ is available (see below). Attempting to get or set the value of a non-existing o
        that are specified.
        }
   \item{\bold{\code{differential.variability.method}}\code{ = "diffVar"}}{
-       Method to be used for calculating p-values on the differential varible sites. Currently supported options are "diffVar"
+       Method to be used for calculating p-values on the differential variable sites. Currently supported options are "diffVar"
        implemented in the \code{missMethyl} package and "iEVORA".}      
   \item{\bold{\code{differential.permutations}}\code{ = 0}}{
        Number of permutation tests performed to compute the p-value of rank permutation tests in the differential

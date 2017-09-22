@@ -107,7 +107,7 @@ setMethod("initialize", "RnBDiffMeth",
 		site.test.method=rnb.getOption("differential.site.test.method"),
 		variability.method=rnb.getOption("differential.variability.method"),
 		covg.thres=rnb.getOption("filtering.coverage.threshold"),
-		disk.dump=FALSE,disk.path=NULL,disk.path.DMVs=NULL){
+		disk.dump=FALSE,disk.path=NULL){
 			#create directory in which to dump the matrices to file. must be a non-existing directory
 			if (disk.dump){
 				if (!is.null(disk.path)){
@@ -115,11 +115,6 @@ setMethod("initialize", "RnBDiffMeth",
 						stop(paste("Could not create directory (RnBDiffMeth):",disk.path))
 					}
 				}
-			  if(!is.null(disk.path.DMVs)){
-			    if(!create.path(disk.path.DMVs, FALSE, showWarnings = FALSE)){
-			      stop(paste("Could not create directory (RnBDiffMeth, differential variability):",disk.path.DMVs))
-			    }
-			  }
 			}
 			
 			.Object@sites <- list()
@@ -164,21 +159,14 @@ setMethod("destroy", signature(object="RnBDiffMeth"),
 				if (!is.null(object@sites[[cci]])){
 					delete(object@sites[[cci]])
 				}
-				if (!is.null(object@variable.sites[[cci]])){
-				  delete(object@variable.sites[[cci]])
-				}
 				for (rri in 1:n.region.types){
 					rr <- object@region.types[rri]
 					if (!is.null(object@regions[[rri]][[cci]])){
 						delete(object@regions[[rri]][[cci]])
 					}
-					if(!is.null(object@variable.regions[[rri]][[cci]])){
-					  delete(object@variable.regions[[rri]][[cci]])
-					}
 				}
 			}
 			unlink(object@disk.path,recursive=TRUE)
-			unlink(object@disk.path.DMVs,recursive=TRUE)
 			logger.completed()
 		}
 	}
@@ -336,7 +324,7 @@ setMethod("get.site.test.method", signature(object="RnBDiffMeth"),
 if (!isGeneric("get.variability.method")) setGeneric("get.variability.method", function(object) standardGeneric("get.variability.method"))
 #' get.variability.method-methods
 #'
-#' Gets the variability testing method used to obtain the p-values in the differential varibility tables
+#' Gets the variability testing method used to obtain the p-values in the differential varibiality tables
 #'
 #' @param object RnBDiffMeth object
 #' @return character describing the variability method
@@ -855,10 +843,9 @@ if (!isGeneric("join.diffMeth")) setGeneric("join.diffMeth", function(obj1,obj2,
 setMethod("join.diffMeth", signature(obj1="RnBDiffMeth",obj2="RnBDiffMeth"),
 	function(obj1,obj2){
 		is.compatible <- (includes.sites(obj1) == includes.sites(obj2)) &&
-		         (hasVariability(obj1) == hasVariability(obj2)) &&
 						 (obj1@site.test.method == obj2@site.test.method) &&
 						 (obj1@covg.thres == obj2@covg.thres) && 
-		         (obj1@variability.method == obj2@varibility.method) &&
+		         (obj1@variability.method == obj2@variability.method) &&
 						 (obj1@disk.dump == obj2@disk.dump)
 		if (!is.compatible){
 			stop("incompatible RnBDiffMeth objects")
@@ -914,13 +901,6 @@ setMethod("join.diffMeth", signature(obj1="RnBDiffMeth",obj2="RnBDiffMeth"),
 							  "--> keeping obj1"))
 			}
 		}
-		#variability
-		is.var.obj1 <- !vapply(obj1@variable.sites[comps.intersect],is.null,FALSE)
-		is.var.obj2 <- !vapply(obj2@variable.sites[comps.intersect],is.null,FALSE)
-		is.var.both <- (is.var.obj1+is.var.obj2)>1
-		if(any(is.var.both)){
-		  warning(paste("Join RnBDiffMeth: Comparison on differential varibility defined in both objects."))
-		}
 		#add empty lists for sites and regions
 		new.comp.list <- rep(list(NULL),n.new.comps)
 		names(new.comp.list) <- new.comps
@@ -928,7 +908,6 @@ setMethod("join.diffMeth", signature(obj1="RnBDiffMeth",obj2="RnBDiffMeth"),
 		for (rr in obj1@region.types){
 			res@regions[[rr]] <- c(res@regions[[rr]],new.comp.list) 
 		}
-		if(hasVariability(obj1)) res@varibility.sites <- c(res@variable.sites,new.comp.list)
 		n.all.comps <- length(res@comparisons)
 		new.reg.list <- rep(list(NULL),n.all.comps)
 		names(new.reg.list) <- res@comparisons
@@ -967,16 +946,6 @@ setMethod("join.diffMeth", signature(obj1="RnBDiffMeth",obj2="RnBDiffMeth"),
 						res@regions[[rr]][[cc]] <- obj2@regions[[rr]][[cc]]
 					}
 				}
-			}
-			if (!is.null(obj2@variable.sites[[cc]]) && is.null(res@variable.sites[[cc]])) {
-			  #if dumped, copy the matrix of obj2 to the location of obj1
-			  if (obj2@disk.dump) {
-			    base.path <- res@disk.path
-			    fileN <- paste0(paste("sites",cmp.fname,sep="_"),".ff")
-			    res@variable.sites[[cc]] <- clone(obj2@variable.sites[[cc]],vmode=vmode(obj2@variable.sites[[cc]]),filename=file.path(base.path,fileN))
-			  } else {
-			    res@variable.sites[[cc]] <- obj2@variable.sites[[cc]]
-			  }
 			}
 		}
 #		logger.completed()
@@ -1050,19 +1019,6 @@ setMethod("is.valid", signature(object="RnBDiffMeth"),
 						return(FALSE)
 					}
 				}
-			}
-			if (hasVariability(object)){ #.hasSlot for backwards compatibility
-			  if (is.null(object@variable.sites[[cc]])){
-			    if (verbose) logger.info(paste0("No table found for comparison '",cc,"' (variability sites)"))
-			    return(FALSE)
-			  }
-			  if (object@disk.dump){
-			    fileN <- file.path(object@disk.path,paste0(paste("variabiliy.sites",ccn,sep="_"),".ff"))
-			    if (!file.exists(fileN)){
-			      if (verbose) logger.info(paste0("Disk dump file ['",fileN,"'] not found for comparison '",cc,"' (variable.sites)"))
-			      return(FALSE)
-			    }
-			  }
 			}
 		}
 		return(TRUE)

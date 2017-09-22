@@ -8,24 +8,20 @@ rnb.execute.diffVar(rnb.set,
   pheno.cols = rnb.getOption("differential.comparison.columns"),
   region.types = rnb.region.types.for.analysis(rnb.set),
   columns.adj = rnb.getOption("covariate.adjustment.columns"),
-  diff.meth = NULL,
   adjust.celltype = rnb.getOption("differential.adjustment.celltype"),
   disk.dump = rnb.getOption("disk.dump.big.matrices"),
-  disk.dump.dir = tempfile(pattern = "diffVarTables_"))
+  disk.dump.dir = tempfile(pattern = "diffMethTables_"))
 }
 \arguments{
 \item{rnb.set}{Object of type \code{\linkS4class{RnBSet}} on which differential varibility analysis should be conducted}
 
 \item{pheno.cols}{Column names used to define the classes, whose methylation variability should be compared with each other}
 
-\item{columns.adj}{Column names or indices in the table of phenotypic information to be used for confounder adjustment in the
-differential variability analysis.}
+\item{region.types}{Regions types to be used for the analysis. Defaults to the results given by rnb.region.types.for.analysis of the given RnBSet.}
 
-\item{diff.meth}{Object of type \code{\linkS4class{RnBDiffMeth}}, possibly containing information about differentially methylated
-sites. The differentially variable sites then are also added to this object instead of creating a new object.}
+\item{columns.adj}{Column names or indices in the table of phenotypic information to be used for confounder adjustment in the differential variability analysis.}
 
-\item{adjust.celltype}{Flag indicating whether the resulting table should also contain estimated celltype contributions.
-See \code{\link{rnb.execute.ct.estimation}} for details.}
+\item{adjust.celltype}{Flag indicating whether the resulting table should also contain estimated celltype contributions. See \code{\link{rnb.execute.ct.estimation}} for details.}
 
 \item{disk.dump}{Flag indicating whether the resulting differential methylation object should be file backed, ie.e the matrices dumped to disk}
 

@@ -29,6 +29,10 @@ computeDiffTab.extended.site(X, inds.g1, inds.g2,
     and "limma" for p-values resulting from linear modeling of the transformed beta values (M-values)
 and using techniques from expression microarray analysis employed in the \code{limma} package.}
 
+\item{variability.method}{Method to determine p-values for differential variability. Currently supported are 
+"diffVar" for the diffVar method implemented in the missMethyl bioconductor package,
+and "iEVORA".}
+
 \item{paired}{should a paired a analysis be performed. If \code{TRUE} then inds.g1 and inds.g2 should have exactly the same length and should be
 order, such that the first element of inds.g1 corresponds to the first element of inds.g2 and so on.}
 
@@ -76,7 +80,6 @@ sample.groups <- rnb.sample.groups(rnb.set.example)[[1]]
 dm <- computeDiffTab.extended.site(meth.mat,sample.groups[[1]],sample.groups[[2]])
 summary(dm)
 }
-Calculate the differential variability and add it to the diffMeth table, if the module is activated
 }
 \author{
 Fabian Mueller

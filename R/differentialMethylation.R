@@ -269,6 +269,9 @@ limmaP <- function(X,inds.g1,inds.g2=-inds.g1,adjustment.table=NULL,fun.conversi
 #' 				"ttest" for a two-sided Welch t-test, "refFreeEWAS" for adjusting for cell mixtures,
 #' 				and "limma" for p-values resulting from linear modeling of the transformed beta values (M-values)
 #'				and using techniques from expression microarray analysis employed in the \code{limma} package.
+#' @param variability.method Method to determine p-values for differential variability. Currently supported are 
+#' 				"diffVar" for the diffVar method implemented in the missMethyl bioconductor package,
+#' 				and "iEVORA".
 #' @param paired should a paired a analysis be performed. If \code{TRUE} then inds.g1 and inds.g2 should have exactly the same length and should be
 #' 			     order, such that the first element of inds.g1 corresponds to the first element of inds.g2 and so on.
 #' @param adjustment.table a table of variables to be adjusted for in the differential methylation test. Currently this is only supported for
@@ -374,7 +377,6 @@ computeDiffTab.default.site <- function(X,inds.g1,inds.g2,
 	}
 	tt <- data.frame(mean.g1=mean.g1,mean.g2=mean.g2,mean.diff=mean.diff,mean.quot.log2=mean.quot.log2,diffmeth.p.val=p.vals)
 
-	#' Calculate the differential variability and add it to the diffMeth table, if the module is activated
 	if(rnb.getOption("differential.variability")){
 	  p.vals.var <- rep(as.double(NA),nrow(X))
 	  do.p.vals <- ncol(tab.g1) > 1 || ncol(tab.g2) > 1
@@ -705,7 +707,7 @@ computeDiffTab.default.region <- function(dmtp,regions2sites,includeCovg=FALSE){
 			res <- combineTestPvalsMeth(na.omit(subtab[,5]),correlated=TRUE)
 			p.vals <- NA
 			if (length(res)>0) p.vals <- res
-			if(rnb.getOption("differential.varibility")){
+			if(rnb.getOption("differential.variability")){
 			  mean.var.g1   <- mean(subtab[,var.start],na.rm=TRUE)
 			  mean.var.g2   <- mean(subtab[,var.start+1],na.rm=TRUE)
 			  diff.var      <- mean(subtab[,var.start+2],na.rm=TRUE)
@@ -763,14 +765,14 @@ computeDiffTab.default.region <- function(dmtp,regions2sites,includeCovg=FALSE){
 				mean.nsamples.covg.thresh.g2[i] <<- mean(subtab[,11])
 				var.start <- 12
 			}
-					
+			
 			res <- combineTestPvalsMeth(na.omit(subtab[,5]),correlated=TRUE)
 			if (length(res)>0) p.vals[i]  <<- res
 			if(rnb.getOption("differential.variability")){
-			  mean.var.g1 <<- mean(subtab[,var.start],na.rm=TRUE)
-			  mean.var.g2 <<- mean(subtab[,var.start+1],na.rm=TRUE)
-			  diff.var <<- mean(subtab[,var.start+2],na.rm=TRUE)
-			  quot.var <<- mean(subtab[,var.start+3],na.rm=TRUE)
+			  mean.var.g1[i] <<- mean(subtab[,var.start],na.rm=TRUE)
+			  mean.var.g2[i] <<- mean(subtab[,var.start+1],na.rm=TRUE)
+			  diff.var[i] <<- mean(subtab[,var.start+2],na.rm=TRUE)
+			  quot.var[i] <<- mean(subtab[,var.start+3],na.rm=TRUE)
 			  res <- combineTestPvalsMeth(na.omit(subtab[,var.start+4]),correlated=TRUE)
 			  if (length(res)>0) p.vals.var[i]  <<- res
 			}
@@ -799,7 +801,7 @@ computeDiffTab.default.region <- function(dmtp,regions2sites,includeCovg=FALSE){
 	  p.vals.var.is.na <- is.na(p.vals.var)
 	  if (any(p.vals.var.is.na)){
 	    logger.info(c(sum(p.vals.var.is.na),"p-values are NA. They are treated as 1 in FDR adjustment"))
-	    p.valsvar.na.adj[is.na(p.valsvar..na.adj)] <- 1
+	    p.vals.var.na.adj[is.na(p.vals.var.na.adj)] <- 1
 	  }
 	  p.vals.var.adj <- p.adjust(p.vals.var.na.adj, method = "fdr")
 	  tt <- cbind(tt,data.frame(mean.var.g1=mean.var.g1,mean.var.g2=mean.var.g2,mean.var.diff=diff.var,
@@ -1796,7 +1798,7 @@ get.diffmeth.tab.col.desc.list.txt <- function(target, includeCovg, hasVariabili
 		      "the variances found in the groups"),
 		    "var.diff: difference in variance values between the two groups g1 and g2 (=var.g1-var.g2)",
 		    "var.log.ratio: Log2 of the ratio between the variances of the two groups g1 and g2 (=log2(var.g1+eps/var.g2+eps), default eps=0.01)",
-		    "diffvar.p.val: p-value resulting from applying the selected differentially variability method (diffVar or iEVORA)",
+		    "diffVar.p.val: p-value resulting from applying the selected differentially variability method (diffVar or iEVORA)",
 		    "diffVar.p.adj.fdr: FDR-adjusted p-value for differential variability",
 		    "log10P: negative decadic logarithm of the p-value",
 		    "log10FDR: negative decadic logarithmn of the FDR-adjusted p-value",
@@ -1900,7 +1902,7 @@ get.diffmeth.tab.annot.cols <- function(target, includeCovg, hasVariability, cov
 	}
 	return(res)
 }
-get.diffmeth.tab.annot.colnames.pretty <- function(target, name.g1, name.g2, includeCovg, covgThres=-1L, skipSites=FALSE){
+get.diffmeth.tab.annot.colnames.pretty <- function(target, name.g1, name.g2, includeCovg, hasVariability, covgThres=-1L, skipSites=FALSE){
 	if (target=="sites" || skipSites) {
 		res <- c(paste("mean",name.g1,sep="."),paste("mean",name.g2,sep="."),"mean.diff","mean.quot.log2",
 				"diffmeth.p.val",paste("max",name.g1,sep="."),paste("min",name.g1,sep="."),paste("sd",name.g1,sep="."),
@@ -1916,8 +1918,8 @@ get.diffmeth.tab.annot.colnames.pretty <- function(target, name.g1, name.g2, inc
 		}
 		if(hasVariability){
 		  res <- c(res,
-		           paste("var",grp.name1,sep="."),paste("var",grp.name2,sep="."),"var.diff",
-		           "var.log.ratio","diffvar.p.val","diffVar.p.adj.fdr","log10P","log10FDR","combinedRank.var")
+		           paste("var",name.g1,sep="."),paste("var",name.g2,sep="."),"var.diff",
+		           "var.log.ratio","diffVar.p.val","diffVar.p.adj.fdr","log10P","log10FDR","combinedRank.var")
 		}
 	} else {
 		res <- c(paste("mean.mean",name.g1,sep="."),paste("mean.mean",name.g2,sep="."),
@@ -1931,7 +1933,7 @@ get.diffmeth.tab.annot.colnames.pretty <- function(target, name.g1, name.g2, inc
 		}
 		if(hasVariability){
 		  res <- c(res,
-		           paste("mean.var",grp.name1,sep="."),paste("mean.var",grp.name2,sep="."),"mean.var.diff",
+		           paste("mean.var",name.g1,sep="."),paste("mean.var",name.g2,sep="."),"mean.var.diff",
 		           "mean.var.log.ratio","comb.p.val.var","comb.p.adj.var.fdr","combinedRank.var")
 		}
 	}
@@ -2099,7 +2101,7 @@ rnb.section.diffMeth.site <- function(rnbSet,diffmeth,report,gzTable=FALSE){
 		cc <- comps[i]
 		
 		annot.vec <- get.diffmeth.tab.annot.cols("sites", includeCovg, hasVariability)
-		colname.vec <- get.diffmeth.tab.annot.colnames.pretty("sites", grp.names[i,1], grp.names[i,2], includeCovg, hasVariability,covgThres=get.covg.thres(diffmeth), skipSites=FALSE)
+		colname.vec <- get.diffmeth.tab.annot.colnames.pretty("sites", grp.names[i,1], grp.names[i,2], includeCovg, hasVariability, covgThres=get.covg.thres(diffmeth), skipSites=FALSE)
 		dmt <- get.table(diffmeth,cc,"sites",return.data.frame=TRUE)[,annot.vec]		
 		colnames(dmt) <- colname.vec
 		dmt <- cbind(rownames(dmt),sites.info,dmt)
@@ -2309,7 +2311,7 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 	
 	logger.start("Adding tables")
 	includeCovg <- hasCovg(rnbSet)
-	hasVariability <- rnb.getOption("differnetial.variability")
+	hasVariability <- rnb.getOption("differential.variability")
 	sectionText <- c("A tabular overview of measures for differential methylation on the region level for the ",
 		"individual comparisons are provided in this section.")
 	report <- rnb.add.section(report, "Differential Methylation Tables", sectionText, level = 2)
@@ -2385,6 +2387,11 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 				'ontology' = ontol,
 				'regions' = reg.types,
 				'differential methylation measure' = rank.cuts)
+		if(is.element("region_var",names(dm.enrich))){
+		  test.methods <- c("differentially methylated","differentially variable")
+		  names(test.methods) <- c("","var")
+		  setting.names$method <- test.methods
+		}
 
 		colnames2round <- c("Pvalue","OddsRatio","ExpCount")
 		do.enrichment.table <- function(ccn,hhn,oon,rrn,rcn){
@@ -2410,6 +2417,29 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 			}
 			return(tt)
 		}
+		do.enrichment.table.var <- function(ccn,hhn,oon,rrn,rcn){
+		  rnb.require("Category")
+		  cc <- comps[ccn]
+		  hh <- hyper.hypo[hhn]
+		  oo <- ontol[oon]
+		  rr <- reg.types[rrn]
+		  rc <- rank.cuts.names.dm.enrich[rcn]
+		  
+		  ee <- dm.enrich$region_var[[cc]][[oo]][[rr]][[rc]][[hhn]]
+		  kk <- paste(c(ccn,hhn,oon,rrn,rcn,"var"),collapse="_")
+		  if (!is.null(ee)){
+		    if (length(sigCategories(ee))>0){
+		      tt <- robustHyperGResultSummary(ee,htmlLinks=TRUE)
+		      tt[,colnames2round] <- round(tt[,colnames2round],4)
+		    }
+		    else {
+		      tt <- data.frame("NA"=NA)
+		    }
+		  } else {
+		    tt <- data.frame("NA"=NA)
+		  }
+		  return(tt)
+		}
 		do.enrichment.wordcloud <- function(ccn,hhn,oon,rrn,rcn){
 			cc <- comps[ccn]
 			hh <- hyper.hypo[hhn]
@@ -2423,6 +2453,20 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 			figName <- paste("enrichGOwordcloud_",kk,sep="")
 			report.plot <- addReportPlots.diffMeth.enrich.GO.wordcloud(report,ee,figName)
 			return(report.plot)
+		}
+		do.enrichment.wordcloud.var <- function(ccn,hhn,oon,rrn,rcn){
+		  cc <- comps[ccn]
+		  hh <- hyper.hypo[hhn]
+		  oo <- ontol[oon]
+		  rr <- reg.types[rrn]
+		  rc <- rank.cuts.names.dm.enrich[rcn]
+		  
+		  ee <- dm.enrich$region_var[[cc]][[oo]][[rr]][[rc]][[hhn]]
+		  
+		  kk <- paste(c(ccn,hhn,oon,rrn,rcn,"var"),collapse="_")
+		  figName <- paste("enrichGOwordcloud_",kk,sep="")
+		  report.plot <- addReportPlots.diffMeth.enrich.GO.wordcloud(report,ee,figName)
+		  return(report.plot)
 		}
 
 		#generate tuples of parameter combinations
@@ -2439,7 +2483,22 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 
 		})
 		names(addedPlots) <- kks
+		
+		if(is.element("region_var",names(dm.enrich))){
+		  tabs2write <- c(tabs2write,lapply(1:nrow(pps),FUN=function(k){
+		    do.enrichment.table.var(pps[k,1],pps[k,2],pps[k,3],pps[k,4],pps[k,5])
+		    
+		  }))
+		  kks <- paste(kks,sep = "_")
+		  names(tabs2write) <- kks
+		  addedPlots <- c(addedPlots,lapply(1:nrow(pps),FUN=function(k){
+		    do.enrichment.wordcloud.var(pps[k,1],pps[k,2],pps[k,3],pps[k,4],pps[k,5])
+		    
+		  }))
+		  names(addedPlots) <- kks
+		}
 
+		print(setting.names)
 		description <- "Wordclouds for GO enrichment terms."
 		report <- rnb.add.figure(report, description, addedPlots, setting.names)
 		report <- rnb.add.tables(report, tabs2write, setting.names, row.names = FALSE)

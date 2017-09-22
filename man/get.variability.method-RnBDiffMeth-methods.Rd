@@ -15,7 +15,7 @@
 character describing the variability method
 }
 \description{
-Gets the variability testing method used to obtain the p-values in the differential varibility tables
+Gets the variability testing method used to obtain the p-values in the differential varibiality tables
 }
 \author{
 Michael Scherer

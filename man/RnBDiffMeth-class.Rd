@@ -26,6 +26,7 @@ as R objects or on disk
   \item{\code{comparison.info}}{A list containing comparison information for each comparison. See \code{\link{get.comparison.info}} for details.}
   \item{\code{includesSites}}{Logical indicating whether the object contains site-level differential methylation information.}
   \item{\code{site.test.method}}{method which was applied to obtain the site-level p-values.}
+  \item{\code{variability.method}}{method to be used to detect differentially variable sites.}
   \item{\code{covg.thres}}{coverage threshold. Important for certain columns of the differential methylation tables.}
   \item{\code{disk.dump}}{Flag indicating whether the tables should be stored on disk rather than in the main memory}
   \item{\code{disk.path}}{path on the disk for DMTs.Only meaningful if \code{disk.dump} is \code{TRUE}}
