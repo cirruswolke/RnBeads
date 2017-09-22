@@ -288,7 +288,8 @@ rnb.execute.import<-function(data.source, data.type=rnb.getOption("import.defaul
 					strand.col=6L,
 					mean.meth.col=4L,
 					coverage.col=5L,
-					coord.shift=0L)
+					coord.shift=0L,
+					nrows=nrows)
 		}else {
 			skip.lines <- 1
 			pos.coord.shift <- 1
