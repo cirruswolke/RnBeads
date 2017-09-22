@@ -1145,7 +1145,8 @@ enrich.go <- performGoEnrichment.diffMeth(rnb.set, diffmeth, verbose=TRUE)
 @
 		The result is a nested list storing enrichment tables for each comparison, ontology, differential methylation rank cutoff and direction of differential methylation. Each element in this nested list corresponds to a result computed using the \cs{GOStats} package\cite{Falcon2007}. It contains enrichment odds ratios and p-values. For instance, let us inspect the enrichment of the 500 highest ranking hypomethylated promoters (in ESCs compared to iPSCs) for biological process (BP) ontology terms:
 <<eval=FALSE>>=
-enrich.table.go <- enrich.go[["region"]][[comparison]][["BP"]][["promoters"]][["rankCut_500"]][["hypo"]]
+enrich.table.go <- 
+    enrich.go[["region"]][[comparison]][["BP"]][["promoters"]][["rankCut_500"]][["hypo"]]
 class(enrich.table.go)
 summary(enrich.table.go)
 @
@@ -1159,15 +1160,34 @@ lolaDirs <- downloadLolaDbs(lolaDest, dbs="LOLACore")
 		
 		This database currently contains annotations for transcription factor binding sites and motifs, DNase accessible regions and genomic features. For more detailed information on the \cs{LOLA} tool, available precomputed databases and instructions on how to assemble your own database, please be referred to the \cs{LOLA} documentation\footnote{\href{http://databio.org/lola/}{http://databio.org/lola/}}. You can now compute the enrichment of differentially methylated regions to reference region sets in the database:
 <<eval=FALSE>>=
-enrich.lola <- performLolaEnrichment.diffMeth(rnb.set, diffmeth, lolaDirs[["hg19"]])
+enrich.lola <-
+    performLolaEnrichment.diffMeth(rnb.set, diffmeth, lolaDirs[["hg19"]])
 @
-		The result is a structured object containing enrichment tables for different comparisons, region types and rank cutoffs as well as information on the reference database. These objects are best explored using \cs{RnBeads}' utility functions. Here we plot the enrichment resultes of the 500 highest ranking hypermethylated promoter regions in ESCs compared to iPSCs:
+		The result is a structured object containing enrichment tables for different comparisons, region types and rank cutoffs as well as information on the reference database. These objects are best explored using \cs{RnBeads}' utility functions. Here we plot the enrichment results of the 500 highest ranking hypermethylated promoter regions in ESCs compared to iPSCs.
 <<eval=FALSE>>=
 enrich.table.lola <- enrich.lola$region[[comparison]][["promoters"]]
-enrich.table.lola <- enrich.table.lola[enrich.table.lola$userSet=="rankCut_500_hyper",]
-lolaBarPlot(enrich.lola$lolaDb, enrich.table.lola, scoreCol="oddsRatio", orderCol="maxRnk", pvalCut=0.05)
+enrich.table.lola <-
+    enrich.table.lola[enrich.table.lola$userSet=="rankCut_500_hyper",]
+lolaBarPlot(enrich.lola$lolaDb, enrich.table.lola, scoreCol="oddsRatio",
+    orderCol="maxRnk", pvalCut=0.05)
+lolaBoxPlotPerTarget(enrich.lola$lolaDb, enrich.table.lola, scoreCol="pValueLog",
+    orderCol="maxRnk", pvalCut=0.05)
 @
+		Figures~\ref{fig:lolaBar} and~\ref{fig:lolaBox} show the results as bar and boxplots. Interpreting the results, we find patterns associated with pluripotency hypermethylated in ESCs compared to iPSCs: enriched region sets are associated with reprogramming factors (POU5F1, SOX2, NANOG) and chromatin accessibility (DNase) in stem cells. Additionally, signatures of gene repression (repressed state in the ENCODE segmentation and the associated H3K27me3 histone mark) are present in more differentiated cells.
+		\begin{figure}
+			\noindent \begin{centering}
+				\includegraphics[width=0.95\textwidth]{"figures/lola_bar"}
+			\par \end{centering}
 
+			\caption{\label{fig:lolaBar} Bar plot of odds ratios for \cs{LOLA} region sets significantly enriched in promoters hypermethylated in ESCs compared to iPSCs. The bars are grouped by category in the \cs{LOLA} core database.}
+		\end{figure}
+		\begin{figure}
+			\noindent \begin{centering}
+				\includegraphics[width=0.95\textwidth]{"figures/lola_box"}
+			\par \end{centering}
+
+			\caption{\label{fig:lolaBox} Box plot of log p-values for \cs{LOLA} region sets significantly enriched in promoters hypermethylated in ESCs compared to iPSCs. Each bar summarizes a given feature across experiments in the \cs{LOLA} core database.}
+		\end{figure}
 
 \subsection{Tracks and Tables}
 
@@ -2040,19 +2060,14 @@ draw.lotto()
       \bibitem{Guintivano2013} Guintivano J., Aryee M.J., Kaminsky Z.A.
       (2013). \newblock \emph{A cell epigenotype specific model for the
       correction of brain cellular heterogeneity bias and its application to age, brain region and major depression}. \newblock Epigenetics, 8(3), 290-302.
+      \bibitem{Ashburner2000} Ashburner, M., Ball, C. A., Blake, J. A., Botstein, D., Butler, H., Cherry, J. M., \emph{et al.} (2000). \newblock \emph{Gene ontology: tool for the unification of biology.}  \newblock Nature Genetics, 25(1), 25-29
+      \bibitem{Sheffield2016} Sheffield, N. C., and Bock, C. (2016). \newblock \emph{LOLA: enrichment analysis for genomic region sets and regulatory elements in R and Bioconductor}. \newblock Bioinformatics, 32(4), 587-589
+      \bibitem{Falcon2007} Falcon, S., and Gentleman, R. (2007). \newblock \emph{Using GOstats to test gene lists for GO term association}. \newblock Bioinformatics, 23(2), 257-258
       \bibitem{Houseman2014} Houseman, E. A., Molitor, J., and Marsit, C. J.
       (2014). \newblock \emph{Reference-Free Cell Mixture Adjustments in Analysis of DNA Methylation Data}. \newblock Bioinformatics, btu029.
       \bibitem{Zou2014}Zou, J., Lippert, C., Heckerman, D., Aryee, M., and
       Listgarten, J. (2014). \newblock \emph{Epigenome-wide association studies without the need for cell-type composition}. \newblock Nature Methods. 11, 309-311.
-      \bibitem{Fortin2014} Fortin, J., Labbe, A., Lemire,
-      M., Zanke, B. W., Hudson, T. J., Fertig, E. J.,
-      Greenwood, C.M.T., and Hansen, K. D. (2014) \emph{Functional normalization
-      of 450k methylation array data improves replication in large cancer studies}.
-      \newblock BioRxiv.
-      \bibitem{Ashburner2000} Ashburner, M., Ball, C. A., Blake, J. A., Botstein, D., Butler, H., Cherry, J. M., \emph{et al.} (2000). \newblock \emph{Gene ontology: tool for the unification of biology.}  \newblock Nature Genetics, 25(1), 25-29
-      \bibitem{Sheffield2016} Sheffield, N. C., and Bock, C. (2016). \newblock \emph{LOLA: enrichment analysis for genomic region sets and regulatory elements in R and Bioconductor}. \newblock Bioinformatics, 32(4), 587-589
-      \bibitem{Falcon2007} Falcon, S., & Gentleman, R. (2007). \newblock \emph{Using GOstats to test gene lists for GO term association}. \newblock Bioinformatics, 23(2), 257–258
-
+      \bibitem{Fortin2014} Fortin, J.-P., Labbe, A., Lemire, M., Zanke, B. W., Hudson, T. J., Fertig, E. J., \emph{et al.} (2014). \newblock \emph{Functional normalization of 450k methylation array data improves replication in large cancer studies}. \newblock Genome Biology, 15(12), 503
 
 	\end{thebibliography}
 
