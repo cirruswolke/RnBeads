@@ -254,7 +254,8 @@ rnb.step.filter.summary.internal <- function(rnb.set, removed.samples, removed.s
 	rems <- table.summary[c(capitalize(txt.sites), "Samples"), "Removed"]
 	txt <- c("As a final outcome of the filtering procedures, ", rems[1], " ",
 		ifelse(rems[1] == 1, txt.site, txt.sites), " and ", rems[2], " sample", ifelse(rems[2] != 1, "s", ""), " were ",
-		"removed. These statistics are presented in <a href=\"", fname, "\">a dedicated table</a> that accompanies ",
+		"removed (", length(samples(rnb.set)), " samples and ", nsites(rnb.set), txt.sites, " were retained). ",
+		"These statistics are presented in <a href=\"", fname, "\">a dedicated table</a> that accompanies ",
 		"this report and visualized in the figure below.")
 	report <- rnb.add.section(report, section.name, txt)
 	txt <- "Fractions of removed values in the dataset after applying filtering procedures."

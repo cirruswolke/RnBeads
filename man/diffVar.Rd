@@ -21,7 +21,7 @@ P-values as the result of the diffVar method not adjusted for multiple hypothesi
 }
 \description{
 This routine applies the diffVar method from the \code{missMethyl} package that determines sites exhibiting
-differential varibility between two sample groups
+differential variability between two sample groups
 }
 \references{
 Phipson, Belinda, Oshlack, Alicia (2014)

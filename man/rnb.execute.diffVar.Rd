@@ -13,7 +13,7 @@ rnb.execute.diffVar(rnb.set,
   disk.dump.dir = tempfile(pattern = "diffMethTables_"))
 }
 \arguments{
-\item{rnb.set}{Object of type \code{\linkS4class{RnBSet}} on which differential varibility analysis should be conducted}
+\item{rnb.set}{Object of type \code{\linkS4class{RnBSet}} on which differential variability analysis should be conducted}
 
 \item{pheno.cols}{Column names used to define the classes, whose methylation variability should be compared with each other}
 

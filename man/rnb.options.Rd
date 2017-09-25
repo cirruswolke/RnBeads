@@ -217,8 +217,10 @@ is available (see below). Attempting to get or set the value of a non-existing o
        Flag indicating if the removal of potentially cross-reactive probes should be performed as a filtering step
        in the preprocessing module. A probes whose sequence maps to multiple genomic locations (allowing up to 3
        mismatches) is cross-reactive.}
-  \item{\bold{\code{filtering.greedycut}}\code{ = TRUE}}{
-       Flag indicating if the Greedycut procedure should be run as a filtering step in the preprocessing module.}
+  \item{\bold{\code{filtering.greedycut}}\code{ = NULL}}{
+       Flag indicating if the Greedycut procedure should be run as a filtering step in the preprocessing module.
+       \code{NULL} (default) indicates that Greedycut will be run for array-based datasets, but not for
+       sequencing-based datasets.}
   \item{\bold{\code{filtering.greedycut.pvalue.threshold}}\code{ = 0.05}}{
        Threshold for the detection p-value to be used in Greedycut. This is a value between 0 and 1. This option has
        effect only when \code{filtering.greedycut} is \code{TRUE}.}
@@ -400,9 +402,16 @@ is available (see below). Attempting to get or set the value of a non-existing o
        It will only have an effect if the corresponding inference option is enabled (see \code{inference.reference.methylome.column}
 	  option for details). Currently this is only supported for \code{differential.site.test.method=="limma"}.
        }
-  \item{\bold{\code{differential.enrichment}}\code{ = FALSE}}{
+  \item{\bold{\code{differential.enrichment.go}}\code{ = FALSE}}{
        Flag indicating whether \href{http://www.geneontology.org/}{Gene Ontology} (GO)-enrichment analysis is to be
        conducted on the identified differentially methylated regions.}
+  \item{\bold{\code{differential.enrichment.lola}}\code{ = FALSE}}{
+       Flag indicating whether \code{LOLA}-enrichment analysis is to be
+       conducted on the identified differentially methylated regions.}
+  \item{\bold{\code{differential.enrichment.lola.dbs}}\code{ = c("${LOLACore}")}}{
+       Vector of directories containing LOLA databases. The following placeholders are allowed which will
+       automatically download corresponding databases from the internet: \code{"${LOLACore}"} and \code{"${LOLAExt}"}
+       for the Core and Extended LOLA Databases respectively.}
   \item{\bold{\code{differential.report.sites}}\code{ = TRUE}}{
        Flag indicating whether a section corresponding to differential site methylation should be added to the report.
        Has no effect on the actual analysis, just the report. To disable differential site methylation analysis entirely

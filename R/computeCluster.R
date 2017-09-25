@@ -435,6 +435,17 @@ setMethod("run",
 				}
 				if (split.differential){
 					logger.info(c("Splitting up into chunks"))
+					if (rnb.getOption("differential.enrichment.lola")){
+						logger.start(c("Checking/Downloading LOLA databases"))
+							dbDownloadDir <- file.path(cluster.dir,paste0("lolaDbs"))
+							lolaDbPaths <- prepLolaDbPaths(rnb.getOption("assembly"), downloadDir=dbDownloadDir)
+							if (length(lolaDbPaths) > 0){
+								saveRDS(lolaDbPaths, file.path(cluster.dir, "lolaDbPaths.rds"))
+							} else {
+								logger.warning(c("No LOLA DB found for assembly", rnb.getOption("assembly"), "--> continuing without LOLA enrichment"))
+							}
+						logger.completed()
+					}
 					logger.start(c("Running chunks"))
 						mm <- "differential_chunk"
 						res.req <- rnb.cr@module.res.req[[mm]]
@@ -574,7 +585,7 @@ logger.machine.name <- function(){
 #' combine.diffMeth.objs
 #'
 #' combine differential methylation objects (output from \code{rnb.run.differential}).
-#' To be more precise, the \code{diffmeth} and \code{dm.enrich} are merged.
+#' To be more precise, the \code{diffmeth} and \code{dm.go.enrich} are merged.
 #' individual objects that are merged are assumed to belong to the same analysis
 #' and vary only in their indexing of region types and comparisons
 #' @param obj.list a list containing outputs from \code{rnb.run.differential}
@@ -589,7 +600,16 @@ combine.diffMeth.objs <- function(obj.list){
 	ontologies <- c("BP","MF")
 	ontol.list.empty <- rep(list(list()),length(ontologies))
 	names(ontol.list.empty) <- ontologies
-	dm.enrich.comb <- list(probe=list(),region=list())
+	dm.go.enrich.comb <- list(probe=list(),region=list())
+	dm.lola.enrich.comb <- list(probe=list(),region=list(),lolaDb=NULL)
+
+	# helper to check whether two lola DB objects are the same
+	# necessary to check for compatibility
+	isIdenticalLolaDb <- function(db1, db2){
+		res <- length(db1$dbLocation) > 0 && length(db2$dbLocation) > 0 && length(db1$regionAnno$filename) > 0 && length(db2$regionAnno$filename) > 0
+		res <- res && all(db1$dbLocation==db2$dbLocation) && all(db1$regionAnno$filename==db2$regionAnno$filename)
+		return(res)
+	}
 	
 	diffmeth <- obj.list[[1]]$diffmeth
 	for (i in 1:length(obj.list)){
@@ -598,38 +618,67 @@ combine.diffMeth.objs <- function(obj.list){
 			diffmeth <- join.diffMeth(diffmeth,dm)
 		}
 		
-		#merge dm.enrich parts
 		new.comps <- get.comparisons(dm)
 		if (i > 1){
 			new.comps <- new.comps[!(new.comps %in% get.comparisons(diffmeth))]
 		}
 		n.new.comps <- length(new.comps)
-		if (!is.null(obj.list[[i]]$dm.enrich)) {
-			dmer <- obj.list[[i]]$dm.enrich$region
+		#merge dm.go.enrich parts
+		if (!is.null(obj.list[[i]]$dm.go.enrich)) {
+			dmer <- obj.list[[i]]$dm.go.enrich$region
 			#add empty lists for new comparisons
 			new.comp.list.empty <- rep(list(ontol.list.empty),n.new.comps)
 			names(new.comp.list.empty) <- new.comps
-			dm.enrich.comb$region <- c(dm.enrich.comb$region,new.comp.list.empty)
+			dm.go.enrich.comb$region <- c(dm.go.enrich.comb$region,new.comp.list.empty)
 			#fill in the empty entries with the new entries
 			for (cc in names(dmer)){
 				for (oo in names(dmer[[cc]])){
 					for (rr in names(dmer[[cc]][[oo]])){
-						if (!is.element(rr,names(dm.enrich.comb$region[[cc]][[oo]]))){
-							dm.enrich.comb$region[[cc]][[oo]][[rr]] <- dmer[[cc]][[oo]][[rr]]
+						if (!is.element(rr,names(dm.go.enrich.comb$region[[cc]][[oo]]))){
+							dm.go.enrich.comb$region[[cc]][[oo]][[rr]] <- dmer[[cc]][[oo]][[rr]]
 						}
+					}
+				}
+			}
+		}
+		#merge dm.lola.enrich parts
+		if (!is.null(obj.list[[i]]$dm.lola.enrich)) {
+			if (is.null(dm.lola.enrich.comb$lolaDb)){
+				dm.lola.enrich.comb$lolaDb <- obj.list[[i]]$dm.lola.enrich$lolaDb
+			} else {
+				if (!isIdenticalLolaDb(dm.lola.enrich.comb$lolaDb, obj.list[[i]]$dm.lola.enrich$lolaDb)){
+					logger.error("Encountered incompatible LOLA DB objects")
+				}
+			}
+			dmer <- obj.list[[i]]$dm.lola.enrich$region
+			#add empty lists for new comparisons
+			new.comp.list.empty <- rep(list(list()),n.new.comps)
+			names(new.comp.list.empty) <- new.comps
+			dm.lola.enrich.comb$region <- c(dm.lola.enrich.comb$region,new.comp.list.empty)
+			#fill in the empty entries with the new entries
+			for (cc in names(dmer)){
+				for (rr in names(dmer[[cc]])){
+					if (!is.element(rr,names(dm.lola.enrich.comb$region[[cc]]))){
+						dm.lola.enrich.comb$region[[cc]][[rr]] <- dmer[[cc]][[rr]]
 					}
 				}
 			}
 		}
 	}
 	
-	#set emtpy enrichment analysis to NULL object
-	if (length(dm.enrich.comb$region)==0){
-		dm.enrich.comb <- NULL
+	#set emtpy GO enrichment analysis to NULL object
+	if (length(dm.go.enrich.comb$region)==0){
+		dm.go.enrich.comb <- NULL
 	} else {
-		class(dm.enrich.comb) <- "DiffMeth.enrich"
+		class(dm.go.enrich.comb) <- "DiffMeth.go.enrich"
+	}
+	#set emtpy LOLA enrichment analysis to NULL object
+	if (length(dm.lola.enrich.comb$region)==0){
+		dm.lola.enrich.comb <- NULL
+	} else {
+		class(dm.lola.enrich.comb) <- "DiffMeth.lola.enrich"
 	}
 
-	res <- list(report=NULL,diffmeth=diffmeth,dm.enrich=dm.enrich.comb)
+	res <- list(report=NULL,diffmeth=diffmeth,dm.go.enrich=dm.go.enrich.comb,dm.lola.enrich=dm.lola.enrich.comb)
 	return(res)
 }

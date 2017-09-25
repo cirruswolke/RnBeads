@@ -17,3 +17,4 @@ sftp-config.json
 RnBeads.Rproj
 .Rhistory
 .gitignore
+/vignettes/figure

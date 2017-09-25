@@ -1480,7 +1480,7 @@ create.densityScatter <- function(df2p,is.special=NULL,dens.subsample=FALSE,dens
 		if (!is.null(is.special)){
 			df2p.special <- df2p[df2p$is.special,]
 			colors.dmp <- DENS.COLORS.LOW[2]
-			if (dens.special){
+			if (dens.special && nrow(df2p.special) > 1){
 				tryCatch(
 					colors.dmp   <- densCols(x=df2p.special[,1],y=df2p.special[,2],colramp = colorRampPalette(c(DENS.COLORS.LOW[2],DENS.COLORS.HIGH[2]))),
 					error=function(ee){
@@ -1541,6 +1541,7 @@ create.scatter.dens.points <- function(df2p,is.special=NULL,dens.special=TRUE,mo
 	num.not.special <- sum(!df2p$is.special)
 	df2p$plotOrder[!df2p$is.special] <- seq_len(num.not.special)
 	df2p$plotOrder[df2p$is.special] <- seq((num.not.special+1),n.points)
+	df2p <- df2p[order(df2p$plotOrder, decreasing=FALSE, na.last=FALSE),]
 	
 	df2p$color <- NA
 	if (sum(!df2p$is.special)>1){
@@ -1574,7 +1575,7 @@ create.scatter.dens.points <- function(df2p,is.special=NULL,dens.special=TRUE,mo
 	if (mock){
 		pp <- pp + geom_blank()
 	} else {
-		pp <- pp + geom_point(aes_string(color="color",order="plotOrder")) + scale_color_identity()
+		pp <- pp + geom_point(aes_string(color="color")) + scale_color_identity()
 	}
 	
 	return(pp)

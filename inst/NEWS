@@ -1,3 +1,19 @@
+RnBeads 1.9.4
+=============
+
+ * You can now retrieve custom region sets from the RnBeads resource using the rnb.load.annotation.from.db function
+
+RnBeads 1.9.3
+=============
+
+ * LOLA support for differentially methylated regions
+ * various LOLA utitility functions
+ * What used to be the "differential.enrichment" option is now called "differential.enrichment.go" to reflect the distinction between GO and LOLA enrichment analyses
+ * Missing methylation data can now be imputed (using mean, random or nearest-neighbor imputation)
+ * Gender prediction now supports sequencing and EPIC data
+ * Added a function for combining two array-based datasets from (potentially) different platforms.
+ * Several bugfixes and performance improvements
+
 RnBeads 1.7.5
 =============
 

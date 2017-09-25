@@ -1094,60 +1094,6 @@ auto.select.rank.cut <- function(p,r,alpha=0.1){
 	return(res)
 }
 
-### create.diffMeth.bin.dens.dmp.scatter
-###
-### Helper function for addReportPlots.diffMeth.bin.site.scatter().
-### creates a plot that based on the categorization of Differentially Methylated Probes (DMPs) 
-### @author Fabian Mueller
-### @param df2p differential methylation table. Must contain the columns "mean.g1","mean.g2","isDMP"
-### @param grp1.name name as it appears on the x axis
-### @param grp2.name name as it appears on the y axis
-### @return ggplot2 plot
-create.diffMeth.bin.dens.dmp.scatter <- function(df2p,grp1.name,grp2.name){
-	n.points <- nrow(df2p)
-	#plot order: plot DMPs last
-	df2p$plotOrder <- NA
-	is.dmp <- df2p$isDMP
-	is.dmp[is.na(is.dmp)] <- FALSE
-	num.not.dmp <- sum(!is.dmp)
-	df2p$plotOrder[!is.dmp] <- seq_len(num.not.dmp)
-	df2p$plotOrder[is.dmp] <- seq((num.not.dmp+1),n.points)
-	
-	df2p <- na.omit(df2p[,c("mean.g1","mean.g2","isDMP","plotOrder")])
-	
-	df2p$color <- NA
-	if (sum(!df2p$isDMP)>1){
-		colors.nodmp <- DENS.COLORS.LOW[1]
-		tryCatch(
-			colors.nodmp <- densCols(x=df2p[!df2p$isDMP,"mean.g1"],y=df2p[!df2p$isDMP,"mean.g2"],colramp = colorRampPalette(c(DENS.COLORS.LOW[1],DENS.COLORS.HIGH[1]))),
-			error=function(ee){
-				logger.warning(c("Could not assess density colors using densCols:",ee$message))
-			}
-		)
-		df2p[!df2p$isDMP,"color"] <- colors.nodmp
-	} else if (sum(!df2p$isDMP)==1){
-		df2p[!df2p$isDMP,"color"] <- DENS.COLORS.LOW[1]
-	}
-	if (sum(df2p$isDMP)>1){
-		colors.dmp <- DENS.COLORS.LOW[2]
-		tryCatch(
-			colors.dmp   <- densCols(x=df2p[ df2p$isDMP,"mean.g1"],y=df2p[ df2p$isDMP,"mean.g2"],colramp = colorRampPalette(c(DENS.COLORS.LOW[2],DENS.COLORS.HIGH[2]))),
-			error=function(ee){
-				logger.warning(c("Could not assess density colors using densCols:",ee$message))
-			}
-		)
-		df2p[df2p$isDMP,"color"] <- colors.dmp
-	} else if (sum(df2p$isDMP)==1){
-		df2p[df2p$isDMP,"color"] <- DENS.COLORS.LOW[2]
-	}
-	
-	pp <- ggplot(df2p) + aes(mean.g1,mean.g2) +
-			labs(x=paste("mean.beta",grp1.name,sep="."),y=paste("mean.beta",grp2.name,sep=".")) + coord_fixed() +
-			geom_point(aes(color=color,order=plotOrder)) + scale_color_identity()
-	
-	return(pp)
-}
-
 ### addReportPlots.diffMeth.bin.site.scatter
 ###
 ### adds report scatterplots for differential methylation for the site level binary case to a report.
@@ -1170,7 +1116,7 @@ addReportPlots.diffMeth.bin.site.scatter <- function(report,dmt,cmpName,diffSite
 		sparse.points <- DENS.SCATTER.SPARSE.POINTS.MAX
 	}
 	dens.subsample <- FALSE
-	if (nrow(df2p) > dens.subsample){
+	if (nrow(df2p) > DENS.SCATTER.SUBSAMPLE.THRES){
 		dens.subsample <- DENS.SCATTER.SUBSAMPLE.THRES
 	}
 
@@ -1262,10 +1208,13 @@ addReportPlots.diffMeth.bin.site.volcano <- function(report,dmt,cmpName,grp1.nam
 	report.plot <- off(report.plot,handle.errors=TRUE)
 	figPlots <- c(figPlots,list(report.plot))
 	
+	#order the plotting data frame according to rank (descending order to plot best/lowest-ranking last)
+	df2p <- df2p[order(df2p[,"combinedRank"], na.last=FALSE, decreasing=TRUE),]
+
 	figName <- paste("diffMeth_site_volcano",cmpName,"quot","pVal",sep="_")
 	if (!dont.plot.p.val){
 		pp <- ggplot(df2p) + aes(mean.quot.log2,-log10(diffmeth.p.val),color=log10(combinedRank)) + scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-				geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))
+				geom_point()
 	} else {
 		pp <- rnb.message.plot("No p-value available")
 	}
@@ -1276,7 +1225,7 @@ addReportPlots.diffMeth.bin.site.volcano <- function(report,dmt,cmpName,grp1.nam
 	figName <- paste("diffMeth_site_volcano",cmpName,"diff","pValAdj",sep="_")
 	pp <- ggplot(df2p) + aes(mean.diff,-log10(diffmeth.p.adj.fdr),color=log10(combinedRank)) + 
 		  scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-		  geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))
+		  geom_point()
 	report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
 	report.plot <- off(report.plot,handle.errors=TRUE)
 	figPlots <- c(figPlots,list(report.plot))
@@ -1284,7 +1233,7 @@ addReportPlots.diffMeth.bin.site.volcano <- function(report,dmt,cmpName,grp1.nam
 	figName <- paste("diffMeth_site_volcano",cmpName,"quot","pValAdj",sep="_")
 	pp <- ggplot(df2p) + aes(mean.quot.log2,-log10(diffmeth.p.adj.fdr),color=log10(combinedRank)) + 
 		  scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-		  geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))
+		  geom_point()
 	report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
 	report.plot <- off(report.plot,handle.errors=TRUE)
 	figPlots <- c(figPlots,list(report.plot))
@@ -1292,7 +1241,7 @@ addReportPlots.diffMeth.bin.site.volcano <- function(report,dmt,cmpName,grp1.nam
 	#mean vs quotient plot
 	figName <- paste("diffMeth_site_volcano",cmpName,"diff","quotSig",sep="_")
 	pp <- ggplot(df2p) + aes(mean.diff,mean.quot.log2,color=log10(combinedRank)) + scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-			geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))
+			geom_point()
 	report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
 	report.plot <- off(report.plot,handle.errors=TRUE)
 	figPlots <- c(figPlots,list(report.plot))
@@ -1304,60 +1253,6 @@ addReportPlots.diffMeth.bin.site.volcano <- function(report,dmt,cmpName,grp1.nam
 	figPlots <- c(figPlots,list(report.plot))
 	
 	return(figPlots)
-}
-
-### create.diffMeth.bin.dens.dmr.scatter
-###
-### Helper function for addReportPlots.diffMeth.bin.region.scatter().
-### creates a plot that based on the categorization of Differentially Methylated Regions (DMRs) 
-### @author Fabian Mueller
-### @param df2p differential methylation table. Must contain the columns "mean.mean.g1","mean.mean.g2","isDMR"
-### @param grp1.name name as it appears on the x axis
-### @param grp2.name name as it appears on the y axis
-### @return ggplot2 plot
-create.diffMeth.bin.dens.dmr.scatter <- function(df2p,grp1.name,grp2.name){
-	n.points <- nrow(df2p)
-	#plot order: plot DMRs last
-	df2p$plotOrder <- NA
-	is.dmr <- df2p$isDMR
-	is.dmr[is.na(is.dmr)] <- FALSE
-	num.not.dmr <- sum(!is.dmr)
-	df2p$plotOrder[!is.dmr] <- seq_len(num.not.dmr)
-	df2p$plotOrder[is.dmr] <- seq((num.not.dmr+1),n.points)
-	
-	df2p <- na.omit(df2p[,c("mean.mean.g1","mean.mean.g2","isDMR","plotOrder")])
-	
-	df2p$color <- NA
-	if (sum(!df2p$isDMR)>1){
-		colors.nodmr <- DENS.COLORS.LOW[1]
-		tryCatch(
-			colors.nodmr <- densCols(x=df2p[!df2p$isDMR,"mean.mean.g1"],y=df2p[!df2p$isDMR,"mean.mean.g2"],colramp = colorRampPalette(c(DENS.COLORS.LOW[1],DENS.COLORS.HIGH[1]))),
-			error=function(ee){
-				logger.warning(c("Could not assess density colors using densCols:",ee$message))
-			}
-		)
-		df2p[!df2p$isDMR,"color"] <- colors.nodmr
-	} else if (sum(!df2p$isDMR)==1){
-		df2p[!df2p$isDMR,"color"] <- DENS.COLORS.LOW[1]
-	}
-	if (sum(df2p$isDMR)>1){
-		colors.dmr <- DENS.COLORS.LOW[2]
-		tryCatch(
-			colors.dmr   <- densCols(x=df2p[ df2p$isDMR,"mean.mean.g1"],y=df2p[ df2p$isDMR,"mean.mean.g2"],colramp = colorRampPalette(c(DENS.COLORS.LOW[2],DENS.COLORS.HIGH[2]))),
-			error=function(ee){
-				logger.warning(c("Could not assess density colors using densCols:",ee$message))
-			}
-		)
-		df2p[df2p$isDMR,"color"] <- colors.dmr
-			
-	} else if (sum(df2p$isDMR)==1){
-		df2p[df2p$isDMR,"color"] <- DENS.COLORS.LOW[2]
-	}
-	pp <- ggplot(df2p) + aes(mean.mean.g1,mean.mean.g2) +
-			labs(x=paste("mean.mean.beta",grp1.name,sep="."),y=paste("mean.mean.beta",grp2.name,sep=".")) + coord_fixed() +
-			geom_point(aes(color=color,order=plotOrder)) + scale_color_identity()
-	
-	return(pp)
 }
 
 ### addReportPlots.diffMeth.bin.region.scatter
@@ -1388,11 +1283,18 @@ addReportPlots.diffMeth.bin.region.scatter <- function(report,dmt,cmpName,regNam
 		al.x <- paste("mean.beta",grp1.name,sep=".")
 		al.y <- paste("mean.beta",grp2.name,sep=".")
 	}
+
+	#subsampling for the densitity estimation when there are too many regions
+	dens.subsample <- FALSE
+	if (nrow(df2p) > DENS.SCATTER.SUBSAMPLE.THRES){
+		dens.subsample <- DENS.SCATTER.SUBSAMPLE.THRES
+	}
+
 	#scatterplot based on adjusted p-value significance
 	if (is.element("comb.p.adj.fdr",colnames(dmt))){
 		df2p$isDMR <- df2p[,"comb.p.adj.fdr"] < P.VAL.CUT
 
-		pp <- create.densityScatter(df2p[,c(cn.x, cn.y)],is.special=df2p$isDMR,add.text.cor=TRUE) +
+		pp <- create.densityScatter(df2p[,c(cn.x, cn.y)],is.special=df2p$isDMR,dens.subsample=dens.subsample,add.text.cor=TRUE) +
 				labs(x=al.x, y=al.y) + coord_fixed()
 		cur.cut.name <- "fdrAdjPval"
 		figName <- paste("diffMeth_region",cmpName,regName,cur.cut.name,sep="_")
@@ -1408,7 +1310,7 @@ addReportPlots.diffMeth.bin.region.scatter <- function(report,dmt,cmpName,regNam
 		cur.cut.name <- paste("rc",i,sep="")
 		df2p$isDMR <- rrs < rc
 		
-		pp <- create.densityScatter(df2p[,c(cn.x, cn.y)],is.special=df2p$isDMR,add.text.cor=TRUE) +
+		pp <- create.densityScatter(df2p[,c(cn.x, cn.y)],is.special=df2p$isDMR,dens.subsample=dens.subsample,add.text.cor=TRUE) +
 				labs(x=al.x, y=al.y) + coord_fixed()
 		
 		figName <- paste("diffMeth_region",cmpName,regName,cur.cut.name,sep="_")
@@ -1419,7 +1321,7 @@ addReportPlots.diffMeth.bin.region.scatter <- function(report,dmt,cmpName,regNam
 	
 	if (is.integer(autoRankCut)){
 		df2p$isDMR <- dmt[,"combinedRank"] <= autoRankCut
-		pp <- create.densityScatter(df2p[,c(cn.x, cn.y)],is.special=df2p$isDMR,add.text.cor=TRUE) +
+		pp <- create.densityScatter(df2p[,c(cn.x, cn.y)],is.special=df2p$isDMR,dens.subsample=dens.subsample,add.text.cor=TRUE) +
 				labs(x=al.x, y=al.y) + coord_fixed()
 		figName <- paste("diffMeth_region",cmpName,regName,"rcAuto",sep="_")
 		report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
@@ -1465,12 +1367,15 @@ addReportPlots.diffMeth.bin.region.volcano <- function(report,dmt,cmpName,regNam
 	df2p <- dmt #data frame to plot
 	figPlots <- list()
 	dont.plot.p.val <- all(is.na(df2p[,cn.p]))
+
+	#order the plotting data frame according to rank (descending order to plot best/lowest-ranking last)
+	df2p <- df2p[order(df2p[,"combinedRank"], na.last=FALSE, decreasing=TRUE),]
 	
 	figName <- paste("diffMeth_region_volcano",cmpName,regName,"diff","pVal",sep="_")
 	if (!dont.plot.p.val){
 		pp <- ggplot(df2p) + aes_string(cn.d, paste0("-log10(",cn.p,")"), color="log10(combinedRank)") +
 			scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-			geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))#(alpha=0.3)
+			geom_point()#(alpha=0.3)
 	} else {
 		pp <- rnb.message.plot("No p-value available")
 	}
@@ -1481,7 +1386,7 @@ addReportPlots.diffMeth.bin.region.volcano <- function(report,dmt,cmpName,regNam
 	figName <- paste("diffMeth_region_volcano",cmpName,regName,"diff","pValAdj",sep="_")
 	pp <- ggplot(df2p) + aes_string(cn.d, paste0("-log10(",cn.pa,")"), color="log10(combinedRank)") +
 		scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-		geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))#(alpha=0.3)
+		geom_point()#(alpha=0.3)
 	report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
 	report.plot <- off(report.plot,handle.errors=TRUE)
 	figPlots <- c(figPlots,list(report.plot))
@@ -1490,7 +1395,7 @@ addReportPlots.diffMeth.bin.region.volcano <- function(report,dmt,cmpName,regNam
 	if (!dont.plot.p.val){
 		pp <- ggplot(df2p) + aes_string(cn.q, paste0("-log10(",cn.p,")"), color="log10(combinedRank)") +
 			scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-			geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))#(alpha=0.3)
+			geom_point()#(alpha=0.3)
 	} else {
 		pp <- rnb.message.plot("No p-value available")
 	}
@@ -1501,7 +1406,7 @@ addReportPlots.diffMeth.bin.region.volcano <- function(report,dmt,cmpName,regNam
 	figName <- paste("diffMeth_region_volcano",cmpName,regName,"quot","pValAdj",sep="_")
 	pp <- ggplot(df2p) + aes_string(cn.q, paste0("-log10(",cn.pa,")"), color="log10(combinedRank)") +
 		scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-		geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))#(alpha=0.3)
+		geom_point()#(alpha=0.3)
 	report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
 	report.plot <- off(report.plot,handle.errors=TRUE)
 	figPlots <- c(figPlots,list(report.plot))
@@ -1509,7 +1414,7 @@ addReportPlots.diffMeth.bin.region.volcano <- function(report,dmt,cmpName,regNam
 	figName <- paste("diffMeth_region_volcano",cmpName,regName,"diff","quotSig",sep="_")
 	pp <- ggplot(df2p) + aes_string(cn.d, cn.q, color="log10(combinedRank)") +
 		scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-		geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))#(alpha=0.3)
+		geom_point()#(alpha=0.3)
 	report.plot <- createReportGgPlot(pp, figName, report,create.pdf=FALSE,high.png=200)
 	report.plot <- off(report.plot,handle.errors=TRUE)
 	figPlots <- c(figPlots,list(report.plot))
@@ -2132,10 +2037,12 @@ rnb.section.diffMeth.site <- function(rnbSet,diffmeth,report,gzTable=FALSE){
 ### @aliases rnb.section.diffMeth.region
 ### @param diffmeth RnBDiffMeth object. See \code{\link{RnBDiffMeth-class}} for details.
 ### @param report report object to which the content is added
-### @param dm.enrich If enrichment analysis reports are desired this argument should not be \code{NULL} (which is the default value
-###                  it should be an object of type \code{DiffMeth.enrich} (see \code{performEnrichment.diffMeth()} for details)
+### @param dm.go.enrich If GO enrichment analysis reports are desired this argument should not be \code{NULL} (which is the default value
+###                  it should be an object of type \code{DiffMeth.go.enrich} (see \code{performGoEnrichment.diffMeth()} for details)
+### @param dm.lola.enrich If LOLA enrichment analysis reports are desired this argument should not be \code{NULL} (which is the default value
+###                  it should be an object of type \code{DiffMeth.lola.enrich} (see \code{performLolaEnrichment.diffMeth()} for details)
 ### @return the updated report object
-rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gzTable=FALSE){
+rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL,dm.lola.enrich=NULL,gzTable=FALSE){
 	if (length(get.comparisons(diffmeth))<1){
 		stop("no valid comparisons")
 	}
@@ -2356,17 +2263,17 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 	rnb.add.table(report,file.tab)
 	logger.completed()
 	
-	sectionText <- "No Enrichment Analysis was conducted"
-	if (class(dm.enrich)=="DiffMeth.enrich" & length(dm.enrich$region)>0){
-		sectionText <- "Enrichment Analysis was conducted. The wordclouds and tables below contains significant GO terms as determined by a hypergeometric test."
+	sectionText <- "No GO Enrichment Analysis was conducted"
+	if (class(dm.go.enrich)=="DiffMeth.go.enrich" & length(dm.go.enrich$region)>0){
+		sectionText <- "GO Enrichment Analysis was conducted. The wordclouds and tables below contains significant GO terms as determined by a hypergeometric test."
 	}
-	report <- rnb.add.section(report, 'Enrichment Analysis', sectionText, level = 2)
-	if (class(dm.enrich)=="DiffMeth.enrich" && length(dm.enrich$region)>0){
-		logger.start("Adding enrichment analysis results")
+	report <- rnb.add.section(report, 'GO Enrichment Analysis', sectionText, level = 2)
+	if (class(dm.go.enrich)=="DiffMeth.go.enrich" && length(dm.go.enrich$region)>0){
+		logger.start("Adding GO enrichment analysis results")
 		rnb.require("annotate")
-		comps <- names(dm.enrich$region)
+		comps <- names(dm.go.enrich$region)
 		names(comps) <- paste("comp",1:length(comps),sep="")
-		ontol <- names(dm.enrich$region[[1]])
+		ontol <- names(dm.go.enrich$region[[1]])
 		names(ontol) <- paste("ontol",1:length(ontol),sep="")
 		names(reg.types) <- paste("reg",1:length(reg.types),sep="")
 		hyper.hypo <- c("hypermethylated","hypomethylated")
@@ -2378,9 +2285,9 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 		}
 		rank.cuts <- paste("combined rank among the ",diffRegionRankCut," best ranking regions",sep="")
 		rank.cuts <- c(rank.cuts,paste("automatically selected rank cutoff"))
-		rank.cuts.names.dm.enrich <-  paste("rankCut_",c(diffRegionRankCut,"autoSelect"),sep="")
+		rank.cuts.names.dm.go.enrich <-  paste("rankCut_",c(diffRegionRankCut,"autoSelect"),sep="")
 		names(rank.cuts) <- c(paste("rc",1:length(diffRegionRankCut),sep=""),"rcAuto")
-		names(rank.cuts.names.dm.enrich) <- c(paste("rc",1:length(diffRegionRankCut),sep=""),"rcAuto")
+		names(rank.cuts.names.dm.go.enrich) <- c(paste("rc",1:length(diffRegionRankCut),sep=""),"rcAuto")
 		setting.names <- list(
 				'comparison' = comps,
 				'Hypermethylation/hypomethylation' = hyper.hypo,
@@ -2400,9 +2307,9 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 			hh <- hyper.hypo[hhn]
 			oo <- ontol[oon]
 			rr <- reg.types[rrn]
-			rc <- rank.cuts.names.dm.enrich[rcn]
+			rc <- rank.cuts.names.dm.go.enrich[rcn]
 
-			ee <- dm.enrich$region[[cc]][[oo]][[rr]][[rc]][[hhn]]
+			ee <- dm.go.enrich$region[[cc]][[oo]][[rr]][[rc]][[hhn]]
 			kk <- paste(c(ccn,hhn,oon,rrn,rcn),collapse="_")
 			if (!is.null(ee)){
 				if (length(sigCategories(ee))>0){
@@ -2445,9 +2352,9 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 			hh <- hyper.hypo[hhn]
 			oo <- ontol[oon]
 			rr <- reg.types[rrn]
-			rc <- rank.cuts.names.dm.enrich[rcn]
+			rc <- rank.cuts.names.dm.go.enrich[rcn]
 
-			ee <- dm.enrich$region[[cc]][[oo]][[rr]][[rc]][[hhn]]
+			ee <- dm.go.enrich$region[[cc]][[oo]][[rr]][[rc]][[hhn]]
 							
 			kk <- paste(c(ccn,hhn,oon,rrn,rcn),collapse="_")
 			figName <- paste("enrichGOwordcloud_",kk,sep="")
@@ -2504,10 +2411,125 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 		report <- rnb.add.tables(report, tabs2write, setting.names, row.names = FALSE)
 		logger.completed()
 	}
+
+	sectionText <- "No LOLA Enrichment Analysis was conducted"
+	lolaDone <- class(dm.lola.enrich)=="DiffMeth.lola.enrich" && length(dm.lola.enrich$region)>0
+	if (lolaDone){
+		refText.lola <- c("Sheffield, N. C., & Bock, C. (2016). LOLA: enrichment analysis for genomic region sets and regulatory elements in R and Bioconductor. ",
+			"<i>Bioinformatics</i>, <b>32</b>(4), 587-589")
+		report <- rnb.add.reference(report, refText.lola)
+		sectionText <- c("LOLA Enrichment Analysis ", rnb.get.reference(report, refText.lola),
+		 " was conducted. The plots and tables below show enrichments across annotations in the supplied LOLA ",
+		 "reference databases for the following collections:"
+		)
+	}
+	report <- rnb.add.section(report, 'LOLA Enrichment Analysis', sectionText, level = 2)
+	if (lolaDone){
+		logger.start("Adding LOLA enrichment analysis results")
+		lolaDb <- dm.lola.enrich$lolaDb
+		rnb.add.list(report, as.list(lolaDb$collectionAnno[["collectionname"]]))
+
+		comps <- names(dm.lola.enrich$region)
+		names(comps) <- paste("comp",1:length(comps),sep="")
+		reg.types <- get.region.types(diffmeth)
+		names(reg.types) <- paste("reg",1:length(reg.types),sep="")
+		hyper.hypo <- c("hypermethylated","hypomethylated")
+		names(hyper.hypo) <- c("hyper","hypo")
+
+		rank.cuts <- paste("combined rank among the ",diffRegionRankCut," best ranking regions",sep="")
+		rank.cuts <- c(rank.cuts,paste("automatically selected rank cutoff"))
+		rank.cuts.names.dm.lola.enrich <-  paste("rankCut_",c(diffRegionRankCut,"autoSelect"),sep="")
+		names(rank.cuts) <- c(paste("rc",1:length(diffRegionRankCut),sep=""),"rcAuto")
+		names(rank.cuts.names.dm.lola.enrich) <- c(paste("rc",1:length(diffRegionRankCut),sep=""),"rcAuto")
+		setting.names <- list(
+				'comparison' = comps,
+				'Hypermethylation/hypomethylation' = hyper.hypo,
+				'regions' = reg.types,
+				'differential methylation measure' = rank.cuts)
+
+		lolaTargets <- sort(unique(getTargetFromLolaDb(lolaDb)))
+		targetColors <- sample(rainbow(length(lolaTargets), v=0.5))
+		names(targetColors) <- lolaTargets
+
+		collectionNames <- unique(lolaDb$collectionAnno[["collectionname"]])
+		collectionColors <- rep(rnb.getOption("colors.category"), length.out=length(collectionNames))
+		names(collectionColors) <- collectionNames
+
+		volcano.colorBy <- c("maxRnk"="combined LOLA rank", "target"="target", "collection"="LOLA DB collection")
+		setting.names.volcano <- c(setting.names, list('color'=volcano.colorBy))
+
+		lolaVolcanoPlots <- list()
+		lolaBarPlots <- list()
+		lolaBoxPlots <- list()
+		for (ccn in names(comps)){
+			cc <- comps[ccn]
+			for (rrn in names(reg.types)){
+				rr <- reg.types[rrn]
+				dmRes <- dm.lola.enrich$region[[cc]][[rr]]
+				for (rcn in names(rank.cuts.names.dm.lola.enrich)){
+					rc <- rank.cuts.names.dm.lola.enrich[rcn]
+					# dmTab.hh <- dmRes[grepl(paste0("^", rc), dmRes[["userSet"]]),]
+					for (hhn in names(hyper.hypo)){
+						hh <- hyper.hypo[hhn]
+						kk <- paste(c(ccn,hhn,rrn,rcn),collapse="_")
+						dmTab <- dmRes[dmRes[["userSet"]]==paste(rc, hhn, sep="_"),]
+						# print(dmTab)
+
+						for (vcbn in names(volcano.colorBy)){
+							kkk <- paste(kk, vcbn, sep="_")
+							figName <- paste("lolaVolcano_", kkk, sep="")
+							cpanel <- c()
+							if (vcbn == "target")     cpanel <- targetColors
+							if (vcbn == "collection") cpanel <- collectionColors
+							pp <- lolaVolcanoPlot(lolaDb, dmTab, signifCol="qValue", colorBy=vcbn, colorpanel=cpanel)
+							if (vcbn == "target") pp <- pp + guides(color=FALSE)
+							rPlot <- createReportGgPlot(pp, figName, report, create.pdf=FALSE, high.png=200)
+							lolaVolcanoPlots[[kkk]] <- off(rPlot, handle.errors=TRUE)
+						}
+						
+
+						figName <- paste("lolaBox_", kk, sep="")
+						pp <- lolaBoxPlotPerTarget(lolaDb, dmTab, scoreCol="logOddsRatio", orderCol="maxRnk", pvalCut=0.01, colorpanel=targetColors, maxTerms=100)
+						rPlot <- createReportGgPlot(pp, figName, report, create.pdf=TRUE, width=20, height=5)
+						# lolaBoxPlots[[kk]] <- off(rPlot, handle.errors=TRUE)
+						lolaBoxPlots[[kk]] <- suppressMessages(off(rPlot, handle.errors=TRUE))
+
+						figName <- paste("lolaBar_", kk, sep="")
+						pp <- lolaBarPlot(lolaDb, dmTab, scoreCol="logOddsRatio", orderCol="maxRnk", pvalCut=0.01, colorpanel=targetColors, maxTerms=100)
+						rPlot <- createReportGgPlot(pp, figName, report, create.pdf=TRUE, width=20, height=5)
+						lolaBarPlots[[kk]] <- off(rPlot, handle.errors=TRUE)
+					}
+				}
+			}
+		}
+
+		desc <- c(
+			"Scatter plot showing the effect size (log-odds ratio) vs. the significance (-log10(q-value)), similar to a 'volcano plot' ",
+			"as it is called in other contexts."
+		)
+		report <- rnb.add.figure(report, desc, lolaVolcanoPlots, setting.names.volcano)
+
+		desc <- c(
+			"Boxplots showing log-odds ratios from LOLA enrichment analysis. Shown are those groups of terms  per category ",
+			"that share the same putative target. Only terms that exhibit statistical significance (p-value < 0.01) are included. ",
+			"If more than 100 terms are enriched, the 100 terms receiving the highest joined ",
+			"LOLA ranks are shown. Coloring of the bars reflects the putative targets of the terms."
+		)
+		report <- rnb.add.figure(report, desc, lolaBoxPlots, setting.names)
+
+		desc <- c(
+			"Barplots showing log-odds ratios from LOLA enrichment analysis. Shown are those terms that exhibit statistical ",
+			"significance (p-value < 0.01). If more than 100 terms are enriched, the 100 terms receiving the highest joined ",
+			"LOLA ranks are shown. Coloring of the bars reflects the putative targets of the terms."
+		)
+		report <- rnb.add.figure(report, desc, lolaBarPlots, setting.names)
+		logger.completed()
+	}
 	
 	logger.completed()
 	return(report)
 }
+
 #' get.adjustment.variables
 #'
 #' Given indices for two groups of samples for comparison, this function
