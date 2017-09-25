@@ -1138,7 +1138,7 @@ rnb.options("differential.enrichment.go"=TRUE)
 rnb.options("differential.enrichment.lola"=TRUE)
 @
 
-		If you want to manually extract the enrichment results, you can use the \cs{RnBeads}' build-in functions. To compute GO enrichments from the computed differential methylation results you can use the following commands (takes a while because an online GO database is queried for each comparison and different differential methylation rank cutoffs):
+		If you want to manually extract the enrichment results, you can use \cs{RnBeads}' build-in functions. To compute GO enrichments from the computed differential methylation results you can use the following commands (takes a while because an online GO database is queried for each comparison, region type and for different differential methylation rank cutoffs):
 
 <<eval=FALSE>>=
 enrich.go <- performGoEnrichment.diffMeth(rnb.set, diffmeth, verbose=TRUE)
@@ -1151,7 +1151,7 @@ class(enrich.table.go)
 summary(enrich.table.go)
 @
 
-		In addition, \cs{RnBeads} supports enrichment analyses of differential methylation results using the \cs{LOLA} tool~\cite{Sheffield2016}. This tool facilitates enrichment analyses of arbitrary genomic and epigenomic annotations using Fisher's exact test. To run a \cs{LOLA} analysis manually, you first need to obtain a corresponding database. For instance, to download the core database from the tool website to a temporary destination, you can use the following commands:
+		In addition, \cs{RnBeads} supports enrichment analyses of differential methylation results using the \cs{LOLA} tool~\cite{Sheffield2016}. This tool facilitates enrichment analyses of arbitrary genomic and epigenomic annotations using Fisher's exact test. To run a \cs{LOLA} analysis manually, you first need to obtain a corresponding database. For instance, to download the core database from the tool website to a temporary destination, execute the following code:
 <<eval=FALSE>>=
 lolaDest <- tempfile()
 dir.create(lolaDest)
@@ -1173,13 +1173,13 @@ lolaBarPlot(enrich.lola$lolaDb, enrich.table.lola, scoreCol="oddsRatio",
 lolaBoxPlotPerTarget(enrich.lola$lolaDb, enrich.table.lola, scoreCol="pValueLog",
     orderCol="maxRnk", pvalCut=0.05)
 @
-		Figures~\ref{fig:lolaBar} and~\ref{fig:lolaBox} show the results as bar and boxplots. Interpreting the results, we find patterns associated with pluripotency hypermethylated in ESCs compared to iPSCs: enriched region sets are associated with reprogramming factors (POU5F1, SOX2, NANOG) and chromatin accessibility (DNase) in stem cells. Additionally, signatures of gene repression (repressed state in the ENCODE segmentation and the associated H3K27me3 histone mark) are present in more differentiated cells.
+		Figures~\ref{fig:lolaBar} and~\ref{fig:lolaBox} show the results as bar and boxplots. Interpreting the results, we find patterns associated with pluripotency hypermethylated in ESCs compared to iPSCs: enriched region sets are associated with reprogramming factors (POU5F1, SOX2, NANOG) and accessible chromatin (DNase) in stem cells. Additionally, signatures of gene repression (repressed state in the ENCODE segmentation and the associated H3K27me3 histone mark) are present in more differentiated cells.
 		\begin{figure}
 			\noindent \begin{centering}
 				\includegraphics[width=0.95\textwidth]{"figures/lola_bar"}
 			\par \end{centering}
 
-			\caption{\label{fig:lolaBar} Bar plot of odds ratios for \cs{LOLA} region sets significantly enriched in promoters hypermethylated in ESCs compared to iPSCs. The bars are grouped by category in the \cs{LOLA} core database.}
+			\caption{\label{fig:lolaBar} Bar plot of odds ratios for \cs{LOLA} region sets significantly enriched in promoters hypermethylated in ESCs compared to iPSCs. The bars are grouped by category in the \cs{LOLA} core database. The coloring indicates different features (chromatin marks, states, transcription factors, etc.).}
 		\end{figure}
 		\begin{figure}
 			\noindent \begin{centering}
