@@ -1013,12 +1013,12 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 
 	## Option list
 	report <- init.pipeline.report("preprocessing", dir.reports, init.configuration)
-	o.greedycut.threshold <- ifelse(inherits(rnb.set, "RnBeadSet"), "filtering.greedycut.pvalue.threshold",
+	x.greedycut <- ifelse(inherits(rnb.set, "RnBeadSet"), "filtering.greedycut.pvalue.threshold",
 		"filtering.coverage.threshold")
-	optionlist <- rnb.options("filtering.whitelist", "filtering.blacklist", "filtering.snp",
-		"filtering.cross.reactive", "filtering.greedycut", o.greedycut.threshold, "filtering.greedycut.rc.ties","imputation.method")
-	attr.vec <- c(TRUE, TRUE, TRUE, TRUE, TRUE,
-		ifelse(is.null(optionlist[["filtering.greedycut"]]), FALSE, optionlist[["filtering.greedycut"]]) || inherits(rnb.set, "RnBiseqSet"), optionlist[["filtering.greedycut"]])
+	optionlist <- rnb.options("filtering.whitelist", "filtering.blacklist", "filtering.snp", "filtering.cross.reactive",
+		"filtering.greedycut", x.greedycut, "filtering.greedycut.rc.ties","imputation.method")
+	x.greedycut <- isTRUE(optionlist[["filtering.greedycut"]] || inherits(rnb.set, "RnBeadSet"))
+	attr.vec <- c(TRUE, TRUE, TRUE, TRUE, TRUE, x.greedycut, x.greedycut)
 	if (!inherits(rnb.set, "RnBeadSet")) {
 		optionlist <- optionlist[-4]
 		attr.vec <- attr.vec[-4]
@@ -1041,6 +1041,7 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 	attr.vec <- c(attr.vec, TRUE, TRUE, TRUE, TRUE, TRUE)
 	attr(optionlist, "enabled") <- attr.vec
 	report <- rnb.add.optionlist(report, optionlist)
+	rm(optionlist, x.greedycut, attr.vec)
 
 	## Prefiltering
 	logger.start(paste0("Filtering Procedures", ifelse(do.normalization, " I", "")))

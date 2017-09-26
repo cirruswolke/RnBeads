@@ -67,7 +67,7 @@
 #' rnb.set <- rnb.execute.import(data.source = data.source, data.type = "idat.dir")
 #' }
 #' @seealso \code{\link{read.data.dir}}, \code{\link{read.idat.files}}, \code{\link{read.GS.report}},
-#'          \code{\link{read.geo}}, \code{\link{read.bed.files}}
+#'          \code{\link{rnb.read.geo}}, \code{\link{read.bed.files}}
 #' #'
 #' @author Pavlo Lutsik
 #' @export
@@ -168,14 +168,10 @@ rnb.execute.import<-function(data.source, data.type=rnb.getOption("import.defaul
 
 	} else if(data.type %in% c("GEO", "infinium.GEO")) {
 
-		if(!(is.character(data.source) && length(data.source) == 1 && (!is.na(data.source[1])))) {
+		if (!(is.character(data.source) && length(data.source) == 1 && isTRUE(data.source != ""))) {
 			stop("invalid value for data.source; expected one-element character")
 		}
-		if(file.exists(data.source) && ! file.info(data.source)[1,"isdir"]) {
-			result <- read.geo(filename = data.source)
-		}else{
-			result <- read.geo(accession = data.source)
-		}
+		result <- rnb.read.geo(data.source)
 
 	} else if(data.type %in% c("bed.dir", "bs.bed.dir")){
 

@@ -13,7 +13,6 @@ Date: 2017-09-19
 Version: 1.9.4
 Suggests:
     Category,
-    GEOquery,
     GOstats,
     Gviz,
     IlluminaHumanMethylation450kmanifest,
@@ -99,13 +98,13 @@ Collate:
     'differentialMethylation.R'
     'enmix.R'
     'enrichment.R'
-    'lolaUtils.R'
     'filtering.R'
     'filteringSummary.R'
     'gender.R'
     'greedycut.R'
     'loading.R'
     'logger.R'
+    'lolaUtils.R'
     'main.R'
     'normalization.R'
     'options.R'
