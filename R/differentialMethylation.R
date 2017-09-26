@@ -2260,13 +2260,13 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 						
 
 						figName <- paste("lolaBox_", kk, sep="")
-						pp <- lolaBoxPlotPerTarget(lolaDb, dmTab, scoreCol="logOddsRatio", orderCol="maxRnk", pvalCut=0.01, colorpanel=targetColors, maxTerms=100)
+						pp <- lolaBoxPlotPerTarget(lolaDb, dmTab, scoreCol="oddsRatio", orderCol="maxRnk", pvalCut=0.01, colorpanel=targetColors, maxTerms=100)
 						rPlot <- createReportGgPlot(pp, figName, report, create.pdf=TRUE, width=20, height=5)
 						# lolaBoxPlots[[kk]] <- off(rPlot, handle.errors=TRUE)
 						lolaBoxPlots[[kk]] <- suppressMessages(off(rPlot, handle.errors=TRUE))
 
 						figName <- paste("lolaBar_", kk, sep="")
-						pp <- lolaBarPlot(lolaDb, dmTab, scoreCol="logOddsRatio", orderCol="maxRnk", pvalCut=0.01, colorpanel=targetColors, maxTerms=100)
+						pp <- lolaBarPlot(lolaDb, dmTab, scoreCol="oddsRatio", orderCol="maxRnk", pvalCut=0.01, colorpanel=targetColors, maxTerms=100)
 						rPlot <- createReportGgPlot(pp, figName, report, create.pdf=TRUE, width=20, height=5)
 						lolaBarPlots[[kk]] <- off(rPlot, handle.errors=TRUE)
 					}

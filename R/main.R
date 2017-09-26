@@ -1519,6 +1519,22 @@ rnb.run.differential <- function(rnb.set, dir.reports,
 		}
 	logger.completed()
 
+	if (TRUE){
+		logger.start("Saving temp objects for debugging")
+			dataDir <- rnb.get.directory(report, "data", absolute=TRUE)
+			diffmeth.path <- file.path(dataDir, "differential_rnbDiffMeth")
+			save.rnb.diffmeth(diffmeth, diffmeth.path)
+			diffmeth.go.enrichment <- dm.go.enrich
+			if (!is.null(diffmeth.go.enrichment)){
+				save(diffmeth.go.enrichment, file=file.path(diffmeth.path, "enrichment_go.RData"))
+			}
+			diffmeth.lola.enrichment <- dm.lola.enrich
+			if (!is.null(diffmeth.lola.enrichment)){
+				save(diffmeth.lola.enrichment, file=file.path(diffmeth.path, "enrichment_lola.RData"))
+			}
+		logger.completed()
+	}
+
 	logger.start("Report Generation")
 	if (is.null(diffmeth)){
 		txt <- "Differential methylation analyis was skipped because no valid grouping information could be found."

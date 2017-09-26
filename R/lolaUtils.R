@@ -182,6 +182,21 @@ lolaPrepareDataFrameForPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", o
 		signifCol <- "qValueLog"
 	}
 
+	#check if column name is in the LOLA results
+	# take older versions of LOLA into account (oddsRatio was named logOddsRatio before)
+	if (is.element("logOddsRatio", colnames(lolaRes))){
+		logger.warning("Detected old version of LOLA. Renaming 'logOddsRatio' to 'oddsRatio'")
+		colnames(lolaRes)[colnames(lolaRes)=="logOddsRatio"] <- "oddsRatio"
+	}
+	if (scoreCol=="logOddsRatio") {
+		logger.warning("In newer versions of LOLA the odds ratio column is called 'oddsRatio' (no longer 'logOddsRatio')")
+		scoreCol <- "oddsRatio"
+	}
+	if (orderCol=="logOddsRatio") {
+		logger.warning("In newer versions of LOLA the odds ratio column is called 'oddsRatio' (no longer 'logOddsRatio')")
+		orderCol <- "oddsRatio"
+	}
+
 	lolaRes$name <- getNamesFromLolaDb(lolaDb, addCollectionNames=!groupByCollection)[lolaRes$dbSet]
 	lolaRes$name <- trimChar(lolaRes$name, len.out=50, trim.str="...", len.pref=30)
 	lolaRes$target <- getTargetFromLolaDb(lolaDb)[lolaRes$dbSet]
@@ -302,10 +317,6 @@ lolaVolcanoPlot <- function(lolaDb, lolaRes, includedCollections=c(), signifCol=
 
 	oddsRatioCol <- "oddsRatio"
 	if (!is.element(oddsRatioCol, colnames(df2p))){
-		#in older LOLA versions, this column was called "logOddsRatio"
-		oddsRatioCol <- "logOddsRatio"
-	}
-	if (!is.element(oddsRatioCol, colnames(df2p))){
 		logger.error("Invalid LOLA result. Could not find a valid column containing odds ratios.")
 	}
 	pp <- ggplot(df2p) + aes_string(oddsRatioCol, signifCol, color=colorBy) + geom_point()
@@ -382,6 +393,10 @@ lolaBarPlot <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scoreCol
 	if (length(unique(lolaRes[["userSet"]])) > 1){
 		logger.warning("Multiple userSets contained in LOLA result object")
 	}
+	if (scoreCol=="logOddsRatio") {
+		logger.warning("In newer versions of LOLA the odds ratio column is called 'oddsRatio' (no longer 'logOddsRatio')")
+		scoreCol <- "oddsRatio"
+	}
 	#prepare data.frame for plotting
 	df2p <- lolaPrepareDataFrameForPlot(lolaDb, lolaRes, scoreCol=scoreCol, orderCol=orderCol, signifCol=signifCol, includedCollections=includedCollections, pvalCut=pvalCut, maxTerms=maxTerms, perUserSet=FALSE, groupByCollection=groupByCollection, orderDecreasing=orderDecreasing)
 
@@ -446,6 +461,10 @@ lolaBarPlot.hyp <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol=scor
 	if (sum(isHypo) + sum(isHyper) != nrow(lolaRes)){
 		lolaRes <- lolaRes[isHypo | isHyper,]
 		logger.warning("LOLA Result contains userSets not annotated as hyper or hypo")
+	}
+	if (scoreCol=="logOddsRatio") {
+		logger.warning("In newer versions of LOLA the odds ratio column is called 'oddsRatio' (no longer 'logOddsRatio')")
+		scoreCol <- "oddsRatio"
 	}
 	#prepare data.frame for plotting
 	df2p <- lolaPrepareDataFrameForPlot(lolaDb, lolaRes, scoreCol=scoreCol, orderCol=orderCol, signifCol=signifCol, includedCollections=includedCollections, pvalCut=pvalCut, maxTerms=maxTerms, perUserSet=TRUE, groupByCollection=groupByCollection, orderDecreasing=orderDecreasing)
@@ -525,7 +544,10 @@ lolaBoxPlotPerTarget <- function(lolaDb, lolaRes, scoreCol="pValueLog", orderCol
 		}
 		scoreDecreasing <- is.element(scoreCol, oset.dec)
 	}
-
+	if (scoreCol=="logOddsRatio") {
+		logger.warning("In newer versions of LOLA the odds ratio column is called 'oddsRatio' (no longer 'logOddsRatio')")
+		scoreCol <- "oddsRatio"
+	}
 	#prepare data.frame for plotting
 	df2p <- lolaPrepareDataFrameForPlot(lolaDb, lolaRes, scoreCol=scoreCol, orderCol=orderCol, signifCol=signifCol, includedCollections=includedCollections, pvalCut=pvalCut, maxTerms=Inf, perUserSet=FALSE, groupByCollection=groupByCollection, orderDecreasing=orderDecreasing)
 
