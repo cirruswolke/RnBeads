@@ -1602,9 +1602,13 @@ get.bed.column.classes<-function(bed.top,
 		classes[strand.col]<-"character"
 	}
 	classes[start.col]<-"integer"
-	classes[end.col]<-"integer"
+	if(!is.na(end.col)){
+		classes[end.col]<-"integer"
+	}
 	classes[coverage.col]<-"integer"
-	classes[mean.meth.col]<-"numeric"
+	if(!is.na(mean.meth.col)){
+		classes[mean.meth.col]<-"numeric"
+	}
 	if(useff){
 		classes[chr.col]<-"factor"
 	}else{
