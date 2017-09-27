@@ -1504,15 +1504,18 @@ rnb.run.differential <- function(rnb.set, dir.reports,
 		if (!is.null(diffmeth) && (length(reg.types)>0) && (rnb.getOption("differential.enrichment.go") || rnb.getOption("differential.enrichment.lola"))){
 			if (rnb.getOption("differential.enrichment.go")){
 				dm.go.enrich <- performGoEnrichment.diffMeth(rnb.set,diffmeth,verbose=TRUE)
+				if(rnb.getOption("differential.variability")){
+				  dm.go.enrich <- performGOEnrichment.diffVar(rnb.set,diffmeth,enrich.diffMeth = dm.go.enrich)
+				}
 				rnb.cleanMem()
 			}
-		  if(rnb.getOption("differential.variability")){
-		    dm.enrich <- performGOEnrichment.diffVar(rnb.set,diffmeth,enrich.diffMeth = dm.enrich)
-		  }
 			if (rnb.getOption("differential.enrichment.lola")){
 				lolaDbPaths <- prepLolaDbPaths(assembly(rnb.set), downloadDir=rnb.get.directory(report, "data", absolute=TRUE))
 				if (length(lolaDbPaths) > 0){
 					dm.lola.enrich <- performLolaEnrichment.diffMeth(rnb.set, diffmeth, lolaDbPaths, verbose=TRUE)
+					if(rnb.getOption("differential.variability")){
+					  dm.lola.enrich <- performLolaEnrichment.diffVar(rnb.set,diffmeth,enrich.diffMeth=dm.lola.enrich,lolaDbPaths,verbose=TRUE)
+					}
 					rnb.cleanMem()
 				} else {
 					logger.warning(c("No LOLA DB found for assembly", assembly(rnb.set), "--> continuing without LOLA enrichment"))

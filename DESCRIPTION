@@ -43,7 +43,9 @@ Suggests:
     glmnet,
     GLAD,
     IlluminaHumanMethylation450kanno.ilmn12.hg19,
-    scales
+    scales,
+    missMethyl,
+    impute
 Depends:
     R (>= 3.0.0),
     BiocGenerics,

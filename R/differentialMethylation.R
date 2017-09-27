@@ -2294,12 +2294,7 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 				'ontology' = ontol,
 				'regions' = reg.types,
 				'differential methylation measure' = rank.cuts)
-		if(is.element("region_var",names(dm.enrich))){
-		  test.methods <- c("differentially methylated","differentially variable")
-		  names(test.methods) <- c("","var")
-		  setting.names$method <- test.methods
-		}
-
+		
 		colnames2round <- c("Pvalue","OddsRatio","ExpCount")
 		do.enrichment.table <- function(ccn,hhn,oon,rrn,rcn){
 			rnb.require("Category")
@@ -2330,10 +2325,10 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 		  hh <- hyper.hypo[hhn]
 		  oo <- ontol[oon]
 		  rr <- reg.types[rrn]
-		  rc <- rank.cuts.names.dm.enrich[rcn]
+		  rc <- rank.cuts.names.dm.go.enrich[rcn]
 		  
-		  ee <- dm.enrich$region_var[[cc]][[oo]][[rr]][[rc]][[hhn]]
-		  kk <- paste(c(ccn,hhn,oon,rrn,rcn,"var"),collapse="_")
+		  ee <- dm.go.enrich$region_var[[cc]][[oo]][[rr]][[rc]][[hhn]]
+		  kk <- paste(c("var",ccn,hhn,oon,rrn,rcn),collapse="_")
 		  if (!is.null(ee)){
 		    if (length(sigCategories(ee))>0){
 		      tt <- robustHyperGResultSummary(ee,htmlLinks=TRUE)
@@ -2366,12 +2361,12 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 		  hh <- hyper.hypo[hhn]
 		  oo <- ontol[oon]
 		  rr <- reg.types[rrn]
-		  rc <- rank.cuts.names.dm.enrich[rcn]
+		  rc <- rank.cuts.names.dm.go.enrich[rcn]
 		  
-		  ee <- dm.enrich$region_var[[cc]][[oo]][[rr]][[rc]][[hhn]]
+		  ee <- dm.go.enrich$region_var[[cc]][[oo]][[rr]][[rc]][[hhn]]
 		  
-		  kk <- paste(c(ccn,hhn,oon,rrn,rcn,"var"),collapse="_")
-		  figName <- paste("enrichGOwordcloud_",kk,sep="")
+		  kk <- paste(c(ccn,hhn,oon,rrn,rcn),collapse="_")
+		  figName <- paste("enrichGOwordcloudVar_",kk,sep="")
 		  report.plot <- addReportPlots.diffMeth.enrich.GO.wordcloud(report,ee,figName)
 		  return(report.plot)
 		}
@@ -2391,24 +2386,31 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 		})
 		names(addedPlots) <- kks
 		
-		if(is.element("region_var",names(dm.enrich))){
-		  tabs2write <- c(tabs2write,lapply(1:nrow(pps),FUN=function(k){
-		    do.enrichment.table.var(pps[k,1],pps[k,2],pps[k,3],pps[k,4],pps[k,5])
-		    
-		  }))
-		  kks <- paste(kks,sep = "_")
-		  names(tabs2write) <- kks
-		  addedPlots <- c(addedPlots,lapply(1:nrow(pps),FUN=function(k){
-		    do.enrichment.wordcloud.var(pps[k,1],pps[k,2],pps[k,3],pps[k,4],pps[k,5])
-		    
-		  }))
-		  names(addedPlots) <- kks
-		}
-
-		print(setting.names)
 		description <- "Wordclouds for GO enrichment terms."
 		report <- rnb.add.figure(report, description, addedPlots, setting.names)
 		report <- rnb.add.tables(report, tabs2write, setting.names, row.names = FALSE)
+		if(is.element("region_var",names(dm.go.enrich))){
+		  tabs2write.var <- lapply(1:nrow(pps),FUN=function(k){
+		    do.enrichment.table.var(pps[k,1],pps[k,2],pps[k,3],pps[k,4],pps[k,5])
+		    
+		  })
+		  kks <- paste(kks,sep = "_")
+		  names(tabs2write.var) <- kks
+		  addedPlots.var <- lapply(1:nrow(pps),FUN=function(k){
+		    do.enrichment.wordcloud.var(pps[k,1],pps[k,2],pps[k,3],pps[k,4],pps[k,5])
+		    
+		  })
+		  names(addedPlots) <- kks
+		  
+		  hyper.hypo <- c("hypervariable","hypovariable")
+		  names(hyper.hypo) <- c("hyper","hypo")
+		  setting.names$'Hypermethylation/hypomethylation' <- hyper.hypo
+		  sec.text <- "GO enrichment analysis was also performed for differentially variable regions."
+		  report <- rnb.add.section(report, title = "GO Enrichment Analysis (Differential Variability)",description = sec.text)
+		  description <- "Workclouds for GO enrichment terms (Differential Variability)"
+		  report <- rnb.add.figure(report,description,addedPlots.var,setting.names)
+		  report <- rnb.add.tables(report,tabs2write.var,setting.names,row.names = FALSE)
+		}
 		logger.completed()
 	}
 
@@ -2446,7 +2448,7 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 				'Hypermethylation/hypomethylation' = hyper.hypo,
 				'regions' = reg.types,
 				'differential methylation measure' = rank.cuts)
-
+		
 		lolaTargets <- sort(unique(getTargetFromLolaDb(lolaDb)))
 		targetColors <- sample(rainbow(length(lolaTargets), v=0.5))
 		names(targetColors) <- lolaTargets
@@ -2500,6 +2502,43 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 						lolaBarPlots[[kk]] <- off(rPlot, handle.errors=TRUE)
 					}
 				}
+				if(is.element("region_var",names(dm.lola.enrich))){
+				  dmRes <- dm.lola.enrich$region_var[[cc]][[rr]]
+				  lolaVolcanoPlots.var <- list()
+				  lolaBarPlots.var <- list()
+				  lolaBoxPlots.var <- list()
+  				for (rcn in names(rank.cuts.names.dm.lola.enrich)){
+  				  rc <- rank.cuts.names.dm.lola.enrich[rcn]
+  				  for (hhn in names(hyper.hypo)){
+  				    hh <- hyper.hypo[hhn]
+  				    kk <- paste(c(ccn,hhn,rrn,rcn),collapse="_")
+  				    dmTab <- dmRes[dmRes[["userSet"]]==paste(rc, hhn, sep="_"),]
+
+  				    for (vcbn in names(volcano.colorBy)){
+  				      kkk <- paste(kk, vcbn, sep="_")
+  				      figName <- paste("lolaVolcanoVar_", kkk, sep="")
+  				      cpanel <- c()
+  				      if (vcbn == "target")     cpanel <- targetColors
+  				      if (vcbn == "collection") cpanel <- collectionColors
+  				      pp <- lolaVolcanoPlot(lolaDb, dmTab, signifCol="qValue", colorBy=vcbn, colorpanel=cpanel)
+  				      if (vcbn == "target") pp <- pp + guides(color=FALSE)
+  				      rPlot <- createReportGgPlot(pp, figName, report, create.pdf=FALSE, high.png=200)
+  				      lolaVolcanoPlots.var[[kkk]] <- off(rPlot, handle.errors=TRUE)
+  				    }
+  				    
+  				    
+  				    figName <- paste("lolaBoxVar_", kk, sep="")
+  				    pp <- lolaBoxPlotPerTarget(lolaDb, dmTab, scoreCol="logOddsRatio", orderCol="maxRnk", pvalCut=0.01, colorpanel=targetColors, maxTerms=100)
+  				    rPlot <- createReportGgPlot(pp, figName, report, create.pdf=TRUE, width=20, height=5)
+  				    lolaBoxPlots.var[[kk]] <- suppressMessages(off(rPlot, handle.errors=TRUE))
+  				    
+  				    figName <- paste("lolaBarVar_", kk, sep="")
+  				    pp <- lolaBarPlot(lolaDb, dmTab, scoreCol="logOddsRatio", orderCol="maxRnk", pvalCut=0.01, colorpanel=targetColors, maxTerms=100)
+  				    rPlot <- createReportGgPlot(pp, figName, report, create.pdf=TRUE, width=20, height=5)
+  				    lolaBarPlots.var[[kk]] <- off(rPlot, handle.errors=TRUE)
+  				  }
+  				}
+				}
 			}
 		}
 
@@ -2508,7 +2547,7 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 			"as it is called in other contexts."
 		)
 		report <- rnb.add.figure(report, desc, lolaVolcanoPlots, setting.names.volcano)
-
+		
 		desc <- c(
 			"Boxplots showing log-odds ratios from LOLA enrichment analysis. Shown are those groups of terms  per category ",
 			"that share the same putative target. Only terms that exhibit statistical significance (p-value < 0.01) are included. ",
@@ -2523,6 +2562,19 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 			"LOLA ranks are shown. Coloring of the bars reflects the putative targets of the terms."
 		)
 		report <- rnb.add.figure(report, desc, lolaBarPlots, setting.names)
+
+		if(rnb.getOption("differential.variability")){
+		  hyper.hypo <- c("hypervariable","hypovariable")
+		  names(hyper.hypo) <- c("hyper","hypo")
+		  setting.names.volcano$'Hypermethylation/hypomethylation' <- hyper.hypo
+		  setting.names$'Hypermethylation/hypomethylation' <- hyper.hypo
+		  sec.text <- "LOLA enrichment analysis was also conducted for differentially variable regions."
+		  report <- rnb.add.section(report = report, title = "LOLA enrichment analysis (Differential Variability)",description = sec.text)
+		  report <- rnb.add.figure(report,desc,lolaVolcanoPlots.var,setting.names.volcano)
+		  report <- rnb.add.figure(report,desc,lolaBoxPlots.var,setting.names)
+		  report <- rnb.add.figure(report,desc,lolaBarPlots.var,setting.names)
+		}
+		
 		logger.completed()
 	}
 	

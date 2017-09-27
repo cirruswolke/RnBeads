@@ -108,12 +108,6 @@ logger.start("Differential Methylation")
 			skip.sites=!rnb.getOption("analyze.sites"),
 			# disk.dump=disk.dump,disk.dump.dir=paste0(cmdArgs$output,"_diffMethTableDir"))
 			disk.dump=disk.dump,disk.dump.dir=paste0(tempfile(pattern=""),"_diffMethTableDir"))
-	if(rnb.getOption("differential.variability")){
-	  diffmeth <- rnb.execute.diffVar(rnb.set,cmp.cols,region.types=reg.types,
-	                                  columns.adj=rnb.getOption("covariate.adjustment.columns"),
-	                                  adjust.celltype=rnb.getOption("differential.adjustment.celltype"),
-	                                  disk.dump=disk.dump,disk.dump.dir=paste0(tempfile(pattern=""),"_diffVarTableDir"))
-	}
 	if (rnb.getOption("differential.enrichment.go")){
 		dm.go.enrich <- performGoEnrichment.diffMeth(rnb.set,diffmeth,verbose=FALSE)
 		if(rnb.getOption("differential.variability")){
@@ -125,6 +119,9 @@ logger.start("Differential Methylation")
 	}
 	if (rnb.getOption("differential.enrichment.lola") && !is.null(lolaDbPaths)){
 		dm.lola.enrich <- performLolaEnrichment.diffMeth(rnb.set,diffmeth,lolaDbPaths,verbose=FALSE)
+		if(rnb.getOption("differential.variability")){
+		  dm.lola.enrich <- performLolaEnrichment.diffVar(rnb.set,diffmeth,enrich.diffMeth = dm.lola.enrich, lolaDbPaths,verbose=FALSE)
+		}
 	} else {
 		dm.lola.enrich <- NULL
 		logger.info(c("Skipping LOLA enrichment analysis of differentially methylated regions"))

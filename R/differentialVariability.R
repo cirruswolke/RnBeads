@@ -371,7 +371,6 @@ addReportPlot.diffVar.scatter.region <- function (report, var.table, comparison.
   return(ret)
 }
 
-
 #' addReportPlot.diffVar.volcano
 #' 
 #' This function creates volcano plots for the given comparison comparing the difference in variances with the
@@ -481,6 +480,7 @@ addReportPlot.diffVar.volcano.region <- function(report, var.table,comparison.na
   
   return(figPlots)
 }
+
 #' addReportPlot.diffVar.meth
 #' 
 #' This function compares differentially methylated sites (DMCs) with differentially variable sites (DVCs) in a scatterplot
@@ -488,46 +488,218 @@ addReportPlot.diffVar.volcano.region <- function(report, var.table,comparison.na
 #' 
 #' @param report Object of class \code{\linkS4class{Report}} to which the plot should be added.
 #' @param var.table Table containing the differentially variable sites.
-#' @param meth.table Table containing the differentially methylated sites.
 #' @param comparison.name Name of the comparison to be conducted.
 #' @param group.name1 Name of the first group in the comparison
 #' @param group.name2 Name of the second group in the comparison
+#' @param auto.diffVar Automatically selected rank cutoff for differential varibility
+#' @param auto.diffMeth Automatically selected rank cutoff for differential methylation
+#' @param rank.cuts Cutoffs used for differentiality detection
 #' @return The modified report
 #' @noRd
 addReportPlot.diffVar.meth <- function(report, var.table, comparison.name,
-                           group.name1,group.name2){
+                           group.name1,group.name2,auto.diffVar=NULL,auto.diffMeth=NULL,rank.cuts=c(100,1000,10000,100000),rerank=TRUE){
   ret <- list()
-  dont.plot.p.val <- all(is.na(var.table[,"diffVar.p.adj.fdr"]))
-  dont.plot.p.val <- dont.plot.p.val && all(is.na(var.table[,"diffmeth.p.adj.fdr"]))
+  dens.subsample <- FALSE
+  if (nrow(var.table) > DENS.SCATTER.SUBSAMPLE.THRES){
+    dens.subsample <- DENS.SCATTER.SUBSAMPLE.THRES
+  }
+
+  ranks.diffVar <- var.table[,"combinedRank.var"]
+  if(rerank) ranks.diffVar <- rank(ranks.diffVar,na.last = "keep",ties.method = "min")
+  ranks.diffMeth <- var.table[,"combinedRank"]
+  if(rerank) ranks.diffMeth <- rank(ranks.diffMeth,na.last = "keep",ties.method = "min")
   
   fig.name <- paste("diffVarMeth_site",comparison.name,sep="_")
-  if (!dont.plot.p.val){
-    toPlot <- data.frame(Meth.p=var.table[,"diffmeth.p.adj.fdr"],Var.p=var.table[,"diffVar.p.adj.fdr"])
-    is.diff.meth <- toPlot$Meth.p < P.VAL.CUT
-    is.diff.var <- toPlot$Var.p < P.VAL.CUT
+  for(i in 1:length(rank.cuts)){
+    cutoff <- rank.cuts[i]
+    cut.id <- paste0("rc",i)
+    toPlot <- data.frame(Meth.p=var.table[,"combinedRank"],Var.p=var.table[,"combinedRank.var"])
+    is.diff.meth <- ranks.diffMeth < cutoff
+    is.diff.var <- ranks.diffVar < cutoff
+    rank.cut.diffMeth <- max(toPlot[is.diff.meth,1])
+    rank.cut.diffVar <- max(toPlot[is.diff.var,2])
     color.diff <- rep('Not Significant',dim(toPlot)[1])
-    color.diff[is.diff.meth] <- "DMR"
+    color.diff[is.diff.meth] <- "DMC"
     color.diff[is.diff.var] <- "DVC"
     color.diff[is.diff.meth&is.diff.var] <- "Both"
     toPlot <- data.frame(toPlot,Color.diff=color.diff)
-    toPlot <- toPlot[is.diff.meth|is.diff.var,]
-    pp <- ggplot(toPlot) + aes(x=-log10(Meth.p),y=-log10(Var.p),color=Color.diff) +
-          scale_color_manual(values = c("#AF648C","#A6CEE3","#FB9A99")) +
-          geom_vline(xintercept = -log10(P.VAL.CUT),linetype='dotted') + geom_hline(yintercept = -log10(P.VAL.CUT),linetype='dotted') +
-          geom_point()
-  } else {
-    pp <- rnb.message.plot("No p-values available")
+    #toPlot <- toPlot[is.diff.meth|is.diff.var,]
+    is.special <- is.diff.meth|is.diff.var
+    pp <- create.diffMeth.diffVar.subsample(toPlot,dens.subsample, is.special=is.special, rank.cut.diffMeth = rank.cut.diffMeth, rank.cut.diffVar = rank.cut.diffVar)
+    fig.name <- paste("diffMethVar",comparison.name,cut.id,sep="_")
+    report.plot <- createReportGgPlot(pp,fig.name,report,create.pdf = FALSE,high.png = 200)
+    report.plot <- off(report.plot,handle.errors=TRUE)
+    ret <- c(ret,report.plot)
   }
-  report.plot <- createReportGgPlot(pp,fig.name, report,create.pdf=FALSE,high.png=200)
-  report.plot <- off(report.plot,handle.errors=TRUE)
-  ret <- c(ret,list(report.plot))
-  
+  if(is.integer(auto.diffVar)&&is.integer(auto.diffMeth)){
+    toPlot <- data.frame(Meth.p=var.table[,"combinedRank"],Var.p=var.table[,"combinedRank.var"])
+    is.diff.meth <- toPlot$Meth.p < auto.diffMeth
+    is.diff.var <- toPlot$Var.p < auto.diffVar
+    color.diff <- rep('Not Significant',dim(toPlot)[1])
+    color.diff[is.diff.meth] <- "DMC"
+    color.diff[is.diff.var] <- "DVC"
+    color.diff[is.diff.meth&is.diff.var] <- "Both"
+    toPlot <- data.frame(toPlot,Color.diff=color.diff)
+    #toPlot <- toPlot[is.diff.meth|is.diff.var,]
+    is.special <- is.diff.meth|is.diff.var
+    pp <- create.diffMeth.diffVar.subsample(toPlot,dens.subsample,is.special=is.special, rank.cut.diffMeth = auto.diffMeth, rank.cut.diffVar = auto.diffVar)
+    fig.name <- paste("diffMethVar",comparison.name,"rcAuto",sep="_")
+    report.plot <- createReportGgPlot(pp,fig.name,report,create.pdf = FALSE,high.png = 200)
+    report.plot <- off(report.plot,handle.errors=TRUE)
+    ret <- c(ret,report.plot)
+  }
   return(ret)
+}
+
+#' addReportPlot.diffVar.meth.region
+#' 
+#' This function compares differentially methylated sites (DMCs) with differentially variable sites (DVCs) in a scatterplot
+#' and colors significantly differential sites with different colors.
+#' 
+#' @param report Object of class \code{\linkS4class{Report}} to which the plot should be added.
+#' @param var.table Table containing the differentially variable sites.
+#' @param comparison.name Name of the comparison to be conducted.
+#' @param region.type Region type used
+#' @param group.name1 Name of the first group in the comparison
+#' @param group.name2 Name of the second group in the comparison
+#' @param auto.diffVar Automatically selected rank cutoff for differential varibility
+#' @param auto.diffMeth Automatically selected rank cutoff for differential methylation
+#' @param rank.cuts Cutoffs used for differentiality detection
+#' @return The modified report
+#' @noRd
+addReportPlot.diffVar.meth.region <- function(report, var.table, comparison.name, region.type,
+                                       group.name1,group.name2,auto.diffVar=NULL,auto.diffMeth=NULL,rank.cuts=c(100,500,1000),rerank=TRUE){
+  ret <- list()
+  dens.subsample <- FALSE
+  if (nrow(var.table) > DENS.SCATTER.SUBSAMPLE.THRES){
+    dens.subsample <- DENS.SCATTER.SUBSAMPLE.THRES
+  }
+  
+  ranks.diffVar <- var.table[,"combinedRank.var"]
+  if(rerank) ranks.diffVar <- rank(ranks.diffVar,na.last = "keep",ties.method = "min")
+  ranks.diffMeth <- var.table[,"combinedRank"]
+  if(rerank) ranks.diffMeth <- rank(ranks.diffMeth,na.last = "keep",ties.method = "min")
+  
+  fig.name <- paste("diffVarMeth_region",comparison.name,region.type,sep="_")
+  for(i in 1:length(rank.cuts)){
+    cutoff <- rank.cuts[i]
+    cut.id <- paste0("rc",i)
+    toPlot <- data.frame(Meth.p=var.table[,"combinedRank"],Var.p=var.table[,"combinedRank.var"])
+    is.diff.meth <- ranks.diffMeth < cutoff
+    is.diff.var <- ranks.diffVar < cutoff
+    rank.cut.diffMeth <- max(toPlot[is.diff.meth,1])
+    rank.cut.diffVar <- max(toPlot[is.diff.var,2])
+    color.diff <- rep('Not Significant',dim(toPlot)[1])
+    color.diff[is.diff.meth] <- "DMR"
+    color.diff[is.diff.var] <- "DVR"
+    color.diff[is.diff.meth&is.diff.var] <- "Both"
+    toPlot <- data.frame(toPlot,Color.diff=color.diff)
+    #toPlot <- toPlot[is.diff.meth|is.diff.var,]
+    is.special <- is.diff.meth|is.diff.var
+    pp <- create.diffMeth.diffVar.subsample(toPlot,dens.subsample, is.special=is.special, rank.cut.diffMeth = rank.cut.diffMeth, rank.cut.diffVar = rank.cut.diffVar)
+    fig.name <- paste("diffMethVar",comparison.name,region.type,cut.id,sep="_")
+    report.plot <- createReportGgPlot(pp,fig.name,report,create.pdf = FALSE,high.png = 200)
+    report.plot <- off(report.plot,handle.errors=TRUE)
+    ret <- c(ret,report.plot)
+  }
+  if(is.integer(auto.diffVar)&&is.integer(auto.diffMeth)){
+    toPlot <- data.frame(Meth.p=var.table[,"combinedRank"],Var.p=var.table[,"combinedRank.var"])
+    is.diff.meth <- toPlot$Meth.p < auto.diffMeth
+    is.diff.var <- toPlot$Var.p < auto.diffVar
+    color.diff <- rep('Not Significant',dim(toPlot)[1])
+    color.diff[is.diff.meth] <- "DMR"
+    color.diff[is.diff.var] <- "DVR"
+    color.diff[is.diff.meth&is.diff.var] <- "Both"
+    toPlot <- data.frame(toPlot,Color.diff=color.diff)
+    #toPlot <- toPlot[is.diff.meth|is.diff.var,]
+    is.special <- is.diff.meth|is.diff.var
+    pp <- create.diffMeth.diffVar.subsample(toPlot,dens.subsample, is.special=is.special, rank.cut.diffMeth = auto.diffMeth, rank.cut.diffVar = auto.diffVar)
+    fig.name <- paste("diffMethVar",comparison.name,region.type,"rcAuto",sep="_")
+    report.plot <- createReportGgPlot(pp,fig.name,report,create.pdf = FALSE,high.png = 200)
+    report.plot <- off(report.plot,handle.errors=TRUE)
+    ret <- c(ret,report.plot)
+  }
+  return(ret)
+}
+
+#' create.diffMeth.diffVar.subsample
+#' 
+#' This routine creates a plot showing both differentially methylated and differentially variable sites for the given rank cutoffs,
+#' where the x-axis is the combined rank of the differential methylation and the y-axis the combined rank of the differential
+#' variability analysis.
+#' @param df2p Data frame containing the ranks and color of the sites
+#' @param dens.subsample Number specifiying the subsample that should be taken from the whole population of sites
+#' @param rank.cut.diffMeth Rank cutoff for differential methylation (absolute rank)
+#' @param rank.cut.diffVar Rank cutoff for differential variability (absolute rank)
+#' @return Plot object with the corresponding plot
+#' @noRd
+create.diffMeth.diffVar.subsample <- function(df2p,dens.subsample,is.special=NULL,rank.cut.diffMeth, rank.cut.diffVar,sparse.points=0.01,dens.n=100){
+  if (!(is.numeric(sparse.points) && sparse.points>=0)) {
+    stop("Invalid parameter value: sparse.points")
+  }
+  if (is.null(df2p) || nrow(df2p)<1){
+    logger.warning(c("Could not create density scatterplot"))
+    pp <- rnb.message.plot("Could not create plot")
+    return(pp)
+  }
+  df2p <- na.omit(df2p)
+  if (is.null(df2p) || nrow(df2p)<1){
+    logger.warning(c("Could not create density scatterplot (NA omission removed all entries)"))
+    pp <- rnb.message.plot("Could not create plot")
+    return(pp)
+  }
+  df2p.sub <- df2p
+  dens.ranks <- NULL
+  tryCatch(
+    dens.ranks <- densRanks(x=df2p[,1],y=df2p[,2]),
+    error=function(ee){
+      logger.warning(c("Could not assess density ranking:",ee$message))
+    }
+  )
+  if (is.numeric(dens.subsample) && dens.subsample>0){
+    ss <- as.integer(dens.subsample)
+    if (nrow(df2p) > ss) {
+      df2p.sub <- df2p[sample(nrow(df2p),ss),]
+    }
+  }
+  
+  #the standard bandwith function of MASS::kde2d is unstable when looking at
+  #distributions with very low variance. Here's a more stable version
+  stable.bandwidth.fun <- function(x,eps=1e-4){
+    r <- quantile(x, c(0.25, 0.75))
+    h <- (r[2] - r[1])/1.34
+    if (h==0) h <- eps
+    4 * 1.06 * min(sqrt(var(x)), h) * length(x)^(-1/5)
+  }
+  stable.h <- c(stable.bandwidth.fun(df2p.sub[,1]),stable.bandwidth.fun(df2p.sub[,2]))
+  
+  if (is.null(dens.ranks)){
+    pp <- rnb.message.plot("Could not assess density")
+  } else {
+    pp <- ggplot(df2p.sub) + aes_string(x=colnames(df2p)[1],y=colnames(df2p)[2]) + 
+      stat_density2d(geom="tile", fill=DENS.COLORS.LOW[1], aes(,alpha=..density..^0.25), contour=FALSE, n=dens.n, h=stable.h) +
+      scale_alpha(range = c(0.0, 1),guide=FALSE) +
+      geom_vline(xintercept = rank.cut.diffMeth,linetype='dotted') + geom_hline(yintercept = rank.cut.diffVar,linetype='dotted')
+    if (sparse.points > 0){
+      if (sparse.points <= 1){
+        thres <- ceiling(nrow(df2p)*sparse.points)
+      } else {
+        thres <- sparse.points
+      }
+      df2p.loose <- df2p[dens.ranks<=thres,]#the sub data.frame in of the least dens points
+      pp <- pp + geom_point(data=df2p.loose,aes_string(x=colnames(df2p)[1],y=colnames(df2p)[2]),colour=DENS.COLORS.LOW[1],size=0.4)
+    }
+    if(!is.null(is.special)){
+      df2p.special <- df2p[is.special,]
+      pp <- pp + geom_point(data=df2p.special,aes_string(x=colnames(df2p)[1],y=colnames(df2p)[2],colour=colnames(df2p)[3]),size=1) + guides(fill=FALSE)
+    }
+  }
+  return(pp)
 }
 
 #' rnb.section.diffVar
 #'
-#' This functions add information about the differential variability analysis to the specified report.
+#' This function adds information about the differential variability analysis to the specified report.
 #' 
 #' @param rnb.set Object of class \code{\linkS4class{RnBSet}} on which the analysis was conducted.
 #' @param diff.meth Object of class \code{\linkS4class{RnBDiffMeth}} as the result of applying \code{rnb.execute.diffVar} 
@@ -547,15 +719,23 @@ rnb.section.diffVar <- function(rnb.set,diff.meth,report,gzTable=FALSE,different
   txt <- c("Differentially variable sites were computed with <code>", differentiality.method, "</code>.",
            " For more information about the method, have a look at the <a href=")
   if(differentiality.method=='diffVar'){
-    txt <- c(txt,"https://bioconductor.org/packages/release/bioc/html/missMethyl.html>missMethyl</a> Bioconductor package.")
+    refText.missMethyl <- c("Phipson, B., & Oshlack, A. (2014). DiffVar: a new method for detecting differential variability with application to methylation in cancer and aging. ",
+                      "<i>Genome Biology</i>, <b>15</b>(9), 465")
+    report <- rnb.add.reference(report, refText.missMethyl)
+    txt <- c(txt,"https://bioconductor.org/packages/release/bioc/html/missMethyl.html>missMethyl</a> Bioconductor package.",
+             rnb.get.reference(report,refText.missMethyl))
   }else if (differentiality.method=='iEVORA'){
-    txt <- c(txt,"https://www.nature.com/articles/ncomms10478>iEVORA</a> method published in Nature.")
+    refText.iEVORA <- c("Teschendorff, A.E. et.al., DNA methylation outliers in normal breast tissue identify field defects that are enriched in cancer",
+                        "<i>Nature Communications</i>, <b>7</b>, 10478")
+    txt <- c(txt,"https://www.nature.com/articles/ncomms10478>iEVORA</a> method published in Nature.",
+             "For the iEVORA method, adjustment columns are not supported and therefore ignored.",
+             rnb.get.reference(report,refText.iEVORA))
   }
   txt <- c(txt," This sections contains plots and tables describing the results of this test and further analyses ",
             "of the sites that were selected as differentially variable.")
   report <- rnb.add.section(report, 'Differential Variability', txt)
   
-  diffRegionRankCut <- c(100,500,1000)
+  diffSitesRankCut <- c(100,1000,10000,100000)
   comps <- get.comparisons(diff.meth)
 
   logger.start("Selection of rank cutoffs")
@@ -564,6 +744,13 @@ rnb.section.diffVar <- function(rnb.set,diff.meth,report,gzTable=FALSE,different
     comp <- comps[[i]]
     var.table <- get.table(diff.meth,comp,region.type="sites",return.data.frame=TRUE)
     res <- auto.select.rank.cut(var.table$diffVar.p.adj.fdr,var.table$combinedRank.var,alpha=0.1)
+    return(as.integer(res))
+  })
+  rank.cuts.auto.meth <- lapply(1:length(comps),FUN=function(i){
+    comp.name <- names(comps)[i]
+    comp <- comps[[i]]
+    var.table <- get.table(diff.meth,comp,region.type="sites",return.data.frame=TRUE)
+    res <- auto.select.rank.cut(var.table$diffmeth.p.adj.fdr,var.table$combinedRank,alpha=0.1)
     return(as.integer(res))
   })
   txt <- paste("The following rank cutoffs have been automatically selected for the analysis of differentially",
@@ -679,7 +866,9 @@ rnb.section.diffVar <- function(rnb.set,diff.meth,report,gzTable=FALSE,different
       var.table <- get.table(diff.meth,comp,region.type="sites",return.data.frame=TRUE)
       comp.name.allowed <- ifelse(is.valid.fname(comp.name),comp.name,paste("cmp",i,sep=""))
       grp.names <- get.comparison.grouplabels(diff.meth)[comp,]
-      res <- addReportPlot.diffVar.meth(report, var.table, comp.name.allowed,
+      auto.cutoff <- rank.cuts.auto[[i]]
+      auto.cutoff.meth <- rank.cuts.auto.meth[[i]]
+      res <- addReportPlot.diffVar.meth(report, var.table, comp.name.allowed,auto.diffVar = auto.cutoff, auto.diffMeth = auto.cutoff.meth,
                                            group.name1=grp.names[1],group.name2=grp.names[2])
       rnb.cleanMem()
       res
@@ -691,14 +880,20 @@ rnb.section.diffVar <- function(rnb.set,diff.meth,report,gzTable=FALSE,different
       var.table <- get.table(diff.meth,comp,region.type="sites",return.data.frame=TRUE)
       comp.name.allowed <- ifelse(is.valid.fname(comp.name),comp.name,paste("cmp",i,sep=""))
       grp.names <- get.comparison.grouplabels(diff.meth)[comp,]
-      res <- addReportPlot.diffVar.meth(report, var.table, comp.name.allowed,
+      auto.cutoff <- rank.cuts.auto[[i]]
+      auto.cutoff.meth <- rank.cuts.auto.meth[[i]]
+      res <- addReportPlot.diffVar.meth(report, var.table, comp.name.allowed,auto.diffVar = auto.cutoff, auto.diffMeth = auto.cutoff.meth,
                                         group.name1=grp.names[1],group.name2=grp.names[2])
       rnb.cleanMem()
       plots <- c(plots,res)
     }
   }
+  diffVarType = c(paste("combined rank among the ",diffSitesRankCut," best ranking regions",sep=""),
+                  "automatically selected rank cutoff")
+  names(diffVarType) = c(paste("rc",1:length(diffSitesRankCut),sep=""),"rcAuto")
   setting.names <- list(
-    'comparison' = comps)
+    'comparison' = comps,
+    'rankCutoff' = diffVarType)
   description <- 'Scatterplot comparing differentially methylated and variable sites.'
   report <- rnb.add.figure(report, description, plots, setting.names)
   logger.completed()
@@ -706,11 +901,11 @@ rnb.section.diffVar <- function(rnb.set,diff.meth,report,gzTable=FALSE,different
   logger.completed()
   return(report)
 }
+
 #' rnb.section.diffVar.region
 #'
-#' Adds information for differentially variable regions to the report
+#' Adds information for differentially variable regions to the report.
 #' @author Michael Scherer
-#' @aliases rnb.section.diffMeth.region
 #' @param rnb.set Object of type \code{\linkS4class{RnBSet}} containing methylation information
 #' @param diff.meth RnBDiffMeth object. See \code{\link{RnBDiffMeth-class}} for details.
 #' @param report Report object to which the content is added
@@ -741,6 +936,13 @@ rnb.section.diffVar.region <- function(rnb.set,diff.meth,report,gzTable=FALSE){
     lapply(1:length(reg.types),FUN=function(j){
       var.table <- get.table(diff.meth,comps[i],region.type=reg.types[j],return.data.frame=TRUE)
       res <- auto.select.rank.cut(var.table$comb.p.adj.var.fdr,var.table$combinedRank.var,alpha=0.1)
+      return(as.integer(res))
+    })
+  })
+  rank.cuts.auto.meth <- lapply(1:length(comps),FUN=function(i){
+    lapply(1:length(reg.types),FUN=function(j){
+      var.table <- get.table(diff.meth,comps[i],region.type=reg.types[j],return.data.frame=TRUE)
+      res <- auto.select.rank.cut(var.table$comb.p.adj.fdr,var.table$combinedRank,alpha=0.1)
       return(as.integer(res))
     })
   })
@@ -865,13 +1067,66 @@ rnb.section.diffVar.region <- function(rnb.set,diff.meth,report,gzTable=FALSE){
   combined ranking.'
   report <- rnb.add.figure(report, description, addedPlots, setting.names)
   logger.completed()
+  
+  #Comparing differentially methylated regions and differentially variable
+  logger.start("Comparing DMRs and DVRs")
+  rnb.cleanMem()
+  plots <- list()
+  if(parallel.isEnabled()){
+    plots <- foreach(k=1:nrow(pps),.combine="c") %dopar% {
+      i <- pps[k,1]
+      j <- pps[k,1]
+      comp.name <- names(comps)[1]
+      comp <- comps[comp.name]
+      ccn <- ifelse(is.valid.fname(comp.name),comp.name,paste("cmp",i,sep=""))
+      region.type <- reg.types[j]
+      rrn <- ifelse(is.valid.fname(rrn),rrn,paste("reg",j,sep=""))
+      var.table <- get.table(diff.meth,comp,region.type=region.type,return.data.frame=TRUE)
+      grp.names <- get.comparison.grouplabels(diff.meth)[comp,]
+      auto.cutoff <- rank.cuts.auto[[i]][[j]]
+      auto.cutoff.meth <- rank.cuts.auto.meth[[i]][[j]]
+      res <- addReportPlot.diffVar.meth.region(report, var.table, ccn, region.type=rrn, auto.diffVar = auto.cutoff, auto.diffMeth = auto.cutoff.meth,
+                                        group.name1=grp.names[1],group.name2=grp.names[2])
+      rnb.cleanMem()
+      res
+    }
+  } else {
+    for (i in 1:length(comps)){
+      cc <- names(comps)[i]
+      ccc <- comps[cc]
+      ccn <- ifelse(is.valid.fname(cc),cc,paste("cmp",i,sep=""))
+      for (j in 1:length(reg.types)){
+        rr <- reg.types[j]
+        rrn <- ifelse(is.valid.fname(rr),rr,paste("reg",j,sep=""))
+        var.table <- get.table(diff.meth,ccc,region.type=rr,return.data.frame=TRUE)
+        grp.names <- get.comparison.grouplabels(diff.meth)[ccc,]
+        auto.cutoff <- rank.cuts.auto[[i]][[j]]
+        auto.cutoff.meth <- rank.cuts.auto.meth[[i]][[j]]
+        plots <- c(plots,addReportPlot.diffVar.meth.region(report,var.table,ccn,region.type=rrn,auto.diffVar = auto.cutoff, auto.diffMeth = auto.cutoff.meth,
+                                                                        group.name1=grp.labels[ccc,1],group.name2=grp.labels[ccc,2])
+        )
+        rnb.cleanMem()
+      }
+    }
+  }
+  diffVarType = c(paste("combined rank among the ",diffRegionRankCut," best ranking regions",sep=""),
+                  "automatically selected rank cutoff")
+  names(diffVarType) = c(paste("rc",1:length(diffRegionRankCut),sep=""),"rcAuto")
+  setting.names <- list(
+    'comparison' = comps,
+    'regions' = reg.types,
+    'rankCutoff' = diffVarType)
+  description <- 'Scatterplot comparing differentially methylated and variable regions.'
+  report <- rnb.add.figure(report, description, plots, setting.names)
+  
 
   logger.completed()
   return(report)
 }
+
 #' cols.to.rank.site
 #' 
-#' Return a matrix contianing the negative absolute values of the information used to rank the sites. Those are currently:
+#' Return a matrix containing the negative absolute values of the information used to rank the sites. Those are currently:
 #' the variance difference, the log ratio in variances and the p-value from the statistical test.
 #' 
 #' @param diff.var A differential variability table.
@@ -889,6 +1144,13 @@ cols.to.rank.region <- function(diff.var){
 }
 
 #' computeDiffVar.bin.site
+#' 
+#' This function computes the table of differentially variable sites with the corresponding statistics.
+#' 
+#' @param X methylation matrix with sites as rows and samples as columns
+#' @param inds.g2 the column indicies of the first group
+#' @param inds.g2 the column indicies of the first group
+#' @param variability.method method to use for calculating p-values. One of `diffVar` or `iEVORA`
 #' @noRd
 computeDiffVar.bin.site <- function(X,inds.g1,inds.g2,
                                     variability.method=rnb.getOption("differential.variability.method"),
@@ -905,7 +1167,7 @@ computeDiffVar.bin.site <- function(X,inds.g1,inds.g2,
         }
       )
     } else if (variability.method == "iEVORA"){
-      logger.info("Conducting differential variability using iEVORA")
+      logger.info("Conducting differential variability using iEVORA, adjustment columns are ignored")
       tryCatch(
         p.vals.var <- apply.iEVORA(X,inds.g1,inds.g2),
         error = function(ee) {
