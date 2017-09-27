@@ -168,7 +168,7 @@ prepareSOFTfileForGEO<-function(rnb.set,
 		unmethyData<-NULL
 	}
 	
-	sampleInfo <- prepareGEOSampleInfoTemplate(rnb.set, 1:ncol(pheno(rnb.set)), 2, 2)
+	sampleInfo <- prepareGEOSampleInfoTemplate(rnb.set, export.cols, sample.source.col, sample.description.col)
 	
 	sampleInfoTitle <- colnames(sampleInfo)
 	if (any(sapply(sampleInfo[, -1, drop = F], nchar) == 0))
@@ -264,14 +264,14 @@ prepareSOFTfileForGEO<-function(rnb.set,
 		labelvalue_series<-paste('!',sapply(label_series,function(x){paste(x,series.info[[x]], sep=' = ')}), sep='')
 		cat(labelvalue_series, file = outputFile, append = TRUE)
 		
-		##write.soft.append(paste.soft('!Series_summary',seriestable$Series_summary))
+		cat(paste('\n!Series_summary',series.info$Series_summary, sep=" = "), file = outputFile, append = TRUE)
 		
 		seriescontributor<-strsplit(series.info$Series_contributor,';')[[1]]
-		cat(paste('!Series_contributor',seriescontributor, sep=' = '), file = outputFile, append = TRUE)
+		cat(paste('\n!Series_contributor',seriescontributor, sep=' = '), file = outputFile, append = TRUE)
 		
-		cat(paste('!Series_sample_id', paste(sampleID, sep=";") ,sep=' = '), file = outputFile, append = TRUE)
+		cat(paste('\n!Series_sample_id', paste(sampleID, sep=";") ,sep=' = '), file = outputFile, append = TRUE)
 	
 	}
-	return TRUE
+	return(TRUE)
 }
 
