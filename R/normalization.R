@@ -117,7 +117,7 @@ rnb.execute.normalization<-function(
 			} else if (method != "none") {
 				disable.method(TRUE, 'dataset already normalized')
 			}
-		} else if (!(method == "none" || inherits(object, "RnBeadRawSet"))) {
+		} else if (!(method %in% c("none", "bmiq") || inherits(object, "RnBeadRawSet"))) {
 			disable.method(TRUE, 'missing intensity data')
 		} else if (method == "illumina" && is.null(qc(object))) {
 			disable.method(TRUE, 'missing data on quality control probes')
