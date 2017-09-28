@@ -19,16 +19,36 @@
 # @param sample.description        \code{integer} specifying a column in the \code{pheno} slot of \code{rnb.set} 
 #                                  containing information which will be written into the field \code{Sample_desription}
 #                                  of each sample record
-prepareGEOSampleInfoTemplate<-function(rnb.set, pheno.cols, sample.source.col, sample.description.col)
+# @param sample.title.col         \code{integer} specifying a column in the \code{pheno} slot of \code{rnb.set} 
+#                                  containing information which will be written into the field \code{Sample_title}
+#                                  of each sample record
+#
+# @return matrix of type \code{character} with columns (named) corresponding to SOFT labels, and rows to samples in \code{rnb.set}
+#
+prepareGEOSampleInfoTemplate<-function(rnb.set, pheno.cols=1:ncol(pheno(rnb.set)), sample.title.col=NULL, sample.source.col=NULL, sample.description.col=NULL, sample.extra.info=NULL)
 {
-	pheno.data<-pheno(rnb.set)[pheno.cols]
+	pheno.data<-pheno(rnb.set)
+	
 	sample.names<-samples(rnb.set)
-	sample.sources<-pheno(rnb.set)[[sample.source.col]]
-	sample.descr<-pheno(rnb.set)[[sample.description.col]]
+	if(!is.null(sample.title.col)){
+		sample.titles<-pheno(rnb.set)[[sample.title.col]]
+	}else{
+		sample.titles<-sample.names
+	}
+	if(!is.null(sample.source.col)){
+		sample.sources<-pheno(rnb.set)[[sample.source.col]]
+	}else{
+		sample.sources<-NULL
+	}
+	if(!is.null(sample.description.col)){
+		sample.descr<-pheno(rnb.set)[[sample.description.col]]
+	}else{
+		sample.descr<-NULL
+	}
 	
 	platform <- c("HumanMethylation27", "HumanMethylation450", "HumanMethylationEPIC")[match(rnb.set@target, c('probes27','probes450','probesEPIC'))]
 	chipVersion<-"unknown"
-	organism <- c("H.sapiens", "M.muscullus", "R.norvegicus")[which(!is.na(pmatch( c('hg','mm','rn'), assembly(rnb.set))))]
+	organism <- c("Homo sapiens", "Mus muscullus", "Rattus norvegicus")[which(!is.na(pmatch( c('hg','mm','rn'), assembly(rnb.set))))]
 	platformID<-c(
 			"HumanMethylation27"="GPL8490",
 			"HumanMethylation450"="GPL13534",
@@ -39,7 +59,7 @@ prepareGEOSampleInfoTemplate<-function(rnb.set, pheno.cols, sample.source.col, s
 			"Sample_channel_count",
 			"Sample_source_name_ch1", 
 			"Sample_organism_ch1", 
-		rep("Sample_characteristics_ch1", ncol(pheno.data)),
+		rep("Sample_characteristics_ch1", length(pheno.cols)),
 			"Sample_molecule_ch1", 
 			"Sample_extract_protocol_ch1",
 			"Sample_label_ch1", 
@@ -49,41 +69,79 @@ prepareGEOSampleInfoTemplate<-function(rnb.set, pheno.cols, sample.source.col, s
 			"Sample_description", 
 			"Sample_data_processing",
 			"Sample_platform_id", 
-			"Sample_supplementary_file")
+			"Sample_supplementary_file",
+			"Sample_contact_name",
+			"Sample_contact_email",
+			"Sample_contact_laboratory",
+			"Sample_contact_department",
+			"Sample_contact_institute",
+			"Sample_contact_address",
+			"Sample_contact_city",
+			"Sample_contact_state",
+			"Sample_contact_zip/postal_code",
+			"Sample_contact_country")
 	
 	templateContent <- c(
-			"", 
+			"unknown sample", 
 			"2", 
-			"", 
+			"unknown", 
 			organism, 
-			colnames(pheno.data),
+			colnames(pheno.data)[pheno.cols],
 			"genomic DNA",
 			"standard as recommended by Illumina", 
 			"Cy3,Cy5", 
 			"standard as recommended by Illumina",
 			"standard as recommended by Illumina", 
 			"standard as recommended by Illumina",
-			"", 
-			"", 
+			"unknown sample", 
+			"unknown", 
 			platformID, 
-			"none")
+			"none",
+			"unknown",
+			"unknown",
+			"unknown",
+			"unknown",
+			"unknown",
+			"unknown",
+			"unknown",
+			"unknown",
+			"unknown",
+			"unknown"
+			)
+	
+	
+	if(!is.null(sample.extra.info)){
+		for(key in names(sample.extra.info)){
+			if(key %in% templateTitle){
+				templateContent[templateTitle==key]<-sample.extra.info[[key]]
+			}
+		}
+	}
+	
+	if(templateContent[templateTitle=="Sample_data_processing"]==""){
+		preprocessMethod <- paste("normalization: ", norm_method, "; ", "background: ", bgcorr_method, sep="")
+		templateContent[templateTitle == "Sample_data_processing"] <- preprocessMethod
+	}
 	
 	norm_method<-rnb.set@status$normalized
 	bgcorr_method<-rnb.set@status$background
-	
-	preprocessMethod <- paste("normalization: ", norm_method, "; ", "background: ", bgcorr_method, sep="")
-	
-	templateContent[templateTitle == "Sample_data_processing"] <- preprocessMethod
+
 	template <- templateTitle
-	pheno.cols<-grep("Sample_characteristics_ch1", template)
+	sample.characteristics.cols<-grep("Sample_characteristics_ch1", template)
 	for (i in seq(sample.names)) {
 		templateContentCopy<-templateContent
 		
-		templateContentCopy[templateTitle == "Sample_title"] <- sample.names[i]
-		templateContentCopy[templateTitle == "Sample_source_name_ch1"] <- sample.sources[i]
-		templateContentCopy[templateTitle == "Sample_description"] <- sample.descr[i]
+		templateContentCopy[templateTitle == "Sample_title"] <- sample.titles[i]
+		if(!is.null(sample.sources)){
+			templateContentCopy[templateTitle == "Sample_source_name_ch1"] <- sample.sources[i]
+		}
+		if(!is.null(sample.descr)){
+			templateContentCopy[templateTitle == "Sample_description"] <- sample.descr[i]
+		}
 		
-		templateContentCopy[pheno.cols] <- paste(templateContentCopy[pheno.cols], as.character(pheno.data[i,]), sep=": ")
+		templateContentCopy[sample.characteristics.cols] <- paste(
+				templateContentCopy[sample.characteristics.cols], 
+				as.character(pheno.data[i,pheno.cols]), sep=": ")
 		template <- rbind(template, templateContentCopy)
 	}
 	template <- cbind(c("sampleID", sample.names), template)
@@ -102,15 +160,24 @@ prepareGEOSampleInfoTemplate<-function(rnb.set, pheno.cols, sample.source.col, s
 #' @param rnb.set                   Object inheriting from class \code{RnBeadSet}
 #'                                  with \code{"GSE"}.
 #' @param filename                  Absolute path or a name of a SOFT file to be generated
+#' 
 #' @param sample.source.col         \code{integer} singleton specifying a column in the \code{pheno} slot of \code{rnb.set} 
 #'                                  containing information which will be written into the field \code{Sample_source_name_ch1}
 #'                                  of each sample record
 #' @param sample.description        \code{integer} singleton specifying a column in the \code{pheno} slot of \code{rnb.set} 
 #'                                  containing information which will be written into the field \code{Sample_desription}
 #'                                  of each sample record
+#' @param sample.title.col         \code{integer} singleton specifying a column in the \code{pheno} slot of \code{rnb.set} 
+#'                                  containing information which will be written into the field \code{Sample_title}
+#'                                  of each sample record. If \code{NULL}, the result of \code{samples(rnb.set)} will be used
+
 #' @param export.cols               \code{integer} vector specifying columns in the \code{pheno} slot of \code{rnb.set} 
 #'                                  containing information which will be written into the fields \code{Sample_characteristics_ch1}
 #'                                  of each sample record
+#' @param sample.extra.info         Optionally, a \code{list} with elements to be written to all series record. Elements should be character
+#'                                  singletons named with valid SOFT labels of a SAMPLE section, e.g.\code{Sample_extract_protocol}, 
+#'                                  \code{Sample_hyb_protocol}, \code{Sample_label_protocol_ch1}, \code{Sample_data_processing}, 
+#'                                  \code{Sample_contact_name}, \code{Sample_contact_email} etc.
 #' @param series.info               A \code{list} with elements to be written to the series record. Elements should be character
 #'                                  singletons named \code{SERIES} (contains a valid GSE identifier for updating an existing series)
 #'                                  \code{Series_title}, \code{Series_summary}, \code{Series_type}, \code{Series_overall_design},
@@ -125,10 +192,12 @@ prepareGEOSampleInfoTemplate<-function(rnb.set, pheno.cols, sample.source.col, s
 #'
 prepareSOFTfileForGEO<-function(rnb.set, 
 		filename, 
-		sample.source.col, 
-		sample.description.col,
+		sample.source.col=NULL, 
+		sample.description.col=NULL,
+		sample.title.col = NULL,
 		export.cols=seq(ncol(pheno(rnb.set))),
 		rnb.set.raw=NULL, 
+		sample.extra.info=NULL,
 		series.info=NULL){
 	
 	if(!inherits(rnb.set, "RnBeadSet")){
@@ -168,7 +237,13 @@ prepareSOFTfileForGEO<-function(rnb.set,
 		unmethyData<-NULL
 	}
 	
-	sampleInfo <- prepareGEOSampleInfoTemplate(rnb.set, export.cols, sample.source.col, sample.description.col)
+	sampleInfo <- prepareGEOSampleInfoTemplate(
+			rnb.set, 
+			pheno.cols=export.cols,
+			sample.title.col=sample.title.col,
+			sample.source.col=sample.source.col, 
+			sample.description.col=sample.description.col, 
+			sample.extra.info=sample.extra.info)
 	
 	sampleInfoTitle <- colnames(sampleInfo)
 	if (any(sapply(sampleInfo[, -1, drop = F], nchar) == 0))
@@ -187,11 +262,11 @@ prepareSOFTfileForGEO<-function(rnb.set,
 	for (i in seq(sampleID)) {
 		cat("Processing sample", i, "\n")
 		if (i == 1) {
-			cat("^SAMPLE =", sampleTitle[i], "\n", sep = "",
+			cat("^SAMPLE = ", sampleTitle[i], "\n", sep = "",
 					file = outputFile, append = FALSE)
 		}
 		else {
-			cat("^SAMPLE =", sampleTitle[i], "\n", sep = "",
+			cat("^SAMPLE = ", sampleTitle[i], "\n", sep = "",
 					file = outputFile, append = TRUE)
 		}
 		sampleInfo.i <- paste("!", sampleInfoTitle[-1], " = ",
@@ -256,20 +331,19 @@ prepareSOFTfileForGEO<-function(rnb.set,
 		label_series<-c(
 				'Series_title',
 				'Series_summary',
-				'Series_type',
 				'Series_overall_design')
 		
-		cat(paste('^SERIES', series.info[["SERIES"]], sep=' = '), file = outputFile, append = TRUE)
+		cat(paste('^SERIES', series.info[["SERIES"]], sep=" = "), file = outputFile, append = TRUE)
 		
-		labelvalue_series<-paste('!',sapply(label_series,function(x){paste(x,series.info[[x]], sep=' = ')}), sep='')
+		labelvalue_series<-paste('\n!',sapply(label_series,function(x){paste(x,series.info[[x]], sep=" = ")}), sep='')
 		cat(labelvalue_series, file = outputFile, append = TRUE)
 		
-		cat(paste('\n!Series_summary',series.info$Series_summary, sep=" = "), file = outputFile, append = TRUE)
+		cat(paste('\n!Series_summary', series.info$Series_summary, sep=" = "), file = outputFile, append = TRUE)
 		
 		seriescontributor<-strsplit(series.info$Series_contributor,';')[[1]]
-		cat(paste('\n!Series_contributor',seriescontributor, sep=' = '), file = outputFile, append = TRUE)
+		cat(paste('\n!Series_contributor',seriescontributor, sep=" = "), file = outputFile, append = TRUE)
 		
-		cat(paste('\n!Series_sample_id', paste(sampleID, sep=";") ,sep=' = '), file = outputFile, append = TRUE)
+		cat(paste('\n!Series_sample_id', paste(sampleID, sep=";") ,sep=" = "), file = outputFile, append = TRUE)
 	
 	}
 	return(TRUE)
