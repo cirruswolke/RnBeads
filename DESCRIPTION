@@ -9,7 +9,7 @@ Authors@R: c(
     role = c("aut")),
     person("Fabian", "Mueller", email = "rnbeads@mpi-inf.mpg.de",
     role = c("aut", "cre")))
-Date: 2017-09-19
+Date: 2017-09-29
 Version: 1.9.4
 Suggests:
     Category,
@@ -35,6 +35,7 @@ Suggests:
     org.Rn.eg.db,
     quadprog,
     rtracklayer,
+    qvalue,
     sva,
     wateRmelon,
     wordcloud,
