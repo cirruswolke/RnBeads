@@ -668,7 +668,7 @@ combine.diffMeth.objs <- function(obj.list){
 			if(is.element("region_var",names(obj.list[[i]]$dm.lola.enrich))){
 			  dm.lola.enrich.comb$region_var <- list()
 			  dmer.var <- obj.list[[i]]$dm.lola.enrich$region_var
-			  dm.go.enrich.comb$region_var <- c(dm.go.enrich.comb$region_var,new.comp.list.empty)
+			  dm.lola.enrich.comb$region_var <- c(dm.lola.enrich.comb$region_var,new.comp.list.empty)
 			}
 			#fill in the empty entries with the new entries
 			for (cc in names(dmer)){
