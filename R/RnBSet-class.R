@@ -1299,6 +1299,7 @@ setMethod("combine", signature(x="RnBSet",y="RnBSet"),
 				}
 			}
 			new.set@inferred.covariates<-list()
+			new.set@imputed <- x@imputed && y@imputed
 
 			rm(common.sites, sites1, sites2, subs1, subs2, x, y)
 			rnb.cleanMem()
@@ -2328,6 +2329,7 @@ setMethod("isImputed",signature(object="RnBSet"),
     return(FALSE)
   }          
 )
+
 ########################################################################################################################
 #' rnb.sample.summary.table
 #'

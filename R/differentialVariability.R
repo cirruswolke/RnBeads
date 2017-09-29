@@ -44,16 +44,21 @@ rnb.execute.diffVar <- function(rnb.set,pheno.cols=rnb.getOption("differential.c
     cmp.info.cur <- cmp.info[[i]]
     logger.start(c("Comparing ",cmp.info.cur$comparison))
     if(!isImputed(rnb.set)) rnb.set <- rnb.execute.imputation(rnb.set)
+    if(cmp.info.cur$paired){
+      logger.status("Conducting PAIRED analysis")
+    }
     meth.matrix <- meth(rnb.set)
     diffVar <- computeDiffVar.bin.site(X=meth.matrix,inds.g1=cmp.info.cur$group.inds$group1,
-                                       inds.g2=cmp.info.cur$group.inds$group2, adjustment.table=cmp.info.cur$adjustment.table)
+                                       inds.g2=cmp.info.cur$group.inds$group2, 
+                                       paired=cmp.info.cur$paired,adjustment.table=cmp.info.cur$adjustment.table)
 
     diff.meth <- addDiffMethTable(diff.meth,diffVar,comparison=cmp.info.cur$comparison,region.type="sites",grp.labs=cmp.info.cur$group.names)
     rnb.cleanMem()
     if (length(cmp.info.cur$region.types)>0){
       diffVar.region <- computeDiffVar.bin.region(rnb.set,diffVar,
                                                   inds.g1=cmp.info.cur$group.inds$group1,inds.g2=cmp.info.cur$group.inds$group2,
-                                                  region.types=cmp.info.cur$region.types
+                                                  region.types=cmp.info.cur$region.types,
+                                                  paired = cmp.info.cur$paired
       )
       for(rt in region.types){
         diff.meth <- addDiffMethTable(diff.meth,diffVar.region[[rt]],comparison=cmp.info.cur$comparison, 
@@ -80,13 +85,15 @@ rnb.execute.diffVar <- function(rnb.set,pheno.cols=rnb.getOption("differential.c
 #' @param inds.g1 Indices in the phenotypic table corresponding to the first group.
 #' @param inds.g2 Indices in the phenotypic table corresponding to the second group.
 #' @param adjustment.table A \code{data.frame} containing variables to adjust for in the testing
+#' @param paired Should the analysis be performed in a paired fashion. If yes, the first index in \code{inds.g1} must 
+#'           correspond to the first in \code{inds.g2} and so on.
 #' @return P-values as the result of the diffVar method not adjusted for multiple hypothesis testing.
 #' 
 #' @export
 #' @references Phipson, Belinda, Oshlack, Alicia (2014)
 #'             DiffVar: a new method for detecting differential variability with application to methylation in cancer and aging
 #'             Genome Biology 15(9):465.
-diffVar <- function(meth.matrix,inds.g1,inds.g2,adjustment.table=NULL){
+diffVar <- function(meth.matrix,inds.g1,inds.g2,adjustment.table=NULL,paired=FALSE){
   logger.start("diffVar method")
   rnb.require('missMethyl')
   if(is.logical(inds.g1)) inds.g1 <- which(inds.g1)
@@ -112,6 +119,12 @@ diffVar <- function(meth.matrix,inds.g1,inds.g2,adjustment.table=NULL){
   df <- data.frame(xg = factor(rep(c("group1","group2"), c(n.g1,n.g2)), levels=c("group1","group2")))
   if (!is.null(adjustment.table)){
     df <- cbind(df,adjustment.table)
+  }
+  if(paired){
+    if(n.g1 != ng.2){
+      stop("Could not conduct paired diffVar analysis: unequal groupsizes")
+    }
+    df$xp <- as.factor(rep(1:n.g1,2))
   }
   formula.text <- paste0(c("~0",colnames(df)),collapse="+")
   design.m <- model.matrix(as.formula(formula.text),data=df)
@@ -513,7 +526,7 @@ addReportPlot.diffVar.meth <- function(report, var.table, comparison.name,
   for(i in 1:length(rank.cuts)){
     cutoff <- rank.cuts[i]
     cut.id <- paste0("rc",i)
-    toPlot <- data.frame(Meth.p=var.table[,"combinedRank"],Var.p=var.table[,"combinedRank.var"])
+    toPlot <- data.frame(Rank.meth=var.table[,"combinedRank"],Rank.var=var.table[,"combinedRank.var"])
     is.diff.meth <- ranks.diffMeth < cutoff
     is.diff.var <- ranks.diffVar < cutoff
     rank.cut.diffMeth <- max(toPlot[is.diff.meth,1])
@@ -523,7 +536,6 @@ addReportPlot.diffVar.meth <- function(report, var.table, comparison.name,
     color.diff[is.diff.var] <- "DVC"
     color.diff[is.diff.meth&is.diff.var] <- "Both"
     toPlot <- data.frame(toPlot,Color.diff=color.diff)
-    #toPlot <- toPlot[is.diff.meth|is.diff.var,]
     is.special <- is.diff.meth|is.diff.var
     pp <- create.diffMeth.diffVar.subsample(toPlot,dens.subsample, is.special=is.special, rank.cut.diffMeth = rank.cut.diffMeth, rank.cut.diffVar = rank.cut.diffVar)
     fig.name <- paste("diffMethVar",comparison.name,cut.id,sep="_")
@@ -532,15 +544,14 @@ addReportPlot.diffVar.meth <- function(report, var.table, comparison.name,
     ret <- c(ret,report.plot)
   }
   if(is.integer(auto.diffVar)&&is.integer(auto.diffMeth)){
-    toPlot <- data.frame(Meth.p=var.table[,"combinedRank"],Var.p=var.table[,"combinedRank.var"])
-    is.diff.meth <- toPlot$Meth.p < auto.diffMeth
-    is.diff.var <- toPlot$Var.p < auto.diffVar
+    toPlot <- data.frame(Rank.meth=var.table[,"combinedRank"],Rank.var=var.table[,"combinedRank.var"])
+    is.diff.meth <- toPlot$Rank.meth < auto.diffMeth
+    is.diff.var <- toPlot$Rank.var < auto.diffVar
     color.diff <- rep('Not Significant',dim(toPlot)[1])
     color.diff[is.diff.meth] <- "DMC"
     color.diff[is.diff.var] <- "DVC"
     color.diff[is.diff.meth&is.diff.var] <- "Both"
     toPlot <- data.frame(toPlot,Color.diff=color.diff)
-    #toPlot <- toPlot[is.diff.meth|is.diff.var,]
     is.special <- is.diff.meth|is.diff.var
     pp <- create.diffMeth.diffVar.subsample(toPlot,dens.subsample,is.special=is.special, rank.cut.diffMeth = auto.diffMeth, rank.cut.diffVar = auto.diffVar)
     fig.name <- paste("diffMethVar",comparison.name,"rcAuto",sep="_")
@@ -691,8 +702,17 @@ create.diffMeth.diffVar.subsample <- function(df2p,dens.subsample,is.special=NUL
     }
     if(!is.null(is.special)){
       df2p.special <- df2p[is.special,]
-      pp <- pp + geom_point(data=df2p.special,aes_string(x=colnames(df2p)[1],y=colnames(df2p)[2],colour=colnames(df2p)[3]),size=1) + guides(fill=FALSE)
-    }
+      if(is.numeric(dens.subsample) && dens.subsample>0){
+        ss <- as.numeric(dens.subsample)
+        if(nrow(df2p.special)>ss){
+          pp <- pp + stat_density2d(data = df2p.special, fill=colnames(df2p)[3], aes(,alpha=..density..^0.25), countour=FALSE, n =dens.n, h=stable.h)
+        }else{
+          pp <- pp + geom_point(data=df2p.special,aes_string(x=colnames(df2p)[1],y=colnames(df2p)[2],colour=colnames(df2p)[3]),size=1) + guides(fill=FALSE)
+        }
+      }else{
+        pp <- pp + geom_point(data=df2p.special,aes_string(x=colnames(df2p)[1],y=colnames(df2p)[2],colour=colnames(df2p)[3]),size=1) + guides(fill=FALSE)
+      }
+    }  
   }
   return(pp)
 }
@@ -1079,9 +1099,9 @@ rnb.section.diffVar.region <- function(rnb.set,diff.meth,report,gzTable=FALSE){
       comp.name <- names(comps)[1]
       comp <- comps[comp.name]
       ccn <- ifelse(is.valid.fname(comp.name),comp.name,paste("cmp",i,sep=""))
-      region.type <- reg.types[j]
-      rrn <- ifelse(is.valid.fname(rrn),rrn,paste("reg",j,sep=""))
-      var.table <- get.table(diff.meth,comp,region.type=region.type,return.data.frame=TRUE)
+      rr <- reg.types[j]
+      rrn <- ifelse(is.valid.fname(rr),rr,paste("reg",j,sep=""))
+      var.table <- get.table(diff.meth,comp,region.type=rr,return.data.frame=TRUE)
       grp.names <- get.comparison.grouplabels(diff.meth)[comp,]
       auto.cutoff <- rank.cuts.auto[[i]][[j]]
       auto.cutoff.meth <- rank.cuts.auto.meth[[i]][[j]]
@@ -1148,32 +1168,45 @@ cols.to.rank.region <- function(diff.var){
 #' This function computes the table of differentially variable sites with the corresponding statistics.
 #' 
 #' @param X methylation matrix with sites as rows and samples as columns
-#' @param inds.g2 the column indicies of the first group
-#' @param inds.g2 the column indicies of the first group
+#' @param inds.g1 the column indicies of the first group
+#' @param inds.g2 the column indicies of the second group
 #' @param variability.method method to use for calculating p-values. One of `diffVar` or `iEVORA`
+#' @param paired Should paired analysis be conducted? If yes, the first entry in \code{inds.g1} should correspond to the first
+#'        in \code{indg.g2} and so on.
+#' @param adjustment.table Table specifying the variables to be adjusted for in the analysis.
 #' @noRd
 computeDiffVar.bin.site <- function(X,inds.g1,inds.g2,
                                     variability.method=rnb.getOption("differential.variability.method"),
-                                    adjustment.table=NULL){
+                                    paired=FALSE, adjustment.table=NULL){
   p.vals.var <- rep(as.double(NA),nrow(X))
   do.p.vals <- ncol(X[,inds.g1]) > 1 || ncol(X[inds.g2]) > 1
   if (do.p.vals) {
     if (variability.method == "diffVar"){
       logger.info("Conducting differential variability using diffVar")
       tryCatch(
-        p.vals.var <- diffVar(X,inds.g1,inds.g2,adjustment.table=adjustment.table),
+        p.vals.var <- diffVar(X,inds.g1,inds.g2,adjustment.table=adjustment.table,paired = paired),
         error = function(ee) {
           logger.warning(c("Could not compute p-values using diffVar:",ee$message))
         }
       )
     } else if (variability.method == "iEVORA"){
-      logger.info("Conducting differential variability using iEVORA, adjustment columns are ignored")
-      tryCatch(
-        p.vals.var <- apply.iEVORA(X,inds.g1,inds.g2),
-        error = function(ee) {
-          logger.warning(c("Could not compute p-values using iEVORA:",ee$message))
-        }
-      )
+      if(paired){
+        logger.warning("Cannot conduct paired variability analysis with iEVORA, changing to diffVar.")
+        rnb.options("differential.variability.method"="diffVar")
+        tryCatch(
+          p.vals.var <- diffVar(X,inds.g1,inds.g2,adjustment.table=adjustment.table,paired=paired),
+          error = function(ee) {
+            logger.warning(c("Could not compute p-values using diffVar:",ee$message))
+          }
+        )
+      }else{
+        tryCatch(
+          p.vals.var <- apply.iEVORA(X,inds.g1,inds.g2),
+          error = function(ee) {
+            logger.warning(c("Could not compute p-values using iEVORA:",ee$message))
+          }
+        )
+      }
     }
   } else {
     logger.warning("Skipping p-value computation due to insufficient sample numbers")
@@ -1190,8 +1223,15 @@ computeDiffVar.bin.site <- function(X,inds.g1,inds.g2,
   }
   var.g1 <- apply(X[,inds.g1],1,var)
   var.g2 <- apply(X[,inds.g2],1,var)
-  var.diff <- var.g1-var.g2
-  var.log.ratio <- ifelse(var.g1==0|var.g2==0,1,log2(var.g1/var.g2))
+  if(paired){
+    var.diff <- apply(tab.g1 - tab.g2,1,var)
+    var.log.ratio <- apply(X,1,function(X,inds.g1,inds.g2){
+      var((X[,inds.g1]+eps)/(X[.inds.g2]+eps))
+    })
+  }else{
+    var.diff <- var.g1-var.g2
+    var.log.ratio <- ifelse(var.g1==0|var.g2==0,1,log2(var.g1/var.g2))
+  }
   neg.log10.p <- -log10(p.vals.var)
   neg.log10.fdr <- -log10(p.vals.var.adj)
   tt <- data.frame(var.g1=var.g1,var.g2=var.g2,var.diff=var.diff,var.log.ratio=var.log.ratio,diffVar.p.val=p.vals.var,diffVar.p.adj.fdr=p.vals.var.adj,log10P=neg.log10.p,

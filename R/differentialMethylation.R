@@ -384,19 +384,30 @@ computeDiffTab.default.site <- function(X,inds.g1,inds.g2,
 	    if (variability.method == "diffVar"){
 	      logger.info("Conducting differential variability using diffVar")
 	      tryCatch(
-	        p.vals.var <- diffVar(X,inds.g1,inds.g2,adjustment.table=adjustment.table),
+	        p.vals.var <- diffVar(X,inds.g1,inds.g2,adjustment.table=adjustment.table,paired=paired),
 	        error = function(ee) {
 	          logger.warning(c("Could not compute p-values using diffVar:",ee$message))
 	        }
 	      )
 	    } else if (variability.method == "iEVORA"){
 	      logger.info("Conducting differential variability using iEVORA")
-	      tryCatch(
-	        p.vals.var <- apply.iEVORA(X,inds.g1,inds.g2),
-	        error = function(ee) {
-	          logger.warning(c("Could not compute p-values using iEVORA:",ee$message))
-	        }
-	      )
+	      if(paired){
+	        logger.warning("Cannot conduct paired variability analysis with iEVORA, changing to diffVar.")
+	        rnb.options("differential.variability.method"="diffVar")
+	        tryCatch(
+	          p.vals.var <- diffVar(X,inds.g1,inds.g2,adjustment.table=adjustment.table,paired=paired),
+	          error = function(ee) {
+	            logger.warning(c("Could not compute p-values using diffVar:",ee$message))
+	          }
+	        )
+	      }else{
+  	      tryCatch(
+  	        p.vals.var <- apply.iEVORA(X,inds.g1,inds.g2),
+  	        error = function(ee) {
+  	          logger.warning(c("Could not compute p-values using iEVORA:",ee$message))
+  	        }
+  	      )
+	      }
 	    }
 	  } else {
 	    logger.warning("Skipping p-value computation due to insufficient sample numbers")
@@ -413,8 +424,16 @@ computeDiffTab.default.site <- function(X,inds.g1,inds.g2,
 	  }
 	  var.g1 <- apply(X[,inds.g1],1,var)
 	  var.g2 <- apply(X[,inds.g2],1,var)
-	  var.diff <- var.g1-var.g2
-	  var.log.ratio <- ifelse(var.g1==0|var.g2==0,1,log2(var.g1/var.g2))
+	  
+	  if(paired){
+	    var.diff <- apply(tab.g1 - tab.g2,1,var)
+	    var.log.ratio <- apply(X,1,function(X,inds.g1,inds.g2){
+	      var((X[,inds.g1]+eps)/(X[.inds.g2]+eps))
+	    })
+	  }else{
+	    var.diff <- var.g1-var.g2
+	    var.log.ratio <- ifelse(var.g1==0|var.g2==0,1,log2(var.g1/var.g2))
+	  }
 	  neg.log10.p <- -log10(p.vals.var)
 	  neg.log10.fdr <- -log10(p.vals.var.adj)
 	  tt <- data.frame(tt,var.g1=var.g1,var.g2=var.g2,var.diff=var.diff,var.log.ratio=var.log.ratio,diffVar.p.val=p.vals.var,diffVar.p.adj.fdr=p.vals.var.adj,log10P=neg.log10.p,
@@ -1701,8 +1720,8 @@ get.diffmeth.tab.col.desc.list.txt <- function(target, includeCovg, hasVariabili
 		    "Strand: strand of the site",
 		    c("var.g1, var.g2: (g1 and g2 are replaced by the corrspondinhg group used in the differentiality analysis) ",
 		      "the variances found in the groups"),
-		    "var.diff: difference in variance values between the two groups g1 and g2 (=var.g1-var.g2)",
-		    "var.log.ratio: Log2 of the ratio between the variances of the two groups g1 and g2 (=log2(var.g1+eps/var.g2+eps), default eps=0.01)",
+		    "var.diff: difference in variance values between the two groups g1 and g2 (=var.g1-var.g2). In case of paired analysis, it is the variance of the pairwise differences.",
+		    "var.log.ratio: Log2 of the ratio between the variances of the two groups g1 and g2 (=log2(var.g1+eps/var.g2+eps), default eps=0.01). In case of paired analysis, it is the variance of the pairwise quotients.",
 		    "diffVar.p.val: p-value resulting from applying the selected differentially variability method (diffVar or iEVORA)",
 		    "diffVar.p.adj.fdr: FDR-adjusted p-value for differential variability",
 		    "log10P: negative decadic logarithm of the p-value",
@@ -2563,7 +2582,7 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 		)
 		report <- rnb.add.figure(report, desc, lolaBarPlots, setting.names)
 
-		if(rnb.getOption("differential.variability")){
+		if(rnb.getOption("differential.variability") && is.element("region_var",names(dm.lola.enrich))){
 		  hyper.hypo <- c("hypervariable","hypovariable")
 		  names(hyper.hypo) <- c("hyper","hypo")
 		  setting.names.volcano$'Hypermethylation/hypomethylation' <- hyper.hypo
