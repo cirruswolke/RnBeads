@@ -13,7 +13,7 @@ performGOEnrichment.diffVar(rnbSet, diffmeth, enrich.diffMeth = NULL,
 
 \item{diffmeth}{RnBDiffMeth object. See \code{\link{RnBDiffMeth-class}} for details.}
 
-\item{enrich.diffMeth}{Result of \code{\link{performGOEnrichment.diffMeth}}. NULL, if enrichment should only be performed for differential variability.}
+\item{enrich.diffMeth}{Result of \code{performGOEnrichment.diffMeth}. NULL, if enrichment should only be performed for differential variability.}
 
 \item{ontologies}{GO ontologies to use for enrichment analysis}
 

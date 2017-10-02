@@ -16,7 +16,7 @@ cols.to.rank.region(diff.var)
 A matrix with the absolute values of the relevant columns
 }
 \description{
-Return a matrix contianing the negative absolute values of the information used to rank the sites. Those are currently:
+Return a matrix containing the negative absolute values of the information used to rank the sites. Those are currently:
 the variance difference, the log ratio in variances and the p-value from the statistical test.
 }
 \author{

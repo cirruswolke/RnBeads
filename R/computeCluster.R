@@ -602,6 +602,12 @@ combine.diffMeth.objs <- function(obj.list){
 	names(ontol.list.empty) <- ontologies
 	dm.go.enrich.comb <- list(probe=list(),region=list())
 	dm.lola.enrich.comb <- list(probe=list(),region=list(),lolaDb=NULL)
+	if(is.element("region_var",names(obj.list[[1]]$dm.go.enrich))){
+	  dm.go.enrich.comb$region_var <- list()
+	}
+  if(is.element("region_var",names(obj.list[[1]]$dm.lola.enrich))){
+    dm.lola.enrich.comb$region_var <- list()
+  }
 
 	# helper to check whether two lola DB objects are the same
 	# necessary to check for compatibility
@@ -632,7 +638,6 @@ combine.diffMeth.objs <- function(obj.list){
 			names(new.comp.list.empty) <- new.comps
 			dm.go.enrich.comb$region <- c(dm.go.enrich.comb$region,new.comp.list.empty)
 			if(is.element("region_var",names(obj.list[[i]]$dm.go.enrich))){
-			  dm.go.enrich.comb$region_var <- list()
 			  dmer.var <- obj.list[[i]]$dm.go.enrich$region_var
 			  dm.go.enrich.comb$region_var <- c(dm.go.enrich.comb$region_var,new.comp.list.empty)
 			}
@@ -666,7 +671,6 @@ combine.diffMeth.objs <- function(obj.list){
 			names(new.comp.list.empty) <- new.comps
 			dm.lola.enrich.comb$region <- c(dm.lola.enrich.comb$region,new.comp.list.empty)
 			if(is.element("region_var",names(obj.list[[i]]$dm.lola.enrich))){
-			  dm.lola.enrich.comb$region_var <- list()
 			  dmer.var <- obj.list[[i]]$dm.lola.enrich$region_var
 			  dm.lola.enrich.comb$region_var <- c(dm.lola.enrich.comb$region_var,new.comp.list.empty)
 			}

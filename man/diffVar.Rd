@@ -4,7 +4,8 @@
 \alias{diffVar}
 \title{diffVar}
 \usage{
-diffVar(meth.matrix, inds.g1, inds.g2, adjustment.table = NULL)
+diffVar(meth.matrix, inds.g1, inds.g2, adjustment.table = NULL,
+  paired = FALSE)
 }
 \arguments{
 \item{meth.matrix}{Matrix containing the methylation information used to calculate differentially variable sites 
@@ -15,6 +16,9 @@ between the two groups}
 \item{inds.g2}{Indices in the phenotypic table corresponding to the second group.}
 
 \item{adjustment.table}{A \code{data.frame} containing variables to adjust for in the testing}
+
+\item{paired}{Should the analysis be performed in a paired fashion. If yes, the first index in \code{inds.g1} must 
+correspond to the first in \code{inds.g2} and so on.}
 }
 \value{
 P-values as the result of the diffVar method not adjusted for multiple hypothesis testing.

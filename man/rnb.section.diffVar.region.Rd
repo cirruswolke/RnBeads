@@ -2,7 +2,6 @@
 % Please edit documentation in R/differentialVariability.R
 \name{rnb.section.diffVar.region}
 \alias{rnb.section.diffVar.region}
-\alias{rnb.section.diffMeth.region}
 \title{rnb.section.diffVar.region}
 \usage{
 rnb.section.diffVar.region(rnb.set, diff.meth, report, gzTable = FALSE)
@@ -20,7 +19,7 @@ rnb.section.diffVar.region(rnb.set, diff.meth, report, gzTable = FALSE)
 The modified report object
 }
 \description{
-Adds information for differentially variable regions to the report
+Adds information for differentially variable regions to the report.
 }
 \author{
 Michael Scherer

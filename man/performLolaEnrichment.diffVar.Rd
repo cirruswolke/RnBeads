@@ -13,6 +13,9 @@ performLolaEnrichment.diffVar(rnbSet, diffmeth, enrich.diffMeth = NULL,
 
 \item{diffmeth}{RnBDiffMeth object. See \code{\link{RnBDiffMeth-class}} for details.}
 
+\item{enrich.diffMeth}{Enrichment object as obtained from \code{\link{performLolaEnrichment.diffMeth}}. If it is not provided
+a new object is created.}
+
 \item{lolaDbPaths}{LOLA database paths}
 
 \item{rank.cuts.region}{Cutoffs for combined ranking that are used to determine differentially variable regions}
@@ -22,16 +25,13 @@ performLolaEnrichment.diffVar(rnbSet, diffmeth, enrich.diffMeth = NULL,
 \item{rerank}{For deterimining differential variability: should the ranks be ranked again or should the absolute ranks be used.}
 
 \item{verbose}{Enable for detailed status report}
-
-\item{enricht.diffMeth}{Enrichment object as obtained from \code{\link{performLolaEnrichment.diffMeth}}. If it is not provided
-a new object is created.}
 }
 \value{
 a DiffMeth.lola.enrich object (S3) containing the following attributes
 \item{region}{Enrichment information for differential variability on the region level. A \code{data.table} object
 as returned by the \code{runLOLA} function from the \code{LOLA} package for further details. Each element will contain different
 user sets for different rank cutoffs and hyper/hypomethylation events(\code{userSet} column)}
-\item{lolaDb}{The loaded \code{lolaDb} object containing the merged databases as returned by \link{\code{loadLolaDbs}}}
+\item{lolaDb}{The loaded \code{lolaDb} object containing the merged databases as returned by \code{\link{loadLolaDbs}}}
 }
 \description{
 performs LOLA enrichment analysis for a given differential variability table.

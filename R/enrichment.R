@@ -346,7 +346,7 @@ loadLolaDbs <- function(lolaDbPaths){
 #' \item{region}{Enrichment information for differential methylation on the region level. A \code{data.table} object
 #' as returned by the \code{runLOLA} function from the \code{LOLA} package for furthert details. Each element will contain different
 #' user sets for different rank cutoffs and hyper/hypomethylation events(\code{userSet} column)}
-#' \item{lolaDb}{The loaded \code{lolaDb} object containing the merged databases as returned by \link{\code{loadLolaDbs}}}
+#' \item{lolaDb}{The loaded \code{lolaDb} object containing the merged databases as returned by \code{\link{loadLolaDbs}}}
 #' @export
 #' @examples
 #' \donttest{
@@ -463,7 +463,7 @@ performLolaEnrichment.diffMeth <- function(rnbSet, diffmeth, lolaDbPaths, rank.c
 #' @author Fabian Mueller and Michael Scherer
 #' @param rnbSet RnBSet object for which dirrential variability was computed
 #' @param diffmeth RnBDiffMeth object. See \code{\link{RnBDiffMeth-class}} for details.
-#' @param enrich.diffMeth Result of \code{\link{performGOEnrichment.diffMeth}}. NULL, if enrichment should only be performed for differential variability.
+#' @param enrich.diffMeth Result of \code{performGOEnrichment.diffMeth}. NULL, if enrichment should only be performed for differential variability.
 #' @param ontologies GO ontologies to use for enrichment analysis
 #' @param rank.cuts.region Cutoffs for combined ranking that are used to determine differentially variable regions
 #' @param add.auto.rank.cut flag indicating whether an automatically computed cut-off should also be considered.
@@ -615,7 +615,7 @@ performGOEnrichment.diffVar <- function(rnbSet,diffmeth,enrich.diffMeth=NULL,ont
 #' \item{region}{Enrichment information for differential variability on the region level. A \code{data.table} object
 #' as returned by the \code{runLOLA} function from the \code{LOLA} package for further details. Each element will contain different
 #' user sets for different rank cutoffs and hyper/hypomethylation events(\code{userSet} column)}
-#' \item{lolaDb}{The loaded \code{lolaDb} object containing the merged databases as returned by \link{\code{loadLolaDbs}}}
+#' \item{lolaDb}{The loaded \code{lolaDb} object containing the merged databases as returned by \code{\link{loadLolaDbs}}}
 #' @export
 #' @examples
 #' \donttest{
