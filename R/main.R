@@ -1009,16 +1009,20 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 	}
 	if (is.null(do.greedycut)) {
 		do.greedycut <- inherits(rnb.set, "RnBeadSet")
+	} else {
+		if (!inherits(rnb.set, "RnBeadSet")){
+			logger.warning("filtering.greedycut disabled for non-array datasets.")
+			do.greedycut <- FALSE
+		}
 	}
 
 	## Option list
 	report <- init.pipeline.report("preprocessing", dir.reports, init.configuration)
-	o.greedycut.threshold <- ifelse(inherits(rnb.set, "RnBeadSet"), "filtering.greedycut.pvalue.threshold",
+	x.greedycut <- ifelse(inherits(rnb.set, "RnBeadSet"), "filtering.greedycut.pvalue.threshold",
 		"filtering.coverage.threshold")
-	optionlist <- rnb.options("filtering.whitelist", "filtering.blacklist", "filtering.snp",
-	                          "filtering.cross.reactive", "filtering.greedycut", o.greedycut.threshold, "filtering.greedycut.rc.ties","imputation.method")
-	attr.vec <- c(TRUE, TRUE, TRUE, TRUE, TRUE,
-	  ifelse(is.null(optionlist[["filtering.greedycut"]]), FALSE, optionlist[["filtering.greedycut"]]) || inherits(rnb.set, "RnBiseqSet"), optionlist[["filtering.greedycut"]])
+	optionlist <- rnb.options("filtering.whitelist", "filtering.blacklist", "filtering.snp", "filtering.cross.reactive",
+		"filtering.greedycut", x.greedycut, "filtering.greedycut.rc.ties","imputation.method")
+	attr.vec <- c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, do.greedycut, TRUE)
 	if (!inherits(rnb.set, "RnBeadSet")) {
 		optionlist <- optionlist[-4]
 		attr.vec <- attr.vec[-4]
