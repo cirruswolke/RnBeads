@@ -770,7 +770,7 @@ rnb.is.option <- function(txt) {
 #'   \item{\bold{\code{export.types}}\code{ = "sites"}}{
 #'        \code{character} vector of sites and region names to be exported. If \code{NULL}, no region methylation values
 #'        are exported.}
-#'   \item{\bold{\code{disk.dump.big.matrices}}\code{ = FALSE}}{
+#'   \item{\bold{\code{disk.dump.big.matrices}}\code{ = TRUE}}{
 #'        Flag indicating whether big tables should be stored on disk rather than in main memory in order to keep memory
 #'        requirements down. May slow down analysis!}
 #'   \item{\bold{\code{logging.exit.on.error}}\code{ = FALSE}}{
