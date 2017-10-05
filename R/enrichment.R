@@ -17,7 +17,7 @@
 #' @param ontology which ontology should be used (see \code{GOHyperGParams} from the \code{GOstats} package for details)
 #' @param assembly Genome to be used. One of the following: hg19, mm9, mm10 or rn5
 #' @param ... arguments passed on to the parameters of \code{GOHyperGParams} from the \code{GOstats} package
-#' @return a \code{GOHyperGresult} object (see the \code{GOstats} package for furthert details)
+#' @return a \code{GOHyperGresult} object (see the \code{GOstats} package for further details)
 #' @author Fabian Mueller
 #' @export
 #' @examples

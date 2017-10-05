@@ -290,10 +290,14 @@ addReportPlot.diffVar.scatter.site <- function (report, var.table, comparison.na
   if (DENS.SCATTER.SPARSE.POINTS.MAX < sparse.points*nrow(var.table)){
     sparse.points <- DENS.SCATTER.SPARSE.POINTS.MAX
   }
+  #dens.subsample <- FALSE
   dens.subsample <- FALSE
-  if (nrow(var.table) > DENS.SCATTER.SUBSAMPLE.THRES){
-    dens.subsample <- DENS.SCATTER.SUBSAMPLE.THRES
+  if(nrow(var.table)>10000){
+    dens.subsample <- 10000
   }
+  #if (nrow(var.table) > DENS.SCATTER.SUBSAMPLE.THRES){
+  #  dens.subsample <- DENS.SCATTER.SUBSAMPLE.THRES
+  #}
   
   if("diffVar.p.adj.fdr" %in% colnames(var.table)){
     var.sites <- var.table[,"diffVar.p.adj.fdr"] < P.VAL.CUT
@@ -513,8 +517,8 @@ addReportPlot.diffVar.meth <- function(report, var.table, comparison.name,
                            group.name1,group.name2,auto.diffVar=NULL,auto.diffMeth=NULL,rank.cuts=c(100,1000,10000,100000),rerank=TRUE){
   ret <- list()
   dens.subsample <- FALSE
-  if (nrow(var.table) > DENS.SCATTER.SUBSAMPLE.THRES){
-    dens.subsample <- DENS.SCATTER.SUBSAMPLE.THRES
+  if (nrow(var.table) > 10000){
+    dens.subsample <- 10000
   }
 
   ranks.diffVar <- var.table[,"combinedRank.var"]
@@ -582,8 +586,8 @@ addReportPlot.diffVar.meth.region <- function(report, var.table, comparison.name
                                        group.name1,group.name2,auto.diffVar=NULL,auto.diffMeth=NULL,rank.cuts=c(100,500,1000),rerank=TRUE){
   ret <- list()
   dens.subsample <- FALSE
-  if (nrow(var.table) > DENS.SCATTER.SUBSAMPLE.THRES){
-    dens.subsample <- DENS.SCATTER.SUBSAMPLE.THRES
+  if (nrow(var.table) > 10000){
+    dens.subsample <- 10000
   }
   
   ranks.diffVar <- var.table[,"combinedRank.var"]
@@ -605,7 +609,6 @@ addReportPlot.diffVar.meth.region <- function(report, var.table, comparison.name
     color.diff[is.diff.var] <- "DVR"
     color.diff[is.diff.meth&is.diff.var] <- "Both"
     toPlot <- data.frame(toPlot,Color.diff=color.diff)
-    #toPlot <- toPlot[is.diff.meth|is.diff.var,]
     is.special <- is.diff.meth|is.diff.var
     pp <- create.diffMeth.diffVar.subsample(toPlot,dens.subsample, is.special=is.special, rank.cut.diffMeth = rank.cut.diffMeth, rank.cut.diffVar = rank.cut.diffVar)
     fig.name <- paste("diffMethVar",comparison.name,region.type,cut.id,sep="_")
@@ -622,7 +625,6 @@ addReportPlot.diffVar.meth.region <- function(report, var.table, comparison.name
     color.diff[is.diff.var] <- "DVR"
     color.diff[is.diff.meth&is.diff.var] <- "Both"
     toPlot <- data.frame(toPlot,Color.diff=color.diff)
-    #toPlot <- toPlot[is.diff.meth|is.diff.var,]
     is.special <- is.diff.meth|is.diff.var
     pp <- create.diffMeth.diffVar.subsample(toPlot,dens.subsample, is.special=is.special, rank.cut.diffMeth = auto.diffMeth, rank.cut.diffVar = auto.diffVar)
     fig.name <- paste("diffMethVar",comparison.name,region.type,"rcAuto",sep="_")
@@ -698,19 +700,19 @@ create.diffMeth.diffVar.subsample <- function(df2p,dens.subsample,is.special=NUL
         thres <- sparse.points
       }
       df2p.loose <- df2p[dens.ranks<=thres,]#the sub data.frame in of the least dens points
-      pp <- pp + geom_point(data=df2p.loose,aes_string(x=colnames(df2p)[1],y=colnames(df2p)[2]),colour=DENS.COLORS.LOW[1],size=0.4)
+      pp <- pp + geom_point(data=df2p.loose,aes_string(x=colnames(df2p)[1],y=colnames(df2p)[2],colour=colnames(df2p)[3]),size=0.4)+scale_color_manual(values=c(rnb.getOption("colors.category")[c(1,2,4)],DENS.COLORS.LOW[1]))
     }
     if(!is.null(is.special)){
       df2p.special <- df2p[is.special,]
       if(is.numeric(dens.subsample) && dens.subsample>0){
         ss <- as.numeric(dens.subsample)
         if(nrow(df2p.special)>ss){
-          pp <- pp + stat_density2d(data = df2p.special, fill=colnames(df2p)[3], aes(,alpha=..density..^0.25), countour=FALSE, n =dens.n, h=stable.h)
+          pp <- pp + stat_density2d(data = df2p.special, geom="tile", aes(fill=Color.diff,alpha=..density..^0.25), contour=FALSE, n =dens.n, h=stable.h)+scale_fill_manual(values=c(rnb.getOption("colors.category")[c(1,2,4)],DENS.COLORS.LOW[1]))
         }else{
-          pp <- pp + geom_point(data=df2p.special,aes_string(x=colnames(df2p)[1],y=colnames(df2p)[2],colour=colnames(df2p)[3]),size=1) + guides(fill=FALSE)
+          pp <- pp + geom_point(data=df2p.special,aes_string(x=colnames(df2p)[1],y=colnames(df2p)[2],colour=colnames(df2p)[3]),size=1) + guides(fill=FALSE)+scale_color_manual(values=c(rnb.getOption("colors.category")[c(1,2,4)],DENS.COLORS.LOW[1]))
         }
       }else{
-        pp <- pp + geom_point(data=df2p.special,aes_string(x=colnames(df2p)[1],y=colnames(df2p)[2],colour=colnames(df2p)[3]),size=1) + guides(fill=FALSE)
+        pp <- pp + geom_point(data=df2p.special,aes_string(x=colnames(df2p)[1],y=colnames(df2p)[2],colour=colnames(df2p)[3]),size=1) + guides(fill=FALSE)+scale_color_manual(values=c(rnb.getOption("colors.category")[c(1,2,4)],DENS.COLORS.LOW[1]))
       }
     }  
   }
@@ -751,7 +753,7 @@ rnb.section.diffVar <- function(rnb.set,diff.meth,report,gzTable=FALSE,different
              "For the iEVORA method, adjustment columns are not supported and therefore ignored.",
              rnb.get.reference(report,refText.iEVORA))
   }
-  txt <- c(txt," This sections contains plots and tables describing the results of this test and further analyses ",
+  txt <- c(txt," This section contains plots and tables describing the results of this test and further analyses ",
             "of the sites that were selected as differentially variable.")
   report <- rnb.add.section(report, 'Differential Variability', txt)
   
@@ -908,13 +910,14 @@ rnb.section.diffVar <- function(rnb.set,diff.meth,report,gzTable=FALSE,different
       plots <- c(plots,res)
     }
   }
-  diffVarType = c(paste("combined rank among the ",diffSitesRankCut," best ranking regions",sep=""),
+  diffVarType = c(paste("combined rank among the ",diffSitesRankCut," best ranking sites",sep=""),
                   "automatically selected rank cutoff")
   names(diffVarType) = c(paste("rc",1:length(diffSitesRankCut),sep=""),"rcAuto")
   setting.names <- list(
     'comparison' = comps,
     'rankCutoff' = diffVarType)
-  description <- 'Scatterplot comparing differentially methylated and variable sites.'
+  description <- c('Scatterplot comparing differentially methylated (DMCs) and variable sites (DVCs), as well as sites ',
+  'that are both differentially methylated and variable.')
   report <- rnb.add.figure(report, description, plots, setting.names)
   logger.completed()
   
@@ -1095,7 +1098,7 @@ rnb.section.diffVar.region <- function(rnb.set,diff.meth,report,gzTable=FALSE){
   if(parallel.isEnabled()){
     plots <- foreach(k=1:nrow(pps),.combine="c") %dopar% {
       i <- pps[k,1]
-      j <- pps[k,1]
+      j <- pps[k,2]
       comp.name <- names(comps)[1]
       comp <- comps[comp.name]
       ccn <- ifelse(is.valid.fname(comp.name),comp.name,paste("cmp",i,sep=""))
@@ -1136,7 +1139,8 @@ rnb.section.diffVar.region <- function(rnb.set,diff.meth,report,gzTable=FALSE){
     'comparison' = comps,
     'regions' = reg.types,
     'rankCutoff' = diffVarType)
-  description <- 'Scatterplot comparing differentially methylated and variable regions.'
+  description <- c('Scatterplot comparing differentially methylated (DMRs) and variable regions (DVRs), as well as regions ',
+  'that are both differentially methylated and variable.')
   report <- rnb.add.figure(report, description, plots, setting.names)
   
 
