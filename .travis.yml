@@ -10,3 +10,4 @@ addons:
     - gsl-bin
     - libgsl-dbg
     - libgsl-dev
+warnings_are_errors: false
