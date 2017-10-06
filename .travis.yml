@@ -7,6 +7,7 @@ before_script:
 addons:
   apt:
     packages:
+    - ghostscript
     - libgsl2
     - gsl-bin
     - libgsl-dbg
