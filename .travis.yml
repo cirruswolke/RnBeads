@@ -3,7 +3,7 @@ sudo: false
 cache: packages
 r: bioc-release
 before_script:
-  - Rscript -e 'install.packages("https://bioconductor.org/packages/release/bioc/src/contrib/GLAD_2.40.0.tar.gz")'
+  - Rscript -e 'install.packages("RUnit")'
 addons:
   apt:
     packages:
