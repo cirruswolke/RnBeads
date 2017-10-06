@@ -2,5 +2,9 @@ language: R
 sudo: false
 cache: packages
 r: bioc-release
-install:
+script:
   - Rscript -e 'install.packages("https://bioconductor.org/packages/release/bioc/src/contrib/GLAD_2.40.0.tar.gz")'
+addons:
+  apt:
+    packages:
+    - gsl
