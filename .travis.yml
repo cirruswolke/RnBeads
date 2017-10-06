@@ -7,4 +7,5 @@ script:
 addons:
   apt:
     packages:
-    - gsl
+    - libgsl2
+    - gsl-bin
