@@ -2,8 +2,6 @@ language: R
 sudo: false
 cache: packages
 r: bioc-release
-before_script:
-  - Rscript -e 'install.packages("RUnit")'
 addons:
   apt:
     packages:
