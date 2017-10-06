@@ -9,6 +9,5 @@ addons:
     packages:
     - libgsl2
     - gsl-bin
-    - libgsl0ldbl
     - libgsl0-dbg
     - libgsl0-dev
