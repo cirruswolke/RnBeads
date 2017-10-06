@@ -115,6 +115,7 @@ Collate:
     'profiles.R'
     'qualityControl.R'
     'readGEO.R'
+    'exportGEO.R'
     'regionDescription.R'
     'regionProfiles.R'
     'subSegments.R'
