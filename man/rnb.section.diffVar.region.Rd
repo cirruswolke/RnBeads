@@ -4,7 +4,8 @@
 \alias{rnb.section.diffVar.region}
 \title{rnb.section.diffVar.region}
 \usage{
-rnb.section.diffVar.region(rnb.set, diff.meth, report, gzTable = FALSE)
+rnb.section.diffVar.region(rnb.set, diff.meth, report, gzTable = FALSE,
+  level = 1)
 }
 \arguments{
 \item{rnb.set}{Object of type \code{\linkS4class{RnBSet}} containing methylation information}
@@ -14,6 +15,8 @@ rnb.section.diffVar.region(rnb.set, diff.meth, report, gzTable = FALSE)
 \item{report}{Report object to which the content is added}
 
 \item{gzTable}{Flag indicating if tables should be gzipped}
+
+\item{level}{Which level of section should be created. See \code{rnb.add.section}.}
 }
 \value{
 The modified report object

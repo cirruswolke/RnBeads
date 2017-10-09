@@ -599,7 +599,7 @@ addReportPlot.diffVar.meth.region <- function(report, var.table, comparison.name
   for(i in 1:length(rank.cuts)){
     cutoff <- rank.cuts[i]
     cut.id <- paste0("rc",i)
-    toPlot <- data.frame(Meth.p=var.table[,"combinedRank"],Var.p=var.table[,"combinedRank.var"])
+    toPlot <- data.frame(Rank.meth=var.table[,"combinedRank"],Rank.var=var.table[,"combinedRank.var"])
     is.diff.meth <- ranks.diffMeth < cutoff
     is.diff.var <- ranks.diffVar < cutoff
     rank.cut.diffMeth <- max(toPlot[is.diff.meth,1])
@@ -617,9 +617,9 @@ addReportPlot.diffVar.meth.region <- function(report, var.table, comparison.name
     ret <- c(ret,report.plot)
   }
   if(is.integer(auto.diffVar)&&is.integer(auto.diffMeth)){
-    toPlot <- data.frame(Meth.p=var.table[,"combinedRank"],Var.p=var.table[,"combinedRank.var"])
-    is.diff.meth <- toPlot$Meth.p < auto.diffMeth
-    is.diff.var <- toPlot$Var.p < auto.diffVar
+    toPlot <- data.frame(Rank.meth=var.table[,"combinedRank"],Rank.var=var.table[,"combinedRank.var"])
+    is.diff.meth <- toPlot$Rank.meth < auto.diffMeth
+    is.diff.var <- toPlot$Rank.var < auto.diffVar
     color.diff <- rep('Not Significant',dim(toPlot)[1])
     color.diff[is.diff.meth] <- "DMR"
     color.diff[is.diff.var] <- "DVR"
@@ -728,10 +728,11 @@ create.diffMeth.diffVar.subsample <- function(df2p,dens.subsample,is.special=NUL
 #'                  containing the differentially variable sites
 #' @param report Report object (\code{\linkS4class{Report}}) to which information should be added.
 #' @param gzTable Flag indicating if the tables should ne gzipped
+#' @param level Which level of section should be created. See \code{rnb.add.section}.
 #' @return Modified report with section about result of differential variability analysis
 #' @author Michael Scherer
 #' @noRd
-rnb.section.diffVar <- function(rnb.set,diff.meth,report,gzTable=FALSE,differentiality.method=rnb.getOption("differential.variability.method")){
+rnb.section.diffVar <- function(rnb.set,diff.meth,report,gzTable=FALSE,differentiality.method=rnb.getOption("differential.variability.method"),level=1){
   if (length(get.comparisons(diff.meth))<1){
     stop("no valid comparisons")
   }
@@ -754,8 +755,9 @@ rnb.section.diffVar <- function(rnb.set,diff.meth,report,gzTable=FALSE,different
              rnb.get.reference(report,refText.iEVORA))
   }
   txt <- c(txt," This section contains plots and tables describing the results of this test and further analyses ",
-            "of the sites that were selected as differentially variable.")
-  report <- rnb.add.section(report, 'Differential Variability', txt)
+            "of the sites that were selected as differentially variable. Please note that missing methylation values have ",
+           "been imputed with ",rnb.getOption("imputation.method"),".")
+  report <- rnb.add.section(report, 'Differential Variability', txt,level = level)
   
   diffSitesRankCut <- c(100,1000,10000,100000)
   comps <- get.comparisons(diff.meth)
@@ -933,8 +935,9 @@ rnb.section.diffVar <- function(rnb.set,diff.meth,report,gzTable=FALSE,different
 #' @param diff.meth RnBDiffMeth object. See \code{\link{RnBDiffMeth-class}} for details.
 #' @param report Report object to which the content is added
 #' @param gzTable Flag indicating if tables should be gzipped
+#' @param level Which level of section should be created. See \code{rnb.add.section}.
 #' @return The modified report object
-rnb.section.diffVar.region <- function(rnb.set,diff.meth,report,gzTable=FALSE){
+rnb.section.diffVar.region <- function(rnb.set,diff.meth,report,gzTable=FALSE,level=1){
   if (length(get.comparisons(diff.meth))<1){
     stop("no valid comparisons")
   }
@@ -949,7 +952,7 @@ rnb.section.diffVar.region <- function(rnb.set,diff.meth,report,gzTable=FALSE){
                    "but the mean of variances, ",
                    "the log-ratio of the quotient of variances as well as the p-values from the differentiality test were ",
                    "employed. Ranking was performed in line with the ranking of differential methylation.")
-  report <- rnb.add.section(report, "Region Level (Differential Variability)", sectionText)
+  report <- rnb.add.section(report, "Differential Variability", sectionText,level = level)
   
   comps <- get.comparisons(diff.meth)
   reg.types <- get.region.types(diff.meth)
