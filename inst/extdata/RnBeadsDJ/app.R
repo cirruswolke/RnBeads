@@ -772,17 +772,19 @@ ui <- tagList(useShinyjs(), navbarPage(
 		tabsetPanel(
 			tabPanel("Data Import",
 				sidebarPanel(
+					tags$h1("Import from ..."),
 					wellPanel(
-						tags$h4("New Dataset"),
+						tags$h4("... new Dataset"),
+						tags$p("Import using the inputs and options specified in other tabs."),
 						actionButton("modImportNew", "Import New Data", class="btn-primary")
 					),
 					wellPanel(
-						tags$h4("Existing Analysis Directory"),
+						tags$h4("... existing Analysis Directory"),
 						uiOutput("modImportAnaDir.about"),
 						actionButton("modImportAnaDir", "Import from Analysis Directory", class="btn-primary")
 					),
 					wellPanel(
-						tags$h4("RnBeads Objects"),
+						tags$h4("... RnBeads Objects"),
 						directoryInput('modImportRnBSetDir', label = 'Select directory containing an RnBSet object', value = '~'),
 						localFileInput('modImportOptionsFile', label = 'Select Options XML file (optional)'),
 						actionButton("modImportRObjects", "Import", class="btn-primary")
@@ -799,6 +801,9 @@ ui <- tagList(useShinyjs(), navbarPage(
 			),
 			tabPanel("Quality Control",
 				"Blubb"
+			),
+			tabPanel("...",
+				"TODO"
 			)
 		)
 	)
