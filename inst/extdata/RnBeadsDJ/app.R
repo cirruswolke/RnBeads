@@ -762,7 +762,7 @@ ui <- tagList(useShinyjs(), navbarPage(
 		)
 	),
 	tabPanel("Run", icon=icon("play"),
-		tags$p(textOutput("runHint")),
+		uiOutput("runHint"),
 		sliderInput('numCores', "Select the number of cores to use", min=1, max=detectCores(), value=1, step=1),
 		selectInput('ggplotTheme', "Select a theme for the plots", c("Black & White"="bw", "Grey"="grey")),
 		actionButton("runRnb", "Run Analysis", class="btn-primary"),
@@ -1144,17 +1144,17 @@ server <- function(input, output, session) {
 		if (!dir.exists(inputDataDir())) res <- FALSE # data directory does not exist
 		return(res)
 	})
-	output$runHint <- renderText({
+	output$runHint <- renderUI({
 		if (enableRun()){
 			shinyjs::enable("numCores")
 			shinyjs::enable("ggplotTheme")
 			shinyjs::enable("runRnb")
-			"Ready to run"
+			tags$p(tags$span(style="color:green", icon("play"), "Ready to run"))
 		} else {
 			shinyjs::disable("numCores")
 			shinyjs::disable("ggplotTheme")
 			shinyjs::disable("runRnb")
-			"Unable to run the analysis. Please make sure that you selected a non-existing report directory ('Analysis' tab) and that you specified the sample annotation file and data directory correctly ('Input' tab)"
+			tags$p(tags$span(style="color:red", icon("warning"), "Unable to run the analysis. Please make sure that you selected a non-existing report directory ('Analysis' tab) and that you specified the sample annotation file and data directory correctly ('Input' tab)"))
 		}
 	})
 	observeEvent(input$numCores, {
