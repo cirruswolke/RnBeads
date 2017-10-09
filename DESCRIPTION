@@ -45,7 +45,8 @@ Suggests:
     IlluminaHumanMethylation450kanno.ilmn12.hg19,
     scales,
     missMethyl,
-    impute
+    impute,
+    RUnit
 Depends:
     R (>= 3.0.0),
     BiocGenerics,
@@ -117,6 +118,7 @@ Collate:
     'profiles.R'
     'qualityControl.R'
     'readGEO.R'
+    'exportGEO.R'
     'regionDescription.R'
     'regionProfiles.R'
     'subSegments.R'

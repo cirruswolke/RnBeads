@@ -255,7 +255,7 @@ rnb.execute.import<-function(data.source, data.type=rnb.getOption("import.defaul
 					strand.col=3L,
 					mean.meth.col=NA,
 					coverage.col=NA,
-					coord.shift = -1L,
+					coord.shift = 0L,
 					nrows=nrows)
 		} else if (rnb.getOption("import.bed.style")=="bismarkCov"){
 			result <- read.bed.files(base.dir=data.source[[1]], sample.sheet=data.source[[2]], file.names.col=filename.column,
@@ -284,7 +284,8 @@ rnb.execute.import<-function(data.source, data.type=rnb.getOption("import.defaul
 					strand.col=6L,
 					mean.meth.col=4L,
 					coverage.col=5L,
-					coord.shift=0L)
+					coord.shift=0L,
+					nrows=nrows)
 		}else {
 			skip.lines <- 1
 			pos.coord.shift <- 1

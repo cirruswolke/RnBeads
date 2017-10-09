@@ -1,0 +1,13 @@
+language: R
+sudo: false
+cache: packages
+r: bioc-release
+addons:
+  apt:
+    packages:
+    - ghostscript
+    - libgsl2
+    - gsl-bin
+    - libgsl-dbg
+    - libgsl-dev
+warnings_are_errors: false

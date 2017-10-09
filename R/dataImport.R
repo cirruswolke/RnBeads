@@ -1540,11 +1540,7 @@ find.bed.column<-function(annotation,
 	potential.fnames<-which(classes%in%c("character","factor"))
 
 	candidate.fname<-sapply(potential.fnames, function(cix){
-
-				extensions<-sapply(strsplit(as.character(annotation[,cix]),"\\."),
-						function(spl) spl[length(spl)] %in% c("bed", "BED", "cov", "COV")
-				)
-
+				extensions<-grepl("\\.bed|\\.BED|\\.cov|\\.COV",annotation[,cix])
 				all(extensions)
 			})
 
@@ -1612,9 +1608,13 @@ get.bed.column.classes<-function(bed.top,
 		classes[strand.col]<-"character"
 	}
 	classes[start.col]<-"integer"
-	classes[end.col]<-"integer"
+	if(!is.na(end.col)){
+		classes[end.col]<-"integer"
+	}
 	classes[coverage.col]<-"integer"
-	classes[mean.meth.col]<-"numeric"
+	if(!is.na(mean.meth.col)){
+		classes[mean.meth.col]<-"numeric"
+	}
 	if(useff){
 		classes[chr.col]<-"factor"
 	}else{
