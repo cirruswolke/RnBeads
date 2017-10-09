@@ -9,8 +9,8 @@ Authors@R: c(
     role = c("aut")),
     person("Fabian", "Mueller", email = "rnbeads@mpi-inf.mpg.de",
     role = c("aut", "cre")))
-Date: 2017-09-29
-Version: 1.9.4
+Date: 2017-10-09
+Version: 1.9.5
 Suggests:
     Category,
     GOstats,
@@ -44,7 +44,9 @@ Suggests:
     GLAD,
     IlluminaHumanMethylation450kanno.ilmn12.hg19,
     scales,
-    RUnit
+    RUnit,
+    shiny,
+    shinyjs
 Depends:
     R (>= 3.0.0),
     BiocGenerics,

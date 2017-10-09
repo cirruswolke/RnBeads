@@ -514,6 +514,26 @@ rnb.run.xml <- function(fname, create.r.command = FALSE) {
 
 ########################################################################################################################
 
+#' rnb.run.dj
+#'
+#' Starts the RnBeads Data Juggler (RnBeadsDJ) for configuring and running RnBeads analyses from the web browser
+#' 
+#' @return Nothing of particular interest
+#'
+#' @details
+#' A Shiny app is launched in the web browser
+#'
+#' @seealso \code{\link{rnb.run.analysis}} for starting an analysis pipeline
+#' @author Fabian Mueller
+#' @export
+rnb.run.dj <- function(){
+	shiny::runApp(system.file("extdata/RnBeadsDJ", package = "RnBeads"))
+	invisible(NULL)
+}
+
+
+########################################################################################################################
+
 #' RnBeads Analysis Pipeline
 #'
 #' Starts the \pkg{RnBeads} analysis pipeline on the given dataset. It loads the dataset if it is specified as a
