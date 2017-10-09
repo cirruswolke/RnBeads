@@ -776,6 +776,7 @@ ui <- tagList(useShinyjs(), navbarPage(
 					wellPanel(
 						tags$h4("... new Dataset"),
 						tags$p("Import using the inputs and options specified in other tabs."),
+						uiOutput("modImportNew.about"),
 						actionButton("modImportNew", "Import New Data", class="btn-primary")
 					),
 					wellPanel(
@@ -1204,6 +1205,15 @@ server <- function(input, output, session) {
 	# Modules
 	############################################################################
 	rnbSet <- NULL
+	output$modImportNew.about <- renderUI({
+		if (enableRun()){
+			if (!modImportStatus$dataset.loaded) shinyjs::enable("modImportNew")
+			tags$p(tags$span(icon("play"), "Ready to run"))
+		} else {
+			shinyjs::disable("modImportNew")
+			tags$p(tags$span(icon("warning"), "Unable to run. Please make sure that you selected a non-existing report directory ('Analysis' tab) and that you specified the sample annotation file and data directory correctly ('Input' tab)"))
+		}
+	})
 	output$modImportAnaDir.about <- renderUI({
 		curStatus <- anaStatus()
 		if (curStatus$status=="reportDir"){
@@ -1224,7 +1234,7 @@ server <- function(input, output, session) {
 			shinyjs::disable("modImportRObjects")
 			shinyjs::enable("modImportReset")
 		} else {
-			shinyjs::enable("modImportNew")
+			if (enableRun()) shinyjs::enable("modImportNew")
 			if (anaStatus()$status=="reportDir") shinyjs::enable("modImportAnaDir")
 			shinyjs::enable("modImportRObjects")
 			shinyjs::disable("modImportReset")
