@@ -425,10 +425,19 @@ checkReportDir <- function(repDir){
 ui <- tagList(useShinyjs(), navbarPage(
 	windowTitle="RnBeadsDJ",
 	tags$p(tags$a(href="http://rnbeads.mpi-inf.mpg.de", tags$img(width=145, height=50, src="img/rnbeads_logo.png")), "DJ"),
-	tabPanel("Sandbox", icon=icon("dropbox"),
-		verbatimTextOutput("sandboxOut"),
-		localFileInput('sandboxIn2', label='select a local file'),
-		verbatimTextOutput("sandboxOut2")
+	# tabPanel("Sandbox", icon=icon("dropbox"),
+	# 	verbatimTextOutput("sandboxOut"),
+	# 	localFileInput('sandboxIn2', label='select a local file'),
+	# 	verbatimTextOutput("sandboxOut2")
+	# ),
+	tabPanel("About", icon=icon("book"),
+		tags$h1("Welcome to the RnBeads Data Juggler"),
+		tags$p("Here, you can configure and run your RnBeads analyses. You can ..."),
+		tags$ul(
+			tags$li("... run new analyses by specifying a non-existing data directory in the", "'Analysis'", "tab."),
+			tags$li("... view the status of an RnBeads analysis by specifying an existing report directory in the", "'Analysis'", "tab."),
+			tags$li("... run individual RnBeads modules via the", "'Modules'", "tab.")
+		)
 	),
 	tabPanel("Analysis", icon=icon("bar-chart"),
 		sidebarPanel(
@@ -758,9 +767,42 @@ ui <- tagList(useShinyjs(), navbarPage(
 		selectInput('ggplotTheme', "Select a theme for the plots", c("Black & White"="bw", "Grey"="grey")),
 		actionButton("runRnb", "Run Analysis", class="btn-primary"),
 		textOutput("runStatusMsg")
+	),
+	tabPanel("Modules", icon=icon("cubes"),
+		tabsetPanel(
+			tabPanel("Data Import",
+				sidebarPanel(
+					wellPanel(
+						tags$h4("New Dataset"),
+						actionButton("modImportNew", "Import New Data", class="btn-primary")
+					),
+					wellPanel(
+						tags$h4("Existing Analysis Directory"),
+						uiOutput("modImportAnaDir.about"),
+						actionButton("modImportAnaDir", "Import from Analysis Directory", class="btn-primary")
+					),
+					wellPanel(
+						tags$h4("RnBeads Objects"),
+						directoryInput('modImportRnBSetDir', label = 'Select directory containing an RnBSet object', value = '~'),
+						localFileInput('modImportOptionsFile', label = 'Select Options XML file (optional)'),
+						actionButton("modImportRObjects", "Import", class="btn-primary")
+					),
+					wellPanel(
+						tags$h4("Reset"),
+						actionButton("modImportReset", "Unload dataset", class="btn-primary")
+					)
+				),
+				mainPanel(
+					tags$h1("Loading Status"),
+					uiOutput("modImport.status")
+				)
+			),
+			tabPanel("Quality Control",
+				"Blubb"
+			)
+		)
 	)
 ))
-
 ################################################################################
 # Server configuration
 ################################################################################
@@ -787,10 +829,12 @@ server <- function(input, output, session) {
 	reportDir <- reactive({
 		file.path(readDirectoryInput(session, 'outDir'), input$reportSubDir)
 	})
-	output$anaStatus <- renderUI({
+	anaStatus <- reactive({
+		res <- list(status="invalid", statusTab=NULL)
 		if (dir.exists(reportDir())){
 			reportStatus <- checkReportDir(reportDir())
 			if (reportStatus$valid){
+				#Valid existing report directory
 				statusTab <- data.frame(
 					Module=names(RNB.MODULES),
 					Report=NA,
@@ -810,20 +854,23 @@ server <- function(input, output, session) {
 						statusTab$Status[i] <- as.character(tags$span(style="color:red", icon("times")))
 					}
 				}
-				
-				tagList(
-					tags$h1("Existing RnBeads analysis"),
-					renderTable(statusTab, sanitize.text.function=function(x){x})
-				)
+				if (!modImportStatus$dataset.loaded) shinyjs::enable("modImportAnaDir")
+				res$status <- "reportDir"
+				res$statusTab <- statusTab
 			} else {
-				tagList(
-					tags$h1("Invalid analysis directory"),
-					tags$p("Please select a non-existing analysis directory for new analyses",
-						"or an existing RnBeads report directory."
-					)
-				)
+				# Existing directory, but no valid RnBeads report
+				shinyjs::disable("modImportAnaDir")
 			}	
 		} else {
+			# New RnBeads analysis
+			shinyjs::disable("modImportAnaDir")
+			res$status <- "new"
+		}
+		res
+	})
+	output$anaStatus <- renderUI({
+		curStatus <- anaStatus()
+		if (curStatus$status=="new"){
 			tagList(
 				tags$h1("Configure new analysis"),
 				tags$p(
@@ -833,6 +880,16 @@ server <- function(input, output, session) {
 				tags$p(
 					"A new report will be created in", tags$code(reportDir())
 				)
+			)
+		} else if (curStatus$status=="reportDir"){
+			tagList(
+				tags$h1("Existing RnBeads analysis"),
+				renderTable(curStatus$statusTab, sanitize.text.function=function(x){x})
+			)
+		} else if (curStatus$status=="invalid"){
+			tagList(
+				tags$h1("Invalid analysis directory"),
+				tags$p("Please select a non-existing analysis directory for new analyses or an existing RnBeads report directory.")
 			)
 		}
 	})
@@ -1137,6 +1194,78 @@ server <- function(input, output, session) {
 	# 	# }
 	# 	return(res)
 	# })
+
+	############################################################################
+	# Modules
+	############################################################################
+	rnbSet <- NULL
+	output$modImportAnaDir.about <- renderUI({
+		curStatus <- anaStatus()
+		if (curStatus$status=="reportDir"){
+			tagList(tags$p("An existing RnBeads report has been specified. Ready to import."))
+		} else {
+			tagList(tags$p(icon("warning"), "Please specify an existing RnBeads report in the 'Analysis' tab to continue."))
+		}
+	})
+	modImportStatus <- reactiveValues(
+		dataset.loaded=FALSE,
+		dataset.loaded.nsamples=-1
+	)
+	# watch if dataset has been loaded
+	reactDataset <- observeEvent(modImportStatus$dataset.loaded, {
+		if (modImportStatus$dataset.loaded){
+			shinyjs::disable("modImportNew")
+			shinyjs::disable("modImportAnaDir")
+			shinyjs::disable("modImportRObjects")
+			shinyjs::enable("modImportReset")
+		} else {
+			shinyjs::enable("modImportNew")
+			if (anaStatus()$status=="reportDir") shinyjs::enable("modImportAnaDir")
+			shinyjs::enable("modImportRObjects")
+			shinyjs::disable("modImportReset")
+		}
+	})
+	output$modImport.status <- renderUI({
+		# curStatus <- modImportStatus()
+		res <- list()
+		if (modImportStatus$dataset.loaded){
+			res <- c(res, list(tags$p(tags$span(style="color:green", icon("check"), "Loaded dataset containing", modImportStatus$dataset.loaded.nsamples, "samples"))))
+		} else {
+			res <- c(res, list(tags$p(tags$span(style="color:red", icon("times"), "No dataset loaded"))))
+		}
+		tagList(res)
+	})
+	observeEvent(input$modImportNew, {
+		modImportStatus$dataset.loaded <- TRUE
+		#TODO
+	})
+	observeEvent(input$modImportAnaDir, {
+		modImportStatus$dataset.loaded <- TRUE
+		#TODO
+	})
+	observeDirectoryInput(input, session, 'modImportRnBSetDir')
+	observeLocalFileInput(input, session, 'modImportOptionsFile')
+	observeEvent(input$modImportRObjects, {
+		modImportStatus$dataset.loaded <- TRUE
+		withProgress({
+			tryCatch({
+					rnbSet <- load.rnb.set(readDirectoryInput(session, 'modImportRnBSetDir'))
+					modImportStatus$dataset.loaded.nsamples <- length(samples(rnbSet))
+				},
+				error = function(err) {
+					rnbSet <- NULL
+					modImportStatus$dataset.loaded <- FALSE
+					showNotification(tags$span(style="color:red", icon("warning"), paste0("Failed to load RnBSet object: ", err$message)))
+				}
+			)
+		}, message="Loading dataset")
+		#TODO: import options
+	})
+	observeEvent(input$modImportReset, {
+		modImportStatus$dataset.loaded <- FALSE
+		modImportStatus$dataset.loaded.nsamples <- -1
+		rnbSet <- NULL
+	})
 }
 
 ################################################################################
