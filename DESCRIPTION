@@ -46,7 +46,8 @@ Suggests:
     scales,
     RUnit,
     shiny,
-    shinyjs
+    shinyjs,
+    plotrix
 Depends:
     R (>= 3.0.0),
     BiocGenerics,
