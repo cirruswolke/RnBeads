@@ -157,6 +157,10 @@ apply.iEVORA <- function(meth.matrix,inds.g1,inds.g2){
   pheno.binary <- rep(0,n)
   pheno.binary[inds.g2] <- 1
   result <- suppressWarnings(iEVORA(data.m=meth.matrix,pheno.v=pheno.binary))
+  if(is.null(result)){
+    p.values <- rep(1,dim(meth.matrix)[1])
+    return(p.values)
+  }
   p.values <- rep(1,dim(meth.matrix)[1])
   p.values[result[,"index"]] <- result[,"P(BT)"]
   return(p.values)
@@ -204,10 +208,12 @@ iEVORA <- function(data.m,pheno.v,thDV=0.001,thDM=0.05){
     }
     else {
       logger.info("No DVCs found.")
+      return(NULL)
     }
   }
   else {
-    logger.info("No DVCs detected. Consider lowering the differential variability threshold.");
+    logger.info("No DVCs detected. All p-values set to 1.");
+    return(NULL)
   }
   logger.completed()
   return(topDVMC.m);
