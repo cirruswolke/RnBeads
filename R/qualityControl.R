@@ -677,7 +677,7 @@ rnb.add.snp.purity <- function(report, mm.snp, s.annotation = data.frame()) {
 	## Plot the data
 	tbl[, "Genetic Noise"] <- tbl[, "Genetic Noise"] * 100
 	xstep <- 2
-	xmax <- ceiling(max(tbl[, 3]) / xstep) * xstep
+	xmax <- ceiling(max(tbl[, "Genetic Noise"]) / xstep) * xstep
 	i.width <- 6.2
 	pp <- ggplot2::ggplot(tbl) + ggplot2::aes_string(x = '`ID`', y = '`Genetic Noise`') +
 		ggplot2::labs(x = NULL, y = "Genetic noise (%)")

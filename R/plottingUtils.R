@@ -806,7 +806,8 @@ rnb.plot.dreduction <- function(rnb.set, plot.type = "pca", dimensions = 1:2, di
 	}
 
 	## Create the ggplot object
-	pp <- ggplot2::ggplot(dframe) + do.call(ggplot2::aes_string, p.aes) + do.call(ggplot2::labs, plot.labs)
+	pp <- ggplot2::ggplot(dframe) + do.call(ggplot2::aes_string, p.aes) + do.call(ggplot2::labs, plot.labs) +
+		ggplot2::coord_fixed()
 	if ("id" %in% colnames(dframe)) {
 		pp <- pp + ggplot2::geom_text()
 	} else {
@@ -835,7 +836,7 @@ rnb.plot.dreduction <- function(rnb.set, plot.type = "pca", dimensions = 1:2, di
 		pp <- pp + theme(plot.margin = unit(rep(0.1, 4), "in"))
 	} else {
 		pp <- pp + theme(plot.margin = unit(0.1 + c(0, legend.space, 0, 0), "in"),
-			legend.justification = c(0, 0.5), legend.position = c(1, 0.5))
+			legend.justification = c(0, 0.5), legend.position = c(1.04, 0.5))
 	}
 
 	attr(pp, "info") <- info
@@ -1479,7 +1480,7 @@ create.densityScatter <- function(df2p,is.special=NULL,dens.subsample=FALSE,dens
 		if (!is.null(is.special)){
 			df2p.special <- df2p[df2p$is.special,]
 			colors.dmp <- DENS.COLORS.LOW[2]
-			if (dens.special){
+			if (dens.special && nrow(df2p.special) > 1){
 				tryCatch(
 					colors.dmp   <- densCols(x=df2p.special[,1],y=df2p.special[,2],colramp = colorRampPalette(c(DENS.COLORS.LOW[2],DENS.COLORS.HIGH[2]))),
 					error=function(ee){
@@ -1540,6 +1541,7 @@ create.scatter.dens.points <- function(df2p,is.special=NULL,dens.special=TRUE,mo
 	num.not.special <- sum(!df2p$is.special)
 	df2p$plotOrder[!df2p$is.special] <- seq_len(num.not.special)
 	df2p$plotOrder[df2p$is.special] <- seq((num.not.special+1),n.points)
+	df2p <- df2p[order(df2p$plotOrder, decreasing=FALSE, na.last=FALSE),]
 	
 	df2p$color <- NA
 	if (sum(!df2p$is.special)>1){
@@ -1573,7 +1575,7 @@ create.scatter.dens.points <- function(df2p,is.special=NULL,dens.special=TRUE,mo
 	if (mock){
 		pp <- pp + geom_blank()
 	} else {
-		pp <- pp + geom_point(aes_string(color="color",order="plotOrder")) + scale_color_identity()
+		pp <- pp + geom_point(aes_string(color="color")) + scale_color_identity()
 	}
 	
 	return(pp)

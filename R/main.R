@@ -743,9 +743,13 @@ rnb.run.analysis <- function(dir.reports, data.source=NULL, sample.sheet=NULL, d
 			if (!is.null(result.diffmeth) && !is.null(result.diffmeth$diffmeth)){
 				diffmeth.path <- file.path(dir.reports, "differential_rnbDiffMeth")
 				save.rnb.diffmeth(result.diffmeth$diffmeth, diffmeth.path)
-				diffmeth.enrichment <- result.diffmeth$dm.enrich
-				if (!is.null(diffmeth.enrichment)){
-					save(diffmeth.enrichment, file=file.path(diffmeth.path, "enrichment.RData"))
+				diffmeth.go.enrichment <- result.diffmeth$dm.go.enrich
+				if (!is.null(diffmeth.go.enrichment)){
+					save(diffmeth.go.enrichment, file=file.path(diffmeth.path, "enrichment_go.RData"))
+				}
+				diffmeth.lola.enrichment <- result.diffmeth$dm.lola.enrich
+				if (!is.null(diffmeth.lola.enrichment)){
+					save(diffmeth.lola.enrichment, file=file.path(diffmeth.path, "enrichment_lola.RData"))
 				}
 			} else {
 				logger.warning("Differential methylation object not saved")
@@ -974,8 +978,8 @@ rnb.run.qc <- function(rnb.set, dir.reports, init.configuration = !file.exists(f
 	if (.hasSlot(rnb.set, "inferred.covariates") && isTRUE(rnb.set@inferred.covariates$gender)) {
 		if (inherits(rnb.set, "RnBeadRawSet")) {
 			signal.increases <- rnb.get.XY.shifts(rnb.set)
-		} else {
-			signal.increases <- NULL
+		} else if (inherits(rnb.set, "RnBiseqSet")) {
+			signal.increases <- rnb.get.XY.shifts.biseq(rnb.set)
 		}
 		report <- rnb.section.gender.prediction(rnb.set, signal.increases, report)
 	}
@@ -995,6 +999,7 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 	module.start.log("Preprocessing")
 
 	do.normalization <- rnb.getOption("normalization")
+	do.greedycut <- rnb.getOption("filtering.greedycut")
 
 	if (is.null(do.normalization)) {
 		do.normalization <- inherits(rnb.set, "RnBeadSet")
@@ -1002,15 +1007,22 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 		logger.warning("Skipped normalization module for sequencing data.")
 		do.normalization <- FALSE
 	}
+	if (is.null(do.greedycut)) {
+		do.greedycut <- inherits(rnb.set, "RnBeadSet")
+	} else {
+		if (!inherits(rnb.set, "RnBeadSet")){
+			logger.warning("filtering.greedycut disabled for non-array datasets.")
+			do.greedycut <- FALSE
+		}
+	}
 
 	## Option list
 	report <- init.pipeline.report("preprocessing", dir.reports, init.configuration)
-	o.greedycut.threshold <- ifelse(inherits(rnb.set, "RnBeadSet"), "filtering.greedycut.pvalue.threshold",
+	x.greedycut <- ifelse(inherits(rnb.set, "RnBeadSet"), "filtering.greedycut.pvalue.threshold",
 		"filtering.coverage.threshold")
-	optionlist <- rnb.options("filtering.whitelist", "filtering.blacklist", "filtering.snp",
-		"filtering.cross.reactive", "filtering.greedycut", o.greedycut.threshold, "filtering.greedycut.rc.ties")
-	attr.vec <- c(TRUE, TRUE, TRUE, TRUE, TRUE,
-		optionlist[["filtering.greedycut"]] || inherits(rnb.set, "RnBiseqSet"), optionlist[["filtering.greedycut"]])
+	optionlist <- rnb.options("filtering.whitelist", "filtering.blacklist", "filtering.snp", "filtering.cross.reactive",
+		"filtering.greedycut", x.greedycut, "filtering.greedycut.rc.ties","imputation.method")
+	attr.vec <- c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, do.greedycut, TRUE)
 	if (!inherits(rnb.set, "RnBeadSet")) {
 		optionlist <- optionlist[-4]
 		attr.vec <- attr.vec[-4]
@@ -1033,6 +1045,7 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 	attr.vec <- c(attr.vec, TRUE, TRUE, TRUE, TRUE, TRUE)
 	attr(optionlist, "enabled") <- attr.vec
 	report <- rnb.add.optionlist(report, optionlist)
+	rm(optionlist, x.greedycut, attr.vec)
 
 	## Prefiltering
 	logger.start(paste0("Filtering Procedures", ifelse(do.normalization, " I", "")))
@@ -1094,7 +1107,7 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 		report <- result$report
 		removed.sites <- sort(c(removed.sites, result$filtered))
 	}
-	if (rnb.getOption("filtering.greedycut")) {
+	if (do.greedycut) {
 		result <- rnb.step.greedycut.internal(rnb.set, removed.sites, report, anno.table)
 		report <- result$report
 		removed.sites <- sort(c(removed.sites, result$sites))
@@ -1151,6 +1164,13 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 		removed.samples <- integer()
 		removed.sites <- whitelist
 	}
+	if(!(rnb.getOption("imputation.method")%in%c("mean.cpgs","mean.samples","random","knn"))){
+	  logger.info("Imputation was skipped, data set may still contain missing methylation values")
+	}else{
+	  imputation.result <- rnb.step.imputation(rnb.set,report)
+	  rnb.set <- imputation.result$dataset
+	  report <- imputation.result$report
+	}
 
 	## Postfiltering
 	mm <- NULL
@@ -1198,14 +1218,6 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 	report <- rnb.step.filter.summary.internal(rnb.set, removed.samples, removed.sites,
 			report, section.name=sn, section.order=so)
 	logger.completed()
-
-	#DEBUG
-	if (TRUE){
-		fn <- file.path(rnb.get.directory(report, "data", absolute=TRUE), "filterData.RData")
-		logger.status(c("DEBUG: Saving filtering data to", fn))
-		save(removed.samples, removed.sites, mask, file=fn)
-	}
-
 
 	rnb.set <- rnb.filter.dataset(rnb.set, removed.samples, removed.sites, mask)
 
@@ -1451,7 +1463,7 @@ rnb.run.differential <- function(rnb.set, dir.reports,
 	report <- init.pipeline.report("differential_methylation", dir.reports, init.configuration)
 	optionlist <- rnb.options("analyze.sites", "differential.report.sites", "region.types", "differential.permutations", "differential.comparison.columns",
 		"differential.comparison.columns.all.pairwise","columns.pairing","differential.site.test.method","covariate.adjustment.columns",
-		"differential.adjustment.sva","differential.adjustment.celltype","differential.enrichment")
+		"differential.adjustment.sva","differential.adjustment.celltype","differential.enrichment.go","differential.enrichment.lola","differential.enrichment.lola.dbs")
 	report <- rnb.add.optionlist(report, optionlist)
 	permutations <- rnb.getOption("differential.permutations")
 
@@ -1490,14 +1502,43 @@ rnb.run.differential <- function(rnb.set, dir.reports,
 			disk.dump=disk.dump,disk.dump.dir=disk.dump.dir
 		)
 		rnb.cleanMem()
-		if (!is.null(diffmeth) && rnb.getOption("differential.enrichment") && (length(reg.types)>0)){
-			dm.enrich <- performEnrichment.diffMeth(rnb.set,diffmeth,verbose=TRUE)
-			rnb.cleanMem()
+
+		dm.go.enrich <- NULL
+		dm.lola.enrich <- NULL
+		if (!is.null(diffmeth) && (length(reg.types)>0) && (rnb.getOption("differential.enrichment.go") || rnb.getOption("differential.enrichment.lola"))){
+			if (rnb.getOption("differential.enrichment.go")){
+				dm.go.enrich <- performGoEnrichment.diffMeth(rnb.set,diffmeth,verbose=TRUE)
+				rnb.cleanMem()
+			}
+			if (rnb.getOption("differential.enrichment.lola")){
+				lolaDbPaths <- prepLolaDbPaths(assembly(rnb.set), downloadDir=rnb.get.directory(report, "data", absolute=TRUE))
+				if (length(lolaDbPaths) > 0){
+					dm.lola.enrich <- performLolaEnrichment.diffMeth(rnb.set, diffmeth, lolaDbPaths, verbose=TRUE)
+					rnb.cleanMem()
+				} else {
+					logger.warning(c("No LOLA DB found for assembly", assembly(rnb.set), "--> continuing without LOLA enrichment"))
+				}
+			}
 		} else {
-			dm.enrich <- NULL
 			logger.info(c("Skipping enrichment analysis of differentially methylated regions"))
 		}
 	logger.completed()
+
+	if (TRUE){
+		logger.start("Saving temp objects for debugging")
+			dataDir <- rnb.get.directory(report, "data", absolute=TRUE)
+			diffmeth.path <- file.path(dataDir, "differential_rnbDiffMeth")
+			save.rnb.diffmeth(diffmeth, diffmeth.path)
+			diffmeth.go.enrichment <- dm.go.enrich
+			if (!is.null(diffmeth.go.enrichment)){
+				save(diffmeth.go.enrichment, file=file.path(diffmeth.path, "enrichment_go.RData"))
+			}
+			diffmeth.lola.enrichment <- dm.lola.enrich
+			if (!is.null(diffmeth.lola.enrichment)){
+				save(diffmeth.lola.enrichment, file=file.path(diffmeth.path, "enrichment_lola.RData"))
+			}
+		logger.completed()
+	}
 
 	logger.start("Report Generation")
 	if (is.null(diffmeth)){
@@ -1511,13 +1552,13 @@ rnb.run.differential <- function(rnb.set, dir.reports,
 			report <- rnb.section.diffMeth.site(rnb.set,diffmeth,report,gzTable=gz)
 		}
 		if (length(get.region.types(diffmeth))>0){
-			report <- rnb.section.diffMeth.region(rnb.set,diffmeth,report,dm.enrich=dm.enrich,gzTable=gz)
+			report <- rnb.section.diffMeth.region(rnb.set,diffmeth,report,dm.go.enrich=dm.go.enrich,dm.lola.enrich=dm.lola.enrich,gzTable=gz)
 		}
 	}
 	logger.completed()
 
 	module.complete(report, close.report, show.report)
-	invisible(list(report=report,diffmeth=diffmeth,dm.enrich=dm.enrich))
+	invisible(list(report=report,diffmeth=diffmeth,dm.go.enrich=dm.go.enrich,dm.lola.enrich=dm.lola.enrich))
 }
 
 ########################################################################################################################

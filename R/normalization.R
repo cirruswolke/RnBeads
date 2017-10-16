@@ -117,7 +117,7 @@ rnb.execute.normalization<-function(
 			} else if (method != "none") {
 				disable.method(TRUE, 'dataset already normalized')
 			}
-		} else if (!(method == "none" || inherits(object, "RnBeadRawSet"))) {
+		} else if (!(method %in% c("none", "bmiq") || inherits(object, "RnBeadRawSet"))) {
 			disable.method(TRUE, 'missing intensity data')
 		} else if (method == "illumina" && is.null(qc(object))) {
 			disable.method(TRUE, 'missing data on quality control probes')
@@ -1042,6 +1042,261 @@ rnb.step.normalization<-function(object, report, method = rnb.getOption("normali
 
 	logger.completed()
 	return(list(dataset=object, report=report))
+}
+
+#######################################################################################################################
+
+#' mean.imputation
+#'
+#' Performs mean imputation either for all samples (way=1) or for all CpGs (way=2).
+#'
+#'@param rnb.set Object containing the methylation information to be changed. Has to be of
+#'               type \code{\linkS4class{RnBeadSet}} or \code{\linkS4class{RnBiseqSet}}.
+#'@param way Should the sample-wise mean (1) or CpG-wise mean (2) be used to replace the missing value.
+#'@return Modified rnb.set object.
+#'
+#'@author Michael Scherer
+#'@noRd
+mean.imputation <- function(rnb.set,way=1){
+  methData <- meth(rnb.set)
+  nas <- is.na(methData)
+  if(any(apply(nas,1,all))){
+    logger.warning("There are CpG sites that have missing values in all samples, imputation not performed.")
+    return(rnb.set)
+  }
+  if(any(apply(nas,2,all))){
+    logger.warning("There are samples that have only missing values at the CpG sites, imputation not performed.")
+    return(rnb.set)
+  }
+  means <- apply(methData,way,mean,na.rm=TRUE)
+  for(i in (1:(dim(nas)[way]))){
+    if(way==1){
+      methData[i,nas[i,]] <- means[i]
+    }else if(way==2){
+      methData[nas[,i],i] <- means[i]
+    }
+  }
+  rnb.set@meth.sites <- methData
+  return(rnb.set)
+}
+
+#######################################################################################################################
+
+#' mean.imputation
+#'
+#' Performs random imputation by replacing missing values with randomly selecting (with replacement) from the same CpG site in the samples
+#' that do not contain missing values.
+#'
+#'@param rnb.set Object containing the methylation information to be changed. Has to be of
+#'               type \code{\linkS4class{RnBeadSet}} or \code{\linkS4class{RnBiseqSet}}.
+#'@return Modified rnb.set object.
+#'
+#'@author Michael Scherer
+#'@noRd
+random.imputation <- function(rnb.set){
+  methData <- meth(rnb.set)
+  nas <- is.na(methData)
+  if(any(apply(nas,1,all))){
+    logger.warning("There are CpG sites that have missing values in all samples, imputation not performed.")
+    return(rnb.set)
+  }
+  for(i in 1:dim(nas)[1]){
+    row <- methData[i,]
+    without_nas <- row[!nas[i,]]
+    replacement <- sample(without_nas,sum(nas[i,]),replace=TRUE)
+    methData[i,nas[i,]] <- replacement
+  }
+  rnb.set@meth.sites <- methData
+  return(rnb.set)
+}
+#######################################################################################################################
+
+#' knn.imputation
+#'
+#' This function performns k nearest neighbors imputation by calling the \code{impute.knn} function from the
+#' \pkg{impute} package.
+#'
+#'@param rnb.set Object containing the methylation information to be changed. Has to be of
+#'               type \code{\linkS4class{RnBeadSet}} or \code{\linkS4class{RnBiseqSet}}.
+#'@param k parameter defining the number of nearest neighbors from which the missing value should be inferred
+#'@return Modified rnb.set object.
+#'
+#'@author Michael Scherer
+#'@noRd
+knn.imputation <- function(rnb.set,k=10){
+  rnb.require('impute')
+  methData <- meth(rnb.set)
+  dummy <- capture.output(methData <- (impute.knn(methData,colmax=1,k=k))$data)
+  rm(dummy)
+  rnb.set@meth.sites <- methData
+  return(rnb.set)
+}
+
+#######################################################################################################################
+
+#' rnb.execute.imputation
+#'
+#' Removes missing methylation values in the methylation matrix of the given object
+#'
+#' @param rnb.set Dataset object inheriting from \code{\linkS4class{RnBSet}}.
+#' @param method Imputation method to be used, must be one of \code{"mean.cpgs"}, \code{"mean.samples"},
+#'                \code{"random"}, \code{"knn"} or \code{"none"}.
+#' @param ... Optional arguments passed to knn.imputation
+#' @return The modified rnb.set object without missing methylation values.
+#' 
+#' @details Imputes missing values by applying on the following methods:
+#'          \describe{
+#'            \item{mean.cpgs:}{missing values are inferred as the average methylation value from all other 
+#'            (non-mising) CpGs in this sample}
+#'            \item{mean.samples:}{missing values are inferred as the average methylation value from all other 
+#'            (non-mising) values at this CpG sites in all other samples}
+#'            \item{random:}{missing values are inferred by randomly selecting a (non-missing) methylation value
+#'            from any other sample at this CpG site}
+#'            \item{knn:}{missing values are inferred by k-nearest neighbors imputation (see \pkg{impute})}
+#'            \item{none:}{imputation should not be performed}
+#'          }
+#'
+#' @author Michael Scherer
+#'
+#' @export
+rnb.execute.imputation <- function(rnb.set,method=rnb.getOption("imputation.method"),...){
+  if(!inherits(rnb.set,"RnBSet")){
+    stop("Invalid value for input object, has to be of type RnBeadSet or RnBiseqSet")
+  }
+  if(!(method%in%c('mean.cpgs','mean.samples','random','knn'))){
+    if(method=='none'){
+      if(inherits(rnb.set,"RnBeadSet")){
+        logger.info("No imputation method selected, 'knn' method used.")
+        rnb.options(imputation.method='knn')
+        method = 'knn'
+      }else if (inherits(rnb.set,"RnBiseqSet")){
+        logger.info("No imputation method selected, 'mean.samples' method used.")
+        rnb.options(imputation.method='mean.samples')
+        method = 'mean.samples'
+      }
+    }else{
+      stop("Invalid option for imputation method, has to be one of 'mean.cpgs','mean.samples','random','knn'")
+    }
+  }
+  if(inherits(rnb.set,"RnBiseqSet") && rnb.getOption("imputation.method")=="knn"){
+    rnb.options("imputation.method"="mean.samples")
+    method = "mean.samples"
+    logger.info("Knn imputation not applicable to sequencing data sets, switched to 'mean.samples' method")
+  }
+  logger.start(sprintf("Imputation procedure %s ",method))
+  if(method=='mean.cpgs'){
+    rnb.set <- mean.imputation(rnb.set,2)
+  }
+  if(method=='mean.samples'){
+    rnb.set <- mean.imputation(rnb.set,1)
+  }
+  if(method=='random'){
+    rnb.set <- random.imputation(rnb.set)
+  }
+  if(method=='knn'){
+    rnb.set <- knn.imputation(rnb.set,...)
+  }
+  logger.completed()
+  return(rnb.set)
+}
+
+#######################################################################################################################
+
+#' rnb.section.imputation
+#'
+#' Adds information and plots describing the effect of imputation on the dataset
+#'
+#' @param report Report to which the information should be added (\code{\linkS4class{Report}}).
+#' @param rnb.set Dataset on which imputation was performed (\code{\linkS4class{RnBSet}}).
+#' @param old.values Methylation matrix before imputation procedure.
+#'
+#' @return The modified report object
+#' @author Michael Scherer
+#' @noRd
+rnb.section.imputation <- function(report,rnb.set,old.values){
+  if(rnb.getOption('imputation.method')=='none'){
+    return(report)
+  }
+  txt <- c("Imputation was performed ")
+  if(rnb.getOption('imputation.method')=='mean.samples'){
+    txt <- c(txt,"by calculating the mean methylation level for each CpG site across all samples",
+             " and replacing all missing values for this CpG site in individual samples with the mean across all samples.\n")
+  }
+  if(rnb.getOption('imputation.method')=='mean.cpgs'){
+    txt <- c(txt,"by calculating the mean methylation level for each sample across all CpG sites",
+             " and replacing all missing values for this sample at an individual CpG site with the mean across all CpGs in the sample.\n")
+  }
+  if(rnb.getOption('imputation.method')=='random'){
+    txt <- c(txt,"by randomly selecting values from non-missing CpGs in other samples.",
+             " Sampling was done with replacement such that the number of missing values can be larger as the number of existing.\n")
+  }
+  if(rnb.getOption('imputation.method')=='knn'){
+    txt <- c(txt,"by k nearest neighbors imputation from the \"impute\" package. Briefly, missing values were replaced",
+             " by the average of the methylation values at that CpG in the closest samples. Closeness was defined with",
+             " the euclidean distance.\n")
+  }
+  new.values <- meth(rnb.set)
+  missing.values <- apply(old.values,2,function(x)sum(is.na(x)))
+  median <- median(missing.values)
+  txt <- c(txt," Imputation replaced a median of ",median," missing values per sample by estimations.")
+  report <- rnb.add.section(report,'Imputation',txt)
+  if(sum(is.na(new.values))==sum(is.na(old.values))){
+    txt <- "Imputation failed, see logger output for more information."
+    report <- rnb.add.paragraph(report,txt)
+    return(report)
+  }
+  old.values <- melt(old.values)
+  old.values <- old.values$value
+  old.values <- na.omit(old.values)
+  new.values <- melt(new.values)
+  new.values <- new.values$value
+  min.observations <- 501L
+  beta.values <- list("NAs removed" = old.values, "After imputation" = new.values)
+  report.plot <- rnb.plot.beta.comparison(beta.values, "imputation_comparison", report, min.observations)
+  setting.names <- list("Plot type" =
+                          c("density" = "density estimation", "histogram" = "histograms", "qq" = "quantile-quantile plot"))
+  descr <- 'Visulisation of the effect of Imputation on the methylation distribution.'
+  report <- rnb.add.figure(report,descr,report.plot,setting.names)
+  return(report)
+}
+#######################################################################################################################
+
+#' rnb.step.imputation
+#'
+#' Imputes missing values from the given dataset with the specified method
+#'
+#' @param rnb.set Dataset object inheriting from \code{\linkS4class{RnBSet}}.
+#' @param report Report object to contain imputation information. Has to be of class
+#'                \code{\linkS4class{Report}}.
+#' @param method Imputation method to be used, must be one of \code{"mean.cpgs"}, \code{"mean.samples"},
+#'                \code{"random"}, \code{"knn"} or \code{"none"}.
+#'
+#' @return List with two elements:
+#'         \describe{
+#'           \item{\code{dataset}}{Dataset as an object of type \code{\linkS4class{RnBSet}}
+#'                 containing the imputed methylation matrix.}
+#'           \item{\code{report}}{the modified report.}
+#'         }
+#'
+#' @author Michael Scherer
+#' @noRd
+rnb.step.imputation <- function(rnb.set, report, method=rnb.getOption("imputation.method")){
+  if(!(inherits(rnb.set,"RnBSet"))) {
+    stop("Invalid value for object; RnBeadSet or RnBiseqSet required")
+  }
+  if (!inherits(report, "Report")) {
+    stop("Invalid value for report")
+  }
+  old.data <- meth(rnb.set)
+  if(sum(is.na(old.data))==0){
+    logger.info("No missing values present, imputation skipped")
+    return(list(dataset=rnb.set,report=report))
+  }
+  if((method%in%c('mean.cpgs','mean.samples','random','knn'))){
+    rnb.set <- rnb.execute.imputation(rnb.set)
+  }
+  report <- rnb.section.imputation(report,rnb.set,old.data)
+  return(list(dataset=rnb.set,report=report))
 }
 
 #######################################################################################################################

@@ -1141,6 +1141,7 @@ read.bed.files<-function(base.dir=NULL,
 			close(data.matrices[[dmi]])
 		}
 	}
+	if (verbose) rnb.status(c("Matched chromosomes and strands to annotation"))
 
 	dm.subsample<-list()
 	if(useff && (prod(length(site.ints), length(data.matrices))>.Machine$integer.max) && !usebigff){
@@ -1183,6 +1184,7 @@ read.bed.files<-function(base.dir=NULL,
 		rnb.warning(c("Coverage information is not present for the following BED files: ", paste(file.names[which(!covg.present)], sep=", ")))
 		rnb.warning(c("Discarded coverage information"))
 	}
+	if (verbose) rnb.status(c("Checked for the presence of sites and coverage"))
 
 	sites <- matrix(nrow=length(all.sites), ncol=3, dimnames=list(NULL, c("chr", "coord", "strand")))
 	if(!useff){
@@ -1209,6 +1211,7 @@ read.bed.files<-function(base.dir=NULL,
 			covg <- NULL
 		}
 	}
+	if (verbose) rnb.status(c("Initialized meth/covg matrices"))
 
 	## Detect the scale of the mean methylation data
 	## A very naive method to guess whether the methylation is  
@@ -1231,6 +1234,7 @@ read.bed.files<-function(base.dir=NULL,
 				if(useff){
 					open(data.matrices[[indx]])
 				}
+				# if (verbose) rnb.status(c("Reading data matrix", indx))
 				dm<-data.matrices[[indx]]
 				#dm.rows2<-intersect(all.sites, rownames(dm))
 				#dm.rows<-match(all.sites, rownames(dm))
@@ -1369,6 +1373,8 @@ read.single.bed<-function(file,
 
 	if(!is.character(file) || length(file)!=1)
 		stop("Invalid file name")
+
+	rnb.info(c("Reading BED file:", file))
 
 	## read top of the file to determine the column classes
 	if(ffread){
@@ -1534,11 +1540,7 @@ find.bed.column<-function(annotation,
 	potential.fnames<-which(classes%in%c("character","factor"))
 
 	candidate.fname<-sapply(potential.fnames, function(cix){
-
-				extensions<-sapply(strsplit(as.character(annotation[,cix]),"\\."),
-						function(spl) spl[length(spl)] %in% c("bed", "BED", "cov", "COV")
-				)
-
+				extensions<-grepl("\\.bed|\\.BED|\\.cov|\\.COV",annotation[,cix])
 				all(extensions)
 			})
 
@@ -1606,9 +1608,13 @@ get.bed.column.classes<-function(bed.top,
 		classes[strand.col]<-"character"
 	}
 	classes[start.col]<-"integer"
-	classes[end.col]<-"integer"
+	if(!is.na(end.col)){
+		classes[end.col]<-"integer"
+	}
 	classes[coverage.col]<-"integer"
-	classes[mean.meth.col]<-"numeric"
+	if(!is.na(mean.meth.col)){
+		classes[mean.meth.col]<-"numeric"
+	}
 	if(useff){
 		classes[chr.col]<-"factor"
 	}else{

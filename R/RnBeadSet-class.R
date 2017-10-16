@@ -22,7 +22,7 @@ RNBEADSET.SLOTNAMES<-c("pval.sites")
 #' \describe{
 #'  \item{Loading from files}{Dataset can be loaded from text or binary files. See the function
 #'       \code{\link{rnb.execute.import}} for more details.}
-#'  \item{Downloading from GEO}{See the function \code{\link{read.geo}} for details.}
+#'  \item{Downloading from GEO}{See the function \code{\link{rnb.read.geo}} for details.}
 #'  \item{Converting from \code{MethyLumiSet}}{...}
 #' } 
 #'

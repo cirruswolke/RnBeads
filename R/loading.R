@@ -67,7 +67,7 @@
 #' rnb.set <- rnb.execute.import(data.source = data.source, data.type = "idat.dir")
 #' }
 #' @seealso \code{\link{read.data.dir}}, \code{\link{read.idat.files}}, \code{\link{read.GS.report}},
-#'          \code{\link{read.geo}}, \code{\link{read.bed.files}}
+#'          \code{\link{rnb.read.geo}}, \code{\link{read.bed.files}}
 #' #'
 #' @author Pavlo Lutsik
 #' @export
@@ -168,14 +168,10 @@ rnb.execute.import<-function(data.source, data.type=rnb.getOption("import.defaul
 
 	} else if(data.type %in% c("GEO", "infinium.GEO")) {
 
-		if(!(is.character(data.source) && length(data.source) == 1 && (!is.na(data.source[1])))) {
+		if (!(is.character(data.source) && length(data.source) == 1 && isTRUE(data.source != ""))) {
 			stop("invalid value for data.source; expected one-element character")
 		}
-		if(file.exists(data.source) && ! file.info(data.source)[1,"isdir"]) {
-			result <- read.geo(filename = data.source)
-		}else{
-			result <- read.geo(accession = data.source)
-		}
+		result <- rnb.read.geo(data.source)
 
 	} else if(data.type %in% c("bed.dir", "bs.bed.dir")){
 
@@ -259,7 +255,7 @@ rnb.execute.import<-function(data.source, data.type=rnb.getOption("import.defaul
 					strand.col=3L,
 					mean.meth.col=NA,
 					coverage.col=NA,
-					coord.shift = -1L,
+					coord.shift = 0L,
 					nrows=nrows)
 		} else if (rnb.getOption("import.bed.style")=="bismarkCov"){
 			result <- read.bed.files(base.dir=data.source[[1]], sample.sheet=data.source[[2]], file.names.col=filename.column,
@@ -288,7 +284,8 @@ rnb.execute.import<-function(data.source, data.type=rnb.getOption("import.defaul
 					strand.col=6L,
 					mean.meth.col=4L,
 					coverage.col=5L,
-					coord.shift=0L)
+					coord.shift=0L,
+					nrows=nrows)
 		}else {
 			skip.lines <- 1
 			pos.coord.shift <- 1
@@ -571,7 +568,7 @@ rnb.step.import <- function(data.source, data.type = rnb.getOption("import.defau
 	logger.status(c("Loaded data from", d.source))
 
 	## Perform gender prediction
-	if (rnb.getOption("import.gender.prediction") && inherits(object, "RnBeadRawSet") && object@target == "probes450") {
+	if (rnb.getOption("import.gender.prediction") && inherits(object, c("RnBeadRawSet","RnBiseqSet")) && object@target %in% c("probes450","probesEPIC","CpG")) {
 		object <- rnb.execute.gender.prediction(object)
 		if (is.null(object@inferred.covariates$gender)) {
 			object@inferred.covariates$gender <- FALSE

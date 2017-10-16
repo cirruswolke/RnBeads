@@ -577,7 +577,7 @@ locus.profile.get.methylation.track.smooth <- function(chrom,start,end,
 		stop("invalid value for smooth.profile")
 	}
 	cvals.grps <- rep(cvals.grps, length.out = length(grps)) #adjust the length of the color vector. Recycle colors if necassary
-	mtrack.smooth <- DataTrack(range=mm.gr,groups=grouping,name=paste("methylation"),type=c("smooth","p"),span=smooth.span,degree=smooth.degree,family=smooth.family,jitter.x=FALSE,col=cvals.grps,
+	mtrack.smooth <- DataTrack(range=mm.gr,groups=grouping,name=paste("methylation"),type=c("smooth","p"),span=smooth.span,degree=smooth.degree,family=smooth.family,jitter.x=FALSE,col=cvals.grps, legend=FALSE,
 			col.title="white",col.axis="white",background.title="lightsteelblue4")
 	
 	return(list(mtrack.smooth))

@@ -9,11 +9,10 @@ Authors@R: c(
     role = c("aut")),
     person("Fabian", "Mueller", email = "rnbeads@mpi-inf.mpg.de",
     role = c("aut", "cre")))
-Date: 2017-05-16
-Version: 1.9.1
+Date: 2017-09-29
+Version: 1.9.4
 Suggests:
     Category,
-    GEOquery,
     GOstats,
     Gviz,
     IlluminaHumanMethylation450kmanifest,
@@ -36,15 +35,16 @@ Suggests:
     org.Rn.eg.db,
     quadprog,
     rtracklayer,
+    qvalue,
     sva,
     wateRmelon,
     wordcloud,
     argparse,
     glmnet,
-    impute,
     GLAD,
     IlluminaHumanMethylation450kanno.ilmn12.hg19,
-    scales
+    scales,
+    RUnit
 Depends:
     R (>= 3.0.0),
     BiocGenerics,
@@ -106,6 +106,7 @@ Collate:
     'greedycut.R'
     'loading.R'
     'logger.R'
+    'lolaUtils.R'
     'main.R'
     'normalization.R'
     'options.R'
@@ -114,6 +115,7 @@ Collate:
     'profiles.R'
     'qualityControl.R'
     'readGEO.R'
+    'exportGEO.R'
     'regionDescription.R'
     'regionProfiles.R'
     'subSegments.R'
