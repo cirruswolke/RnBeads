@@ -1378,7 +1378,7 @@ server <- function(input, output, session) {
 		!is.na(curStatus$statusTab["quality_control", "Report"])
 	})
 	output$modQC.status <- renderUI({
-		# curStatus <- modImportStatus()
+		reportStatus <- checkReportDir(reportDir())
 		rdy <- FALSE
 		res <- list()
 		if (modImportStatus$dataset.loaded){
@@ -1393,8 +1393,8 @@ server <- function(input, output, session) {
 			}
 			if (!input$modQC.overwrite){
 				rdy <- FALSE
-				res <- c(res, list(tags$p(tags$span(style="color:red", icon("times"), "Report already exists."))))
 			}
+			res <- c(res, list(tags$p(tags$span(icon("search"), tags$a(href=paste0("file://", file.path(reportDir(), reportStatus$reportHtml["quality_control"])), "View report")))))
 		} else {
 			shinyjs::disable("modQC.overwrite")
 		}
@@ -1418,6 +1418,7 @@ server <- function(input, output, session) {
 					res <- rnb.run.qc(rnbData$rnbSet, dir.reports=reportDir())
 					logger.close()
 					markDirDJ(reportDir())
+					showNotification(tags$span(style="color:green", icon("check"), paste0("Analysis (Quality Control) completed")))
 				},
 				error = function(err) {
 					showNotification(tags$span(style="color:red", icon("warning"), paste0("Analysis (Quality Control) failed:", err$message)))
