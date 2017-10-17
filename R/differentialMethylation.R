@@ -2044,7 +2044,7 @@ rnb.section.diffMeth.site <- function(rnbSet,diffmeth,report,gzTable=FALSE){
 	
 	logger.completed()
 	if(rnb.getOption("differential.variability")){
-	  report <- rnb.section.diffVar(rnbSet,diffmeth,report,gzTable=gzTable)
+	  report <- rnb.section.diffVar(rnbSet,diffmeth,report,gzTable=gzTable,level=2)
 	}
 	return(report)
 }
@@ -2231,10 +2231,6 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 	report <- rnb.add.figure(report, description, addedPlots, setting.names)
 	logger.completed()
 
-	if(rnb.getOption("differential.variability")){
-	  report <- rnb.section.diffVar.region(rnbSet,diffmeth,report,gzTable=gzTable)
-	}
-	
 	logger.start("Adding tables")
 	includeCovg <- hasCovg(rnbSet)
 	hasVariability <- rnb.getOption("differential.variability")
@@ -2281,6 +2277,10 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 	colnames(file.tab) <- reg.types
 	rnb.add.table(report,file.tab)
 	logger.completed()
+	
+	if(rnb.getOption("differential.variability")){
+	  report <- rnb.section.diffVar.region(rnbSet,diffmeth,report,gzTable=gzTable,level=2)
+	}
 	
 	sectionText <- "No GO Enrichment Analysis was conducted"
 	if (class(dm.go.enrich)=="DiffMeth.go.enrich" & length(dm.go.enrich$region)>0){
@@ -2425,7 +2425,7 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 		  names(hyper.hypo) <- c("hyper","hypo")
 		  setting.names$'Hypermethylation/hypomethylation' <- hyper.hypo
 		  sec.text <- "GO enrichment analysis was also performed for differentially variable regions."
-		  report <- rnb.add.section(report, title = "GO Enrichment Analysis (Differential Variability)",description = sec.text)
+		  report <- rnb.add.section(report, title = "Differential Variability",description = sec.text,level = 3)
 		  description <- "Workclouds for GO enrichment terms (Differential Variability)"
 		  report <- rnb.add.figure(report,description,addedPlots.var,setting.names)
 		  report <- rnb.add.tables(report,tabs2write.var,setting.names,row.names = FALSE)
@@ -2482,6 +2482,9 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 		lolaVolcanoPlots <- list()
 		lolaBarPlots <- list()
 		lolaBoxPlots <- list()
+		lolaVolcanoPlots.var <- list()
+		lolaBarPlots.var <- list()
+		lolaBoxPlots.var <- list()
 		for (ccn in names(comps)){
 			cc <- comps[ccn]
 			for (rrn in names(reg.types)){
@@ -2541,9 +2544,6 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 				}
 				if(is.element("region_var",names(dm.lola.enrich))){
 				  dmRes <- dm.lola.enrich$region_var[[cc]][[rr]]
-				  lolaVolcanoPlots.var <- list()
-				  lolaBarPlots.var <- list()
-				  lolaBoxPlots.var <- list()
   				for (rcn in names(rank.cuts.names.dm.lola.enrich)){
   				  rc <- rank.cuts.names.dm.lola.enrich[rcn]
   				  for (hhn in names(hyper.hypo)){
@@ -2606,7 +2606,7 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 		  setting.names.volcano$'Hypermethylation/hypomethylation' <- hyper.hypo
 		  setting.names$'Hypermethylation/hypomethylation' <- hyper.hypo
 		  sec.text <- "LOLA enrichment analysis was also conducted for differentially variable regions."
-		  report <- rnb.add.section(report = report, title = "LOLA enrichment analysis (Differential Variability)",description = sec.text)
+		  report <- rnb.add.section(report = report, title = "Differential Variability",description = sec.text,level = 3)
 		  report <- rnb.add.figure(report,desc,lolaVolcanoPlots.var,setting.names.volcano)
 		  report <- rnb.add.figure(report,desc,lolaBoxPlots.var,setting.names)
 		  report <- rnb.add.figure(report,desc,lolaBarPlots.var,setting.names)
