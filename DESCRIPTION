@@ -10,7 +10,7 @@ Authors@R: c(
     person("Fabian", "Mueller", email = "rnbeads@mpi-inf.mpg.de",
     role = c("aut", "cre")))
 Date: 2017-09-29
-Version: 1.10.0
+Version: 1.11.0
 Suggests:
     Category,
     GOstats,
