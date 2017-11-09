@@ -164,16 +164,16 @@ prepareGEOSampleInfoTemplate<-function(rnb.set, pheno.cols=1:ncol(pheno(rnb.set)
 #' @param sample.source.col         \code{integer} singleton specifying a column in the \code{pheno} slot of \code{rnb.set} 
 #'                                  containing information which will be written into the field \code{Sample_source_name_ch1}
 #'                                  of each sample record
-#' @param sample.description        \code{integer} singleton specifying a column in the \code{pheno} slot of \code{rnb.set} 
+#' @param sample.description.col    \code{integer} singleton specifying a column in the \code{pheno} slot of \code{rnb.set} 
 #'                                  containing information which will be written into the field \code{Sample_desription}
 #'                                  of each sample record
 #' @param sample.title.col         \code{integer} singleton specifying a column in the \code{pheno} slot of \code{rnb.set} 
 #'                                  containing information which will be written into the field \code{Sample_title}
 #'                                  of each sample record. If \code{NULL}, the result of \code{samples(rnb.set)} will be used
-
 #' @param export.cols               \code{integer} vector specifying columns in the \code{pheno} slot of \code{rnb.set} 
 #'                                  containing information which will be written into the fields \code{Sample_characteristics_ch1}
 #'                                  of each sample record
+#' @param rnb.set.raw               Object inheriting from class \code{RnBeadSet}
 #' @param sample.extra.info         Optionally, a \code{list} with elements to be written to all series record. Elements should be character
 #'                                  singletons named with valid SOFT labels of a SAMPLE section, e.g.\code{Sample_extract_protocol}, 
 #'                                  \code{Sample_hyb_protocol}, \code{Sample_label_protocol_ch1}, \code{Sample_data_processing}, 
