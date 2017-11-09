@@ -7,10 +7,10 @@
 rnb.load.annotation.from.db(types, assembly = "hg19")
 }
 \arguments{
-\item{assembly}{Genome assembly of interest. See \code{\link{rnb.get.assemblies}} for the list of supported genomes.}
-
-\item{type}{One-element \code{character} vector giving the name of the region annotation. If this annotation
+\item{types}{One-element \code{character} vector giving the name of the region annotation. If this annotation
 is already available, it will be overwritten for the current session.}
+
+\item{assembly}{Genome assembly of interest. See \code{\link{rnb.get.assemblies}} for the list of supported genomes.}
 }
 \value{
 Invisibly, \code{TRUE} if the annotation was loaded successfully; an error message if the objects in the
