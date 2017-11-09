@@ -19,6 +19,10 @@ with \code{"GSE"}.}
 containing information which will be written into the field \code{Sample_source_name_ch1}
 of each sample record}
 
+\item{sample.description.col}{\code{integer} singleton specifying a column in the \code{pheno} slot of \code{rnb.set} 
+containing information which will be written into the field \code{Sample_desription}
+of each sample record}
+
 \item{sample.title.col}{\code{integer} singleton specifying a column in the \code{pheno} slot of \code{rnb.set} 
 containing information which will be written into the field \code{Sample_title}
 of each sample record. If \code{NULL}, the result of \code{samples(rnb.set)} will be used}
@@ -26,6 +30,8 @@ of each sample record. If \code{NULL}, the result of \code{samples(rnb.set)} wil
 \item{export.cols}{\code{integer} vector specifying columns in the \code{pheno} slot of \code{rnb.set} 
 containing information which will be written into the fields \code{Sample_characteristics_ch1}
 of each sample record}
+
+\item{rnb.set.raw}{Object inheriting from class \code{RnBeadSet}}
 
 \item{sample.extra.info}{Optionally, a \code{list} with elements to be written to all series record. Elements should be character
 singletons named with valid SOFT labels of a SAMPLE section, e.g.\code{Sample_extract_protocol}, 
@@ -36,10 +42,6 @@ singletons named with valid SOFT labels of a SAMPLE section, e.g.\code{Sample_ex
 singletons named \code{SERIES} (contains a valid GSE identifier for updating an existing series)
 \code{Series_title}, \code{Series_summary}, \code{Series_type}, \code{Series_overall_design},
 \code{Series_contributor}, \code{Series_sample_id}}
-
-\item{sample.description}{\code{integer} singleton specifying a column in the \code{pheno} slot of \code{rnb.set} 
-containing information which will be written into the field \code{Sample_desription}
-of each sample record}
 }
 \value{
 \code{TRUE} on success.
