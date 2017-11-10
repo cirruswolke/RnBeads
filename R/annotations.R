@@ -1122,7 +1122,7 @@ rnb.load.annotation <- function(fname, type) {
 #'
 #' Loads a previously region annotation from the RnBeads resource database
 #'
-#' @param type  One-element \code{character} vector giving the name of the region annotation. If this annotation
+#' @param types  One-element \code{character} vector giving the name of the region annotation. If this annotation
 #'              is already available, it will be overwritten for the current session.
 #' @param assembly Genome assembly of interest. See \code{\link{rnb.get.assemblies}} for the list of supported genomes.
 #' @return Invisibly, \code{TRUE} if the annotation was loaded successfully; an error message if the objects in the

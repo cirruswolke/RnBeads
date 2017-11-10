@@ -7,6 +7,9 @@ RnBeads 1.9.4
 =============
 
  * You can now retrieve custom region sets from the RnBeads resource using the rnb.load.annotation.from.db function
+ * improved import from GEO
+ * bigff disk dump is now the default option for dealing with disk-based big matrices
+ * Several bugfixes and performance improvements in Greedycut, normalization, Bisulfite data loading and others
 
 RnBeads 1.9.3
 =============
