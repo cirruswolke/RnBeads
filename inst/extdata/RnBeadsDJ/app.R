@@ -45,8 +45,11 @@ RNB.MODULES.LOG.MSG <- c(
 RNB.PLATFORMS <- c("Bisulfite Sequencing"="biseq", "Illumina EPIC"="illEpic", "Illumina 450k"="ill450k", "Illumina27k"="ill27k")
 RNB.ASSEMBLIES <- rnb.get.assemblies()
 RNB.BED.STYLES <- c("BisSNP"="BisSNP", "ENCODE"="Encode", "EPP"="EPP", "Bismark cytosine"="bismarkCytosine", "Bismark coverage"="bismarkCov")
+RNB.FILTERING.SNP <- c("No filtering"="no", "3 SNPs"="3", "5 SNPs"="5", "Any SNPs"="any")
 RNB.NORMALIZATION.METHODS=c("none", "bmiq", "illumina", "swan", "minfi.funnorm", "wm.dasen", "wm.nasen", "wm.betaqn", "wm.naten", "wm.nanet", "wm.nanes", "wm.danes", "wm.danet", "wm.danen", "wm.daten1", "wm.daten2", "wm.tost", "wm.fuks", "wm.swan")
 RNB.NORMALIZATION.BG.METHODS <- c("none", "methylumi.noob", "methylumi.goob", "enmix.oob")
+RNB.TRACKHUB.FORMATS <- c("bigBed", "bigWig")
+RNB.DIFFVAR.METHODS <- c("diffVar", "iEVORA")
 RNB.COLSCHEMES.CATEGORY <- list(
 	default=c("#1B9E77","#D95F02","#7570B3","#E7298A","#66A61E","#E6AB02","#A6761D","#666666"),
 	extended=c("#1B9E77","#D95F02","#7570B3","#E7298A","#66A61E","#E6AB02","#A6761D","#666666","#2166AC","#B2182B","#00441B","#40004B","#053061","#003D7C","#D50911")
@@ -55,6 +58,8 @@ RNB.COLSCHEMES.METH <- list(
 	default=c("#AD0021","#909090","#39278C"),
 	YlBl=c("#EDF8B1","#41B6C4","#081D58")
 )
+
+RNB.OPTION.DESC <- sapply(names(rnb.options()), FUN=function(x){"See the help pages: '?rnb.options'"})
 
 ################################################################################
 # Choose local file or directory
@@ -488,7 +493,7 @@ ui <- tagList(useShinyjs(), navbarPage(
 					tags$tbody(
 						tags$tr(
 							tags$td(
-								tags$code("analysis.name")
+								tags$div(title=RNB.OPTION.DESC["analysis.name"], tags$code("analysis.name"))
 							),
 							tags$td(
 								textInput("rnbOptsI.analysis.name", NULL, "RnBeads Analysis")
@@ -499,7 +504,7 @@ ui <- tagList(useShinyjs(), navbarPage(
 						),
 						tags$tr(
 							tags$td(
-								tags$code("assembly")
+								tags$div(title=RNB.OPTION.DESC["assembly"], tags$code("assembly"))
 							),
 							tags$td(
 								selectInput("rnbOptsI.assembly", NULL, RNB.ASSEMBLIES, selected="hg38")
@@ -510,7 +515,7 @@ ui <- tagList(useShinyjs(), navbarPage(
 						),
 						tags$tr(
 							tags$td(
-								tags$code("region.types")
+								tags$div(title=RNB.OPTION.DESC["region.types"], tags$code("region.types"))
 							),
 							tags$td(
 								uiOutput("selRegionTypes")
@@ -521,7 +526,7 @@ ui <- tagList(useShinyjs(), navbarPage(
 						),
 						tags$tr(
 							tags$td(
-								tags$code("identifiers.column")
+								tags$div(title=RNB.OPTION.DESC["identifiers.column"], tags$code("identifiers.column"))
 							),
 							tags$td(
 								uiOutput('selColumn.id')
@@ -532,7 +537,7 @@ ui <- tagList(useShinyjs(), navbarPage(
 						),
 						tags$tr(
 							tags$td(
-								tags$code("min.group.size")
+								tags$div(title=RNB.OPTION.DESC["min.group.size"], tags$code("min.group.size"))
 							),
 							tags$td(
 								sliderInput("rnbOptsI.min.group.size", NULL, min=1, max=20, value=2)
@@ -543,7 +548,7 @@ ui <- tagList(useShinyjs(), navbarPage(
 						),
 						tags$tr(
 							tags$td(
-								tags$code("max.group.count")
+								tags$div(title=RNB.OPTION.DESC["max.group.count"], tags$code("max.group.count"))
 							),
 							tags$td(
 								sliderInput("rnbOptsI.max.group.count", NULL, min=2, max=20, value=20)
@@ -554,7 +559,7 @@ ui <- tagList(useShinyjs(), navbarPage(
 						),
 						tags$tr(
 							tags$td(
-								tags$code("colors.category")
+								tags$div(title=RNB.OPTION.DESC["colors.category"], tags$code("colors.category"))
 							),
 							tags$td(
 								selectInput("rnbOptsI.colors.category", NULL, names(RNB.COLSCHEMES.CATEGORY))
@@ -566,7 +571,7 @@ ui <- tagList(useShinyjs(), navbarPage(
 						),
 						tags$tr(
 							tags$td(
-								tags$code("colors.meth")
+								tags$div(title=RNB.OPTION.DESC["colors.meth"], tags$code("colors.meth"))
 							),
 							tags$td(
 								selectInput("rnbOptsI.colors.meth", NULL, names(RNB.COLSCHEMES.METH))
@@ -589,7 +594,7 @@ ui <- tagList(useShinyjs(), navbarPage(
 					tags$tbody(
 						tags$tr(
 							tags$td(
-								tags$code("import.default.data.type")
+								tags$div(title=RNB.OPTION.DESC["import.default.data.type"], tags$code("import.default.data.type"))
 							),
 							tags$td(
 								"Defined per 'Platform' in the 'Input' section"
@@ -600,7 +605,7 @@ ui <- tagList(useShinyjs(), navbarPage(
 						),
 						tags$tr(
 							tags$td(
-								tags$code("import.table.separator")
+								tags$div(title=RNB.OPTION.DESC["import.table.separator"], tags$code("import.table.separator"))
 							),
 							tags$td(
 								"Defined per 'Separator' in the 'Input' section"
@@ -611,7 +616,7 @@ ui <- tagList(useShinyjs(), navbarPage(
 						),
 						tags$tr(
 							tags$td(
-								tags$code("import.bed.style")
+								tags$div(title=RNB.OPTION.DESC["import.bed.style"], tags$code("import.bed.style"))
 							),
 							tags$td(
 								selectInput("rnbOptsI.import.bed.style", NULL, names(RNB.BED.STYLES))
@@ -633,7 +638,7 @@ ui <- tagList(useShinyjs(), navbarPage(
 					tags$tbody(
 						tags$tr(
 							tags$td(
-								tags$code("filtering.coverage.threshold")
+								tags$div(title=RNB.OPTION.DESC["filtering.coverage.threshold"], tags$code("filtering.coverage.threshold"))
 							),
 							tags$td(
 								sliderInput("rnbOptsI.filtering.coverage.threshold", NULL, min=1, max=100, value=5)
@@ -644,7 +649,40 @@ ui <- tagList(useShinyjs(), navbarPage(
 						),
 						tags$tr(
 							tags$td(
-								tags$code("filtering.sex.chromosomes.removal")
+								tags$div(title=RNB.OPTION.DESC["filtering.low.coverage.masking"], tags$code("filtering.low.coverage.masking"))
+							),
+							tags$td(
+								checkboxInput("rnbOptsI.filtering.low.coverage.masking", "Enable", value=FALSE)
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.filtering.low.coverage.masking")
+							)
+						),
+						tags$tr(
+							tags$td(
+								tags$div(title=RNB.OPTION.DESC["filtering.high.coverage.outliers"], tags$code("filtering.high.coverage.outliers"))
+							),
+							tags$td(
+								checkboxInput("rnbOptsI.filtering.high.coverage.outliers", "Enable", value=FALSE)
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.filtering.high.coverage.outliers")
+							)
+						),
+						tags$tr(
+							tags$td(
+								tags$div(title=RNB.OPTION.DESC["filtering.missing.value.quantile"], tags$code("filtering.missing.value.quantile"))
+							),
+							tags$td(
+								sliderInput("rnbOptsI.filtering.missing.value.quantile", NULL, min=0, max=1, value=1)
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.filtering.missing.value.quantile")
+							)
+						),
+						tags$tr(
+							tags$td(
+								tags$div(title=RNB.OPTION.DESC["filtering.sex.chromosomes.removal"], tags$code("filtering.sex.chromosomes.removal"))
 							),
 							tags$td(
 								checkboxInput("rnbOptsI.filtering.sex.chromosomes.removal", "Enable", value=FALSE)
@@ -655,7 +693,18 @@ ui <- tagList(useShinyjs(), navbarPage(
 						),
 						tags$tr(
 							tags$td(
-								tags$code("normalization.method")
+								tags$div(title=RNB.OPTION.DESC["filtering.snp"], tags$code("filtering.snp"))
+							),
+							tags$td(
+								selectInput("rnbOptsI.filtering.snp", NULL, RNB.FILTERING.SNP, selected="3")
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.filtering.snp")
+							)
+						),
+						tags$tr(
+							tags$td(
+								tags$div(title=RNB.OPTION.DESC["normalization.method"], tags$code("normalization.method"))
 							),
 							tags$td(
 								selectInput("rnbOptsI.normalization.method", NULL, RNB.NORMALIZATION.METHODS, selected="swan")
@@ -666,13 +715,46 @@ ui <- tagList(useShinyjs(), navbarPage(
 						),
 						tags$tr(
 							tags$td(
-								tags$code("normalization.background.method")
+								tags$div(title=RNB.OPTION.DESC["normalization.background.method"], tags$code("normalization.background.method"))
 							),
 							tags$td(
 								selectInput("rnbOptsI.normalization.background.method", NULL, RNB.NORMALIZATION.BG.METHODS, selected="methylumi.noob")
 							),
 							tags$td(
 								verbatimTextOutput("rnbOptsO.normalization.background.method")
+							)
+						)
+					)
+				)
+			),
+			tabPanel("Export",
+				tags$table(class="table table-hover",
+					tags$thead(tags$tr(
+						tags$th("Name"),
+						tags$th("Setting"),
+						tags$th("Value")
+					)),
+					tags$tbody(
+						tags$tr(
+							tags$td(
+								tags$div(title=RNB.OPTION.DESC["export.to.trackhub"], tags$code("export.to.trackhub"))
+							),
+							tags$td(
+								selectInput("rnbOptsI.export.to.trackhub", NULL, RNB.TRACKHUB.FORMATS, multiple=TRUE, selected=RNB.TRACKHUB.FORMATS)
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.export.to.trackhub", placeholder=TRUE)
+							)
+						),
+						tags$tr(
+							tags$td(
+								tags$div(title=RNB.OPTION.DESC["export.types"], tags$code("export.types"))
+							),
+							tags$td(
+								uiOutput('selRegions.export')
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.export.types", placeholder=TRUE)
 							)
 						)
 					)
@@ -688,26 +770,57 @@ ui <- tagList(useShinyjs(), navbarPage(
 					tags$tbody(
 						tags$tr(
 							tags$td(
-								tags$code("exploratory.columns")
+								tags$div(title=RNB.OPTION.DESC["exploratory.columns"], tags$code("exploratory.columns"))
 							),
 							tags$td(
 								uiOutput('selColumn.ex')
-							)
-							,
+							),
 							tags$td(
 								verbatimTextOutput("rnbOptsO.exploratory.columns", placeholder=TRUE)
 							)
 						),
 						tags$tr(
 							tags$td(
-								tags$code("exploratory.intersample")
+								tags$div(title=RNB.OPTION.DESC["exploratory.intersample"], tags$code("exploratory.intersample"))
 							),
 							tags$td(
 								checkboxInput("rnbOptsI.exploratory.intersample", "Enable", value=TRUE)
-							)
-							,
+							),
 							tags$td(
 								verbatimTextOutput("rnbOptsO.exploratory.intersample")
+							)
+						),
+						tags$tr(
+							tags$td(
+								tags$div(title=RNB.OPTION.DESC["exploratory.beta.distribution"], tags$code("exploratory.beta.distribution"))
+							),
+							tags$td(
+								checkboxInput("rnbOptsI.exploratory.beta.distribution", "Enable", value=TRUE)
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.exploratory.beta.distribution")
+							)
+						),
+						tags$tr(
+							tags$td(
+								tags$div(title=RNB.OPTION.DESC["exploratory.correlation.qc"], tags$code("exploratory.correlation.qc"))
+							),
+							tags$td(
+								checkboxInput("rnbOptsI.exploratory.correlation.qc", "Enable", value=TRUE)
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.exploratory.correlation.qc")
+							)
+						),
+						tags$tr(
+							tags$td(
+								tags$div(title=RNB.OPTION.DESC["exploratory.region.profiles"], tags$code("exploratory.region.profiles"))
+							),
+							tags$td(
+								uiOutput('selRegionProfiles.ex')
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.exploratory.region.profiles", placeholder=TRUE)
 							)
 						)
 					)
@@ -723,48 +836,66 @@ ui <- tagList(useShinyjs(), navbarPage(
 					tags$tbody(
 						tags$tr(
 							tags$td(
-								tags$code("differential.comparison.columns")
+								tags$div(title=RNB.OPTION.DESC["differential.comparison.columns"], tags$code("differential.comparison.columns"))
 							),
 							tags$td(
 								uiOutput('selColumn.diff')
-							)
-							,
+							),
 							tags$td(
 								verbatimTextOutput("rnbOptsO.differential.comparison.columns", placeholder=TRUE)
 							)
 						),
 						tags$tr(
 							tags$td(
-								tags$code("differential.report.sites")
+								tags$div(title=RNB.OPTION.DESC["differential.report.sites"], tags$code("differential.report.sites"))
 							),
 							tags$td(
 								checkboxInput("rnbOptsI.differential.report.sites", "Enable", value=TRUE)
-							)
-							,
+							),
 							tags$td(
 								verbatimTextOutput("rnbOptsO.differential.report.sites")
 							)
 						),
 						tags$tr(
 							tags$td(
-								tags$code("differential.enrichment.go")
+								tags$div(title=RNB.OPTION.DESC["differential.variability"], tags$code("differential.variability"))
+							),
+							tags$td(
+								checkboxInput("rnbOptsI.differential.variability", "Enable", value=FALSE)
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.differential.variability")
+							)
+						),
+						tags$tr(
+							tags$td(
+								tags$div(title=RNB.OPTION.DESC["differential.variability.method"], tags$code("differential.variability.method"))
+							),
+							tags$td(
+								selectInput("rnbOptsI.differential.variability.method", NULL, RNB.DIFFVAR.METHODS)
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.differential.variability.method")
+							)
+						),
+						tags$tr(
+							tags$td(
+								tags$div(title=RNB.OPTION.DESC["differential.enrichment.go"], tags$code("differential.enrichment.go"))
 							),
 							tags$td(
 								checkboxInput("rnbOptsI.differential.enrichment.go", "Enable", value=FALSE)
-							)
-							,
+							),
 							tags$td(
 								verbatimTextOutput("rnbOptsO.differential.enrichment.go")
 							)
 						),
 						tags$tr(
 							tags$td(
-								tags$code("differential.enrichment.lola")
+								tags$div(title=RNB.OPTION.DESC["differential.enrichment.lola"], tags$code("differential.enrichment.lola"))
 							),
 							tags$td(
 								checkboxInput("rnbOptsI.differential.enrichment.lola", "Enable", value=FALSE)
-							)
-							,
+							),
 							tags$td(
 								verbatimTextOutput("rnbOptsO.differential.enrichment.lola")
 							)
@@ -972,14 +1103,20 @@ server <- function(input, output, session) {
 			shinyjs::enable("rnbOptsI.assembly")
 			shinyjs::enable("rnbOptsI.import.bed.style")
 			shinyjs::enable("rnbOptsI.filtering.coverage.threshold")
+			shinyjs::enable("rnbOptsI.filtering.low.coverage.masking")
+			shinyjs::enable("rnbOptsI.filtering.high.coverage.outliers")
 			shinyjs::disable("rnbOptsI.normalization.method")
 			shinyjs::disable("rnbOptsI.normalization.background.method")
+			shinyjs::disable("rnbOptsI.exploratory.correlation.qc")
 		} else {
 			shinyjs::disable("rnbOptsI.assembly")
 			shinyjs::disable("rnbOptsI.import.bed.style")
 			shinyjs::disable("rnbOptsI.filtering.coverage.threshold")
+			shinyjs::disable("rnbOptsI.filtering.low.coverage.masking")
+			shinyjs::disable("rnbOptsI.filtering.high.coverage.outliers")
 			shinyjs::enable("rnbOptsI.normalization.method")
 			shinyjs::enable("rnbOptsI.normalization.background.method")
+			shinyjs::enable("rnbOptsI.exploratory.correlation.qc")
 		}
 		res
 	})
@@ -990,11 +1127,11 @@ server <- function(input, output, session) {
 	})
 	output$selColumn.ex <- renderUI({
 		selCols <- c("[automatic]", sannot.cols.grps())
-		selectInput('rnbOptsI.exploratory.columns', NULL, selCols, multiple=TRUE)
+		selectInput('rnbOptsI.exploratory.columns', NULL, selCols, multiple=TRUE, selected="[automatic]")
 	})
 	output$selColumn.diff <- renderUI({
 		selCols <- c("[automatic]", sannot.cols.grps())
-		selectInput('rnbOptsI.differential.comparison.columns', NULL, selCols, multiple=TRUE)
+		selectInput('rnbOptsI.differential.comparison.columns', NULL, selCols, multiple=TRUE, selected="[automatic]")
 	})
 
 	############################################################################
@@ -1036,16 +1173,28 @@ server <- function(input, output, session) {
 		depDummy <- assemblySel()
 		rnb.getOption("assembly")
 	})
-	regTypes <- reactive({
+	regTypes.all <- reactive({
 		depDummy <- assemblySel() # dummy to update on dependency: assembly
 		rnb.region.types(rnb.getOption("assembly"))
 	})
 	output$selRegionTypes <- renderUI({
-		selectInput('rnbOptsI.region.types', NULL, regTypes(), multiple=TRUE, selected=regTypes())
+		selectInput('rnbOptsI.region.types', NULL, regTypes.all(), multiple=TRUE, selected=regTypes.all())
+	})
+	regTypes <- reactive({
+		input$rnbOptsI.region.types
 	})
 	output$rnbOptsO.region.types <- renderText({
 		rnb.options(region.types=regTypes())
 		rnb.getOption("region.types")
+	})
+	output$selRegionProfiles.ex <- renderUI({
+		selRegs <- regTypes()
+		defaultRegs <- intersect(c("genes", "promoters", "cpgislands"), selRegs)
+		selectInput('rnbOptsI.exploratory.region.profiles', NULL, selRegs, selected=defaultRegs, multiple=TRUE)
+	})
+	output$selRegions.export <- renderUI({
+		selRegs <- c("sites", regTypes())
+		selectInput('rnbOptsI.export.types', NULL, selRegs, selected="sites", multiple=TRUE)
 	})
 	output$rnbOptsO.identifiers.column <- renderText({
 		cname <- input$rnbOptsI.identifiers.column
@@ -1117,9 +1266,33 @@ server <- function(input, output, session) {
 		}
 		res
 	})
+	output$rnbOptsO.filtering.low.coverage.masking <- renderText({
+		res <- rnb.getOption("filtering.low.coverage.masking")
+		if (isBiseq()){
+			res <- input$rnbOptsI.filtering.low.coverage.masking
+			rnb.options(filtering.low.coverage.masking=res)
+		}
+		res
+	})
+	output$rnbOptsO.filtering.high.coverage.outliers <- renderText({
+		res <- rnb.getOption("filtering.high.coverage.outliers")
+		if (isBiseq()){
+			res <- input$rnbOptsI.filtering.high.coverage.outliers
+			rnb.options(filtering.high.coverage.outliers=res)
+		}
+		res
+	})
+	output$rnbOptsO.filtering.missing.value.quantile <- renderText({
+		rnb.options(filtering.missing.value.quantile=input$rnbOptsI.filtering.missing.value.quantile)
+		rnb.getOption("filtering.missing.value.quantile")
+	})
 	output$rnbOptsO.filtering.sex.chromosomes.removal <- renderText({
 		rnb.options(filtering.sex.chromosomes.removal=input$rnbOptsI.filtering.sex.chromosomes.removal)
 		rnb.getOption("filtering.sex.chromosomes.removal")
+	})
+	output$rnbOptsO.filtering.snp <- renderText({
+		rnb.options(filtering.snp=input$rnbOptsI.filtering.snp)
+		rnb.getOption("filtering.snp")
 	})
 	output$rnbOptsO.normalization.method <- renderText({
 		res <- rnb.getOption("normalization.method")
@@ -1137,9 +1310,19 @@ server <- function(input, output, session) {
 		}
 		res
 	})
+	output$rnbOptsO.export.to.trackhub <- renderText({
+		rnb.options(export.to.trackhub=input$rnbOptsI.export.to.trackhub)
+		rnb.getOption("export.to.trackhub")
+	})
+	output$rnbOptsO.export.types <- renderText({
+		rts <- input$rnbOptsI.export.types
+		if (length(rts)<1) rts <- NULL
+		rnb.options(export.types=rts)
+		rnb.getOption("export.types")
+	})
 	output$rnbOptsO.exploratory.columns <- renderText({
 		cnames <- input$rnbOptsI.exploratory.columns
-		if (is.null(cnames)) cnames <- NULL
+		if (length(cnames)<1) cnames <- NULL
 		if (length(cnames)==1 && cnames=="[automatic]") cnames <- NULL
 		cnames <- setdiff(cnames, "[automatic]")
 		rnb.options(exploratory.columns=cnames)
@@ -1149,9 +1332,27 @@ server <- function(input, output, session) {
 		rnb.options(exploratory.intersample=input$rnbOptsI.exploratory.intersample)
 		rnb.getOption("exploratory.intersample")
 	})
+	output$rnbOptsO.exploratory.beta.distribution <- renderText({
+		rnb.options(exploratory.beta.distribution=input$rnbOptsI.exploratory.beta.distribution)
+		rnb.getOption("exploratory.beta.distribution")
+	})
+	output$rnbOptsO.exploratory.correlation.qc <- renderText({
+		res <- rnb.getOption("exploratory.correlation.qc")
+		if (!isBiseq()){
+			res <- input$rnbOptsI.exploratory.correlation.qc
+			rnb.options(exploratory.correlation.qc=res)
+		}
+		res
+	})
+	output$rnbOptsO.exploratory.region.profiles <- renderText({
+		rts <- input$rnbOptsI.exploratory.region.profiles
+		if (length(rts)<1) rts <- character(0)
+		rnb.options(exploratory.region.profiles=rts)
+		rnb.getOption("exploratory.region.profiles")
+	})
 	output$rnbOptsO.differential.comparison.columns <- renderText({
 		cnames <- input$rnbOptsI.differential.comparison.columns
-		if (is.null(cnames)) cnames <- NULL
+		if (length(cnames)<1) cnames <- NULL
 		if (length(cnames)==1 && cnames=="[automatic]") cnames <- NULL
 		cnames <- setdiff(cnames, "[automatic]")
 		rnb.options(differential.comparison.columns=cnames)
@@ -1160,6 +1361,23 @@ server <- function(input, output, session) {
 	output$rnbOptsO.differential.report.sites <- renderText({
 		rnb.options(differential.report.sites=input$rnbOptsI.differential.report.sites)
 		rnb.getOption("differential.report.sites")
+	})
+	doDiffVar <- reactive({
+		res <- input$rnbOptsI.differential.variability
+		if (res){
+			shinyjs::enable("rnbOptsI.differential.variability.method")
+		} else {
+			shinyjs::disable("rnbOptsI.differential.variability.method")
+		}
+		res
+	})
+	output$rnbOptsO.differential.variability <- renderText({
+		rnb.options(differential.variability=doDiffVar())
+		rnb.getOption("differential.variability")
+	})
+	output$rnbOptsO.differential.variability.method <- renderText({
+		rnb.options(differential.variability.method=input$rnbOptsI.differential.variability.method)
+		rnb.getOption("differential.variability.method")
 	})
 	output$rnbOptsO.differential.enrichment.go <- renderText({
 		rnb.options(differential.enrichment.go=input$rnbOptsI.differential.enrichment.go)
@@ -1308,6 +1526,7 @@ server <- function(input, output, session) {
 		} else {
 			res <- c(res, list(tags$p(tags$span(style="color:red", icon("times"), "No dataset loaded"))))
 		}
+		res <- c(res, list(tags$p("The current report directory is ", tags$code(reportDir()), ". This can be configured in the 'Analysis' tab.")))
 		tagList(res)
 	})
 	observeEvent(input$modImportNew, {
@@ -1387,6 +1606,7 @@ server <- function(input, output, session) {
 		} else {
 			res <- c(res, list(tags$p(tags$span(style="color:red", icon("times"), "No dataset loaded. Please load a dataset using the 'Data Import' tab."))))
 		}
+		res <- c(res, list(tags$p("The current report directory is ", tags$code(reportDir()), ". This can be configured in the 'Analysis' tab.")))
 		if (reportExists.quality_control()){
 			if (rdy){
 				shinyjs::enable("modQC.overwrite")
@@ -1394,7 +1614,7 @@ server <- function(input, output, session) {
 			if (!input$modQC.overwrite){
 				rdy <- FALSE
 			}
-			res <- c(res, list(tags$p(tags$span(icon("search"), tags$a(href=paste0("file://", file.path(reportDir(), reportStatus$reportHtml["quality_control"])), "View report")))))
+			res <- c(res, list(tags$div(title="If the link does not open use right-click, copy the link and paste the address in a new browser window", tags$p(tags$span(icon("search"), tags$a(href=paste0("file://", file.path(reportDir(), reportStatus$reportHtml["quality_control"])), "View report"))))))
 		} else {
 			shinyjs::disable("modQC.overwrite")
 		}
