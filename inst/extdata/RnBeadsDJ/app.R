@@ -48,7 +48,10 @@ RNB.BED.STYLES <- c("BisSNP"="BisSNP", "ENCODE"="Encode", "EPP"="EPP", "Bismark 
 RNB.FILTERING.SNP <- c("No filtering"="no", "3 SNPs"="3", "5 SNPs"="5", "Any SNPs"="any")
 RNB.NORMALIZATION.METHODS=c("none", "bmiq", "illumina", "swan", "minfi.funnorm", "wm.dasen", "wm.nasen", "wm.betaqn", "wm.naten", "wm.nanet", "wm.nanes", "wm.danes", "wm.danet", "wm.danen", "wm.daten1", "wm.daten2", "wm.tost", "wm.fuks", "wm.swan")
 RNB.NORMALIZATION.BG.METHODS <- c("none", "methylumi.noob", "methylumi.goob", "enmix.oob")
+RNB.IMPUTATION.METHODS <- c("none", "mean.cpgs", "mean.samples", "random", "knn")
 RNB.TRACKHUB.FORMATS <- c("bigBed", "bigWig")
+RNB.SVA.NUM.METHODS <- c("leek", "be")
+RNB.DIFFMETH.TEST.METHODS <- c("limma", "refFreeEWAS")
 RNB.DIFFVAR.METHODS <- c("diffVar", "iEVORA")
 RNB.COLSCHEMES.CATEGORY <- list(
 	default=c("#1B9E77","#D95F02","#7570B3","#E7298A","#66A61E","#E6AB02","#A6761D","#666666"),
@@ -682,6 +685,17 @@ ui <- tagList(useShinyjs(), navbarPage(
 						),
 						tags$tr(
 							tags$td(
+								tags$div(title=RNB.OPTION.DESC["filtering.greedycut"], tags$code("filtering.greedycut"))
+							),
+							tags$td(
+								checkboxInput("rnbOptsI.filtering.greedycut", "Enable", value=FALSE)
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.filtering.greedycut")
+							)
+						),
+						tags$tr(
+							tags$td(
 								tags$div(title=RNB.OPTION.DESC["filtering.sex.chromosomes.removal"], tags$code("filtering.sex.chromosomes.removal"))
 							),
 							tags$td(
@@ -704,6 +718,17 @@ ui <- tagList(useShinyjs(), navbarPage(
 						),
 						tags$tr(
 							tags$td(
+								tags$div(title=RNB.OPTION.DESC["filtering.cross.reactive"], tags$code("filtering.cross.reactive"))
+							),
+							tags$td(
+								checkboxInput("rnbOptsI.filtering.cross.reactive", "Enable", value=FALSE)
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.filtering.cross.reactive")
+							)
+						),
+						tags$tr(
+							tags$td(
 								tags$div(title=RNB.OPTION.DESC["normalization.method"], tags$code("normalization.method"))
 							),
 							tags$td(
@@ -722,6 +747,17 @@ ui <- tagList(useShinyjs(), navbarPage(
 							),
 							tags$td(
 								verbatimTextOutput("rnbOptsO.normalization.background.method")
+							)
+						),
+						tags$tr(
+							tags$td(
+								tags$div(title=RNB.OPTION.DESC["imputation.method"], tags$code("imputation.method"))
+							),
+							tags$td(
+								selectInput("rnbOptsI.imputation.method", NULL, RNB.IMPUTATION.METHODS)
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.imputation.method")
 							)
 						)
 					)
@@ -755,6 +791,72 @@ ui <- tagList(useShinyjs(), navbarPage(
 							),
 							tags$td(
 								verbatimTextOutput("rnbOptsO.export.types", placeholder=TRUE)
+							)
+						)
+					)
+				)
+			),
+			tabPanel("Inference",
+				tags$table(class="table table-hover",
+					tags$thead(tags$tr(
+						tags$th("Name"),
+						tags$th("Setting"),
+						tags$th("Value")
+					)),
+					tags$tbody(
+						tags$tr(
+							tags$td(
+								tags$div(title=RNB.OPTION.DESC["inference"], tags$code("inference"))
+							),
+							tags$td(
+								checkboxInput("rnbOptsI.inference", "Enable", value=FALSE)
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.inference")
+							)
+						),
+						tags$tr(
+							tags$td(
+								tags$div(title=RNB.OPTION.DESC["inference.age.prediction"], tags$code("inference.age.prediction"))
+							),
+							tags$td(
+								checkboxInput("rnbOptsI.inference.age.prediction", "Enable", value=TRUE)
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.inference.age.prediction")
+							)
+						),
+						tags$tr(
+							tags$td(
+								tags$div(title=RNB.OPTION.DESC["inference.targets.sva"], tags$code("inference.targets.sva"))
+							),
+							tags$td(
+								uiOutput('selColumn.sva')
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.inference.targets.sva", placeholder=TRUE)
+							)
+						),
+						tags$tr(
+							tags$td(
+								tags$div(title=RNB.OPTION.DESC["inference.sva.num.method"], tags$code("inference.sva.num.method"))
+							),
+							tags$td(
+								selectInput("rnbOptsI.inference.sva.num.method", NULL, RNB.SVA.NUM.METHODS)
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.inference.sva.num.method", placeholder=TRUE)
+							)
+						),
+						tags$tr(
+							tags$td(
+								tags$div(title=RNB.OPTION.DESC["inference.reference.methylome.column"], tags$code("inference.reference.methylome.column"))
+							),
+							tags$td(
+								uiOutput('selColumn.cellTypeRef')
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.inference.reference.methylome.column", placeholder=TRUE)
 							)
 						)
 					)
@@ -843,6 +945,28 @@ ui <- tagList(useShinyjs(), navbarPage(
 							),
 							tags$td(
 								verbatimTextOutput("rnbOptsO.differential.comparison.columns", placeholder=TRUE)
+							)
+						),
+						tags$tr(
+							tags$td(
+								tags$div(title=RNB.OPTION.DESC["covariate.adjustment.columns"], tags$code("covariate.adjustment.columns"))
+							),
+							tags$td(
+								uiOutput('selAdjColumns')
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.covariate.adjustment.columns", placeholder=TRUE)
+							)
+						),
+						tags$tr(
+							tags$td(
+								tags$div(title=RNB.OPTION.DESC["differential.site.test.method"], tags$code("differential.site.test.method"))
+							),
+							tags$td(
+								selectInput("rnbOptsI.differential.site.test.method", NULL, RNB.DIFFMETH.TEST.METHODS)
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.differential.site.test.method", placeholder=TRUE)
 							)
 						),
 						tags$tr(
@@ -1105,6 +1229,9 @@ server <- function(input, output, session) {
 			shinyjs::enable("rnbOptsI.filtering.coverage.threshold")
 			shinyjs::enable("rnbOptsI.filtering.low.coverage.masking")
 			shinyjs::enable("rnbOptsI.filtering.high.coverage.outliers")
+			updateCheckboxInput(session, "rnbOptsI.filtering.greedycut", value=FALSE)
+			shinyjs::disable("rnbOptsI.filtering.greedycut")
+			shinyjs::disable("rnbOptsI.filtering.cross.reactive")
 			shinyjs::disable("rnbOptsI.normalization.method")
 			shinyjs::disable("rnbOptsI.normalization.background.method")
 			shinyjs::disable("rnbOptsI.exploratory.correlation.qc")
@@ -1114,6 +1241,9 @@ server <- function(input, output, session) {
 			shinyjs::disable("rnbOptsI.filtering.coverage.threshold")
 			shinyjs::disable("rnbOptsI.filtering.low.coverage.masking")
 			shinyjs::disable("rnbOptsI.filtering.high.coverage.outliers")
+			updateCheckboxInput(session, "rnbOptsI.filtering.greedycut", value=TRUE)
+			shinyjs::enable("rnbOptsI.filtering.greedycut")
+			shinyjs::enable("rnbOptsI.filtering.cross.reactive")
 			shinyjs::enable("rnbOptsI.normalization.method")
 			shinyjs::enable("rnbOptsI.normalization.background.method")
 			shinyjs::enable("rnbOptsI.exploratory.correlation.qc")
@@ -1125,6 +1255,14 @@ server <- function(input, output, session) {
 		selCols <- c("[None]", sannot.cols())
 		selectInput('rnbOptsI.identifiers.column', NULL, selCols)
 	})
+	output$selColumn.sva<- renderUI({
+		selCols <- c(sannot.cols.grps())
+		selectInput('rnbOptsI.inference.targets.sva', NULL, selCols, multiple=TRUE)
+	})
+	output$selColumn.cellTypeRef <- renderUI({
+		selCols <- c("[None]", sannot.cols())
+		selectInput('rnbOptsI.inference.reference.methylome.column', NULL, selCols)
+	})
 	output$selColumn.ex <- renderUI({
 		selCols <- c("[automatic]", sannot.cols.grps())
 		selectInput('rnbOptsI.exploratory.columns', NULL, selCols, multiple=TRUE, selected="[automatic]")
@@ -1132,6 +1270,10 @@ server <- function(input, output, session) {
 	output$selColumn.diff <- renderUI({
 		selCols <- c("[automatic]", sannot.cols.grps())
 		selectInput('rnbOptsI.differential.comparison.columns', NULL, selCols, multiple=TRUE, selected="[automatic]")
+	})
+	output$selAdjColumns <- renderUI({
+		selCols <- sannot.cols()
+		selectInput('rnbOptsI.covariate.adjustment.columns', NULL, selCols, multiple=TRUE, selected=c())
 	})
 
 	############################################################################
@@ -1286,6 +1428,10 @@ server <- function(input, output, session) {
 		rnb.options(filtering.missing.value.quantile=input$rnbOptsI.filtering.missing.value.quantile)
 		rnb.getOption("filtering.missing.value.quantile")
 	})
+	output$rnbOptsO.filtering.greedycut <- renderText({
+		rnb.options(filtering.greedycut=input$rnbOptsI.filtering.greedycut)
+		rnb.getOption("filtering.greedycut")
+	})
 	output$rnbOptsO.filtering.sex.chromosomes.removal <- renderText({
 		rnb.options(filtering.sex.chromosomes.removal=input$rnbOptsI.filtering.sex.chromosomes.removal)
 		rnb.getOption("filtering.sex.chromosomes.removal")
@@ -1293,6 +1439,10 @@ server <- function(input, output, session) {
 	output$rnbOptsO.filtering.snp <- renderText({
 		rnb.options(filtering.snp=input$rnbOptsI.filtering.snp)
 		rnb.getOption("filtering.snp")
+	})
+	output$rnbOptsO.filtering.cross.reactive <- renderText({
+		rnb.options(filtering.cross.reactive=input$rnbOptsI.filtering.cross.reactive)
+		rnb.getOption("filtering.cross.reactive")
 	})
 	output$rnbOptsO.normalization.method <- renderText({
 		res <- rnb.getOption("normalization.method")
@@ -1310,6 +1460,10 @@ server <- function(input, output, session) {
 		}
 		res
 	})
+	output$rnbOptsO.imputation.method <- renderText({
+		rnb.options(imputation.method=input$rnbOptsI.imputation.method)
+		rnb.getOption("imputation.method")
+	})
 	output$rnbOptsO.export.to.trackhub <- renderText({
 		rnb.options(export.to.trackhub=input$rnbOptsI.export.to.trackhub)
 		rnb.getOption("export.to.trackhub")
@@ -1319,6 +1473,44 @@ server <- function(input, output, session) {
 		if (length(rts)<1) rts <- NULL
 		rnb.options(export.types=rts)
 		rnb.getOption("export.types")
+	})
+	doInference <- reactive({
+		res <- input$rnbOptsI.inference
+		inferenceOptNames <- grep("^rnbOptsI.inference.", names(input), value=TRUE)
+		if (res){
+			for (oo in inferenceOptNames){
+				shinyjs::enable(oo)
+			}
+		} else {
+			for (oo in inferenceOptNames){
+				shinyjs::disable(oo)
+			}
+		}
+		res
+	})
+	output$rnbOptsO.inference <- renderText({
+		rnb.options(inference=doInference())
+		rnb.getOption("inference")
+	})
+	output$rnbOptsO.inference.age.prediction <- renderText({
+		rnb.options(inference.age.prediction=input$rnbOptsI.inference.age.prediction)
+		rnb.getOption("inference.age.prediction")
+	})
+	output$rnbOptsO.inference.targets.sva <- renderText({
+		cnames <- input$rnbOptsI.inference.targets.sva
+		if (length(cnames)<1) cnames <- character(0)
+		rnb.options(inference.targets.sva=cnames)
+		rnb.getOption("inference.targets.sva")
+	})
+	output$rnbOptsO.inference.sva.num.method <- renderText({
+		rnb.options(inference.sva.num.method=input$rnbOptsI.inference.sva.num.method)
+		rnb.getOption("inference.sva.num.method")
+	})
+	output$rnbOptsO.inference.reference.methylome.column <- renderText({
+		cname <- input$rnbOptsI.inference.reference.methylome.column
+		if (is.null(cname) || cname=="[None]") cname <- NULL
+		rnb.options(inference.reference.methylome.column=cname)
+		rnb.getOption("inference.reference.methylome.column")
 	})
 	output$rnbOptsO.exploratory.columns <- renderText({
 		cnames <- input$rnbOptsI.exploratory.columns
@@ -1357,6 +1549,16 @@ server <- function(input, output, session) {
 		cnames <- setdiff(cnames, "[automatic]")
 		rnb.options(differential.comparison.columns=cnames)
 		rnb.getOption("differential.comparison.columns")
+	})
+	output$rnbOptsO.covariate.adjustment.columns <- renderText({
+		cnames <- input$rnbOptsI.covariate.adjustment.columns
+		if (length(cnames)<1) cnames <- NULL
+		rnb.options(covariate.adjustment.columns=cnames)
+		rnb.getOption("covariate.adjustment.columns")
+	})
+	output$rnbOptsO.differential.site.test.method <- renderText({
+		rnb.options(differential.site.test.method=input$rnbOptsI.differential.site.test.method)
+		rnb.getOption("differential.site.test.method")
 	})
 	output$rnbOptsO.differential.report.sites <- renderText({
 		rnb.options(differential.report.sites=input$rnbOptsI.differential.report.sites)
@@ -1658,3 +1860,10 @@ shinyApp(ui = ui, server = server)
 ################################################################################
 # useful link for themes/layout
 # https://shiny.rstudio.com/gallery/shiny-theme-selector.html
+
+################################################################################
+# TODOs:
+# - help page parser for tooltips for options (is '?parse_Rd' useful?)
+# - Connect Modules->Data Import to 'Input' and 'Run' tabs
+################################################################################
+
