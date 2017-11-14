@@ -62,8 +62,14 @@ RNB.COLSCHEMES.METH <- list(
 	YlBl=c("#EDF8B1","#41B6C4","#081D58")
 )
 
-RNB.OPTION.DESC <- sapply(names(rnb.options()), FUN=function(x){"See the help pages: '?rnb.options'"})
-
+RNB.OPTION.DESC.TAB <- RnBeads:::rnb.options.description.table()
+RNB.OPTION.DESC <- sapply(names(rnb.options()), FUN=function(x){
+	if (x in rownames(RNB.OPTION.DESC.TAB)){
+		RNB.OPTION.DESC.TAB[x, "desc"]
+	} else {
+		"See the help pages: '?rnb.options'"
+	}
+})
 ################################################################################
 # Choose local file or directory
 # adapted from https://github.com/wleepang/shiny-directory-input
@@ -480,8 +486,7 @@ ui <- tagList(useShinyjs(), navbarPage(
 			directoryInput('dataDir', label='Select input data directory')
 		),
 		mainPanel(
-			tags$h1("Preview of the sample annotation table"),
-			tableOutput("sampleAnnotContent")
+			uiOutput("inputStatus")
 		)
 	),
 	tabPanel("Analysis Options", icon=icon("sliders"),
@@ -1192,7 +1197,7 @@ server <- function(input, output, session) {
 		readDirectoryInput(session, 'dataDir')
 	})
 
-	sannot <- reactive({
+	sannot.fromFile <- reactive({
 		sampleAnnotFn <- sampleAnnotFile()
 		if (is.null(sampleAnnotFn) || sampleAnnotFn=="") return(NULL)
 		tryCatch(
@@ -1203,6 +1208,15 @@ server <- function(input, output, session) {
 				data.frame(Error="Unable to load table", Why=err$message)
 			}
 		)
+	})
+	sannot <- reactive({
+		# first look if an RnBSet object has been loaded. If so, take the sample annotation from there
+		# otherwise require the user to upload an annotation table via file input
+		if (!is.null(rnbData$rnbSet)){
+			pheno(rnbData$rnbSet)
+		} else {
+			sannot.fromFile()
+		}
 	})
 	sannot.nsamples <- reactive({
 		nrow(sannot())
@@ -1219,7 +1233,7 @@ server <- function(input, output, session) {
 			NULL
 		}
 	})
-	output$sampleAnnotContent <- renderTable({sannot()})
+	output$sampleAnnotContent <- renderTable({sannot.fromFile()})
 
 	isBiseq <- reactive({
 		res <- input$platform == "biseq"
@@ -1274,6 +1288,24 @@ server <- function(input, output, session) {
 	output$selAdjColumns <- renderUI({
 		selCols <- sannot.cols()
 		selectInput('rnbOptsI.covariate.adjustment.columns', NULL, selCols, multiple=TRUE, selected=c())
+	})
+
+	output$inputStatus <- renderUI({
+		res <- list()
+		showAnnotTab <- TRUE
+		sampleAnnotFn <- sampleAnnotFile()
+		if (is.null(sampleAnnotFn) || sampleAnnotFn=="") showAnnotTab <- FALSE
+		if (showAnnotTab){
+			res <- c(res,
+				list(tags$h1("Preview of the sample annotation table")),
+				list(tableOutput("sampleAnnotContent"))
+			)
+		} else {
+			res <- c(res,
+				list(tags$p("No sample annotation loaded"))
+			)
+		}
+		tagList(res)
 	})
 
 	############################################################################
@@ -1692,7 +1724,9 @@ server <- function(input, output, session) {
 		if (is.null(rnbData$rnbSet)) return(NULL)
 		tagList(
 			tags$h2("RnBSet Object:"),
-			renderPrint({methods::show(rnbData$rnbSet)})
+			renderPrint({methods::show(rnbData$rnbSet)}),
+			tags$h2("Sample Annotation:"),
+			renderTable({sannot()})
 		)
 	})
 	modImportStatus <- reactiveValues(
@@ -1769,7 +1803,7 @@ server <- function(input, output, session) {
 		#TODO: import options
 	})
 	observeDirectoryInput(input, session, 'modImportRnBSetDir')
-	observeLocalFileInput(input, session, 'modImportOptionsFile')
+	# observeLocalFileInput(input, session, 'modImportOptionsFile')
 	observeEvent(input$modImportRObjects, {
 		modImportStatus$dataset.loaded <- TRUE
 		withProgress({
@@ -1864,6 +1898,5 @@ shinyApp(ui = ui, server = server)
 ################################################################################
 # TODOs:
 # - help page parser for tooltips for options (is '?parse_Rd' useful?)
-# - Connect Modules->Data Import to 'Input' and 'Run' tabs
 ################################################################################
 

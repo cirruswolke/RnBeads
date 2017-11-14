@@ -997,7 +997,7 @@ rnb.options.description.table.fromRd <- function(rdFile=file.path("man", "rnb.op
 		#check structure of dl element (should be alternating dt and dd)
 		if (!all(names(x)==rep(c("dt", "dd"), length.out=length(x)))) stop("Invalid structure of dl element")
 		optTitles  <- sapply(x[names(x)=="dt"], xmlValue)
-		optDescs   <- sapply(x[names(x)=="dd"], xmlValue)
+		optDescs   <- gsub("(\\t|\\n)", " ", sapply(x[names(x)=="dd"], xmlValue))
 		optNames   <- sapply(strsplit(optTitles, split="="), FUN=function(x){trimws(x[1])})
 		optDefault <- sapply(strsplit(optTitles, split="="), FUN=function(x){trimws(x[2])})
 		optionDf <- rbind(optionDf, data.frame(
@@ -1025,6 +1025,6 @@ rnb.options.description.table.fromRd <- function(rdFile=file.path("man", "rnb.op
 #' @noRd
 rnb.options.description.table <- function(){
 	optDescFn <- system.file(file.path("extdata", "option_desc.tsv"), package="RnBeads")
-	optionDf <- read.table(optDescFn, sep="\t", header=TRUE, stringsAsFactors=FALSE)
+	optionDf <- read.table(tabFile, sep="\t", header=TRUE, stringsAsFactors=FALSE, colClasses="character", na.strings="", quote="")
 	return(optionDf)
 }
