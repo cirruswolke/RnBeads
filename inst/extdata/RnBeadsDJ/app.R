@@ -64,10 +64,10 @@ RNB.COLSCHEMES.METH <- list(
 
 RNB.OPTION.DESC.TAB <- RnBeads:::rnb.options.description.table()
 RNB.OPTION.DESC <- sapply(names(rnb.options()), FUN=function(x){
-	if (x in rownames(RNB.OPTION.DESC.TAB)){
-		RNB.OPTION.DESC.TAB[x, "desc"]
+	if (is.element(x, rownames(RNB.OPTION.DESC.TAB))){
+		return(RNB.OPTION.DESC.TAB[x, "desc"])
 	} else {
-		"See the help pages: '?rnb.options'"
+		return("See the help pages: '?rnb.options'")
 	}
 })
 ################################################################################

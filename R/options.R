@@ -1025,6 +1025,6 @@ rnb.options.description.table.fromRd <- function(rdFile=file.path("man", "rnb.op
 #' @noRd
 rnb.options.description.table <- function(){
 	optDescFn <- system.file(file.path("extdata", "option_desc.tsv"), package="RnBeads")
-	optionDf <- read.table(tabFile, sep="\t", header=TRUE, stringsAsFactors=FALSE, colClasses="character", na.strings="", quote="")
+	optionDf <- read.table(optDescFn, sep="\t", header=TRUE, stringsAsFactors=FALSE, colClasses="character", na.strings="", quote="")
 	return(optionDf)
 }
