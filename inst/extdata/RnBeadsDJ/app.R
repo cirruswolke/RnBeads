@@ -436,7 +436,8 @@ checkReportDir <- function(repDir){
 	htmlModules <- paste0(RNB.MODULES, ".html")
 	htmlModules.exist <- htmlModules %in% contents
 	res$reportHtml[htmlModules.exist] <- htmlModules[htmlModules.exist]
-	res$moduleStatus <- getRnbStatusFromLog(file.path(repDir, "analysis.log"))
+	res$logFile <- file.path(repDir, "analysis.log")
+	res$moduleStatus <- getRnbStatusFromLog(res$logFile)
 	return(res)
 }
 # mark a report directory as created by RnBeadsDJ
@@ -1084,8 +1085,52 @@ ui <- tagList(useShinyjs(), navbarPage(
 					uiOutput("modQC.status")
 				)
 			),
-			tabPanel("...",
-				"TODO"
+			tabPanel("Preprocessing",
+				sidebarPanel(
+					checkboxInput("modPreprocessing.overwrite", "Overwrite existing report", value=FALSE),
+					checkboxInput("modPreprocessing.save", "Save RnBSet object", value=TRUE),
+					actionButton("modPreprocessing.run", "Run Preprocessing", class="btn-primary")
+				),
+				mainPanel(
+					uiOutput("modPreprocessing.status")
+				)
+			),
+			tabPanel("Tracks and Tables",
+				sidebarPanel(
+					checkboxInput("modTNT.overwrite", "Overwrite existing report", value=FALSE),
+					actionButton("modTNT.run", "Run Tracks and Tables", class="btn-primary")
+				),
+				mainPanel(
+					uiOutput("modTNT.status")
+				)
+			),
+			tabPanel("Covariate Inference",
+				sidebarPanel(
+					checkboxInput("modInference.overwrite", "Overwrite existing report", value=FALSE),
+					checkboxInput("modInference.save", "Save RnBSet object", value=TRUE),
+					actionButton("modInference.run", "Run Covariate Inference", class="btn-primary")
+				),
+				mainPanel(
+					uiOutput("modInference.status")
+				)
+			),
+			tabPanel("Exploratory Analysis",
+				sidebarPanel(
+					checkboxInput("modExploratory.overwrite", "Overwrite existing report", value=FALSE),
+					actionButton("modExploratory.run", "Run Exploratory Analysis", class="btn-primary")
+				),
+				mainPanel(
+					uiOutput("modExploratory.status")
+				)
+			),
+			tabPanel("Differential Methylation",
+				sidebarPanel(
+					checkboxInput("modDifferential.overwrite", "Overwrite existing report", value=FALSE),
+					actionButton("modDifferential.run", "Run Differential Methylation", class="btn-primary")
+				),
+				mainPanel(
+					uiOutput("modDifferential.status")
+				)
 			)
 		)
 	)
@@ -1118,7 +1163,7 @@ server <- function(input, output, session) {
 	})
 	anaStatus <- reactive({
 		refreshTimer()
-		res <- list(status="invalid", statusTab=NULL, rnbSet.paths=c())
+		res <- list(status="invalid", statusTab=NULL, rnbSet.paths=c(), logFile=NA)
 		if (dir.exists(reportDir())){
 			reportStatus <- checkReportDir(reportDir())
 			if (reportStatus$valid){
@@ -1144,6 +1189,7 @@ server <- function(input, output, session) {
 				}
 				res$rnbSet.paths <- file.path(reportDir(), grep("rnbSet_", list.dirs(reportDir(), full.names=FALSE, recursive=FALSE), value=TRUE))
 				if (!modImportStatus$dataset.loaded) shinyjs::enable("modImportAnaDir")
+				res$logFile <- reportStatus$logFile
 				res$status <- "reportDir"
 				res$statusTab <- statusTab
 			} else {
@@ -1173,7 +1219,8 @@ server <- function(input, output, session) {
 		} else if (curStatus$status=="reportDir"){
 			tagList(
 				tags$h1("Existing RnBeads analysis"),
-				renderTable(curStatus$statusTab, sanitize.text.function=function(x){x})
+				renderTable(curStatus$statusTab, sanitize.text.function=function(x){x}, striped=TRUE, hover=TRUE, bordered=TRUE),
+				tags$div(title="If the link does not open use right-click, copy the link and paste the address in a new browser window", tags$p(tags$span(icon("file-text-o"), tags$a(href=paste0("file://", curStatus$logFile), "Log File"))))
 			)
 		} else if (curStatus$status=="invalid"){
 			tagList(
@@ -1233,10 +1280,14 @@ server <- function(input, output, session) {
 			NULL
 		}
 	})
-	output$sampleAnnotContent <- renderTable({sannot.fromFile()})
+	output$sampleAnnotContent <- renderTable({sannot.fromFile()}, striped=TRUE, hover=TRUE, bordered=TRUE)
 
 	isBiseq <- reactive({
-		res <- input$platform == "biseq"
+		if (!is.null(rnbData$rnbSet) && (inherits(rnbData$rnbSet, "RnBeadSet") || inherits(rnbData$rnbSet, "RnBiseqSet"))){
+			res <- inherits(rnbData$rnbSet, "RnBiseqSet")
+		} else {
+			res <- input$platform == "biseq"
+		}
 		if (res) {
 			shinyjs::enable("rnbOptsI.assembly")
 			shinyjs::enable("rnbOptsI.import.bed.style")
@@ -1726,7 +1777,7 @@ server <- function(input, output, session) {
 			tags$h2("RnBSet Object:"),
 			renderPrint({methods::show(rnbData$rnbSet)}),
 			tags$h2("Sample Annotation:"),
-			renderTable({sannot()})
+			renderTable({sannot()}, striped=TRUE, hover=TRUE, bordered=TRUE)
 		)
 	})
 	modImportStatus <- reactiveValues(
@@ -1882,6 +1933,311 @@ server <- function(input, output, session) {
 			)
 		}, message="Performing analysis: Quality Control")
 	})
+
+	# PREPROCESSING
+	reportExists.preprocessing <- reactive({
+		curStatus <- anaStatus()
+		if (is.null(curStatus$statusTab)) return(FALSE)
+		!is.na(curStatus$statusTab["preprocessing", "Report"])
+	})
+	output$modPreprocessing.status <- renderUI({
+		reportStatus <- checkReportDir(reportDir())
+		rdy <- FALSE
+		res <- list()
+		if (modImportStatus$dataset.loaded){
+			rdy <- TRUE
+			res <- c(res, list(tags$p(tags$span(style="color:green", icon("check"), "Dataset loaded."))))
+		} else {
+			res <- c(res, list(tags$p(tags$span(style="color:red", icon("times"), "No dataset loaded. Please load a dataset using the 'Data Import' tab."))))
+		}
+		res <- c(res, list(tags$p("The current report directory is ", tags$code(reportDir()), ". This can be configured in the 'Analysis' tab.")))
+		if (reportExists.preprocessing()){
+			if (rdy){
+				shinyjs::enable("modPreprocessing.overwrite")
+			}
+			if (!input$modPreprocessing.overwrite){
+				rdy <- FALSE
+			}
+			res <- c(res, list(tags$div(title="If the link does not open use right-click, copy the link and paste the address in a new browser window", tags$p(tags$span(icon("search"), tags$a(href=paste0("file://", file.path(reportDir(), reportStatus$reportHtml["preprocessing"])), "View report"))))))
+		} else {
+			shinyjs::disable("modPreprocessing.overwrite")
+		}
+		if (rdy){
+			shinyjs::enable("modPreprocessing.run")
+		} else {
+			shinyjs::disable("modPreprocessing.run")
+		}
+		tagList(res)
+	})
+	observeEvent(input$modPreprocessing.run, {
+		withProgress({
+			tryCatch({
+					if(!dir.exists(reportDir())) rnb.initialize.reports(reportDir())
+					if (reportExists.preprocessing() && input$modPreprocessing.overwrite){
+						unlink(file.path(reportDir(), paste0("preprocessing","*")), recursive=TRUE)
+						showNotification(tags$span(icon("trash"), paste0("Deleted previous report")))
+					}
+					updateCheckboxInput(session, "modPreprocessing.overwrite", value=FALSE)
+					logger.start(fname=file.path(reportDir(), "analysis.log"))
+					res <- rnb.run.preprocessing(rnbData$rnbSet, dir.reports=reportDir())
+					logger.close()
+					markDirDJ(reportDir())
+					rnbData$rnbSet <- res$rnb.set
+					if (input$modPreprocessing.save) {
+						rnbsPath <- file.path(reportDir(), "rnbSet_preprocessed")
+						if (dir.exists(rnbsPath)){
+							unlink(rnbsPath, recursive=TRUE)
+							showNotification(tags$span(icon("trash"), paste0("Deleted previous RnBSet object from report directory")))
+						}
+						save.rnb.set(rnbData$rnbSet, rnbsPath, archive=FALSE)
+					}
+					showNotification(tags$span(style="color:green", icon("check"), paste0("Analysis (Preprocessing) completed")))
+					showNotification(tags$span(style="color:green", icon("warning"), paste0("Replaced loaded RnBSet object with preprocessed object")))
+				},
+				error = function(err) {
+					showNotification(tags$span(style="color:red", icon("warning"), paste0("Analysis (Preprocessing) failed:", err$message)))
+				}
+			)
+		}, message="Performing analysis: Preprocessing")
+	})
+
+	# TRACKS AND TABLES
+	reportExists.tracks_and_tables <- reactive({
+		curStatus <- anaStatus()
+		if (is.null(curStatus$statusTab)) return(FALSE)
+		!is.na(curStatus$statusTab["tracks_and_tables", "Report"])
+	})
+	output$modTNT.status <- renderUI({
+		reportStatus <- checkReportDir(reportDir())
+		rdy <- FALSE
+		res <- list()
+		if (modImportStatus$dataset.loaded){
+			rdy <- TRUE
+			res <- c(res, list(tags$p(tags$span(style="color:green", icon("check"), "Dataset loaded."))))
+		} else {
+			res <- c(res, list(tags$p(tags$span(style="color:red", icon("times"), "No dataset loaded. Please load a dataset using the 'Data Import' tab."))))
+		}
+		res <- c(res, list(tags$p("The current report directory is ", tags$code(reportDir()), ". This can be configured in the 'Analysis' tab.")))
+		if (reportExists.tracks_and_tables()){
+			if (rdy){
+				shinyjs::enable("modTNT.overwrite")
+			}
+			if (!input$modTNT.overwrite){
+				rdy <- FALSE
+			}
+			res <- c(res, list(tags$div(title="If the link does not open use right-click, copy the link and paste the address in a new browser window", tags$p(tags$span(icon("search"), tags$a(href=paste0("file://", file.path(reportDir(), reportStatus$reportHtml["tracks_and_tables"])), "View report"))))))
+		} else {
+			shinyjs::disable("modTNT.overwrite")
+		}
+		if (rdy){
+			shinyjs::enable("modTNT.run")
+		} else {
+			shinyjs::disable("modTNT.run")
+		}
+		tagList(res)
+	})
+	observeEvent(input$modTNT.run, {
+		withProgress({
+			tryCatch({
+					if(!dir.exists(reportDir())) rnb.initialize.reports(reportDir())
+					if (reportExists.tracks_and_tables() && input$modTNT.overwrite){
+						unlink(file.path(reportDir(), paste0("tracks_and_tables","*")), recursive=TRUE)
+						showNotification(tags$span(icon("trash"), paste0("Deleted previous report")))
+					}
+					updateCheckboxInput(session, "modTNT.overwrite", value=FALSE)
+					logger.start(fname=file.path(reportDir(), "analysis.log"))
+					res <- rnb.run.tnt(rnbData$rnbSet, dir.reports=reportDir())
+					logger.close()
+					markDirDJ(reportDir())
+					showNotification(tags$span(style="color:green", icon("check"), paste0("Analysis (Tracks and Tables) completed")))
+				},
+				error = function(err) {
+					showNotification(tags$span(style="color:red", icon("warning"), paste0("Analysis (Tracks and Tables) failed:", err$message)))
+				}
+			)
+		}, message="Performing analysis: Tracks and Tables")
+	})
+
+	# COVARIATE INFERENCE
+	reportExists.covariate_inference <- reactive({
+		curStatus <- anaStatus()
+		if (is.null(curStatus$statusTab)) return(FALSE)
+		!is.na(curStatus$statusTab["covariate_inference", "Report"])
+	})
+	output$modInference.status <- renderUI({
+		reportStatus <- checkReportDir(reportDir())
+		rdy <- FALSE
+		res <- list()
+		if (modImportStatus$dataset.loaded){
+			rdy <- TRUE
+			res <- c(res, list(tags$p(tags$span(style="color:green", icon("check"), "Dataset loaded."))))
+		} else {
+			res <- c(res, list(tags$p(tags$span(style="color:red", icon("times"), "No dataset loaded. Please load a dataset using the 'Data Import' tab."))))
+		}
+		res <- c(res, list(tags$p("The current report directory is ", tags$code(reportDir()), ". This can be configured in the 'Analysis' tab.")))
+		if (reportExists.covariate_inference()){
+			if (rdy){
+				shinyjs::enable("modInference.overwrite")
+			}
+			if (!input$modInference.overwrite){
+				rdy <- FALSE
+			}
+			res <- c(res, list(tags$div(title="If the link does not open use right-click, copy the link and paste the address in a new browser window", tags$p(tags$span(icon("search"), tags$a(href=paste0("file://", file.path(reportDir(), reportStatus$reportHtml["covariate_inference"])), "View report"))))))
+		} else {
+			shinyjs::disable("modInference.overwrite")
+		}
+		if (rdy){
+			shinyjs::enable("modInference.run")
+		} else {
+			shinyjs::disable("modInference.run")
+		}
+		tagList(res)
+	})
+	observeEvent(input$modInference.run, {
+		withProgress({
+			tryCatch({
+					if(!dir.exists(reportDir())) rnb.initialize.reports(reportDir())
+					if (reportExists.covariate_inference() && input$modInference.overwrite){
+						unlink(file.path(reportDir(), paste0("covariate_inference","*")), recursive=TRUE)
+						showNotification(tags$span(icon("trash"), paste0("Deleted previous report")))
+					}
+					updateCheckboxInput(session, "modInference.overwrite", value=FALSE)
+					logger.start(fname=file.path(reportDir(), "analysis.log"))
+					res <- rnb.run.inference(rnbData$rnbSet, dir.reports=reportDir())
+					logger.close()
+					markDirDJ(reportDir())
+					rnbData$rnbSet <- res$rnb.set
+					if (input$modInference.save) {
+						rnbsPath <- file.path(reportDir(), "rnbSet_inference")
+						if (dir.exists(rnbsPath)){
+							unlink(rnbsPath, recursive=TRUE)
+							showNotification(tags$span(icon("trash"), paste0("Deleted previous RnBSet object from report directory")))
+						}
+						save.rnb.set(rnbData$rnbSet, rnbsPath, archive=FALSE)
+					}
+					showNotification(tags$span(style="color:green", icon("check"), paste0("Analysis (Covariate Inference) completed")))
+					showNotification(tags$span(style="color:green", icon("warning"), paste0("Replaced loaded RnBSet object with inference object")))
+				},
+				error = function(err) {
+					showNotification(tags$span(style="color:red", icon("warning"), paste0("Analysis (Covariate Inference) failed:", err$message)))
+				}
+			)
+		}, message="Performing analysis: Covariate Inference")
+	})
+
+	# EXPLORATORY ANALYSIS
+	reportExists.exploratory_analysis <- reactive({
+		curStatus <- anaStatus()
+		if (is.null(curStatus$statusTab)) return(FALSE)
+		!is.na(curStatus$statusTab["exploratory_analysis", "Report"])
+	})
+	output$modExploratory.status <- renderUI({
+		reportStatus <- checkReportDir(reportDir())
+		rdy <- FALSE
+		res <- list()
+		if (modImportStatus$dataset.loaded){
+			rdy <- TRUE
+			res <- c(res, list(tags$p(tags$span(style="color:green", icon("check"), "Dataset loaded."))))
+		} else {
+			res <- c(res, list(tags$p(tags$span(style="color:red", icon("times"), "No dataset loaded. Please load a dataset using the 'Data Import' tab."))))
+		}
+		res <- c(res, list(tags$p("The current report directory is ", tags$code(reportDir()), ". This can be configured in the 'Analysis' tab.")))
+		if (reportExists.exploratory_analysis()){
+			if (rdy){
+				shinyjs::enable("modExploratory.overwrite")
+			}
+			if (!input$modExploratory.overwrite){
+				rdy <- FALSE
+			}
+			res <- c(res, list(tags$div(title="If the link does not open use right-click, copy the link and paste the address in a new browser window", tags$p(tags$span(icon("search"), tags$a(href=paste0("file://", file.path(reportDir(), reportStatus$reportHtml["exploratory_analysis"])), "View report"))))))
+		} else {
+			shinyjs::disable("modExploratory.overwrite")
+		}
+		if (rdy){
+			shinyjs::enable("modExploratory.run")
+		} else {
+			shinyjs::disable("modExploratory.run")
+		}
+		tagList(res)
+	})
+	observeEvent(input$modExploratory.run, {
+		withProgress({
+			tryCatch({
+					if(!dir.exists(reportDir())) rnb.initialize.reports(reportDir())
+					if (reportExists.exploratory_analysis() && input$modExploratory.overwrite){
+						unlink(file.path(reportDir(), paste0("exploratory_analysis","*")), recursive=TRUE)
+						showNotification(tags$span(icon("trash"), paste0("Deleted previous report")))
+					}
+					updateCheckboxInput(session, "modExploratory.overwrite", value=FALSE)
+					logger.start(fname=file.path(reportDir(), "analysis.log"))
+					res <- rnb.run.exploratory(rnbData$rnbSet, dir.reports=reportDir())
+					logger.close()
+					markDirDJ(reportDir())
+					showNotification(tags$span(style="color:green", icon("check"), paste0("Analysis (Explorarory Analysis) completed")))
+				},
+				error = function(err) {
+					showNotification(tags$span(style="color:red", icon("warning"), paste0("Analysis (Explorarory Analysis) failed:", err$message)))
+				}
+			)
+		}, message="Performing analysis: Explorarory Analysis")
+	})
+
+	# DIFFERENTIAL METHYLATION
+	reportExists.differential_methylation <- reactive({
+		curStatus <- anaStatus()
+		if (is.null(curStatus$statusTab)) return(FALSE)
+		!is.na(curStatus$statusTab["differential_methylation", "Report"])
+	})
+	output$modDifferential.status <- renderUI({
+		reportStatus <- checkReportDir(reportDir())
+		rdy <- FALSE
+		res <- list()
+		if (modImportStatus$dataset.loaded){
+			rdy <- TRUE
+			res <- c(res, list(tags$p(tags$span(style="color:green", icon("check"), "Dataset loaded."))))
+		} else {
+			res <- c(res, list(tags$p(tags$span(style="color:red", icon("times"), "No dataset loaded. Please load a dataset using the 'Data Import' tab."))))
+		}
+		res <- c(res, list(tags$p("The current report directory is ", tags$code(reportDir()), ". This can be configured in the 'Analysis' tab.")))
+		if (reportExists.differential_methylation()){
+			if (rdy){
+				shinyjs::enable("modDifferential.overwrite")
+			}
+			if (!input$modDifferential.overwrite){
+				rdy <- FALSE
+			}
+			res <- c(res, list(tags$div(title="If the link does not open use right-click, copy the link and paste the address in a new browser window", tags$p(tags$span(icon("search"), tags$a(href=paste0("file://", file.path(reportDir(), reportStatus$reportHtml["differential_methylation"])), "View report"))))))
+		} else {
+			shinyjs::disable("modDifferential.overwrite")
+		}
+		if (rdy){
+			shinyjs::enable("modDifferential.run")
+		} else {
+			shinyjs::disable("modDifferential.run")
+		}
+		tagList(res)
+	})
+	observeEvent(input$modDifferential.run, {
+		withProgress({
+			tryCatch({
+					if(!dir.exists(reportDir())) rnb.initialize.reports(reportDir())
+					if (reportExists.differential_methylation() && input$modDifferential.overwrite){
+						unlink(file.path(reportDir(), paste0("differential_methylation","*")), recursive=TRUE)
+						showNotification(tags$span(icon("trash"), paste0("Deleted previous report")))
+					}
+					updateCheckboxInput(session, "modDifferential.overwrite", value=FALSE)
+					logger.start(fname=file.path(reportDir(), "analysis.log"))
+					res <- rnb.run.differential(rnbData$rnbSet, dir.reports=reportDir())
+					logger.close()
+					markDirDJ(reportDir())
+					showNotification(tags$span(style="color:green", icon("check"), paste0("Analysis (Differential Methylation) completed")))
+				},
+				error = function(err) {
+					showNotification(tags$span(style="color:red", icon("warning"), paste0("Analysis (Differential Methylation) failed:", err$message)))
+				}
+			)
+		}, message="Performing analysis: Differential Methylation")
+	})
 }
 
 ################################################################################
@@ -1897,6 +2253,6 @@ shinyApp(ui = ui, server = server)
 
 ################################################################################
 # TODOs:
-# - help page parser for tooltips for options (is '?parse_Rd' useful?)
+# - 
 ################################################################################
 
