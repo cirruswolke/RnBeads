@@ -70,6 +70,9 @@ RNB.OPTION.DESC <- sapply(names(rnb.options()), FUN=function(x){
 		return("See the help pages: '?rnb.options'")
 	}
 })
+
+RNB.OPTION.PROFILES.PATH <- system.file(file.path("extdata", "optionProfiles"), package="RnBeads")
+RNB.OPTION.PROFILES <- gsub("\\.xml$", "", list.files(path=RNB.OPTION.PROFILES.PATH, pattern="\\.xml$"))
 ################################################################################
 # Choose local file or directory
 # adapted from https://github.com/wleepang/shiny-directory-input
@@ -491,6 +494,32 @@ ui <- tagList(useShinyjs(), navbarPage(
 		)
 	),
 	tabPanel("Analysis Options", icon=icon("sliders"),
+		fluidRow(
+			column(9,
+				wellPanel(
+					tags$h3("Load Option Profile"),
+					fluidRow(
+						column(3, wellPanel(
+							actionButton("loadOptsAnaDirDo", "Load from Analysis Directory")
+						)),
+						column(5, wellPanel(
+							localFileInput("loadOptsXmlFile", "XML file"),
+							actionButton("loadOptsXmlDo", "Load from XML")
+						)),
+						column(4, wellPanel(
+							selectInput("loadOptsProfileSel", "Predefined Option Profile", RNB.OPTION.PROFILES),
+							actionButton("loadOptsProfileDo", "Load Option Profile")
+						))
+					)
+				)
+			),
+			column(3,
+				wellPanel(
+					tags$h3("Saving Option Profile"),
+					downloadButton("saveOptsXml", "Save to XML")
+				)
+			)
+		),
 		tabsetPanel(
 			tabPanel("General",
 				tags$table(class="table table-hover",
@@ -1192,13 +1221,16 @@ server <- function(input, output, session) {
 				res$logFile <- reportStatus$logFile
 				res$status <- "reportDir"
 				res$statusTab <- statusTab
+				shinyjs::enable("loadOptsAnaDirDo")
 			} else {
 				# Existing directory, but no valid RnBeads report
 				shinyjs::disable("modImportAnaDir")
+				shinyjs::disable("loadOptsAnaDirDo")
 			}	
 		} else {
 			# New RnBeads analysis
 			shinyjs::disable("modImportAnaDir")
+			shinyjs::disable("loadOptsAnaDirDo")
 			res$status <- "new"
 		}
 		res
@@ -1672,6 +1704,98 @@ server <- function(input, output, session) {
 		rnb.options(differential.enrichment.lola=input$rnbOptsI.differential.enrichment.lola)
 		rnb.getOption("differential.enrichment.lola")
 	})
+
+	#apply the option setting 'ovalue' for option with name 'oname'
+	applyOptValue <- function(oname, ovalue){
+		if (oname=="analysis.name") {
+			updateTextInput(session, "rnbOptsI.analysis.name", value=ovalue)
+		} else if (oname=="assembly") {
+			updateSelectInput(session, "rnbOptsI.assembly", selected=ovalue)
+		} else if (oname=="region.types") {
+			updateSelectInput(session, "rnbOptsI.region.types", selected=ovalue)
+		} else if (oname=="identifiers.column") {
+			updateSelectInput(session, "rnbOptsI.identifiers.column", selected=ovalue)
+		}
+	}
+
+	#apply the options stored in list 'ol'
+	applyOptList <- function(ol){
+		for (oname in names(ol)){
+			rr <- tryCatch(
+				applyOptValue(oname, ol[[oname]]),
+				error = function(err) {
+					showNotification(tags$span(style="color:red", icon("warning"), paste0("Could not update option '", oname, "' with value '", ol[[oname]], "' (", err$message, ")")))
+				}
+			)
+		}
+		print(str(input$rnbOptsI.assembly))
+	}
+
+	observeLocalFileInput(input, session, 'loadOptsXmlFile')
+	loadOptsXml.fName <- reactive({
+		readLocalFileInput(session, 'loadOptsXmlFile')
+	})
+	observeEvent(input$loadOptsAnaDirDo, {
+		curStatus <- anaStatus()
+		isValid <- curStatus$status=="reportDir"
+		xmlFile <- file.path(reportDir(), "analysis_options.xml")
+		if (isValid && file.exists(xmlFile)){
+			optList <- tryCatch(
+				rnb.xml2options(xmlFile),
+				error = function(err) {
+					showNotification(tags$span(style="color:red", icon("warning"), paste0("Could not load option file from analysis directory:", err$message)))
+					NULL
+				}
+			)
+			if (length(optList) > 0){
+				applyOptList(optList)
+			}
+		} else {
+			showNotification(tags$span(style="color:red", icon("warning"), paste0("Option file does not exist in analysis directory")))
+		}
+	})
+	observeEvent(input$loadOptsXmlDo, {
+		xmlFile <- loadOptsXml.fName()
+		if (file.exists(xmlFile)){
+			optList <- tryCatch(
+				rnb.xml2options(xmlFile),
+				error = function(err) {
+					showNotification(tags$span(style="color:red", icon("warning"), paste0("Could not load option file:", err$message)))
+					NULL
+				}
+			)
+			if (length(optList) > 0){
+				applyOptList(optList)
+			}
+		} else {
+			showNotification(tags$span(style="color:red", icon("warning"), paste0("Option file does not exist")))
+		}
+	})
+	observeEvent(input$loadOptsProfileDo, {
+		xmlFile <- file.path(RNB.OPTION.PROFILES.PATH, paste0(input$loadOptsProfileSel, ".xml"))
+		if (file.exists(xmlFile)){
+			optList <- tryCatch(
+				rnb.xml2options(xmlFile),
+				error = function(err) {
+					showNotification(tags$span(style="color:red", icon("warning"), paste0("Could not load option profile:", err$message)))
+					NULL
+				}
+			)
+			if (length(optList) > 0){
+				applyOptList(optList)
+			}
+		} else {
+			showNotification(tags$span(style="color:red", icon("warning"), paste0("Option profile does not exist")))
+		}
+	})
+
+	output$saveOptsXml <- downloadHandler(
+		filename="rnb_options.xml",
+		content=function(fname){
+			cat(rnb.options2xml(), file=fname)
+		}
+	)
+
 	############################################################################
 	# Run
 	############################################################################
