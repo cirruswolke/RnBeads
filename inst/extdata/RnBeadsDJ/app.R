@@ -71,6 +71,9 @@ RNB.OPTION.DESC <- sapply(names(rnb.options()), FUN=function(x){
 	}
 })
 
+RNB.GROUP.SIZE.RANGE  <- c(1, 20)
+RNB.GROUP.COUNT.RANGE <- c(2, 20)
+
 RNB.OPTION.PROFILES.PATH <- system.file(file.path("extdata", "optionProfiles"), package="RnBeads")
 RNB.OPTION.PROFILES <- gsub("\\.xml$", "", list.files(path=RNB.OPTION.PROFILES.PATH, pattern="\\.xml$"))
 ################################################################################
@@ -578,7 +581,7 @@ ui <- tagList(useShinyjs(), navbarPage(
 								tags$div(title=RNB.OPTION.DESC["min.group.size"], tags$code("min.group.size"))
 							),
 							tags$td(
-								sliderInput("rnbOptsI.min.group.size", NULL, min=1, max=20, value=2)
+								sliderInput("rnbOptsI.min.group.size", NULL, min=RNB.GROUP.SIZE.RANGE[1], max=RNB.GROUP.SIZE.RANGE[2], value=2)
 							),
 							tags$td(
 								verbatimTextOutput("rnbOptsO.min.group.size")
@@ -589,7 +592,7 @@ ui <- tagList(useShinyjs(), navbarPage(
 								tags$div(title=RNB.OPTION.DESC["max.group.count"], tags$code("max.group.count"))
 							),
 							tags$td(
-								sliderInput("rnbOptsI.max.group.count", NULL, min=2, max=20, value=20)
+								sliderInput("rnbOptsI.max.group.count", NULL, min=RNB.GROUP.COUNT.RANGE[1], max=RNB.GROUP.COUNT.RANGE[2], value=RNB.GROUP.COUNT.RANGE[2])
 							),
 							tags$td(
 								verbatimTextOutput("rnbOptsO.max.group.count")
@@ -1285,6 +1288,7 @@ server <- function(input, output, session) {
 			},
 			error = function(err) {
 				data.frame(Error="Unable to load table", Why=err$message)
+				NULL
 			}
 		)
 	})
@@ -1298,13 +1302,18 @@ server <- function(input, output, session) {
 		}
 	})
 	sannot.nsamples <- reactive({
-		nrow(sannot())
+		if (is.null(sannot())){
+			0
+		} else {
+			nrow(sannot())
+		}
 	})
 	sannot.cols <- reactive({
 		cnames <- colnames(sannot())
 		if (length(cnames)==2 && cnames==c("Error", "Why")) cnames <- NULL #error --> no column names
 		cnames
 	})
+	sannot.cols.plusNone <- reactive(c("[None]", sannot.cols()))
 	sannot.cols.grps <- reactive({
 		if(length(sannot.cols())>0) {
 			names(rnb.sample.groups(sannot()))
@@ -1312,6 +1321,7 @@ server <- function(input, output, session) {
 			NULL
 		}
 	})
+	sannot.cols.grps.plusAutomatic <- reactive(c("[automatic]", sannot.cols()))
 	output$sampleAnnotContent <- renderTable({sannot.fromFile()}, striped=TRUE, hover=TRUE, bordered=TRUE)
 
 	isBiseq <- reactive({
@@ -1349,28 +1359,22 @@ server <- function(input, output, session) {
 	})
 
 	output$selColumn.id <- renderUI({
-		selCols <- c("[None]", sannot.cols())
-		selectInput('rnbOptsI.identifiers.column', NULL, selCols)
+		selectInput('rnbOptsI.identifiers.column', NULL, sannot.cols.plusNone())
 	})
 	output$selColumn.sva<- renderUI({
-		selCols <- c(sannot.cols.grps())
-		selectInput('rnbOptsI.inference.targets.sva', NULL, selCols, multiple=TRUE)
+		selectInput('rnbOptsI.inference.targets.sva', NULL, sannot.cols.grps(), multiple=TRUE)
 	})
 	output$selColumn.cellTypeRef <- renderUI({
-		selCols <- c("[None]", sannot.cols())
-		selectInput('rnbOptsI.inference.reference.methylome.column', NULL, selCols)
+		selectInput('rnbOptsI.inference.reference.methylome.column', NULL, sannot.cols.plusNone())
 	})
 	output$selColumn.ex <- renderUI({
-		selCols <- c("[automatic]", sannot.cols.grps())
-		selectInput('rnbOptsI.exploratory.columns', NULL, selCols, multiple=TRUE, selected="[automatic]")
+		selectInput('rnbOptsI.exploratory.columns', NULL, sannot.cols.grps.plusAutomatic(), multiple=TRUE, selected="[automatic]")
 	})
 	output$selColumn.diff <- renderUI({
-		selCols <- c("[automatic]", sannot.cols.grps())
-		selectInput('rnbOptsI.differential.comparison.columns', NULL, selCols, multiple=TRUE, selected="[automatic]")
+		selectInput('rnbOptsI.differential.comparison.columns', NULL, sannot.cols.grps.plusAutomatic(), multiple=TRUE, selected="[automatic]")
 	})
 	output$selAdjColumns <- renderUI({
-		selCols <- sannot.cols()
-		selectInput('rnbOptsI.covariate.adjustment.columns', NULL, selCols, multiple=TRUE, selected=c())
+		selectInput('rnbOptsI.covariate.adjustment.columns', NULL, sannot.cols(), multiple=TRUE, selected=c())
 	})
 
 	output$inputStatus <- renderUI({
@@ -1403,6 +1407,12 @@ server <- function(input, output, session) {
 	# 		rnb.getOption(oo)
 	# 	})
 	# }
+
+	# a helper container for storing variable, option-related information
+	optionSettingObserver <- reactiveValues(
+		group.count.range.max=RNB.GROUP.COUNT.RANGE[2],
+		colors.category.list=RNB.COLSCHEMES.CATEGORY
+	)
 
 	output$rnbOpts <- renderPrint({
 		depDummy <- assemblySel()
@@ -1466,24 +1476,26 @@ server <- function(input, output, session) {
 	observe({
 		val.min.group.size <- input$rnbOptsI.min.group.size
 		val.max.group.count <- input$rnbOptsI.max.group.count
-		maxval <- 20
-		if (!is.null(sannot.nsamples()) && sannot.nsamples() > 0) maxval <- sannot.nsamples()
-		updateSliderInput(session, "rnbOptsI.min.group.size", value=val.min.group.size, min=1, max=maxval, step=1)
-		updateSliderInput(session, "rnbOptsI.max.group.count", value=val.max.group.count, min=2, max=maxval, step=1)
+		if (sannot.nsamples() > 0) optionSettingObserver$group.count.range.max <- sannot.nsamples()
+		updateSliderInput(session, "rnbOptsI.min.group.size", value=val.min.group.size, min=RNB.GROUP.SIZE.RANGE[1], max=RNB.GROUP.SIZE.RANGE[2], step=1)
+		updateSliderInput(session, "rnbOptsI.max.group.count", value=val.max.group.count, min=RNB.GROUP.COUNT.RANGE[1], max=optionSettingObserver$group.count.range.max, step=1)
 	})
 	output$rnbOptsO.max.group.count <- renderText({
 		rnb.options(max.group.count=input$rnbOptsI.max.group.count)
 		rnb.getOption("max.group.count")
 	})
+	opts.colors.category <- reactive({
+		
+	})
 	output$rnbOptsO.colors.category <- renderText({
-		cols <- RNB.COLSCHEMES.CATEGORY[[input$rnbOptsI.colors.category]]
+		cols <- optionSettingObserver$colors.category.list[[input$rnbOptsI.colors.category]]
+		print("UPDATE")
+		print(str(optionSettingObserver$colors.category.list))
 		rnb.options(colors.category=cols)
 		rnb.getOption("colors.category")
 	})
 	output$rnbOptsOP.colors.category <- renderPlot({
-		cols <- RNB.COLSCHEMES.CATEGORY[[input$rnbOptsI.colors.category]]
-		# rnb.options(colors.category=cols)
-		# rnb.getOption("colors.category")
+		cols <- optionSettingObserver$colors.category.list[[input$rnbOptsI.colors.category]]
 		plotColPal(cols)
 	})
 	output$rnbOptsO.colors.meth <- renderText({
@@ -1710,25 +1722,61 @@ server <- function(input, output, session) {
 		if (oname=="analysis.name") {
 			updateTextInput(session, "rnbOptsI.analysis.name", value=ovalue)
 		} else if (oname=="assembly") {
-			updateSelectInput(session, "rnbOptsI.assembly", selected=ovalue)
+			if (is.element(ovalue, RNB.ASSEMBLIES)){
+				updateSelectInput(session, "rnbOptsI.assembly", selected=ovalue)
+				print("SET ASSEMBLY")
+			} else {
+				stop(paste0("Invalid assembly: ", ovalue))
+			}
 		} else if (oname=="region.types") {
-			updateSelectInput(session, "rnbOptsI.region.types", selected=ovalue)
+			if (is.null(ovalue) || all(ovalue %in% regTypes.all())){
+				updateSelectInput(session, "rnbOptsI.region.types", selected=ovalue)
+			} else {
+				stop(paste0("Region type(s) not supported by current assembly (", rnb.getOption("assembly"), "): ", paste(setdiff(ovalue, regTypes.all()), collapse=", ")))
+			}
 		} else if (oname=="identifiers.column") {
-			updateSelectInput(session, "rnbOptsI.identifiers.column", selected=ovalue)
+			if (is.null(ovalue) || is.element(ovalue, sannot.cols.plusNone())){
+				updateSelectInput(session, "rnbOptsI.identifiers.column", selected=ovalue)
+				print(paste("SET to", ovalue))
+			} else {
+				print("FAIL")
+				stop(paste0("Sample annotation column not supported"))
+			}
+		} else if (oname=="min.group.size") {
+			if (ovalue >= RNB.GROUP.SIZE.RANGE[1] && ovalue <= RNB.GROUP.SIZE.RANGE[2]){
+				updateSelectInput(session, "rnbOptsI.min.group.size", selected=ovalue)
+			} else {
+				stop(paste0("Not within expected range [", RNB.GROUP.SIZE.RANGE[1], "-", RNB.GROUP.SIZE.RANGE[2],"]: ", ovalue))
+			}
+		} else if (oname=="max.group.count") {
+			if (is.null(ovalue) || (ovalue >= RNB.GROUP.COUNT.RANGE[1] && ovalue <= optionSettingObserver$group.count.range.max)){
+				updateSelectInput(session, "rnbOptsI.max.group.count", selected=ovalue)
+			} else {
+				stop(paste0("Not within expected range [", RNB.GROUP.COUNT.RANGE[1], "-", optionSettingObserver$group.count.range.max,"]: ", ovalue))
+			}
+		} else if (oname=="colors.category") {
+			print(ovalue)
+			selVal <- ovalue
+			if (length(ovalue)>1){
+				selVal <- "[custom]"
+				optionSettingObserver$colors.category.list[[selVal]] <- ovalue
+			}
+			updateSelectInput(session, "rnbOptsI.colors.category", choices=names(optionSettingObserver$colors.category.list), selected=selVal)
 		}
 	}
 
 	#apply the options stored in list 'ol'
-	applyOptList <- function(ol){
+	applyOptList <- function(ol, ol.old=list()){
 		for (oname in names(ol)){
 			rr <- tryCatch(
 				applyOptValue(oname, ol[[oname]]),
 				error = function(err) {
 					showNotification(tags$span(style="color:red", icon("warning"), paste0("Could not update option '", oname, "' with value '", ol[[oname]], "' (", err$message, ")")))
+					if (is.element(oname, names(ol.old))) applyOptValue(oname, ol.old[[oname]])
 				}
 			)
 		}
-		print(str(input$rnbOptsI.assembly))
+		showNotification(tags$span(style="color:green", icon("check"), paste0("Option settings applied")))
 	}
 
 	observeLocalFileInput(input, session, 'loadOptsXmlFile')
@@ -1740,6 +1788,7 @@ server <- function(input, output, session) {
 		isValid <- curStatus$status=="reportDir"
 		xmlFile <- file.path(reportDir(), "analysis_options.xml")
 		if (isValid && file.exists(xmlFile)){
+			rnbOpts.old <- rnb.options()
 			optList <- tryCatch(
 				rnb.xml2options(xmlFile),
 				error = function(err) {
@@ -1748,24 +1797,28 @@ server <- function(input, output, session) {
 				}
 			)
 			if (length(optList) > 0){
-				applyOptList(optList)
+				applyOptList(optList, rnbOpts.old)
 			}
 		} else {
 			showNotification(tags$span(style="color:red", icon("warning"), paste0("Option file does not exist in analysis directory")))
 		}
 	})
 	observeEvent(input$loadOptsXmlDo, {
+		rnbOpts.old <- rnb.options()
+		# print(str(rnbOpts.old))
 		xmlFile <- loadOptsXml.fName()
 		if (file.exists(xmlFile)){
-			optList <- tryCatch(
-				rnb.xml2options(xmlFile),
-				error = function(err) {
-					showNotification(tags$span(style="color:red", icon("warning"), paste0("Could not load option file:", err$message)))
-					NULL
-				}
-			)
+			optList <- rnb.xml2options(xmlFile)
+			# optList <- tryCatch(
+			# 	rr <- rnb.xml2options(xmlFile),
+			# 	error = function(err) {
+			# 		showNotification(tags$span(style="color:red", icon("warning"), paste0("Could not load option file:", err$message)))
+			# 		NULL
+			# 	}
+			# )
 			if (length(optList) > 0){
-				applyOptList(optList)
+				print(str(optList))
+				applyOptList(optList, rnbOpts.old)
 			}
 		} else {
 			showNotification(tags$span(style="color:red", icon("warning"), paste0("Option file does not exist")))
@@ -1774,6 +1827,7 @@ server <- function(input, output, session) {
 	observeEvent(input$loadOptsProfileDo, {
 		xmlFile <- file.path(RNB.OPTION.PROFILES.PATH, paste0(input$loadOptsProfileSel, ".xml"))
 		if (file.exists(xmlFile)){
+			rnbOpts.old <- rnb.options()
 			optList <- tryCatch(
 				rnb.xml2options(xmlFile),
 				error = function(err) {
@@ -1782,7 +1836,7 @@ server <- function(input, output, session) {
 				}
 			)
 			if (length(optList) > 0){
-				applyOptList(optList)
+				applyOptList(optList, rnbOpts.old)
 			}
 		} else {
 			showNotification(tags$span(style="color:red", icon("warning"), paste0("Option profile does not exist")))
