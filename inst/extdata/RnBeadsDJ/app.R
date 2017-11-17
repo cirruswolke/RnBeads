@@ -1808,14 +1808,16 @@ server <- function(input, output, session) {
 		# print(str(rnbOpts.old))
 		xmlFile <- loadOptsXml.fName()
 		if (file.exists(xmlFile)){
-			optList <- rnb.xml2options(xmlFile)
-			# optList <- tryCatch(
-			# 	rr <- rnb.xml2options(xmlFile),
-			# 	error = function(err) {
-			# 		showNotification(tags$span(style="color:red", icon("warning"), paste0("Could not load option file:", err$message)))
-			# 		NULL
-			# 	}
-			# )
+			optList <- tryCatch(
+				{
+					dummy <- rnb.xml2options(xmlFile)
+					rnb.options()
+				},
+				error = function(err) {
+					showNotification(tags$span(style="color:red", icon("warning"), paste0("Could not load option file:", err$message)))
+					NULL
+				}
+			)
 			if (length(optList) > 0){
 				print(str(optList))
 				applyOptList(optList, rnbOpts.old)
