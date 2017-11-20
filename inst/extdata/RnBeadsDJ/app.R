@@ -1428,7 +1428,6 @@ server <- function(input, output, session) {
 	})
 	#default setting for assembly if platform is not bisulfite and thus no assembly input has been given
 	assemblySel <- reactive({
-		# print("HI")
 		res <- "hg19"
 		if (isBiseq() && !is.null(input$rnbOptsI.assembly)){
 			res <- input$rnbOptsI.assembly
@@ -1489,8 +1488,6 @@ server <- function(input, output, session) {
 	})
 	output$rnbOptsO.colors.category <- renderText({
 		cols <- optionSettingObserver$colors.category.list[[input$rnbOptsI.colors.category]]
-		print("UPDATE")
-		print(str(optionSettingObserver$colors.category.list))
 		rnb.options(colors.category=cols)
 		rnb.getOption("colors.category")
 	})
@@ -1724,7 +1721,6 @@ server <- function(input, output, session) {
 		} else if (oname=="assembly") {
 			if (is.element(ovalue, RNB.ASSEMBLIES)){
 				updateSelectInput(session, "rnbOptsI.assembly", selected=ovalue)
-				print("SET ASSEMBLY")
 			} else {
 				stop(paste0("Invalid assembly: ", ovalue))
 			}
@@ -1737,9 +1733,7 @@ server <- function(input, output, session) {
 		} else if (oname=="identifiers.column") {
 			if (is.null(ovalue) || is.element(ovalue, sannot.cols.plusNone())){
 				updateSelectInput(session, "rnbOptsI.identifiers.column", selected=ovalue)
-				print(paste("SET to", ovalue))
 			} else {
-				print("FAIL")
 				stop(paste0("Sample annotation column not supported"))
 			}
 		} else if (oname=="min.group.size") {
@@ -1755,7 +1749,6 @@ server <- function(input, output, session) {
 				stop(paste0("Not within expected range [", RNB.GROUP.COUNT.RANGE[1], "-", optionSettingObserver$group.count.range.max,"]: ", ovalue))
 			}
 		} else if (oname=="colors.category") {
-			print(ovalue)
 			selVal <- ovalue
 			if (length(ovalue)>1){
 				selVal <- "[custom]"
@@ -1772,7 +1765,12 @@ server <- function(input, output, session) {
 				applyOptValue(oname, ol[[oname]]),
 				error = function(err) {
 					showNotification(tags$span(style="color:red", icon("warning"), paste0("Could not update option '", oname, "' with value '", ol[[oname]], "' (", err$message, ")")))
-					if (is.element(oname, names(ol.old))) applyOptValue(oname, ol.old[[oname]])
+					if (is.element(oname, names(ol.old))){
+						applyOptValue(oname, ol.old[[oname]])
+						optSettingList <- list(ol.old[[oname]])
+						names(optSettingList) <- oname
+						do.call("rnb.options", optSettingList)
+					}
 				}
 			)
 		}
@@ -1789,8 +1787,10 @@ server <- function(input, output, session) {
 		xmlFile <- file.path(reportDir(), "analysis_options.xml")
 		if (isValid && file.exists(xmlFile)){
 			rnbOpts.old <- rnb.options()
-			optList <- tryCatch(
-				rnb.xml2options(xmlFile),
+			optList <- tryCatch({
+					dummy <- rnb.xml2options(xmlFile)
+					rnb.options()
+				},
 				error = function(err) {
 					showNotification(tags$span(style="color:red", icon("warning"), paste0("Could not load option file from analysis directory:", err$message)))
 					NULL
@@ -1804,12 +1804,10 @@ server <- function(input, output, session) {
 		}
 	})
 	observeEvent(input$loadOptsXmlDo, {
-		rnbOpts.old <- rnb.options()
-		# print(str(rnbOpts.old))
 		xmlFile <- loadOptsXml.fName()
 		if (file.exists(xmlFile)){
-			optList <- tryCatch(
-				{
+			rnbOpts.old <- rnb.options()
+			optList <- tryCatch({
 					dummy <- rnb.xml2options(xmlFile)
 					rnb.options()
 				},
@@ -1819,7 +1817,6 @@ server <- function(input, output, session) {
 				}
 			)
 			if (length(optList) > 0){
-				print(str(optList))
 				applyOptList(optList, rnbOpts.old)
 			}
 		} else {
@@ -1830,8 +1827,10 @@ server <- function(input, output, session) {
 		xmlFile <- file.path(RNB.OPTION.PROFILES.PATH, paste0(input$loadOptsProfileSel, ".xml"))
 		if (file.exists(xmlFile)){
 			rnbOpts.old <- rnb.options()
-			optList <- tryCatch(
-				rnb.xml2options(xmlFile),
+			optList <- tryCatch({
+					dummy <- rnb.xml2options(xmlFile)
+					rnb.options()
+				},
 				error = function(err) {
 					showNotification(tags$span(style="color:red", icon("warning"), paste0("Could not load option profile:", err$message)))
 					NULL
