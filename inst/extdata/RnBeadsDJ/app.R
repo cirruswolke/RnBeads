@@ -44,6 +44,7 @@ RNB.MODULES.LOG.MSG <- c(
 )
 RNB.PLATFORMS <- c("Bisulfite Sequencing"="biseq", "Illumina EPIC"="illEpic", "Illumina 450k"="ill450k", "Illumina27k"="ill27k")
 RNB.ASSEMBLIES <- rnb.get.assemblies()
+RNB.TABLE.SEPS <- c("comma" = ",", "tab"="\t")
 RNB.BED.STYLES <- c("BisSNP"="BisSNP", "ENCODE"="Encode", "EPP"="EPP", "Bismark cytosine"="bismarkCytosine", "Bismark coverage"="bismarkCov")
 RNB.FILTERING.SNP <- c("No filtering"="no", "3 SNPs"="3", "5 SNPs"="5", "Any SNPs"="any")
 RNB.NORMALIZATION.METHODS=c("none", "bmiq", "illumina", "swan", "minfi.funnorm", "wm.dasen", "wm.nasen", "wm.betaqn", "wm.naten", "wm.nanet", "wm.nanes", "wm.danes", "wm.danet", "wm.danen", "wm.daten1", "wm.daten2", "wm.tost", "wm.fuks", "wm.swan")
@@ -471,7 +472,9 @@ ui <- tagList(useShinyjs(), navbarPage(
 		tags$ul(
 			tags$li("... run new analyses by specifying a non-existing data directory in the", "'Analysis'", "tab."),
 			tags$li("... view the status of an RnBeads analysis by specifying an existing report directory in the", "'Analysis'", "tab."),
-			tags$li("... run individual RnBeads modules via the", "'Modules'", "tab.")
+			tags$li("... configure, load and save option settings for your analyses in the", "'Analysis Options'", "tab."),
+			tags$li("... run the complete RnBeads pipeline using the", "'Input'",  " and 'Run'", "tabs."),
+			tags$li("... run individual RnBeads modules for new or existing RnBeads analysis runs via the", "'Modules'", "tab.")
 		)
 	),
 	tabPanel("Analysis", icon=icon("bar-chart"),
@@ -488,7 +491,7 @@ ui <- tagList(useShinyjs(), navbarPage(
 	tabPanel("Input", icon=icon("sign-in"),
 		sidebarPanel(
 			localFileInput("sampleAnnotFile", "Select sample annotation file"),
-			selectInput("rnbOptsI.import.table.separator", "Separator:", c("comma" = ",", "tab"="\t")),
+			selectInput("rnbOptsI.import.table.separator", "Separator:", RNB.TABLE.SEPS),
 			selectInput("platform", "Platform", RNB.PLATFORMS),
 			directoryInput('dataDir', label='Select input data directory')
 		),
@@ -660,7 +663,7 @@ ui <- tagList(useShinyjs(), navbarPage(
 								tags$div(title=RNB.OPTION.DESC["import.bed.style"], tags$code("import.bed.style"))
 							),
 							tags$td(
-								selectInput("rnbOptsI.import.bed.style", NULL, names(RNB.BED.STYLES))
+								selectInput("rnbOptsI.import.bed.style", NULL, RNB.BED.STYLES)
 							),
 							tags$td(
 								verbatimTextOutput("rnbOptsO.import.import.bed.style")
@@ -1099,7 +1102,7 @@ ui <- tagList(useShinyjs(), navbarPage(
 					),
 					wellPanel(
 						tags$h4("Reset"),
-						actionButton("modImportReset", "Unload dataset", class="btn-primary")
+						actionButton("modImportReset", "Unload dataset")
 					)
 				),
 				mainPanel(
@@ -1325,10 +1328,11 @@ server <- function(input, output, session) {
 	output$sampleAnnotContent <- renderTable({sannot.fromFile()}, striped=TRUE, hover=TRUE, bordered=TRUE)
 
 	isBiseq <- reactive({
+		selPlatform <- input$platform
 		if (!is.null(rnbData$rnbSet) && (inherits(rnbData$rnbSet, "RnBeadSet") || inherits(rnbData$rnbSet, "RnBiseqSet"))){
 			res <- inherits(rnbData$rnbSet, "RnBiseqSet")
 		} else {
-			res <- input$platform == "biseq"
+			res <- selPlatform == "biseq"
 		}
 		if (res) {
 			shinyjs::enable("rnbOptsI.assembly")
@@ -1359,22 +1363,22 @@ server <- function(input, output, session) {
 	})
 
 	output$selColumn.id <- renderUI({
-		selectInput('rnbOptsI.identifiers.column', NULL, sannot.cols.plusNone())
+		selectInput('rnbOptsI.identifiers.column', NULL, sannot.cols.plusNone(), selected=optionSettingObserver$selColumn.id)
 	})
 	output$selColumn.sva<- renderUI({
-		selectInput('rnbOptsI.inference.targets.sva', NULL, sannot.cols.grps(), multiple=TRUE)
+		selectInput('rnbOptsI.inference.targets.sva', NULL, sannot.cols.grps(), multiple=TRUE, selected=optionSettingObserver$selColumn.sva)
 	})
 	output$selColumn.cellTypeRef <- renderUI({
-		selectInput('rnbOptsI.inference.reference.methylome.column', NULL, sannot.cols.plusNone())
+		selectInput('rnbOptsI.inference.reference.methylome.column', NULL, sannot.cols.plusNone(), selected=optionSettingObserver$selColumn.cellTypeRef)
 	})
 	output$selColumn.ex <- renderUI({
-		selectInput('rnbOptsI.exploratory.columns', NULL, sannot.cols.grps.plusAutomatic(), multiple=TRUE, selected="[automatic]")
+		selectInput('rnbOptsI.exploratory.columns', NULL, sannot.cols.grps.plusAutomatic(), multiple=TRUE, selected=optionSettingObserver$selColumn.ex)
 	})
 	output$selColumn.diff <- renderUI({
-		selectInput('rnbOptsI.differential.comparison.columns', NULL, sannot.cols.grps.plusAutomatic(), multiple=TRUE, selected="[automatic]")
+		selectInput('rnbOptsI.differential.comparison.columns', NULL, sannot.cols.grps.plusAutomatic(), multiple=TRUE, selected=optionSettingObserver$selColumn.diff)
 	})
 	output$selAdjColumns <- renderUI({
-		selectInput('rnbOptsI.covariate.adjustment.columns', NULL, sannot.cols(), multiple=TRUE, selected=c())
+		selectInput('rnbOptsI.covariate.adjustment.columns', NULL, sannot.cols(), multiple=TRUE, selected=optionSettingObserver$selAdjColumns)
 	})
 
 	output$inputStatus <- renderUI({
@@ -1411,16 +1415,31 @@ server <- function(input, output, session) {
 	# a helper container for storing variable, option-related information
 	optionSettingObserver <- reactiveValues(
 		group.count.range.max=RNB.GROUP.COUNT.RANGE[2],
-		colors.category.list=RNB.COLSCHEMES.CATEGORY
+		colors.category.list=RNB.COLSCHEMES.CATEGORY,
+		selRegs=NULL,
+		selRegs.export=NULL,
+		selRegs.exploratory.profiles=NULL,
+		selRegs.differential=NULL,
+		selColumn.id="[None]",
+		selColumn.sva=character(0),
+		selColumn.cellTypeRef="[None]",
+		selColumn.ex="[automatic]",
+		selColumn.diff="[automatic]",
+		selColumn.sva=character(0)
 	)
 
-	output$rnbOpts <- renderPrint({
+	optList <- reactive({
 		depDummy <- assemblySel()
+		depDummy <- isBiseq() #dummy to create dependency upon update of platform selection
+		depDummy <- optsImportDataType()
 		# auto update on any option change to rnbOptsI
 		for (oo in grep("^rnbOptsI.", names(input), value=TRUE)){
 			input[[oo]]
 		}
 		rnb.options()
+	})
+	output$rnbOpts <- renderPrint({
+		optList()
 	})
 	output$rnbOptsO.analysis.name <- renderText({
 		rnb.options(analysis.name=input$rnbOptsI.analysis.name)
@@ -1428,9 +1447,10 @@ server <- function(input, output, session) {
 	})
 	#default setting for assembly if platform is not bisulfite and thus no assembly input has been given
 	assemblySel <- reactive({
+		interfaceSetting <- input$rnbOptsI.assembly
 		res <- "hg19"
-		if (isBiseq() && !is.null(input$rnbOptsI.assembly)){
-			res <- input$rnbOptsI.assembly
+		if (isBiseq() && !is.null(interfaceSetting)){
+			res <- interfaceSetting
 		}
 		rnb.options(assembly=res)
 		res
@@ -1444,23 +1464,38 @@ server <- function(input, output, session) {
 		rnb.region.types(rnb.getOption("assembly"))
 	})
 	output$selRegionTypes <- renderUI({
-		selectInput('rnbOptsI.region.types', NULL, regTypes.all(), multiple=TRUE, selected=regTypes.all())
+		rrs <- optionSettingObserver$selRegs
+		if (is.null(rrs)){
+			rrs <- regTypes.all()
+			optionSettingObserver$selRegs <- rrs
+		}
+		selectInput('rnbOptsI.region.types', NULL, regTypes.all(), multiple=TRUE, selected=rrs)
 	})
 	regTypes <- reactive({
 		input$rnbOptsI.region.types
 	})
+	regTypes.plus.sites <- reactive({c("sites", regTypes())})
 	output$rnbOptsO.region.types <- renderText({
 		rnb.options(region.types=regTypes())
 		rnb.getOption("region.types")
 	})
 	output$selRegionProfiles.ex <- renderUI({
 		selRegs <- regTypes()
-		defaultRegs <- intersect(c("genes", "promoters", "cpgislands"), selRegs)
-		selectInput('rnbOptsI.exploratory.region.profiles', NULL, selRegs, selected=defaultRegs, multiple=TRUE)
+		rrs <- optionSettingObserver$selRegs.exploratory.profiles
+		if (is.null(rrs)) {
+			rrs <- intersect(c("genes", "promoters", "cpgislands"), selRegs)
+			optionSettingObserver$selRegs.exploratory.profiles <- rrs
+		}
+		selectInput('rnbOptsI.exploratory.region.profiles', NULL, selRegs, selected=rrs, multiple=TRUE)
 	})
 	output$selRegions.export <- renderUI({
-		selRegs <- c("sites", regTypes())
-		selectInput('rnbOptsI.export.types', NULL, selRegs, selected="sites", multiple=TRUE)
+		selRegs <- regTypes.plus.sites()
+		rrs <- optionSettingObserver$selRegs.export
+		if (is.null(rrs)) {
+			rrs <- "sites"
+			optionSettingObserver$selRegs.export <- rrs
+		}
+		selectInput('rnbOptsI.export.types', NULL, selRegs, selected=optionSettingObserver$selRegs.export, multiple=TRUE)
 	})
 	output$rnbOptsO.identifiers.column <- renderText({
 		cname <- input$rnbOptsI.identifiers.column
@@ -1483,9 +1518,6 @@ server <- function(input, output, session) {
 		rnb.options(max.group.count=input$rnbOptsI.max.group.count)
 		rnb.getOption("max.group.count")
 	})
-	opts.colors.category <- reactive({
-		
-	})
 	output$rnbOptsO.colors.category <- renderText({
 		cols <- optionSettingObserver$colors.category.list[[input$rnbOptsI.colors.category]]
 		rnb.options(colors.category=cols)
@@ -1506,10 +1538,17 @@ server <- function(input, output, session) {
 		# rnb.getOption("colors.meth")
 		plotColPal(cols)
 	})
+	optsImportDataType <- reactive({
+		res <- ""
+		if (isBiseq()){
+			res <- "bed.dir"
+		} else {
+			res <- "idat.dir"
+		}
+		rnb.options(import.default.data.type=res)
+		res
+	})
 	output$rnbOptsO.import.default.data.type <- renderText({
-		dt <- "bed.dir"
-		if (!isBiseq()) dt <- "idat.dir"
-		rnb.options(import.default.data.type=dt)
 		rnb.getOption("import.default.data.type")
 	})
 	output$rnbOptsO.import.table.separator <- renderText({
@@ -1517,33 +1556,37 @@ server <- function(input, output, session) {
 		rnb.getOption("import.table.separator")
 	})
 	output$rnbOptsO.import.bed.style <- renderText({
+		interfaceSetting <- input$rnbOptsI.import.bed.style
 		res <- rnb.getOption("import.bed.style")
 		if (isBiseq()){
-			res <- input$rnbOptsI.import.bed.style
+			res <- interfaceSetting
 			rnb.options(import.bed.style=res)
 		}
 		res
 	})
 	output$rnbOptsO.filtering.coverage.threshold <- renderText({
+		interfaceSetting <- input$rnbOptsI.filtering.coverage.threshold
 		res <- rnb.getOption("filtering.coverage.threshold")
 		if (isBiseq()){
-			res <- input$rnbOptsI.filtering.coverage.threshold
+			res <- interfaceSetting
 			rnb.options(filtering.coverage.threshold=res)
 		}
 		res
 	})
 	output$rnbOptsO.filtering.low.coverage.masking <- renderText({
+		interfaceSetting <- input$rnbOptsI.filtering.low.coverage.masking
 		res <- rnb.getOption("filtering.low.coverage.masking")
 		if (isBiseq()){
-			res <- input$rnbOptsI.filtering.low.coverage.masking
+			res <- interfaceSetting
 			rnb.options(filtering.low.coverage.masking=res)
 		}
 		res
 	})
 	output$rnbOptsO.filtering.high.coverage.outliers <- renderText({
+		interfaceSetting <- input$rnbOptsI.filtering.high.coverage.outliers
 		res <- rnb.getOption("filtering.high.coverage.outliers")
 		if (isBiseq()){
-			res <- input$rnbOptsI.filtering.high.coverage.outliers
+			res <- interfaceSetting
 			rnb.options(filtering.high.coverage.outliers=res)
 		}
 		res
@@ -1569,17 +1612,19 @@ server <- function(input, output, session) {
 		rnb.getOption("filtering.cross.reactive")
 	})
 	output$rnbOptsO.normalization.method <- renderText({
+		interfaceSetting <- input$rnbOptsI.normalization.method
 		res <- rnb.getOption("normalization.method")
 		if (!isBiseq()){
-			res <- input$rnbOptsI.normalization.method
+			res <- interfaceSetting
 			rnb.options(normalization.method=res)
 		}
 		res
 	})
 	output$rnbOptsO.normalization.background.method <- renderText({
+		interfaceSetting <- input$rnbOptsI.normalization.background.method
 		res <- rnb.getOption("normalization.background.method")
 		if (!isBiseq()){
-			res <- input$rnbOptsI.normalization.background.method
+			res <- interfaceSetting
 			rnb.options(normalization.background.method=res)
 		}
 		res
@@ -1653,9 +1698,10 @@ server <- function(input, output, session) {
 		rnb.getOption("exploratory.beta.distribution")
 	})
 	output$rnbOptsO.exploratory.correlation.qc <- renderText({
+		interfaceSetting <- input$rnbOptsI.exploratory.correlation.qc
 		res <- rnb.getOption("exploratory.correlation.qc")
 		if (!isBiseq()){
-			res <- input$rnbOptsI.exploratory.correlation.qc
+			res <- interfaceSetting
 			rnb.options(exploratory.correlation.qc=res)
 		}
 		res
@@ -1726,25 +1772,28 @@ server <- function(input, output, session) {
 			}
 		} else if (oname=="region.types") {
 			if (is.null(ovalue) || all(ovalue %in% regTypes.all())){
+				if (is.null(ovalue)) ovalue <- regTypes.all()
+				optionSettingObserver$selRegs <- ovalue
 				updateSelectInput(session, "rnbOptsI.region.types", selected=ovalue)
 			} else {
 				stop(paste0("Region type(s) not supported by current assembly (", rnb.getOption("assembly"), "): ", paste(setdiff(ovalue, regTypes.all()), collapse=", ")))
 			}
 		} else if (oname=="identifiers.column") {
 			if (is.null(ovalue) || is.element(ovalue, sannot.cols.plusNone())){
+				optionSettingObserver$selColumn.id <- ovalue
 				updateSelectInput(session, "rnbOptsI.identifiers.column", selected=ovalue)
 			} else {
 				stop(paste0("Sample annotation column not supported"))
 			}
 		} else if (oname=="min.group.size") {
 			if (ovalue >= RNB.GROUP.SIZE.RANGE[1] && ovalue <= RNB.GROUP.SIZE.RANGE[2]){
-				updateSelectInput(session, "rnbOptsI.min.group.size", selected=ovalue)
+				updateSliderInput(session, "rnbOptsI.min.group.size", value=ovalue)
 			} else {
 				stop(paste0("Not within expected range [", RNB.GROUP.SIZE.RANGE[1], "-", RNB.GROUP.SIZE.RANGE[2],"]: ", ovalue))
 			}
 		} else if (oname=="max.group.count") {
 			if (is.null(ovalue) || (ovalue >= RNB.GROUP.COUNT.RANGE[1] && ovalue <= optionSettingObserver$group.count.range.max)){
-				updateSelectInput(session, "rnbOptsI.max.group.count", selected=ovalue)
+				updateSliderInput(session, "rnbOptsI.max.group.count", value=ovalue)
 			} else {
 				stop(paste0("Not within expected range [", RNB.GROUP.COUNT.RANGE[1], "-", optionSettingObserver$group.count.range.max,"]: ", ovalue))
 			}
@@ -1755,16 +1804,96 @@ server <- function(input, output, session) {
 				optionSettingObserver$colors.category.list[[selVal]] <- ovalue
 			}
 			updateSelectInput(session, "rnbOptsI.colors.category", choices=names(optionSettingObserver$colors.category.list), selected=selVal)
+		} else if (oname=="import.default.data.type") {
+			if (ovalue != optsImportDataType()){
+				stop(paste0("Incompatible option with currently selected platform"))
+			}
+		} else if (oname=="import.table.separator") {
+			if (is.element(ovalue, RNB.TABLE.SEPS)){
+				updateSelectInput(session, "rnbOptsI.import.table.separator", selected=ovalue)
+			} else {
+				stop(paste0("Invalid table separator: ", ovalue))
+			}
+		} else if (oname=="import.bed.style") {
+			if (is.element(ovalue, RNB.BED.STYLES)){
+				updateSelectInput(session, "rnbOptsI.import.bed.style", selected=ovalue)
+			} else {
+				stop(paste0("Invalid import.bed.style: ", ovalue))
+			}
+		} else if (oname=="filtering.coverage.threshold") {
+			if (ovalue >= 1 && ovalue <= 100){
+				updateSliderInput(session, "rnbOptsI.filtering.coverage.threshold", value=ovalue)
+			} else {
+				stop(paste0("Not within expected range [", 1, "-", 100, "]: ", ovalue))
+			}
+		} else if (oname=="filtering.low.coverage.masking") {
+			updateCheckboxInput(session, "rnbOptsI.filtering.low.coverage.masking", value=ovalue)
+		} else if (oname=="filtering.high.coverage.outliers") {
+			updateCheckboxInput(session, "rnbOptsI.filtering.high.coverage.outliers", value=ovalue)
+		} else if (oname=="filtering.missing.value.quantile") {
+			if (ovalue >= 0 && ovalue <= 1){
+				updateSliderInput(session, "rnbOptsI.filtering.missing.value.quantile", value=ovalue)
+			} else {
+				stop(paste0("Not within expected range [", 0, "-", 1, "]: ", ovalue))
+			}
+		} else if (oname=="filtering.greedycut") {
+			updateCheckboxInput(session, "rnbOptsI.filtering.greedycut", value=ovalue)
+		} else if (oname=="filtering.sex.chromosomes.removal") {
+			updateCheckboxInput(session, "rnbOptsI.filtering.sex.chromosomes.removal", value=ovalue)
+		} else if (oname=="filtering.snp") {
+			if (is.element(ovalue, RNB.FILTERING.SNP)){
+				updateSelectInput(session, "rnbOptsI.filtering.snp", selected=ovalue)
+			} else {
+				stop(paste0("Invalid selection: ", ovalue))
+			}
+		} else if (oname=="filtering.cross.reactive") {
+			updateCheckboxInput(session, "rnbOptsI.filtering.cross.reactive", value=ovalue)
+		} else if (oname=="normalization.method") {
+			if (is.element(ovalue, RNB.NORMALIZATION.METHODS)){
+				updateSelectInput(session, "rnbOptsI.normalization.method", selected=ovalue)
+			} else {
+				stop(paste0("Invalid selection: ", ovalue))
+			}
+		} else if (oname=="normalization.background.method") {
+			if (is.element(ovalue, RNB.NORMALIZATION.BG.METHODS)){
+				updateSelectInput(session, "rnbOptsI.normalization.background.method", selected=ovalue)
+			} else {
+				stop(paste0("Invalid selection: ", ovalue))
+			}
+		} else if (oname=="imputation.method") {
+			if (is.element(ovalue, RNB.IMPUTATION.METHODS)){
+				updateSelectInput(session, "rnbOptsI.imputation.method", selected=ovalue)
+			} else {
+				stop(paste0("Invalid selection: ", ovalue))
+			}
+		} else if (oname=="export.to.trackhub") {
+			if (is.null(ovalue) || all(ovalue %in% RNB.TRACKHUB.FORMATS)){
+				if (is.null(ovalue)) ovalue <- character(0)
+				updateSelectInput(session, "rnbOptsI.export.to.trackhub", selected=ovalue)
+			} else {
+				stop(paste0("Trackhub formats not supported: ", paste(setdiff(ovalue, RNB.TRACKHUB.FORMATS), collapse=", ")))
+			}
+		} else if (oname=="export.types") {
+			# allowedVals <- regTypes.plus.sites()
+			allowedVals <- c("sites", optionSettingObserver$selRegs)
+			if (is.null(ovalue) || all(ovalue %in% allowedVals)){
+				if (is.null(ovalue)) ovalue <- character(0)
+				optionSettingObserver$selRegs.export <- ovalue
+				updateSelectInput(session, "rnbOptsI.export.types", selected=ovalue)
+			} else {
+				stop(paste0("Export types not supported: ", paste(setdiff(ovalue, allowedVals), collapse=", ")))
+			}
 		}
 	}
 
 	#apply the options stored in list 'ol'
 	applyOptList <- function(ol, ol.old=list()){
 		for (oname in names(ol)){
+			print(oname)
 			rr <- tryCatch(
 				applyOptValue(oname, ol[[oname]]),
 				error = function(err) {
-					showNotification(tags$span(style="color:red", icon("warning"), paste0("Could not update option '", oname, "' with value '", ol[[oname]], "' (", err$message, ")")))
+					showNotification(tags$span(style="color:red", icon("warning"), paste0("Could not update option '", oname, " (", err$message, ")")))
 					if (is.element(oname, names(ol.old))){
 						applyOptValue(oname, ol.old[[oname]])
 						optSettingList <- list(ol.old[[oname]])
@@ -1812,7 +1941,7 @@ server <- function(input, output, session) {
 					rnb.options()
 				},
 				error = function(err) {
-					showNotification(tags$span(style="color:red", icon("warning"), paste0("Could not load option file:", err$message)))
+					showNotification(tags$span(style="color:red", icon("warning"), paste0("Could not load option file: ", err$message)))
 					NULL
 				}
 			)
@@ -2432,6 +2561,6 @@ shinyApp(ui = ui, server = server)
 
 ################################################################################
 # TODOs:
-# - 
+# - refresh output$rnbOpts upon platform change
 ################################################################################
 
