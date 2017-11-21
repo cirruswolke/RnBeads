@@ -1889,7 +1889,6 @@ server <- function(input, output, session) {
 	#apply the options stored in list 'ol'
 	applyOptList <- function(ol, ol.old=list()){
 		for (oname in names(ol)){
-			print(oname)
 			rr <- tryCatch(
 				applyOptValue(oname, ol[[oname]]),
 				error = function(err) {
@@ -2561,6 +2560,6 @@ shinyApp(ui = ui, server = server)
 
 ################################################################################
 # TODOs:
-# - refresh output$rnbOpts upon platform change
+# - 
 ################################################################################
 
