@@ -1318,13 +1318,16 @@ server <- function(input, output, session) {
 	})
 	sannot.cols.plusNone <- reactive(c("[None]", sannot.cols()))
 	sannot.cols.grps <- reactive({
+		# print("DEBUG: updated sannot.cols.grps")
+		depDummy <- input$rnbOptsI.min.group.size
+		depDummy <- input$rnbOptsI.max.group.count
 		if(length(sannot.cols())>0) {
 			names(rnb.sample.groups(sannot()))
 		} else {
 			NULL
 		}
 	})
-	sannot.cols.grps.plusAutomatic <- reactive(c("[automatic]", sannot.cols()))
+	sannot.cols.plusAutomatic <- reactive(c("[automatic]", sannot.cols()))
 	output$sampleAnnotContent <- renderTable({sannot.fromFile()}, striped=TRUE, hover=TRUE, bordered=TRUE)
 
 	isBiseq <- reactive({
@@ -1372,13 +1375,13 @@ server <- function(input, output, session) {
 		selectInput('rnbOptsI.inference.reference.methylome.column', NULL, sannot.cols.plusNone(), selected=optionSettingObserver$selColumn.cellTypeRef)
 	})
 	output$selColumn.ex <- renderUI({
-		selectInput('rnbOptsI.exploratory.columns', NULL, sannot.cols.grps.plusAutomatic(), multiple=TRUE, selected=optionSettingObserver$selColumn.ex)
+		selectInput('rnbOptsI.exploratory.columns', NULL, sannot.cols.plusAutomatic(), multiple=TRUE, selected=optionSettingObserver$selColumn.ex)
 	})
 	output$selColumn.diff <- renderUI({
-		selectInput('rnbOptsI.differential.comparison.columns', NULL, sannot.cols.grps.plusAutomatic(), multiple=TRUE, selected=optionSettingObserver$selColumn.diff)
+		selectInput('rnbOptsI.differential.comparison.columns', NULL, sannot.cols.plusAutomatic(), multiple=TRUE, selected=optionSettingObserver$selColumn.diff)
 	})
 	output$selAdjColumns <- renderUI({
-		selectInput('rnbOptsI.covariate.adjustment.columns', NULL, sannot.cols(), multiple=TRUE, selected=optionSettingObserver$selAdjColumns)
+		selectInput('rnbOptsI.covariate.adjustment.columns', NULL, sannot.cols(), multiple=TRUE, selected=optionSettingObserver$selColumn.adj)
 	})
 
 	output$inputStatus <- renderUI({
@@ -1425,7 +1428,7 @@ server <- function(input, output, session) {
 		selColumn.cellTypeRef="[None]",
 		selColumn.ex="[automatic]",
 		selColumn.diff="[automatic]",
-		selColumn.sva=character(0)
+		selColumn.adj=character(0)
 	)
 
 	optList <- reactive({
@@ -1480,7 +1483,7 @@ server <- function(input, output, session) {
 		rnb.getOption("region.types")
 	})
 	output$selRegionProfiles.ex <- renderUI({
-		selRegs <- regTypes()
+		selRegs <- optionSettingObserver$selRegs
 		rrs <- optionSettingObserver$selRegs.exploratory.profiles
 		if (is.null(rrs)) {
 			rrs <- intersect(c("genes", "promoters", "cpgislands"), selRegs)
@@ -1761,7 +1764,7 @@ server <- function(input, output, session) {
 	})
 
 	#apply the option setting 'ovalue' for option with name 'oname'
-	applyOptValue <- function(oname, ovalue){
+	applyOptValue <- function(oname, ovalue, fallback=FALSE){
 		if (oname=="analysis.name") {
 			updateTextInput(session, "rnbOptsI.analysis.name", value=ovalue)
 		} else if (oname=="assembly") {
@@ -1780,6 +1783,7 @@ server <- function(input, output, session) {
 			}
 		} else if (oname=="identifiers.column") {
 			if (is.null(ovalue) || is.element(ovalue, sannot.cols.plusNone())){
+				if (is.null(ovalue)) ovalue <- "[None]"
 				optionSettingObserver$selColumn.id <- ovalue
 				updateSelectInput(session, "rnbOptsI.identifiers.column", selected=ovalue)
 			} else {
@@ -1787,6 +1791,7 @@ server <- function(input, output, session) {
 			}
 		} else if (oname=="min.group.size") {
 			if (ovalue >= RNB.GROUP.SIZE.RANGE[1] && ovalue <= RNB.GROUP.SIZE.RANGE[2]){
+				# print("DEBUG: updating min.group.size option")
 				updateSliderInput(session, "rnbOptsI.min.group.size", value=ovalue)
 			} else {
 				stop(paste0("Not within expected range [", RNB.GROUP.SIZE.RANGE[1], "-", RNB.GROUP.SIZE.RANGE[2],"]: ", ovalue))
@@ -1876,6 +1881,7 @@ server <- function(input, output, session) {
 		} else if (oname=="export.types") {
 			# allowedVals <- regTypes.plus.sites()
 			allowedVals <- c("sites", optionSettingObserver$selRegs)
+			if (fallback) ovalue <- intersect(ovalue, allowedVals) #if resetting to old options, make sure that the old regions are contained in the allowed regions
 			if (is.null(ovalue) || all(ovalue %in% allowedVals)){
 				if (is.null(ovalue)) ovalue <- character(0)
 				optionSettingObserver$selRegs.export <- ovalue
@@ -1883,18 +1889,108 @@ server <- function(input, output, session) {
 			} else {
 				stop(paste0("Export types not supported: ", paste(setdiff(ovalue, allowedVals), collapse=", ")))
 			}
-		}
+		} else if (oname=="inference") {
+			updateCheckboxInput(session, "rnbOptsI.inference", value=ovalue)
+		} else if (oname=="inference.age.prediction") {
+			updateCheckboxInput(session, "rnbOptsI.inference.age.prediction", value=ovalue)
+		} else if (oname=="inference.targets.sva") {
+			print(ovalue)
+			print(sannot.cols.grps())
+			if (all(ovalue %in% sannot.cols.grps())){
+				# print("DEBUG: updating inference.targets.sva option")
+				optionSettingObserver$selColumn.sva <- ovalue
+				updateSelectInput(session, "rnbOptsI.inference.targets.sva", selected=ovalue)
+			} else {
+				stop(paste0("Sample annotation column(s) not supported"))
+			}
+		} else if (oname=="inference.sva.num.method") {
+			if (is.element(ovalue, RNB.SVA.NUM.METHODS)){
+				updateSelectInput(session, "rnbOptsI.inference.sva.num.method", selected=ovalue)
+			} else {
+				stop(paste0("Invalid selection: ", ovalue))
+			}
+		} else if (oname=="inference.reference.methylome.column") {
+			if (is.null(ovalue) || is.element(ovalue, sannot.cols.plusNone())){
+				if (is.null(ovalue)) ovalue <- "[None]"
+				optionSettingObserver$selColumn.cellTypeRef <- ovalue
+				updateSelectInput(session, "rnbOptsI.inference.reference.methylome.column", selected=ovalue)
+			} else {
+				stop(paste0("Sample annotation column not supported"))
+			}
+		} else if (oname=="exploratory.columns") {
+			if (is.null(ovalue) || all(ovalue %in% sannot.cols.plusAutomatic())){
+				if (is.null(ovalue)) ovalue <- "[automatic]"
+				optionSettingObserver$selColumn.ex <- ovalue
+				updateSelectInput(session, "rnbOptsI.exploratory.columns", selected=ovalue)
+			} else {
+				stop(paste0("Sample annotation column(s) not supported"))
+			}
+		} else if (oname=="exploratory.intersample") {
+			updateCheckboxInput(session, "rnbOptsI.exploratory.intersample", value=ovalue)
+		} else if (oname=="exploratory.beta.distribution") {
+			updateCheckboxInput(session, "rnbOptsI.exploratory.beta.distribution", value=ovalue)
+		} else if (oname=="exploratory.correlation.qc") {
+			updateCheckboxInput(session, "rnbOptsI.exploratory.correlation.qc", value=ovalue)
+		} else if (oname=="exploratory.region.profiles") {
+			allowedVals <- optionSettingObserver$selRegs
+			if (fallback) ovalue <- intersect(ovalue, allowedVals) #if resetting to old options, make sure that the old regions are contained in the allowed regions
+			if (is.null(ovalue) || all(ovalue %in% allowedVals)){
+				if (is.null(ovalue)) ovalue <- intersect(c("genes", "promoters", "cpgislands"), allowedVals)
+				optionSettingObserver$selRegs.exploratory.profiles <- ovalue
+				updateSelectInput(session, "rnbOptsI.exploratory.region.profiles", selected=ovalue)
+			} else {
+				stop(paste0("Region profiles not supported for region types: ", paste(setdiff(ovalue, allowedVals), collapse=", ")))
+			}
+		} else if (oname=="differential.comparison.columns") {
+			if (is.null(ovalue) || all(ovalue %in% sannot.cols.plusAutomatic())){
+				if (is.null(ovalue)) ovalue <- "[automatic]"
+				optionSettingObserver$selColumn.diff <- ovalue
+				updateSelectInput(session, "rnbOptsI.differential.comparison.columns", selected=ovalue)
+			} else {
+				stop(paste0("Sample annotation column(s) not supported"))
+			}
+		} else if (oname=="covariate.adjustment.columns") {
+			if (is.null(ovalue) || all(ovalue %in% sannot.cols())){
+				if (is.null(ovalue)) ovalue <- character(0)
+				optionSettingObserver$selColumn.adj <- ovalue
+				updateSelectInput(session, "rnbOptsI.covariate.adjustment.columns", selected=ovalue)
+			} else {
+				stop(paste0("Sample annotation column(s) not supported"))
+			}
+		} else if (oname=="differential.site.test.method") {
+			if (is.element(ovalue, RNB.DIFFMETH.TEST.METHODS)){
+				updateSelectInput(session, "rnbOptsI.differential.site.test.method", selected=ovalue)
+			} else {
+				stop(paste0("Invalid selection: ", ovalue))
+			}
+		} else if (oname=="differential.report.sites") {
+			updateCheckboxInput(session, "rnbOptsI.differential.report.sites", value=ovalue)
+		} else if (oname=="differential.variability") {
+			updateCheckboxInput(session, "rnbOptsI.differential.variability", value=ovalue)
+		} else if (oname=="differential.variability.method") {
+			if (is.element(ovalue, RNB.DIFFVAR.METHODS)){
+				updateSelectInput(session, "rnbOptsI.differential.variability.method", selected=ovalue)
+			} else {
+				stop(paste0("Invalid selection: ", ovalue))
+			}
+		} else if (oname=="differential.enrichment.go") {
+			updateCheckboxInput(session, "rnbOptsI.differential.enrichment.go", value=ovalue)
+		} else if (oname=="differential.enrichment.lola") {
+			updateCheckboxInput(session, "rnbOptsI.differential.enrichment.lola", value=ovalue)
+		} 
 	}
 
 	#apply the options stored in list 'ol'
 	applyOptList <- function(ol, ol.old=list()){
 		for (oname in names(ol)){
+			print(paste("DEBUG: Reading XML option:", oname))
 			rr <- tryCatch(
 				applyOptValue(oname, ol[[oname]]),
 				error = function(err) {
 					showNotification(tags$span(style="color:red", icon("warning"), paste0("Could not update option '", oname, " (", err$message, ")")))
 					if (is.element(oname, names(ol.old))){
-						applyOptValue(oname, ol.old[[oname]])
+						print(paste("DEBUG: FAILED: Resetting to old option"))
+						applyOptValue(oname, ol.old[[oname]], fallback=TRUE)
 						optSettingList <- list(ol.old[[oname]])
 						names(optSettingList) <- oname
 						do.call("rnb.options", optSettingList)
@@ -1932,9 +2028,12 @@ server <- function(input, output, session) {
 		}
 	})
 	observeEvent(input$loadOptsXmlDo, {
+		# print("DEBUG: Reading XML file")
 		xmlFile <- loadOptsXml.fName()
 		if (file.exists(xmlFile)){
 			rnbOpts.old <- rnb.options()
+			# print("DEBUG: Old option settings")
+			# print(rnbOpts.old)
 			optList <- tryCatch({
 					dummy <- rnb.xml2options(xmlFile)
 					rnb.options()
@@ -2560,6 +2659,6 @@ shinyApp(ui = ui, server = server)
 
 ################################################################################
 # TODOs:
-# - 
+# - sannot.cols.grps updates last during XML file loading --> SVA column option has to be loaded twice
 ################################################################################
 
