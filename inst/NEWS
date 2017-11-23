@@ -1,7 +1,7 @@
-RnBeads 1.9.5
+RnBeads 1.11.2
 =============
 
- * Added RnBeadsDJ, a shiny app for configuring and running RnBeads analyses
+ * Fixed a bug concerning failed trackhub exports on Windows
 
 RnBeads 1.9.4
 =============
@@ -10,6 +10,7 @@ RnBeads 1.9.4
  * improved import from GEO
  * bigff disk dump is now the default option for dealing with disk-based big matrices
  * Several bugfixes and performance improvements in Greedycut, normalization, Bisulfite data loading and others
+ * Added differential variability analysis in addition to differential methylation
 
 RnBeads 1.9.3
 =============
