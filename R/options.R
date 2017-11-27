@@ -131,6 +131,26 @@ rm(parse.default, parse.options)
 
 ########################################################################################################################
 
+## rnb.option.compatibility
+##
+## Check an option name and value and ensure backwards compatibility
+##
+## @return The (possibly modified) option name and value in a structured list with names oname, ovalue and modified
+## @author Fabian Mueller
+rnb.option.compatibility <- function(oname, ovalue) {
+	res <- list(oname=oname, ovalue=ovalue, modified=FALSE)
+
+	if (oname == "differential.enrichment"){
+		msg <- paste0("The option '", "differential.enrichment", "' does no longer exist. Note, that RnBeads now supports GO and LOLA enrichment. Your option setting will be applied to the new option '", "differential.enrichment.go", "'")
+		logger.warning(msg)
+		res[["oname"]] <- "differential.enrichment.go"
+		res[["modified"]] <- TRUE
+	}
+	return(res)
+}
+
+########################################################################################################################
+
 ## rnb.validate.option
 ##
 ## Validates the provided values for an option is acceptable, and converts it if necessary.
@@ -139,6 +159,10 @@ rm(parse.default, parse.options)
 ## @author Yassen Assenov
 rnb.validate.option <- function(oname, ovalue) {
 	infos <- .rnb.options[["infos"]]
+	# ensure backwards compatibility for legacy options
+	ocompat <- rnb.option.compatibility(oname, ovalue)
+	oname   <- ocompat$oname
+	ovalue  <- ocompat$ovalue
 	if (!(oname %in% rownames(infos))) {
 		stop(paste(oname, "is invalid option"))
 	}
@@ -311,6 +335,11 @@ rnb.validate.option <- function(oname, ovalue) {
 ## @return Empty \code{character} string if the operation was successful; the text of an error message otherwise.
 ## @author Yassen Assenov
 rnb.get.option <- function(oname, ovalue = NULL, setvalue = FALSE) {
+	# ensure backwards compatibility for legacy options
+	ocompat <- rnb.option.compatibility(oname, ovalue)
+	oname   <- ocompat$oname
+	ovalue  <- ocompat$ovalue
+
 	if (!(oname %in% names(.rnb.options[["current"]]))) {
 		return(paste(oname, "is invalid option"))
 	}
