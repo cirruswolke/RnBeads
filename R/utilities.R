@@ -153,11 +153,17 @@ rnb.get.executable <- function(fname) {
 		dname <- "windows"
 		cmd.search <- "where"
 	}
-	dname <- system.file(paste0("bin/", dname, "/", fname), package = "RnBeads")
+	dname <- system.file(file.path("bin", dname, fname), package = "RnBeads")
 	if (dname != "") {
 		return(dname)
 	}
-	suppressWarnings(system(paste(cmd.search, fname), intern = TRUE))
+	searchResult <- suppressWarnings(system(paste(cmd.search, fname), intern = TRUE))
+	validResult <- length(searchResult) == 1 && file.exists(searchResult)
+	if (validResult){
+		return(searchResult)
+	} else {
+		return(character(0))
+	}
 }
 
 ########################################################################################################################
