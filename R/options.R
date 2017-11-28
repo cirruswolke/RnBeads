@@ -140,12 +140,19 @@ rm(parse.default, parse.options)
 rnb.option.compatibility <- function(oname, ovalue) {
 	noEffectOptions <- c("noeffect")
 	res <- list(oname=oname, ovalue=ovalue, modified=FALSE)
-
+	isCharValue <- is.character(ovalue) && length(ovalue)==1
 	if (oname == "differential.enrichment"){
-		msg <- paste0("The option '", "differential.enrichment", "' no longer exists. Note, that RnBeads now supports GO and LOLA enrichment. Your option setting will be applied to the new option '", "differential.enrichment.go", "'")
-		logger.warning(msg)
-		res[["oname"]] <- "differential.enrichment.go"
-		res[["modified"]] <- TRUE
+		oldValid <- is.logical(ovalue) || isCharValue
+		if (oldValid){
+			msg <- paste0("The option '", "differential.enrichment", "' no longer exists. Note, that RnBeads now supports GO and LOLA enrichment. Your option setting will be applied to the new option '", "differential.enrichment.go", "'")
+			logger.warning(msg)
+			res[["oname"]] <- "differential.enrichment.go"
+			if (isCharValue){
+				ov <- as.logical(ovalue)
+				res[["ovalue"]] <- ov
+			}
+			res[["modified"]] <- TRUE
+		}
 	} else if (is.element(oname, noEffectOptions)){
 		msg <- paste0("The option '", oname, "' no longer exists. It will not have an effect on the current analysis")
 		logger.warning(msg)
