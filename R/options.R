@@ -131,6 +131,39 @@ rm(parse.default, parse.options)
 
 ########################################################################################################################
 
+## rnb.option.compatibility
+##
+## Check an option name and value and ensure backwards compatibility
+##
+## @return The (possibly modified) option name and value in a structured list with names oname, ovalue and modified
+## @author Fabian Mueller
+rnb.option.compatibility <- function(oname, ovalue) {
+	noEffectOptions <- c("noeffect")
+	res <- list(oname=oname, ovalue=ovalue, modified=FALSE)
+	isCharValue <- is.character(ovalue) && length(ovalue)==1
+	if (oname == "differential.enrichment"){
+		oldValid <- is.logical(ovalue) || isCharValue
+		if (oldValid){
+			msg <- paste0("The option '", "differential.enrichment", "' no longer exists. Note, that RnBeads now supports GO and LOLA enrichment. Your option setting will be applied to the new option '", "differential.enrichment.go", "'")
+			logger.warning(msg)
+			res[["oname"]] <- "differential.enrichment.go"
+			if (isCharValue){
+				ov <- as.logical(ovalue)
+				res[["ovalue"]] <- ov
+			}
+			res[["modified"]] <- TRUE
+		}
+	} else if (is.element(oname, noEffectOptions)){
+		msg <- paste0("The option '", oname, "' no longer exists. It will not have an effect on the current analysis")
+		logger.warning(msg)
+		res["oname"] <- list(NULL)
+		res[["modified"]] <- TRUE
+	}
+	return(res)
+}
+
+########################################################################################################################
+
 ## rnb.validate.option
 ##
 ## Validates the provided values for an option is acceptable, and converts it if necessary.
@@ -139,6 +172,12 @@ rm(parse.default, parse.options)
 ## @author Yassen Assenov
 rnb.validate.option <- function(oname, ovalue) {
 	infos <- .rnb.options[["infos"]]
+	# ensure backwards compatibility for legacy options
+	ocompat <- rnb.option.compatibility(oname, ovalue)
+	oname   <- ocompat$oname
+	ovalue  <- ocompat$ovalue
+	if (is.null(oname) && ocompat$modified) return(NULL)
+
 	if (!(oname %in% rownames(infos))) {
 		stop(paste(oname, "is invalid option"))
 	}
@@ -311,6 +350,12 @@ rnb.validate.option <- function(oname, ovalue) {
 ## @return Empty \code{character} string if the operation was successful; the text of an error message otherwise.
 ## @author Yassen Assenov
 rnb.get.option <- function(oname, ovalue = NULL, setvalue = FALSE) {
+	# ensure backwards compatibility for legacy options
+	ocompat <- rnb.option.compatibility(oname, ovalue)
+	oname   <- ocompat$oname
+	ovalue  <- ocompat$ovalue
+	if (is.null(oname) && ocompat$modified) return("")
+
 	if (!(oname %in% names(.rnb.options[["current"]]))) {
 		return(paste(oname, "is invalid option"))
 	}
