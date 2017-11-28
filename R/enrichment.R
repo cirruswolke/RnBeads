@@ -317,9 +317,9 @@ prepLolaDbPaths <- function(assembly, dbs=rnb.getOption("differential.enrichment
 #' lolaDb <- loadLolaDbs(lolaDirs[["hg19"]])
 #' }
 loadLolaDbs <- function(lolaDbPaths){
-	rnb.require(data.table) #explicitely load data.table to adress LOLA namespace issues
-	rnb.require(LOLA)
-	rnb.require(simpleCache) # TODO: include requirement in dependencies
+	rnb.require("data.table") #explicitely load data.table to adress LOLA namespace issues
+	rnb.require("LOLA")
+	rnb.require("simpleCache") # TODO: include requirement in dependencies
 	logger.start("Loading LOLA DBs")
 		lolaDb <- loadRegionDB(lolaDbPaths[1])
 		if (length(lolaDbPaths)>1){
