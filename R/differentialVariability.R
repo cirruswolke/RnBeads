@@ -1234,8 +1234,19 @@ computeDiffVar.bin.site <- function(X,inds.g1,inds.g2,
   } else {
     p.vals.var.adj <- rep(NA,length(p.vals.var))
   }
-  var.g1 <- apply(X[,inds.g1],1,var)
-  var.g2 <- apply(X[,inds.g2],1,var)
+  tab.g1 <- X[,inds.g1]
+  tab.g2 <- X[,inds.g2]
+  if(length(inds.g1)<2) {
+    logger.info("Group 1 has less than 2 members")
+    tab.g1 <- as.matrix(tab.g1)
+  }
+  if(length(inds.g2)<2) {
+    logger.info("Group 2 has less than 2 members")
+    tab.g2 <- as.matrix(tab.g2)
+  }
+  
+  var.g1 <- apply(tab.g1,1,var)
+  var.g2 <- apply(tab.g2,1,var)
   if(paired){
     var.diff <- apply(tab.g1 - tab.g2,1,var)
     var.log.ratio <- apply(X,1,function(X,inds.g1,inds.g2){
