@@ -3,7 +3,7 @@ RnBeads 1.11.3
  
  * Introducing RnBeadsDJ, a shiny-based interface for running RnBeads analyses and modules (run with rnb.run.dj())
  * Option backwards compatibility
- * bugfixes (LOLA dependencies, ...)
+ * bugfixes (LOLA dependencies, 1-sample differential variability, ...)
 
 RnBeads 1.11.2
 =============

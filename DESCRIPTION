@@ -9,7 +9,7 @@ Authors@R: c(
     role = c("aut")),
     person("Fabian", "Mueller", email = "rnbeads@mpi-inf.mpg.de",
     role = c("aut", "cre")))
-Date: 2017-11-29
+Date: 2017-11-30
 Version: 1.11.3
 Suggests:
     Category,
