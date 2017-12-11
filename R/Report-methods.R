@@ -673,7 +673,7 @@ rnb.add.table <- function(report, tdata, row.names = TRUE, first.col.header = FA
 		stop("invalid value for na; expected single character")
 	}
 	if (nrow(tdata) * ncol(tdata) == 0) {
-		return(invisible())
+		return(invisible(report))
 	}
 
 	## Convert factors to characters
