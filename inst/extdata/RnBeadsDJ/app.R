@@ -672,6 +672,28 @@ ui <- tagList(useShinyjs(), navbarPage(
 					)
 				)
 			),
+			tabPanel("Quality Control",
+				tags$table(class="table table-hover",
+					tags$thead(tags$tr(
+						tags$th("Name"),
+						tags$th("Setting"),
+						tags$th("Value")
+					)),
+					tags$tbody(
+						tags$tr(
+							tags$td(
+								tags$div(title=RNB.OPTION.DESC["qc"], tags$code("qc"))
+							),
+							tags$td(
+								checkboxInput("rnbOptsI.qc", "Enable", value=TRUE)
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.qc")
+							)
+						)
+					)
+				)
+			),
 			tabPanel("Preprocessing",
 				tags$table(class="table table-hover",
 					tags$thead(tags$tr(
@@ -680,6 +702,17 @@ ui <- tagList(useShinyjs(), navbarPage(
 						tags$th("Value")
 					)),
 					tags$tbody(
+						tags$tr(
+							tags$td(
+								tags$div(title=RNB.OPTION.DESC["preprocessing"], tags$code("preprocessing"))
+							),
+							tags$td(
+								checkboxInput("rnbOptsI.preprocessing", "Enable", value=TRUE)
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.preprocessing")
+							)
+						),
 						tags$tr(
 							tags$td(
 								tags$div(title=RNB.OPTION.DESC["filtering.coverage.threshold"], tags$code("filtering.coverage.threshold"))
@@ -814,6 +847,28 @@ ui <- tagList(useShinyjs(), navbarPage(
 					tags$tbody(
 						tags$tr(
 							tags$td(
+								tags$div(title=RNB.OPTION.DESC["export.to.bed"], tags$code("export.to.bed"))
+							),
+							tags$td(
+								checkboxInput("rnbOptsI.export.to.bed", "Enable", value=TRUE)
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.export.to.bed")
+							)
+						),
+						tags$tr(
+							tags$td(
+								tags$div(title=RNB.OPTION.DESC["export.to.csv"], tags$code("export.to.csv"))
+							),
+							tags$td(
+								checkboxInput("rnbOptsI.export.to.csv", "Enable", value=FALSE)
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.export.to.csv")
+							)
+						),
+						tags$tr(
+							tags$td(
 								tags$div(title=RNB.OPTION.DESC["export.to.trackhub"], tags$code("export.to.trackhub"))
 							),
 							tags$td(
@@ -913,6 +968,17 @@ ui <- tagList(useShinyjs(), navbarPage(
 					tags$tbody(
 						tags$tr(
 							tags$td(
+								tags$div(title=RNB.OPTION.DESC["exploratory"], tags$code("exploratory"))
+							),
+							tags$td(
+								checkboxInput("rnbOptsI.exploratory", "Enable", value=TRUE)
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.exploratory")
+							)
+						),
+						tags$tr(
+							tags$td(
 								tags$div(title=RNB.OPTION.DESC["exploratory.columns"], tags$code("exploratory.columns"))
 							),
 							tags$td(
@@ -977,6 +1043,17 @@ ui <- tagList(useShinyjs(), navbarPage(
 						tags$th("Value")
 					)),
 					tags$tbody(
+						tags$tr(
+							tags$td(
+								tags$div(title=RNB.OPTION.DESC["differential"], tags$code("differential"))
+							),
+							tags$td(
+								checkboxInput("rnbOptsI.differential", "Enable", value=TRUE)
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.differential")
+							)
+						),
 						tags$tr(
 							tags$td(
 								tags$div(title=RNB.OPTION.DESC["differential.comparison.columns"], tags$code("differential.comparison.columns"))
@@ -1567,6 +1644,44 @@ server <- function(input, output, session) {
 		}
 		res
 	})
+	doQc <- reactive({
+		res <- input$rnbOptsI.qc
+		oNames <- grep("^rnbOptsI.qc.", names(input), value=TRUE)
+		if (res){
+			for (oo in oNames){
+				shinyjs::enable(oo)
+			}
+		} else {
+			for (oo in oNames){
+				shinyjs::disable(oo)
+			}
+		}
+		res
+	})
+	output$rnbOptsO.qc <- renderText({
+		rnb.options(qc=doQc())
+		rnb.getOption("qc")
+	})
+	doPreprocessing <- reactive({
+		res <- input$rnbOptsI.preprocessing
+		oNames <- grep("^rnbOptsI.preprocessing.", names(input), value=TRUE)
+		oNames <- union(oNames, grep("^rnbOptsI.normalization.", names(input), value=TRUE))
+		oNames <- union(oNames, grep("^rnbOptsI.filtering.", names(input), value=TRUE))
+		if (res){
+			for (oo in oNames){
+				shinyjs::enable(oo)
+			}
+		} else {
+			for (oo in oNames){
+				shinyjs::disable(oo)
+			}
+		}
+		res
+	})
+	output$rnbOptsO.preprocessing <- renderText({
+		rnb.options(preprocessing=doPreprocessing())
+		rnb.getOption("preprocessing")
+	})
 	output$rnbOptsO.filtering.coverage.threshold <- renderText({
 		interfaceSetting <- input$rnbOptsI.filtering.coverage.threshold
 		res <- rnb.getOption("filtering.coverage.threshold")
@@ -1636,6 +1751,14 @@ server <- function(input, output, session) {
 		rnb.options(imputation.method=input$rnbOptsI.imputation.method)
 		rnb.getOption("imputation.method")
 	})
+	output$rnbOptsO.export.to.bed<- renderText({
+		rnb.options(export.to.bed=input$rnbOptsI.export.to.bed)
+		rnb.getOption("export.to.bed")
+	})
+	output$rnbOptsO.export.to.csv <- renderText({
+		rnb.options(export.to.csv=input$rnbOptsI.export.to.csv)
+		rnb.getOption("export.to.csv")
+	})
 	output$rnbOptsO.export.to.trackhub <- renderText({
 		rnb.options(export.to.trackhub=input$rnbOptsI.export.to.trackhub)
 		rnb.getOption("export.to.trackhub")
@@ -1684,6 +1807,24 @@ server <- function(input, output, session) {
 		rnb.options(inference.reference.methylome.column=cname)
 		rnb.getOption("inference.reference.methylome.column")
 	})
+	doExploratory <- reactive({
+		res <- input$rnbOptsI.exploratory
+		oNames <- grep("^rnbOptsI.exploratory.", names(input), value=TRUE)
+		if (res){
+			for (oo in oNames){
+				shinyjs::enable(oo)
+			}
+		} else {
+			for (oo in oNames){
+				shinyjs::disable(oo)
+			}
+		}
+		res
+	})
+	output$rnbOptsO.exploratory <- renderText({
+		rnb.options(exploratory=doExploratory())
+		rnb.getOption("exploratory")
+	})
 	output$rnbOptsO.exploratory.columns <- renderText({
 		cnames <- input$rnbOptsI.exploratory.columns
 		if (length(cnames)<1) cnames <- NULL
@@ -1714,6 +1855,24 @@ server <- function(input, output, session) {
 		if (length(rts)<1) rts <- character(0)
 		rnb.options(exploratory.region.profiles=rts)
 		rnb.getOption("exploratory.region.profiles")
+	})
+	doDifferential <- reactive({
+		res <- input$rnbOptsI.differential
+		oNames <- grep("^rnbOptsI.differential.", names(input), value=TRUE)
+		if (res){
+			for (oo in oNames){
+				shinyjs::enable(oo)
+			}
+		} else {
+			for (oo in oNames){
+				shinyjs::disable(oo)
+			}
+		}
+		res
+	})
+	output$rnbOptsO.differential <- renderText({
+		rnb.options(differential=doDifferential())
+		rnb.getOption("differential")
 	})
 	output$rnbOptsO.differential.comparison.columns <- renderText({
 		cnames <- input$rnbOptsI.differential.comparison.columns
