@@ -46,6 +46,8 @@ Suggests:
     scales,
     missMethyl,
     impute,
+    shiny,
+    plotrix,
     RUnit
 Depends:
     R (>= 3.0.0),
