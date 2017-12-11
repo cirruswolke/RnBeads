@@ -11,14 +11,15 @@
 GEO.PLATFORMS <- c(
 	"GPL8490" = "probes27",
 	"GPL13534" = "probes450",
-	"GPL16304" = "probes450")
+	"GPL16304" = "probes450",
+	"GPL21145" = "probesEPIC")
 
 ## F U N C T I O N S ###################################################################################################
 
 #' Preprocesse sample characteristics
-#' 
+#'
 #' Preprocesses sample characteristics lines from a series matrix definition file.
-#' 
+#'
 #' @param txt               Lines in the file to be parsed.
 #' @param regex.sample.info Regular expression capturing a definition of sample characteristics.
 #' @return \code{character} vector storing sequence of preprocessed lines defining sample characteristics; an empty
@@ -39,13 +40,13 @@ rnb.geo.parse.sample.info <- function(txt, regex.sample.info = "^!Sample_([^\t]+
 ########################################################################################################################
 
 #' Parses sample annotation
-#' 
+#'
 #' Parses the sample annotation table from the corresponding lines in a series matrix definition file.
-#' 
+#'
 #' @param txt Lines of the series matrix definition file that define sample characteristics. These should be
 #'            preprocessed and not contain the initial sample specification (the token starting with \code{"!Sample_"}).
 #' @return Sample annotation table as a \code{data.frame}.
-#' 
+#'
 #' @author Yassen Assenov
 #' @noRd
 rnb.geo.parse.sample.anno <- function(txt) {
@@ -99,12 +100,12 @@ rnb.geo.parse.sample.anno <- function(txt) {
 ########################################################################################################################
 
 #' Parse sample identifiers
-#' 
+#'
 #' Parses column names from the first line of series matrix table definition.
 #' @param txt Line in the series matrix file that defines table columns; this is the line following the matrix
 #'            definition \code{"series_matrix_table_begin"}.
 #' @return All column names in the form of a \code{character} vector.
-#' 
+#'
 #' @author Yassen Assenov
 #' @noRd
 rnb.geo.parse.ids <- function(txt) {
@@ -122,14 +123,14 @@ rnb.geo.parse.ids <- function(txt) {
 ########################################################################################################################
 
 #' Initialize methylation matrix
-#' 
+#'
 #' Initializes the beta value matrix from a series matrix file.
 #' @param txt        Line in the series matrix file that defines table columns; this is the line following the matrix
 #'                   definition \code{"series_matrix_table_begin"}.
 #' @param N.expected Number of columns expected, based on the sample definition lines above.
 #' @param assay.type Expected assay. This must be one of \code{"probes27"}, \code{"probes450"} or \code{"probesEPIC"}.
 #' @return Newly initialized \code{matrix} of type \code{double}.
-#' 
+#'
 #' @author Yassen Assenov
 #' @noRd
 rnb.geo.init.matrix <- function(txt, N.expected, assay.type) {
@@ -147,14 +148,14 @@ rnb.geo.init.matrix <- function(txt, N.expected, assay.type) {
 ########################################################################################################################
 
 #' Parse a series matrix file
-#' 
+#'
 #' Parses the sample annotation data and methylation values from a series matrix file.
-#' 
+#'
 #' @param fname   Name of the file that contains the series matrix definition. This can also be gzipped.
 #' @param verbose Flag indicating if messages are to be sent to the logger.
 #' @return \code{list} with three elements: sample annotation table (\code{data.frame}), methylation beta value matrix,
 #'         and a platform, specified as one of \code{"probes27"}, \code{"probes450"} or \code{"probesEPIC"}.
-#' 
+#'
 #' @author Yassen Assenov
 #' @noRd
 rnb.geo.parse.series.matrix <- function(fname, verbose) {
@@ -260,10 +261,11 @@ rnb.geo.parse.series.matrix <- function(fname, verbose) {
 				stop("Invalid format of data table")
 			}
 			i.probes <- match(gsub(regex.data, "\\1", txt), rownames(data.matrix))
-			skipped.records <- skipped.records + sum(i.probes == 0)
-			if (any(i.probes != 0)) {
-				txt <- gsub(regex.data, "\\2", txt[i.probes != 0])
-				i.probes <- i.probes[i.probes != 0]
+			i.found <- which(i.probes != 0L)
+			skipped.records <- skipped.records + length(i.probes) - length(i.found)
+			if (length(i.found) != 0) {
+				txt <- gsub(regex.data, "\\2", txt[i.found])
+				i.probes <- i.probes[i.found]
 				txt <- gsub("\t$", "\t\t", txt)
 				mm <- suppressWarnings(sapply(strsplit(txt, "\t", fixed = TRUE), as.double))
 				if (!(is.matrix(mm) && nrow(mm) == ncol(data.matrix))) {
@@ -271,7 +273,7 @@ rnb.geo.parse.series.matrix <- function(fname, verbose) {
 				}
 				data.matrix[i.probes, ] <- t(mm)
 			}
-			suppressWarnings(rm(i.probes, mm))
+			suppressWarnings(rm(i.probes, i.found, mm))
 
 			if (length(i) == 1) {
 				state.data.matrix <- 3L
