@@ -1244,7 +1244,10 @@ rnb.run.inference <- function(rnb.set, dir.reports,
 	module.start.log("Covariate Inference")
 
 	report <- init.pipeline.report("covariate_inference", dir.reports, init.configuration)
-	optionlist <- rnb.options("inference.targets.sva","inference.sva.num.method","covariate.adjustment.columns", "export.to.ewasher","inference.age.prediction","inference.age.prediction.training","inference.age.prediction.predictor","inference.age.column","inference.age.prediction.cv")
+	optionlist <- rnb.options("inference.targets.sva", "inference.sva.num.method", "covariate.adjustment.columns",
+		"export.to.ewasher", "inference.age.prediction", "inference.age.prediction.training",
+		"inference.age.prediction.predictor", "inference.age.column", "inference.age.prediction.cv",
+		"inference.immune.cells")
 	report <- rnb.add.optionlist(report, optionlist)
 
 	if (inherits(rnb.set,"RnBSet") && rnb.getOption("inference.age.prediction")){
@@ -1273,6 +1276,21 @@ rnb.run.inference <- function(rnb.set, dir.reports,
 			logger.info("We already have a predicted age in the phenotypic table of the dataset.")
 		}
 		report <- rnb.step.ageprediction(rnb.set,report)
+	}
+
+	## LUMP estimates
+	if (rnb.getOption("inference.immune.cells")) {
+		immune.content <- tryCatch(rnb.execute.lump(rnb.set), error = function(err) { err$message })
+		report <- rnb.section.lump(report, immune.content)
+		if (is.double(immune.content)) {
+			rnb.set@pheno$`Immune Cell Content (LUMP)` <- as.double(immune.content)
+			rnb.set@inferred.covariates$`LUMP` <- TRUE
+			rnb.status("Calculated LUMP estimates")
+		} else if (is.null(immune.content)) {
+			rnb.set@inferred.covariates$`LUMP` <- FALSE
+			rnb.status("Could not calculate LUMP estimates")
+		}
+		rm(immune.content)
 	}
 
 	if (length(rnb.getOption("inference.targets.sva"))>0) {

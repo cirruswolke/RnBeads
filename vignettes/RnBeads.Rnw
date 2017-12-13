@@ -894,7 +894,7 @@ rnb.options(inference.age.prediction=TRUE)
 @
 	Or by performing the command
 <<eval=FALSE>>=
-rnb.exectue.age.prediction(rnb.set)
+rnb.execute.age.prediction(rnb.set)
 @
 	The difference between the first and the second option is that the first one creates a report, whereas the second modifies the \cs{rnb.set} object by adding additional columns \cs{predicted\_ages} and \cs{age\_increase}. The first one corresponds to the predicted age by the prediction algorithm and the second to the difference between predicted and annotated age.
 
@@ -906,6 +906,22 @@ rnb.options(inference.age.prediction.training=TRUE)
 	In the first case, a new predictor is trained based on the methylation information in the \cs{rnb.set} object and written as a CSV-file at the given \cs{predictor.path}, which has to be a full path. The second option requires running \cs{rnb.run.inference} to create a new predictor that then is written into the \cs{RnBeads} data folder and sets the option \cs{inference.age.prediction.predictor} to the corresponding one.
 
 	Additionally, by setting the option \cs{inference.age.prediction.cv}, a 10-fold cross-validation is performed to serve as an accuracy measure for the training functionality. Setting the option \cs{inference.age.column} enables \cs{RnBeads} to read the corresponding age annotation column of the data set, which enables the creation of evaluation plots. These include scatterplots of the deviation between annotated and predicted age as well as density plots for the differences between predicted and annotated ages. On default, \cs{inference.age.column} is set to \cs{age}.
+
+\subsubsection{Immune Cell Content Estimation}
+
+	The LUMP algorithm for estimating immune cell content was developed by Dvir Aran, Marina Sirota and Atul J. Buttea for Infinium 450k data~\cite{Aran2015}. It is implemented in \cs{RnBeads} for all supported platforms in the genome assembly hg19: Infinium 27k, Infinium 450k, MethylationEPIC and sequencing-based data.
+
+	By default, immune cell content estimation is attempted when the Covariate Inference module is run. Upon successful completion of the LUMP algorithm, the sample annotation table receives a column named \cs{Immune Cell Content (LUMP)} that lists the estimated immune cell fractions for the samples. If such a column already exists, its contents will be overwritten. LUMP can be disabled using the following option:
+
+<<eval=FALSE>>=
+rnb.options(inference.immune.cells=FALSE)
+@
+	The dedicated function to obtain LUMP estimates expects a methylation dataset as a parameter:
+<<eval=FALSE>>=
+immune.content <- rnb.execute.lump(rnb.set)
+@
+
+	If none of the CpGs used in LUMP is measured in the dataset of interest, the return value is \cs{NULL}. Otherwise, the function returns a numeric vector with immune cell fractions for every sample, that is, values between 0 and 1. The vector also has an integer attribute named \cs{"sites"} that stores the number of CpGs or probes used in estimating immume cell proportions for the specific dataset.
 
 \subsection{Exploratory Analysis}
 \label{sec:exploratory}
@@ -2108,7 +2124,7 @@ draw.lotto()
       \bibitem{Zou2014}Zou, J., Lippert, C., Heckerman, D., Aryee, M., and
       Listgarten, J. (2014). \newblock \emph{Epigenome-wide association studies without the need for cell-type composition}. \newblock Nature Methods. 11, 309-311.
       \bibitem{Fortin2014} Fortin, J.-P., Labbe, A., Lemire, M., Zanke, B. W., Hudson, T. J., Fertig, E. J., \emph{et al.} (2014). \newblock \emph{Functional normalization of 450k methylation array data improves replication in large cancer studies}. \newblock Genome Biology, 15(12), 503
-
+      \bibitem{Aran2015} Aran, D., Sirota, M., Butte, A.J. (2014). \newblock \emph{Systematic pan-cancer analysis of tumour purity}. \newblock Nature Communications, 6, 8971
 	\end{thebibliography}
 
 \end{document}

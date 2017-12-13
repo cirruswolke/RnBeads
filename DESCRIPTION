@@ -107,6 +107,7 @@ Collate:
     'filteringSummary.R'
     'gender.R'
     'greedycut.R'
+    'immune.R'
     'loading.R'
     'logger.R'
     'lolaUtils.R'
