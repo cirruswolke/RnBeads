@@ -441,9 +441,10 @@ load.annotations <- function(assembly = NULL, sites = NULL) {
 				return(invisible(FALSE))
 			}
 		}
-		tryCatch(load(system.file(paste0("data/", fname), package = pname), envir = .rnb.annotations),
+		fp <- system.file(file.path("data", fname), package=pname)
+		tryCatch(load(fp, envir = .rnb.annotations),
 			error = function(e) {
-				stop(paste0("Internal error in ", pname, ": loading required file", fname, "failed"))
+				stop(paste0("Internal error in ", pname, ": loading required file '", fp, "' failed"))
 			}
 		)
 		invisible(TRUE)
