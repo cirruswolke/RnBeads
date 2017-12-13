@@ -1,10 +1,11 @@
 RnBeads 1.11.3
-=============
+==============
 
  * Fixed a bug concerning 1 sample differential variability
+ * Added implementation of the LUMP algorithm for immune cell content estimation
 
 RnBeads 1.11.2
-=============
+==============
 
  * Fixed a bug concerning failed trackhub exports on Windows
 
@@ -12,7 +13,7 @@ RnBeads 1.9.4
 =============
 
  * You can now retrieve custom region sets from the RnBeads resource using the rnb.load.annotation.from.db function
- * improved import from GEO
+ * Improved import from GEO
  * bigff disk dump is now the default option for dealing with disk-based big matrices
  * Several bugfixes and performance improvements in Greedycut, normalization, Bisulfite data loading and others
  * Added differential variability analysis in addition to differential methylation
