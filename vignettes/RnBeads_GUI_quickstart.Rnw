@@ -1,0 +1,140 @@
+%\VignetteIndexEntry{Comprehensive DNA Methylation Analysis with RnBeads}
+%\VignetteKeywords{analysis, methylation, RnBeads}
+
+\documentclass[a4paper]{scrartcl}
+\usepackage[OT1]{fontenc}
+\usepackage{Sweave}
+\usepackage{hyperref}
+\usepackage{color}
+\usepackage{vmargin}
+\usepackage[american]{babel}
+\usepackage{fancyhdr}
+\usepackage{listings}
+\usepackage{amsmath}
+
+\selectlanguage{american}
+\definecolor{darkblue}{rgb}{0.0,0.0,0.3}
+\hypersetup{colorlinks,breaklinks,
+            linkcolor=darkblue,urlcolor=darkblue,
+            anchorcolor=darkblue,citecolor=darkblue}
+\setpapersize{A4}
+\setmargins{2.5cm}{2.0cm}% % left margin and upper margin
+           {16cm}{23cm}%   % text width and height
+           {60pt}{22pt}%   % Header height and margin
+           {0pt}{30pt}%    % \footheight (egal) und Fusszeilenabstand
+
+%%%%%%%%%%%%%%%%% Some style sttings %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\insertemptypage}[0]{\newpage \thispagestyle{empty} \vspace*{\fill}}
+
+% Layout
+\newcommand{\emphr}[1]{\textcolor{red}{\sffamily{\textbf{#1}}}}
+\newcommand{\itemr}[1]{\item \emphr{#1} \\}
+\newcommand{\ns}[1]{{\sffamily #1}}  % non-serif font
+\newcommand{\nsb}[1]{\ns{\textbf{#1}}}
+\newcommand{\nsbc}[1]{\nsb{\textcolor{blue}{#1}}}
+\newcommand{\nsbcr}[1]{\nsb{\textcolor{red}{#1}}}
+\newcommand{\cs}[1]{\texttt{#1}}    % code style
+
+\newcommand{\vocab}[1]{\textit{\ns{#1}}}
+\definecolor{grey}{rgb}{0.6,0.6,0.6}
+% Ueberschriften
+\renewcommand*{\sectfont }{\color{blue} \sffamily \bfseries}
+%\renewcommand{\thesection}{\Alph{section}}
+
+%neuer absatz
+\newcommand{\newpara}[0]{\vskip 10pt}
+
+%simple hyperrefs without having to type the link double
+\newcommand{\hrefs}[1]{\href{#1}{#1}}
+
+% Mathematik-Modus
+% Mengen
+\newcommand{\setN}[0]{\ensuremath{\mathds{N}}}
+\newcommand{\setR}[0]{\ensuremath{\mathds{R}}}
+\newcommand{\setZ}[0]{\ensuremath{\mathds{Z}}}
+\newcommand{\set}[1]{\left\{#1\right\}}
+%\newcommand{\tupt}[1]{\ensuremath{\langle}#1\ensuremath{\rangle}}
+
+% Statistics
+\newcommand{\pr}[0]{\ensuremath{\text{Pr}}}
+\newcommand{\E}[0]{\ensuremath{\text{E}}}
+\newcommand{\var}[0]{\ensuremath{\text{Var}}}
+\newcommand{\cov}[0]{\ensuremath{\text{Cov}}}
+\newcommand{\sd}[0]{\ensuremath{\text{sd}}}
+% Statistical Independence
+\newcommand\independent{\protect\mathpalette{\protect\independenT}{\perp}}
+\def\independenT#1#2{\mathrel{\setbox0\hbox{$#1#2$}%
+\copy0\kern-\wd0\mkern4mu\box0}}
+
+% Unsicher
+\newcommand{\chk}[0]{\textcolor{red}{(\textbf{???)}}}
+\newcommand{\chktxth}[1]{\textcolor{red}{(\textbf{???} #1 \textbf{???})}}
+\newcommand{\chkside}[0]{\marginpar{\textcolor{red}{(\textbf{???)}}}}
+\newcommand{\chktxt}[1]{\marginpar{\textcolor{red}{(\textbf{???} #1 \textbf{???})}}}
+
+\newcommand{\todo}[1]{\marginpar{\textcolor{red}{\textbf{TODO:}\newline #1}}}
+\newcommand{\todoh}[1]{\textcolor{red}{\textbf{TODO:} #1}}
+\newcommand{\todomark}[0]{\marginpar{\textcolor{red}{\textbf{TODO}}}}
+\newcommand{\chkm}[0]{\textcolor{red}{(\textbf{???)}} \marginpar{\textcolor{red}{\textbf{TODO}}}}
+\newcommand{\ph}[1]{\paragraph{} \textcolor{red}{[ #1 ]}} %placeholder
+
+\newcommand{\ra}[0]{$\rightarrow$}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\lhead{\cs{RnBeads}}
+\rhead{\thepage}
+\cfoot{}
+
+\pagestyle{fancy}
+
+\begin{document}
+
+\title{\cs{RnBeadsDJ} -- A Quickstart Guide to the RnBeads Data Juggler}
+
+\author{Fabian M\"uller, Yassen Assenov, Pavlo Lutsik \\
+	\small{Contact: \cs{rnbeads@mpi-inf.mpg.de}} \\
+	\small{Package version: \cs{1.9.4}}}
+
+\thispagestyle{empty}
+\maketitle
+
+\cs{RnBeads} is an R package for the comprehensive analysis of genome-wide DNA methylation data with single basepair resolution. \cs{RnBeadsDJ} is a graphical user interface (GUI) providing access to all analysis modules in \cs{RnBeads}.
+
+<<echo=FALSE,warning=FALSE>>=
+suppressPackageStartupMessages(library(RnBeads))
+#for knitr: avoid tidy because it messes up line breaks
+# opts_chunk$set(tidy=FALSE)
+@
+
+\tableofcontents
+
+\section{Getting Started}
+
+\subsection{Installation}
+	Automatic installation of \cs{RnBeads} and one or more of its companion data packages is performed just like any other Bioconductor package. As an example, the following commands install RnBeads and its annotation package for the human genome annotation hg19:
+<<eval=FALSE>>=
+source("http://bioconductor.org/biocLite.R")
+biocLite(c("RnBeads", "RnBeads.hg19"))
+@
+
+	Additionally, you might have to install \textit{Ghostscript} which \cs{RnBeads} uses for generating plot files. \textit{Ghostscript} is included in most Unix/Linux distributions by default, but may require installation on other operating systems. You can obtain the version corresponding to your operating system freely from the program's website\footnote{\href{http://www.ghostscript.com/download/gsdnld.html}{http://www.ghostscript.com/download/gsdnld.html}}. Follow their installation instructions. You might have to set path variables as well. Additional hints on installation of Ghostscript can be found on the FAQ section of the \href{http://rnbeads.mpi-inf.mpg.de/}{RnBeads website}\footnote{\href{http://rnbeads.mpi-inf.mpg.de/}{http://rnbeads.mpi-inf.mpg.de}}. The web site also describes alternative ways to install RnBeads and its dependencies.
+
+\subsection{Launching the Data Juggler}
+	To launch the Data Juggler (DJ), you just have to load the \cs{RnBeads} package in an R session and then run the launch command:
+<<eval=FALSE>>=
+suppressPackageStartupMessages(library(RnBeads))
+rnb.run.dj()
+@
+	This will open your web browser and present you with the starting page of the DJ.
+
+\subsection{Example Datasets}
+	In this tutorial, we will use a dataset of Infinium 450k methylation data from multiple human embryonic stem cells (hESCs) and induced pluripotent stem cells (hiPSCs) lines. You can download the dataset from the tutorial website\footnote{\href{http://rnbeads.mpi-inf.mpg.de/tutorial.html}{http://rnbeads.mpi-inf.mpg.de/tutorial.html}}.
+
+\section{Tutorial: Running RnBeads Analysis}
+	If you have not done so already, please download and extract the example dataset from the \cs{RnBeads} tutorial website. Then launch the DJ as described above:
+<<eval=FALSE>>=
+suppressPackageStartupMessages(library(RnBeads))
+rnb.run.dj()
+@
+
+\end{document}
