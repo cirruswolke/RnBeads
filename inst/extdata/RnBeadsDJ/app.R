@@ -460,7 +460,7 @@ markDirDJ <- function(repDir){
 ################################################################################
 ui <- tagList(useShinyjs(), navbarPage(
 	windowTitle="RnBeadsDJ",
-	tags$p(tags$a(href="http://rnbeads.mpi-inf.mpg.de", tags$img(width=145, height=50, src="img/rnbeads_logo.png")), "DJ"),
+	tags$p(tags$a(href="https://rnbeads.org", tags$img(width=145, height=50, src="img/rnbeads_logo.png")), "DJ"),
 	# tabPanel("Sandbox", icon=icon("dropbox"),
 	# 	verbatimTextOutput("sandboxOut"),
 	# 	localFileInput('sandboxIn2', label='select a local file'),
