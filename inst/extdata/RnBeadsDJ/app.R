@@ -924,6 +924,17 @@ ui <- tagList(useShinyjs(), navbarPage(
 						),
 						tags$tr(
 							tags$td(
+								tags$div(title=RNB.OPTION.DESC["inference.age.column"], tags$code("inference.age.column"))
+							),
+							tags$td(
+								uiOutput('selColumn.agepred')
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.inference.age.column", placeholder=TRUE)
+							)
+						),
+						tags$tr(
+							tags$td(
 								tags$div(title=RNB.OPTION.DESC["inference.targets.sva"], tags$code("inference.targets.sva"))
 							),
 							tags$td(
@@ -1394,6 +1405,7 @@ server <- function(input, output, session) {
 		cnames
 	})
 	sannot.cols.plusNone <- reactive(c("[None]", sannot.cols()))
+	sannot.cols.plusDefault <- reactive(c("[default]", sannot.cols()))
 	sannot.cols.grps <- reactive({
 		# print("DEBUG: updated sannot.cols.grps")
 		depDummy <- input$rnbOptsI.min.group.size
@@ -1444,6 +1456,9 @@ server <- function(input, output, session) {
 
 	output$selColumn.id <- renderUI({
 		selectInput('rnbOptsI.identifiers.column', NULL, sannot.cols.plusNone(), selected=optionSettingObserver$selColumn.id)
+	})
+	output$selColumn.agepred <- renderUI({
+		selectInput('rnbOptsI.inference.age.column', NULL, sannot.cols.plusDefault(), selected=optionSettingObserver$selColumn.agepred)
 	})
 	output$selColumn.sva<- renderUI({
 		selectInput('rnbOptsI.inference.targets.sva', NULL, sannot.cols.grps(), multiple=TRUE, selected=optionSettingObserver$selColumn.sva)
@@ -1501,6 +1516,7 @@ server <- function(input, output, session) {
 		selRegs.exploratory.profiles=NULL,
 		selRegs.differential=NULL,
 		selColumn.id="[None]",
+		selColumn.agepred="[default]",
 		selColumn.sva=character(0),
 		selColumn.cellTypeRef="[None]",
 		selColumn.ex="[automatic]",
@@ -1771,10 +1787,20 @@ server <- function(input, output, session) {
 	})
 	doInference <- reactive({
 		res <- input$rnbOptsI.inference
-		inferenceOptNames <- grep("^rnbOptsI.inference.", names(input), value=TRUE)
+		res.agepred <- input$rnbOptsI.inference.age.prediction
+		inferenceOptNames <- grep("^rnbOptsI\\.inference\\.", names(input), value=TRUE)
+		inferenceOptNames.agepred <- setdiff(grep("^rnbOptsI\\.inference\\.age\\.", names(input), value=TRUE), "rnbOptsI.inference.age.prediction")
 		if (res){
 			for (oo in inferenceOptNames){
-				shinyjs::enable(oo)
+				if (is.element(oo, inferenceOptNames.agepred)){
+					if (res.agepred){
+						shinyjs::enable(oo)
+					} else {
+						shinyjs::disable(oo)
+					}
+				} else {
+					shinyjs::enable(oo)
+				}
 			}
 		} else {
 			for (oo in inferenceOptNames){
@@ -1790,6 +1816,12 @@ server <- function(input, output, session) {
 	output$rnbOptsO.inference.age.prediction <- renderText({
 		rnb.options(inference.age.prediction=input$rnbOptsI.inference.age.prediction)
 		rnb.getOption("inference.age.prediction")
+	})
+	output$rnbOptsO.inference.age.column <- renderText({
+		cname <- input$rnbOptsI.inference.age.column
+		if (is.null(cname) || cname=="[default]") cname <- "age"
+		rnb.options(inference.age.column=cname)
+		rnb.getOption("inference.age.column")
 	})
 	output$rnbOptsO.inference.targets.sva <- renderText({
 		cnames <- input$rnbOptsI.inference.targets.sva
