@@ -2,6 +2,7 @@ RnBeads 1.11.3
 =============
  
  * Introducing RnBeadsDJ, a shiny-based interface for running RnBeads analyses and modules (run with rnb.run.dj())
+ * Added implementation of the LUMP algorithm for immune cell content estimation
  * Option backwards compatibility
  * bugfixes (LOLA dependencies, 1-sample differential variability, ...)
 

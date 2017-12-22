@@ -10,7 +10,7 @@
 #' @import methods MASS cluster fields ggplot2 S4Vectors IRanges GenomicRanges methylumi ff limma
 #' @importFrom BiocGenerics annotation
 #' @importFrom BiocGenerics annotation<-
-#' @importFrom grDevices colorRampPalette densCols dev.control dev.off dev2bitmap pdf png rgb xy.coords
+#' @importFrom grDevices colorRampPalette densCols dev.control dev.off dev2bitmap pdf png rainbow rgb xy.coords
 #' @importFrom graphics abline close.screen layout legend lines mtext par plot plot.new polygon screen split.screen
 #' @importFrom gridExtra arrangeGrob
 #' @importFrom gplots colorpanel heatmap.2
@@ -18,7 +18,7 @@
 #' @importFrom matrixStats colMaxs colMedians colMins colQuantiles colSds colVars
 #' @importFrom matrixStats rowMaxs rowMedians rowMins rowQuantiles rowSds rowVars
 #' @importFrom plyr rbind.fill
-#' @importFrom stats as.dendrogram as.dist as.formula coef cutree dbeta density dexp dist dnorm ecdf
+#' @importFrom stats as.dendrogram as.dist as.formula bartlett.test coef cutree dbeta density dexp dist dnorm ecdf
 #' @importFrom stats fisher.test hclust knots kruskal.test lm model.matrix optim p.adjust pbeta pchisq pf pnorm
 #' @importFrom stats prcomp predict pt qbeta residuals rnorm rt t.test vcov wilcox.test
 #' @importFrom utils browseURL capture.output combn data download.file installed.packages memory.size
@@ -45,5 +45,22 @@ NULL
 #'         \code{current} is a \code{list} with current values for all options.
 #'         \code{previous} is a \code{list} with previous values for the affected options; this list is only temporarily
 #'         used while setting option values through \code{\link{rnb.options}} or \code{\link{rnb.xml2options}}.
+#' @author Yassen Assenov
+NULL
+
+#' LUMP Support
+#'
+#' The sites used by the LUMP algorithm for estimating immune cell content are stored in an object named
+#' \code{lump.hg19}. This object should not be loaded or otherwise operated on by users. Please refer to the
+#' documentation of \code{\link{rnb.execute.lump}} for information on the algorithm and its implementation in
+#' \pkg{RnBeads}.
+#'
+#' @docType data
+#' @keywords datasets
+#' @name lump.hg19
+#' @format \code{lump.*} is a \code{list} of non-empty \code{integer} matrices, one per supported platform. Every
+#'         \code{matrix} contains exactly two columns, denoting chromosome index and chromosome-based index,
+#'         respectively. These indices refer to positions within the probe/site annotation table employed by
+#'         \pkg{RnBeads} for the corresponding platform.
 #' @author Yassen Assenov
 NULL

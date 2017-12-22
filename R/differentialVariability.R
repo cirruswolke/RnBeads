@@ -1108,7 +1108,7 @@ rnb.section.diffVar.region <- function(rnb.set,diff.meth,report,gzTable=FALSE,le
     plots <- foreach(k=1:nrow(pps),.combine="c") %dopar% {
       i <- pps[k,1]
       j <- pps[k,2]
-      comp.name <- names(comps)[1]
+      comp.name <- names(comps)[i]
       comp <- comps[comp.name]
       ccn <- ifelse(is.valid.fname(comp.name),comp.name,paste("cmp",i,sep=""))
       rr <- reg.types[j]
