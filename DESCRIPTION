@@ -37,7 +37,6 @@ Suggests:
     rtracklayer,
     qvalue,
     sva,
-    wateRmelon,
     wordcloud,
     argparse,
     glmnet,
@@ -64,7 +63,8 @@ Depends:
     methods,
     illuminaio,
     methylumi,
-    plyr
+    plyr,
+    wateRmelon
 Imports:
     IRanges
 License: GPL-3
