@@ -639,6 +639,7 @@ performLolaEnrichment.diffVar <- function(rnbSet, diffmeth, enrich.diffMeth=NULL
   comps <- get.comparisons(diffmeth)
   region.types <- get.region.types(diffmeth)
   diff.col.reg <- "mean.var.diff"
+  if (skipSites) diff.col.reg <- "var.diff"
   if(!is.null(enrich.diffMeth)){
     enrich.diffMeth$region_var <- list()
     dv.lola.enrich <- enrich.diffMeth
