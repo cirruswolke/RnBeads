@@ -638,6 +638,7 @@ performLolaEnrichment.diffVar <- function(rnbSet, diffmeth, enrich.diffMeth=NULL
   lolaDb <- loadLolaDbs(lolaDbPaths)
   comps <- get.comparisons(diffmeth)
   region.types <- get.region.types(diffmeth)
+  skipSites <- !includes.sites(diffmeth)
   diff.col.reg <- "mean.var.diff"
   if (skipSites) diff.col.reg <- "var.diff"
   if(!is.null(enrich.diffMeth)){
