@@ -44,7 +44,6 @@ Suggests:
     IlluminaHumanMethylation450kanno.ilmn12.hg19,
     scales,
     missMethyl,
-    impute,
     RUnit
 Depends:
     R (>= 3.0.0),
@@ -64,7 +63,8 @@ Depends:
     illuminaio,
     methylumi,
     plyr,
-    wateRmelon
+    wateRmelon,
+    impute
 Imports:
     IRanges
 License: GPL-3
