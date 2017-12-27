@@ -134,14 +134,12 @@ rnb.execute.filter.summary.internal <- function(rnb.set, removed.samples, remove
 		cmatrix <- matrix(0, nrow = 2, ncol = 2)
 		rownames(cmatrix) <- paste(c("Reliable", "Unreliable"), "measurements")
 
-		hasRemovedSites <- length(removed.sites) > 0
-		hasRemovedSamples <- length(removed.samples) > 0
-		if (hasRemovedSites){
-			relCounts.remSites <- rnb.get.reliability.counts.per.sample(rnb.set, siteIndices=removed.sites)
+		if (length(removed.sites) != 0) {
+			relCounts.remSites <- rnb.get.reliability.counts.per.sample(rnb.set, removed.sites)
 			notRelCounts.remSites <- length(removed.sites) - relCounts.remSites
-			relCounts.retSites <- rnb.get.reliability.counts.per.sample(rnb.set, siteIndices=-removed.sites)
+			relCounts.retSites <- rnb.get.reliability.counts.per.sample(rnb.set, -removed.sites)
 			notRelCounts.retSites <- nsites(rnb.set) - length(removed.sites) - relCounts.retSites
-			if (hasRemovedSamples){
+			if (length(removed.samples) != 0) {
 				cmatrix[1,1] <- sum(as.numeric(relCounts.retSites[-removed.samples]))
 				cmatrix[1,2] <- sum(as.numeric(relCounts.remSites[-removed.samples])) + sum(as.numeric(relCounts.retSites[removed.samples]) + as.numeric(relCounts.remSites[removed.samples]))
 				cmatrix[2,1] <- sum(as.numeric(notRelCounts.retSites[-removed.samples]))
@@ -152,10 +150,10 @@ rnb.execute.filter.summary.internal <- function(rnb.set, removed.samples, remove
 				cmatrix[2,1] <- sum(as.numeric(notRelCounts.retSites))
 				cmatrix[2,2] <- sum(as.numeric(notRelCounts.remSites))
 			}
-		} else {
-			relCounts <- rnb.get.reliability.counts.per.sample(rnb.set, siteIndices=NULL)
+		} else { # length(removed.sites) == 0
+			relCounts <- rnb.get.reliability.counts.per.sample(rnb.set)
 			notRelCounts <- nsites(rnb.set) - relCounts
-			if (hasRemovedSamples){
+			if (length(removed.samples) != 0) {
 				cmatrix[1,1] <- sum(as.numeric(relCounts[-removed.samples]))
 				cmatrix[1,2] <- sum(as.numeric(relCounts[ removed.samples]))
 				cmatrix[2,1] <- sum(as.numeric(notRelCounts[-removed.samples]))
@@ -214,23 +212,26 @@ rnb.step.filter.summary <- function(old.set, new.set, report) {
 }
 
 rnb.step.filter.summary.internal <- function(rnb.set, removed.samples, removed.sites, report,
-	log.section = FALSE, section.name="Filtering Summary", section.order=1) {
+	log.section = FALSE, section.name = "Filtering Summary") {
 
 	if (log.section) {
 		logger.start("Summary of Filtering Procedures")
 	}
+	section.suffix <- gsub("^Filtering Summary( (.+))?$", "\\2", section.name)
+	if (section.suffix != "") {
+		section.suffix <- paste0("_", which(c("I", "II", "III", "IV") == section.suffix))
+	}
 
 	## Create a summary table of removed sites, samples and unreliable measurements
-	logger.status("Creating summary table of removed sites, samples and unreliable measurements...")
 	table.summary <- rnb.execute.filter.summary.internal(rnb.set, removed.samples, removed.sites)
+	logger.status("Created summary table of removed sites, samples and unreliable measurements")
 	if (all(table.summary[, "Removed"] == 0)) {
 		if (log.section) logger.completed()
 		return(report)
 	}
 
 	## Save table and create figure
-	logger.status("Saving table and figures...")
-	fname <- sprintf("summary%d.csv", section.order)
+	fname <- paste0("summary", section.suffix, ".csv")
 	utils::write.csv(table.summary, file = file.path(rnb.get.directory(report, "data", TRUE), fname))
 	dframe <- table.summary[, -3]
 	colnames(dframe) <- tolower(colnames(dframe))
@@ -243,7 +244,7 @@ rnb.step.filter.summary.internal <- function(rnb.set, removed.samples, removed.s
 		labs(x = NULL, y = "Fraction", fill = "Group") + theme(axis.ticks.y = element_blank()) +
 		ggplot2::geom_bar(position = "fill", width = 0.7) + coord_flip() +
 		theme(plot.margin = unit(0.1 + c(0, 0, 0, 0), "in"))
-	pname <- sprintf("summary%d_barchart", section.order)
+	pname <- paste0("summary", section.suffix, "_barchart")
 	rplot <- createReportPlot(pname, report, width = 7, height = 0.55 + 0.4 * nrow(table.summary))
 	suppressWarnings(print(pp))
 	rplot <- off(rplot)
@@ -313,7 +314,7 @@ rnb.step.filter.summary.internal <- function(rnb.set, removed.samples, removed.s
 
 	## Compare removed vs. retained methylation beta values
 	if ((!is.null(beta.values)) && min(sapply(beta.values, length)) >= 501) {
-		report.plots <- rnb.plot.beta.comparison(beta.values, sprintf("summary%d_betas", section.order), report)
+		report.plots <- rnb.plot.beta.comparison(beta.values, paste0("summary", section.suffix, "_betas"), report)
 		setting.names <- list("Plot type" =
 			c("density" = "density estimation", "histogram" = "histograms", "qq" = "quantile-quantile plot"))
 		txt <- c("The figure below compares the distributions of the removed methylation &beta; values and of the ",

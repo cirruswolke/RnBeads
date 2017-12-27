@@ -1048,30 +1048,37 @@ rnb.has.reliability.info <- function(rnb.set) {
 #' Gets a vector with the counts of reliable measurements per sample
 #' 
 #' @param rnb.set   Methylation dataset as an object of type inheriting \code{\linkS4class{RnBSet}}.
-#' @param siteIndices	vector of indices of sites that should be considered. indices can be numeric or logical.
+#' @param siteIndices	vector of indices of sites that should be considered. indices can be integer or logical.
 #' @return \code{numric} vector in which each entry corresponds to the number of reliable measurements in the corresponding sample
 #'         If the dataset does not contain coverage or detection p-value information, the returned value is \code{NULL}.
 #' 
 #' @author Fabian Mueller
 #' @noRd
 rnb.get.reliability.counts.per.sample <- function(rnb.set, siteIndices=NULL) {
-	if (!inherits(rnb.set, "RnBSet")) {
-		stop("invalid value for rnb.set")
-	}
-	result <- NULL
+
+	## Extract reliability matrix and threshold values
 	if (inherits(rnb.set, "RnBeadSet")) {
-		relmat <- dpval(rnb.set)
-		if (!is.null(relmat)) {
-			result <- colSums(relmat < rnb.getOption("filtering.greedycut.pvalue.threshold"), na.rm=TRUE)
-		}
+		mm <- rnb.set@pval.sites
+		x.cutoff <- rnb.getOption("filtering.greedycut.pvalue.threshold")
 	} else { # inherits(rnb.set, "RnBiseqSet")
-		if (hasCovg(rnb.set)) {
-			result <- sapply(1:length(samples(rnb.set)), FUN=function(j){
-				sum(as.vector(covg(rnb.set, i=siteIndices, j=j)) >= rnb.getOption("filtering.coverage.threshold"), na.rm=TRUE)
-			})
-			names(result) <- samples(rnb.set)
+		mm <- rnb.set@covg.sites
+		x.cutoff <- rnb.getOption("filtering.coverage.threshold")
+	}
+	if (is.null(mm)) {
+		return(NULL)
+	}
+
+	## Count number of reliable values per sample
+	result <- rep(0L, ncol(mm))
+	for (j in 1:ncol(mm)) {
+		x <- as.vector(get.dataset.matrix(rnb.set, "sites", FALSE, mm, list(), i = siteIndices, j = j))
+		if (inherits(rnb.set, "RnBeadSet")) {
+			result[j] <- sum(x < x.cutoff, na.rm = TRUE)
+		} else {
+			result[j] <- sum(x >= x.cutoff, na.rm = TRUE)
 		}
 	}
+	names(result) <- samples(rnb.set)
 	result
 }
 
