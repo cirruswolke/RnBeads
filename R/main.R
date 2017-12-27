@@ -1454,8 +1454,13 @@ rnb.run.exploratory <- function(rnb.set, dir.reports,
 	if (is.null(profile.types)) {
 		profile.types <- intersect(summarized.regions(rnb.set), rnb.region.types(rnb.set@assembly))
 	}
-	if (length(profile.types) != 0) {
-		report <- rnb.step.region.profiles(rnb.set, report, profile.types, subsample=rnb.getOption("distribution.subsample"))
+	profile.types.in.set <- intersect(profile.types, summarized.regions(rnb.set))
+	profile.types.not.in.set <- setdiff(profile.types, summarized.regions(rnb.set))
+	if (length(profile.types.not.in.set) > 0){
+		logger.warning(c("The following region types are not contained in the RnBSet. They will be discarded for regional methylation profiling:", paste(profile.types.not.in.set, collapse=", ")))
+	}
+	if (length(profile.types.in.set) != 0) {
+		report <- rnb.step.region.profiles(rnb.set, report, profile.types.in.set, subsample=rnb.getOption("distribution.subsample"))
 	}
 	custom.genes <- rnb.getOption("exploratory.gene.symbols")
 	custom.loci.bed <- rnb.getOption("exploratory.custom.loci.bed")
