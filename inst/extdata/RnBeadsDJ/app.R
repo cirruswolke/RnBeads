@@ -806,7 +806,7 @@ ui <- tagList(useShinyjs(), navbarPage(
 								tags$div(title=RNB.OPTION.DESC["normalization.method"], tags$code("normalization.method"))
 							),
 							tags$td(
-								selectInput("rnbOptsI.normalization.method", NULL, RNB.NORMALIZATION.METHODS, selected="swan")
+								selectInput("rnbOptsI.normalization.method", NULL, RNB.NORMALIZATION.METHODS, selected="wm.dasen")
 							),
 							tags$td(
 								verbatimTextOutput("rnbOptsO.normalization.method")
@@ -817,7 +817,7 @@ ui <- tagList(useShinyjs(), navbarPage(
 								tags$div(title=RNB.OPTION.DESC["normalization.background.method"], tags$code("normalization.background.method"))
 							),
 							tags$td(
-								selectInput("rnbOptsI.normalization.background.method", NULL, RNB.NORMALIZATION.BG.METHODS, selected="methylumi.noob")
+								selectInput("rnbOptsI.normalization.background.method", NULL, RNB.NORMALIZATION.BG.METHODS, selected="none")
 							),
 							tags$td(
 								verbatimTextOutput("rnbOptsO.normalization.background.method")

@@ -3,6 +3,8 @@ RnBeads 1.11.4
  
  * Introducing RnBeadsDJ, a shiny-based interface for running RnBeads analyses and modules (run with rnb.run.dj())
  * Added implementation of the LUMP algorithm for immune cell content estimation
+ * The default normalization method was changed to "wm.dasen"
+ * Background normalization is now disabled per default.
  * Option backwards compatibility
  * bugfixes (LOLA dependencies, 1-sample differential variability, ...)
 
