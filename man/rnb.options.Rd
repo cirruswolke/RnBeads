@@ -122,7 +122,7 @@ is available (see below). Attempting to get or set the value of a non-existing o
        See \pkg{RnBeads} vignette and the FAQ section on the website for more details.}
   \item{\bold{\code{import.bed.test.only}}\code{ = FALSE}}{
 		  Perform only the small loading test, and skip loading all the data.}
-  \item{\bold{\code{import.skip.object.check}}\code{ =  FALSE}}{
+  \item{\bold{\code{import.skip.object.check}}\code{ = FALSE}}{
 	  Skip the check of the loaded RnBSet object after loading. Helps with keeping the memory profile down}
   \item{\bold{\code{import.gender.prediction}}\code{ = TRUE}}{
        Flag indicating if gender prediction is to be performed. Gender prediction is supported for Infinium 450k, EPIC
@@ -283,7 +283,10 @@ is available (see below). Attempting to get or set the value of a non-existing o
   \item{\bold{\code{inference.age.prediction.cv}}\code{ = FALSE}}{
        Flag indicating if predictive power of a predictor that was trained in that run of the age prediction should
 	be assessed by cross-validation. This option only has an influence if 
-	\code{inference.age.prediction.training}\code{ = TRUE}}.
+	\code{inference.age.prediction.training}\code{ = TRUE}.}
+  \item{\bold{\code{inference.immune.cells}}\code{ = TRUE}}{
+       Flag indicating if immune cell content estimation is to be performed. Immune cell content prediction is based
+       on the LUMP algorithm and is currently supported for the hg19 assembly only.}
   \item{\bold{\code{exploratory}}\code{ = TRUE}}{
        Flag indicating if the exploratory analysis module is to be executed.}
   \item{\bold{\code{exploratory.columns}}\code{ = NULL}}{

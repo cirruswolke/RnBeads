@@ -11,5 +11,6 @@
 	<region.types>promoters,tiling</region.types>
 	<distribution.subsample>100000</distribution.subsample>
 	<exploratory.region.profiles></exploratory.region.profiles>
-	<differential.enrichment>false</differential.enrichment>
+	<differential.enrichment.go>false</differential.enrichment.go>
+	<differential.enrichment.lola>false</differential.enrichment.lola>
 </rnb.xml>

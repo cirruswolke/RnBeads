@@ -1,7 +1,12 @@
-RnBeads 1.11.3
+RnBeads 1.11.4
 =============
-
- * Fixed a bug concerning 1 sample differential variability
+ 
+ * Introducing RnBeadsDJ, a shiny-based interface for running RnBeads analyses and modules (run with rnb.run.dj())
+ * Added implementation of the LUMP algorithm for immune cell content estimation
+ * The default normalization method was changed to "wm.dasen"
+ * Background normalization is now disabled per default.
+ * Option backwards compatibility
+ * bugfixes (LOLA dependencies, 1-sample differential variability, ...)
 
 RnBeads 1.11.2
 =============

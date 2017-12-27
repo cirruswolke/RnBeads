@@ -9,8 +9,8 @@ Authors@R: c(
     role = c("aut")),
     person("Fabian", "Mueller", email = "rnbeads@mpi-inf.mpg.de",
     role = c("aut", "cre")))
-Date: 2017-11-30
-Version: 1.11.3
+Date: 2017-12-28
+Version: 1.11.4
 Suggests:
     Category,
     GOstats,
@@ -46,6 +46,8 @@ Suggests:
     scales,
     missMethyl,
     impute,
+    shiny,
+    plotrix,
     RUnit
 Depends:
     R (>= 3.0.0),
@@ -107,6 +109,7 @@ Collate:
     'filteringSummary.R'
     'gender.R'
     'greedycut.R'
+    'immune.R'
     'loading.R'
     'logger.R'
     'lolaUtils.R'

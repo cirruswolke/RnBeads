@@ -4,6 +4,7 @@
 	<enforce.memory.management>true</enforce.memory.management>
 	<gz.large.files>true</gz.large.files>
 	<distribution.subsample>1000000</distribution.subsample>
-	<differential.enrichment>true</differential.enrichment>
+	<differential.enrichment.go>true</differential.enrichment.go>
+	<differential.enrichment.lola>true</differential.enrichment.lola>
 	<exploratory.clustering.heatmaps.pdf>true</exploratory.clustering.heatmaps.pdf>
 </rnb.xml>

@@ -514,6 +514,26 @@ rnb.run.xml <- function(fname, create.r.command = FALSE) {
 
 ########################################################################################################################
 
+#' rnb.run.dj
+#'
+#' Starts the RnBeads Data Juggler (RnBeadsDJ) for configuring and running RnBeads analyses from the web browser
+#' 
+#' @return Nothing of particular interest
+#'
+#' @details
+#' A Shiny app is launched in the web browser
+#'
+#' @seealso \code{\link{rnb.run.analysis}} for starting an analysis pipeline
+#' @author Fabian Mueller
+#' @export
+rnb.run.dj <- function(){
+	shiny::runApp(system.file("extdata/RnBeadsDJ", package = "RnBeads"))
+	invisible(NULL)
+}
+
+
+########################################################################################################################
+
 #' RnBeads Analysis Pipeline
 #'
 #' Starts the \pkg{RnBeads} analysis pipeline on the given dataset. It loads the dataset if it is specified as a
@@ -1244,7 +1264,10 @@ rnb.run.inference <- function(rnb.set, dir.reports,
 	module.start.log("Covariate Inference")
 
 	report <- init.pipeline.report("covariate_inference", dir.reports, init.configuration)
-	optionlist <- rnb.options("inference.targets.sva","inference.sva.num.method","covariate.adjustment.columns", "export.to.ewasher","inference.age.prediction","inference.age.prediction.training","inference.age.prediction.predictor","inference.age.column","inference.age.prediction.cv")
+	optionlist <- rnb.options("inference.targets.sva", "inference.sva.num.method", "covariate.adjustment.columns",
+		"export.to.ewasher", "inference.age.prediction", "inference.age.prediction.training",
+		"inference.age.prediction.predictor", "inference.age.column", "inference.age.prediction.cv",
+		"inference.immune.cells")
 	report <- rnb.add.optionlist(report, optionlist)
 
 	if (inherits(rnb.set,"RnBSet") && rnb.getOption("inference.age.prediction")){
@@ -1273,6 +1296,21 @@ rnb.run.inference <- function(rnb.set, dir.reports,
 			logger.info("We already have a predicted age in the phenotypic table of the dataset.")
 		}
 		report <- rnb.step.ageprediction(rnb.set,report)
+	}
+
+	## LUMP estimates
+	if (rnb.getOption("inference.immune.cells")) {
+		immune.content <- tryCatch(rnb.execute.lump(rnb.set), error = function(err) { err$message })
+		report <- rnb.section.lump(report, immune.content)
+		if (is.double(immune.content)) {
+			rnb.set@pheno$`Immune Cell Content (LUMP)` <- as.double(immune.content)
+			rnb.set@inferred.covariates$`LUMP` <- TRUE
+			rnb.status("Calculated LUMP estimates")
+		} else if (is.null(immune.content)) {
+			rnb.set@inferred.covariates$`LUMP` <- FALSE
+			rnb.status("Could not calculate LUMP estimates")
+		}
+		rm(immune.content)
 	}
 
 	if (length(rnb.getOption("inference.targets.sva"))>0) {
@@ -1436,8 +1474,13 @@ rnb.run.exploratory <- function(rnb.set, dir.reports,
 	if (is.null(profile.types)) {
 		profile.types <- intersect(summarized.regions(rnb.set), rnb.region.types(rnb.set@assembly))
 	}
-	if (length(profile.types) != 0) {
-		report <- rnb.step.region.profiles(rnb.set, report, profile.types, subsample=rnb.getOption("distribution.subsample"))
+	profile.types.in.set <- intersect(profile.types, summarized.regions(rnb.set))
+	profile.types.not.in.set <- setdiff(profile.types, summarized.regions(rnb.set))
+	if (length(profile.types.not.in.set) > 0){
+		logger.warning(c("The following region types are not contained in the RnBSet. They will be discarded for regional methylation profiling:", paste(profile.types.not.in.set, collapse=", ")))
+	}
+	if (length(profile.types.in.set) != 0) {
+		report <- rnb.step.region.profiles(rnb.set, report, profile.types.in.set, subsample=rnb.getOption("distribution.subsample"))
 	}
 	custom.genes <- rnb.getOption("exploratory.gene.symbols")
 	custom.loci.bed <- rnb.getOption("exploratory.custom.loci.bed")

@@ -45,8 +45,8 @@ qc.coverage.violins	logical	no	no		TRUE
 qc.sample.batch.size	integer	no	no		500
 preprocessing	logical	no	no		TRUE
 normalization	logical	no	yes		NULL
-normalization.method	character	no	no	(none,bmiq,illumina,swan,minfi.funnorm,wm.dasen,wm.nasen,wm.betaqn,wm.naten,wm.nanet,wm.nanes,wm.danes,wm.danet,wm.danen,wm.daten1,wm.daten2,wm.tost,wm.fuks,wm.swan)	swan
-normalization.background.method	character	no	no	(none,methylumi.noob,methylumi.goob,enmix.oob)	methylumi.noob
+normalization.method	character	no	no	(none,bmiq,illumina,swan,minfi.funnorm,wm.dasen,wm.nasen,wm.betaqn,wm.naten,wm.nanet,wm.nanes,wm.danes,wm.danet,wm.danen,wm.daten1,wm.daten2,wm.tost,wm.fuks,wm.swan)	wm.dasen
+normalization.background.method	character	no	no	(none,methylumi.noob,methylumi.goob,enmix.oob)	none
 normalization.plot.shifts	logical	no	no		TRUE
 filtering.whitelist	character	no	yes		NULL
 filtering.blacklist	character	no	yes		NULL
@@ -74,6 +74,7 @@ inference.age.prediction	logical	no	no		TRUE
 inference.age.prediction.training	logical	no	no		FALSE
 inference.age.prediction.predictor	character	no	yes		NULL
 inference.age.prediction.cv	logical	no	no		FALSE
+inference.immune.cells	logical	no	no		TRUE
 exploratory	logical	no	no		TRUE
 exploratory.columns	integer.vector	no	yes		NULL
 exploratory.top.dimensions	integer	no	no	[0,	0
