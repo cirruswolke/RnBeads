@@ -37,6 +37,7 @@ Suggests:
     rtracklayer,
     qvalue,
     sva,
+    wateRmelon,
     wordcloud,
     argparse,
     glmnet,
@@ -44,6 +45,9 @@ Suggests:
     IlluminaHumanMethylation450kanno.ilmn12.hg19,
     scales,
     missMethyl,
+    impute,
+    shiny,
+    plotrix,
     RUnit
 Depends:
     R (>= 3.0.0),
@@ -62,9 +66,7 @@ Depends:
     methods,
     illuminaio,
     methylumi,
-    plyr,
-    wateRmelon,
-    impute
+    plyr
 Imports:
     IRanges
 License: GPL-3
