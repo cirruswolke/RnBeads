@@ -1018,15 +1018,17 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 	validate.module.parameters(rnb.set, dir.reports, close.report, show.report)
 	module.start.log("Preprocessing")
 
+	## Decide if a normalization procedure is to be executed
 	do.normalization <- rnb.getOption("normalization")
-	do.greedycut <- rnb.getOption("filtering.greedycut")
-
 	if (is.null(do.normalization)) {
 		do.normalization <- inherits(rnb.set, "RnBeadSet")
 	} else if (do.normalization && inherits(rnb.set, "RnBiseqSet")) {
 		logger.warning("Skipped normalization module for sequencing data.")
 		do.normalization <- FALSE
 	}
+
+	## Decide if Greedycut is to be executed
+	do.greedycut <- rnb.getOption("filtering.greedycut")
 	if (is.null(do.greedycut)) {
 		do.greedycut <- inherits(rnb.set, "RnBeadSet")
 	} else {
@@ -1057,12 +1059,10 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 		optionlist <- c(optionlist, rnb.options("filtering.high.coverage.outliers", "filtering.low.coverage.masking"))
 		attr.vec <- c(attr.vec, TRUE, TRUE)
 	}
-	optionlist <- c(optionlist,
-			rnb.options("normalization.method", "normalization.background.method", "normalization.plot.shifts"))
-	attr.vec <- c(attr.vec, TRUE, TRUE, TRUE)
-	optionlist <- c(optionlist, rnb.options("filtering.context.removal", "filtering.missing.value.quantile",
+	optionlist <- c(optionlist, rnb.options("normalization.method", "normalization.background.method",
+			"normalization.plot.shifts", "filtering.context.removal", "filtering.missing.value.quantile",
 			"filtering.sex.chromosomes.removal", "filtering.deviation.threshold", "distribution.subsample"))
-	attr.vec <- c(attr.vec, TRUE, TRUE, TRUE, TRUE, TRUE)
+	attr.vec <- c(attr.vec, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE)
 	attr(optionlist, "enabled") <- attr.vec
 	report <- rnb.add.optionlist(report, optionlist)
 	rm(optionlist, x.greedycut, attr.vec)
@@ -1075,7 +1075,6 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 	whitelist <- rnb.process.sitelist(rnb.getOption("filtering.whitelist"), anno.table)
 	blacklist <- rnb.process.sitelist(rnb.getOption("filtering.blacklist"), anno.table)
 	if (is.null(whitelist) && is.null(blacklist)) {
-		removed.sites <- integer()
 		whitelist <- integer()
 		blacklist <- integer()
 	} else {
@@ -1138,7 +1137,6 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 		report <- result$report
 		removed.sites <- sort(c(removed.sites, result$filtered))
 	}
-	rnb.cleanMem()
 	mask <- NULL
 	if (rnb.getOption("filtering.low.coverage.masking")) {
 		result <- rnb.step.low.coverage.masking.internal(rnb.set, removed.sites, report, anno.table,
@@ -1165,7 +1163,7 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 
 		logger.start("Summary of Filtering Procedures I")
 		report <- rnb.step.filter.summary.internal(rnb.set, removed.samples, removed.sites,
-				report, section.name="Filtering Summary I", section.order=1)
+				report, section.name="Filtering Summary I")
 		logger.completed()
 
 		rnb.set <- rnb.filter.dataset(rnb.set, removed.samples, removed.sites, mask)
@@ -1179,11 +1177,16 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 		rnb.cleanMem()
 
 		logger.start("Filtering Procedures II")
+		sn <- " II"
 		anno.table <- annotation(rnb.set, add.names = inherits(rnb.set, "RnBeadSet"))
 		whitelist <- rnb.process.sitelist(rnb.getOption("filtering.whitelist"), anno.table)
 		removed.samples <- integer()
 		removed.sites <- whitelist
+	} else {
+		sn <- ""
 	}
+
+	## Imputation
 	if(!(rnb.getOption("imputation.method")%in%c("mean.cpgs","mean.samples","random","knn"))){
 	  logger.info("Imputation was skipped, data set may still contain missing methylation values")
 	}else{
@@ -1223,20 +1226,10 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 	## Summary (II)
 	removed.sites <- setdiff(removed.sites, whitelist)
 	logger.completed.filtering(rnb.set, removed.samples, removed.sites)
-
+	logger.start(paste0("Summary of Filtering Procedures", sn))
 	rnb.cleanMem()
-
-	logger.start(paste0("Summary of Filtering Procedures", ifelse(do.normalization, " II", "")))
-
-	if(do.normalization){
-		sn<-"Filtering Summary II"
-		so<-2L
-	}else{
-		sn<-"Filtering Summary"
-		so<-0L
-	}
-	report <- rnb.step.filter.summary.internal(rnb.set, removed.samples, removed.sites,
-			report, section.name=sn, section.order=so)
+	sn <- paste0("Filtering Summary", sn)
+	report <- rnb.step.filter.summary.internal(rnb.set, removed.samples, removed.sites, report, section.name = sn)
 	logger.completed()
 
 	rnb.set <- rnb.filter.dataset(rnb.set, removed.samples, removed.sites, mask)

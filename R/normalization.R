@@ -208,7 +208,7 @@ rnb.execute.normalization<-function(
 	if (inherits(object, "RnBeadSet") && object@target == "probes27" && !(method %in% accepted)) {
 		disable.method(TRUE, 'not supported for Infinium 27k')
 	}
-	accepted <- c("none", "bmiq", "swan", "minfi.funnorm")
+	accepted <- c("none", "bmiq", "swan", "minfi.funnorm", "wm.dasen")
 	if (inherits(object, "RnBeadSet") && object@target == "probesEPIC" && !(method %in% accepted)) {
 		disable.method(TRUE, 'not supported for MethylationEPIC')
 	}

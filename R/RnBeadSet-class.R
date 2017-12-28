@@ -439,7 +439,8 @@ if(!isGeneric("dpval")) setGeneric('dpval',
 #' 						site is returned. Otherwise should be one of region types for for which the summarized 
 #' 						p-values are available
 #' @param row.names	    Flag indicating of row names are to be generated in the result.
-
+#' @param i     	    Indices of sites/regions to be retrieved. By default (\code{NULL}), all will be retrieved.
+#' @param j     	    Indices of samples to be retrieved. By default (\code{NULL}), all will be retrieved.
 #' 
 #' @return detection p-values available for the dataset in the form of a \code{matrix}.
 #'
@@ -455,10 +456,11 @@ if(!isGeneric("dpval")) setGeneric('dpval',
 #' dp<-dpval(rnb.set.example, row.names=TRUE)
 #' head(dp)
 #' }
-setMethod("dpval", signature(object="RnBeadSet"),
-          function(object, type="sites", row.names=FALSE){
-			  get.dataset.matrix(object, type, row.names, object@pval.sites, object@meth.regions)
-          })
+setMethod("dpval", signature(object = "RnBeadSet"),
+	function(object, type = "sites", row.names = FALSE, i = NULL, j = NULL) {
+		get.dataset.matrix(object, type, row.names, object@pval.sites, object@meth.regions, i, j)
+	}
+)
 
 ########################################################################################################################
   
