@@ -2558,7 +2558,13 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
   				      cpanel <- c()
   				      if (vcbn == "target")     cpanel <- targetColors
   				      if (vcbn == "collection") cpanel <- collectionColors
-  				      pp <- lolaVolcanoPlot(lolaDb, dmTab, signifCol="qValue", colorBy=vcbn, colorpanel=cpanel)
+  				      pp <- tryCatch(
+  				      	lolaVolcanoPlot(lolaDb, dmTab, signifCol="qValue", colorBy=vcbn, colorpanel=cpanel),
+  				      	error = function(e) {
+  				      		logger.warning(c("Plotting error:", e$message))
+  				      		rnb.message.plot("Plotting error")
+  				      	}
+  				      )
   				      if (vcbn == "target") pp <- pp + guides(color=FALSE)
   				      rPlot <- createReportGgPlot(pp, figName, report, create.pdf=FALSE, high.png=200)
   				      lolaVolcanoPlots.var[[kkk]] <- off(rPlot, handle.errors=TRUE)
@@ -2566,12 +2572,24 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
   				    
   				    
   				    figName <- paste("lolaBoxVar_", kk, sep="")
-  				    pp <- lolaBoxPlotPerTarget(lolaDb, dmTab, scoreCol="oddsRatio", orderCol="maxRnk", pvalCut=0.01, colorpanel=targetColors, maxTerms=100)
+  				    pp <- tryCatch(
+  				    	lolaBoxPlotPerTarget(lolaDb, dmTab, scoreCol="oddsRatio", orderCol="maxRnk", pvalCut=0.01, colorpanel=targetColors, maxTerms=100),
+  				    	error = function(e) {
+  				    		logger.warning(c("Plotting error:", e$message))
+  				    		rnb.message.plot("Plotting error")
+  				    	}
+  				    )
   				    rPlot <- createReportGgPlot(pp, figName, report, create.pdf=TRUE, width=20, height=5)
   				    lolaBoxPlots.var[[kk]] <- suppressMessages(off(rPlot, handle.errors=TRUE))
   				    
   				    figName <- paste("lolaBarVar_", kk, sep="")
-  				    pp <- lolaBarPlot(lolaDb, dmTab, scoreCol="oddsRatio", orderCol="maxRnk", pvalCut=0.01, colorpanel=targetColors, maxTerms=100)
+  				    pp <- tryCatch(
+  				    	lolaBarPlot(lolaDb, dmTab, scoreCol="oddsRatio", orderCol="maxRnk", pvalCut=0.01, colorpanel=targetColors, maxTerms=100),
+  				    	error = function(e) {
+  				    		logger.warning(c("Plotting error:", e$message))
+  				    		rnb.message.plot("Plotting error")
+  				    	}
+  				    )
   				    rPlot <- createReportGgPlot(pp, figName, report, create.pdf=TRUE, width=20, height=5)
   				    lolaBarPlots.var[[kk]] <- off(rPlot, handle.errors=TRUE)
   				  }
