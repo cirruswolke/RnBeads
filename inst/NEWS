@@ -6,7 +6,7 @@ RnBeads 1.11.4
  * The default normalization method was changed to "wm.dasen"
  * Background normalization is now disabled per default.
  * Option backwards compatibility
- * bugfixes (LOLA dependencies, 1-sample differential variability, ...)
+ * bugfixes (LOLA dependencies, 1-sample differential variability, QC visualization, ...)
 
 RnBeads 1.11.2
 =============
