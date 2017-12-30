@@ -965,7 +965,7 @@ rnb.section.diffVar.region <- function(rnb.set,diff.meth,report,gzTable=FALSE,le
     stop("no valid region types")
   }
 
-  skipSites <- !includes.sites(diffmeth)
+  skipSites <- !includes.sites(diff.meth)
   diffRegionRankCut <- c(100,500,1000)
   logger.start("Adding Region Level Information (Differential Variability)")
 
