@@ -62,7 +62,7 @@ filtering.coverage.threshold	integer	no	no	[0,	5
 filtering.low.coverage.masking	logical	no	no		FALSE
 filtering.high.coverage.outliers	logical	no	no		FALSE
 filtering.deviation.threshold	double	no	no	[0,1]	0
-imputation.method	character	no	no	(none,mean.cpgs,mean.samples,random,knn)	none
+imputation.method	character	no	no	(none,mean.cpgs,mean.samples,random,knn,median.cpgs,median.samples)	none
 inference	logical	no	no		FALSE
 inference.targets.sva	character.vector	no	no		()
 inference.reference.methylome.column	character	no	yes		NULL

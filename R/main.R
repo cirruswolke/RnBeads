@@ -1164,13 +1164,6 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 		removed.samples <- integer()
 		removed.sites <- whitelist
 	}
-	if(!(rnb.getOption("imputation.method")%in%c("mean.cpgs","mean.samples","random","knn"))){
-	  logger.info("Imputation was skipped, data set may still contain missing methylation values")
-	}else{
-	  imputation.result <- rnb.step.imputation(rnb.set,report)
-	  rnb.set <- imputation.result$dataset
-	  report <- imputation.result$report
-	}
 
 	## Postfiltering
 	mm <- NULL
@@ -1221,6 +1214,14 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 
 	rnb.set <- rnb.filter.dataset(rnb.set, removed.samples, removed.sites, mask)
 
+	if((rnb.getOption("imputation.method")%in%c("none"))){
+	  logger.info("Imputation was skipped, data set may still contain missing methylation values")
+	}else{
+	  imputation.result <- rnb.step.imputation(rnb.set,report)
+	  rnb.set <- imputation.result$dataset
+	  report <- imputation.result$report
+	}
+	
 	if (rnb.getOption("region.subsegments") > 1L) {
 		res <- rnb.step.region.subsegmentation(rnb.set, report, region.types=rnb.getOption("region.subsegments.types"))
 		rnb.set <- res$rnb.set

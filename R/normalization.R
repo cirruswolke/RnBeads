@@ -1069,11 +1069,21 @@ mean.imputation <- function(rnb.set,way=1){
     return(rnb.set)
   }
   means <- apply(methData,way,mean,na.rm=TRUE)
+  rm(methData)
+  methData <- rnb.set@meth.sites
   for(i in (1:(dim(nas)[way]))){
     if(way==1){
-      methData[i,nas[i,]] <- means[i]
+      if(any(nas[i,])){
+        methData[i,nas[i,]] <- means[i]
+      }else{
+        next
+      }
     }else if(way==2){
-      methData[nas[,i],i] <- means[i]
+      if(any(nas[,i])){
+        methData[nas[,i],i] <- means[i]
+      }else{
+        next
+      }
     }
   }
   rnb.set@meth.sites <- methData
@@ -1082,7 +1092,7 @@ mean.imputation <- function(rnb.set,way=1){
 
 #######################################################################################################################
 
-#' mean.imputation
+#' random.imputation
 #'
 #' Performs random imputation by replacing missing values with randomly selecting (with replacement) from the same CpG site in the samples
 #' that do not contain missing values.
@@ -1100,11 +1110,17 @@ random.imputation <- function(rnb.set){
     logger.warning("There are CpG sites that have missing values in all samples, imputation not performed.")
     return(rnb.set)
   }
+  rm(methData)
+  methData <- rnb.set@meth.sites
   for(i in 1:dim(nas)[1]){
-    row <- methData[i,]
-    without_nas <- row[!nas[i,]]
-    replacement <- sample(without_nas,sum(nas[i,]),replace=TRUE)
-    methData[i,nas[i,]] <- replacement
+    if(any(nas[i,])){
+      row <- methData[i,]
+      without_nas <- row[!nas[i,]]
+      replacement <- sample(without_nas,sum(nas[i,]),replace=TRUE)
+      methData[i,nas[i,]] <- replacement
+    }else{
+      next
+    }
   }
   rnb.set@meth.sites <- methData
   return(rnb.set)
@@ -1128,6 +1144,57 @@ knn.imputation <- function(rnb.set,k=10){
   methData <- meth(rnb.set)
   dummy <- capture.output(methData <- (impute.knn(methData,colmax=1,k=k))$data)
   rm(dummy)
+  new.meth <- rnb.set@meth.sites
+  for(i in 1:nrow(methData)){
+    new.meth[i,] <- methData[i,]
+  }
+  rm(methData)
+  rnb.set@meth.sites <- new.meth
+  return(rnb.set)
+}
+
+#######################################################################################################################
+
+#' median.imputation
+#'
+#' Performs median imputation either for all samples (way=1) or for all CpGs (way=2).
+#'
+#'@param rnb.set Object containing the methylation information to be changed. Has to be of
+#'               type \code{\linkS4class{RnBeadSet}} or \code{\linkS4class{RnBiseqSet}}.
+#'@param way Should the sample-wise median (1) or CpG-wise median (2) be used to replace the missing value.
+#'@return Modified rnb.set object.
+#'
+#'@author Michael Scherer
+#'@noRd
+median.imputation <- function(rnb.set,way=1){
+  methData <- meth(rnb.set)
+  nas <- is.na(methData)
+  if(any(apply(nas,1,all))){
+    logger.warning("There are CpG sites that have missing values in all samples, imputation not performed.")
+    return(rnb.set)
+  }
+  if(any(apply(nas,2,all))){
+    logger.warning("There are samples that have only missing values at the CpG sites, imputation not performed.")
+    return(rnb.set)
+  }
+  medians <- apply(methData,way,median,na.rm=TRUE)
+  rm(methData)
+  methData <- rnb.set@meth.sites
+  for(i in (1:(dim(nas)[way]))){
+    if(way==1){
+      if(any(nas[i,])){
+        methData[i,nas[i,]] <- medians[i]
+      }else{
+        next
+      }
+    }else if(way==2){
+      if(any(nas[,i])){
+        methData[nas[,i],i] <- medians[i]
+      }else{
+        next
+      }
+    }
+  }
   rnb.set@meth.sites <- methData
   return(rnb.set)
 }
@@ -1140,7 +1207,7 @@ knn.imputation <- function(rnb.set,k=10){
 #'
 #' @param rnb.set Dataset object inheriting from \code{\linkS4class{RnBSet}}.
 #' @param method Imputation method to be used, must be one of \code{"mean.cpgs"}, \code{"mean.samples"},
-#'                \code{"random"}, \code{"knn"} or \code{"none"}.
+#'                \code{"random"}, \code{"knn"}, \code{"median.cpgs"}, \code{"median.samples"}, or \code{"none"}.
 #' @param ... Optional arguments passed to knn.imputation
 #' @return The modified rnb.set object without missing methylation values.
 #' 
@@ -1153,6 +1220,10 @@ knn.imputation <- function(rnb.set,k=10){
 #'            \item{random:}{missing values are inferred by randomly selecting a (non-missing) methylation value
 #'            from any other sample at this CpG site}
 #'            \item{knn:}{missing values are inferred by k-nearest neighbors imputation (see \pkg{impute})}
+#'            \item{median.cpgs:}{missing values are inferred as the median methylation value from all other 
+#'            (non-mising) CpGs in this sample}
+#'            \item{median.samples:}{missing values are inferred as the median methylation value from all other 
+#'            (non-mising) values at this CpG sites in all other samples}
 #'            \item{none:}{imputation should not be performed}
 #'          }
 #'
@@ -1163,7 +1234,7 @@ rnb.execute.imputation <- function(rnb.set,method=rnb.getOption("imputation.meth
   if(!inherits(rnb.set,"RnBSet")){
     stop("Invalid value for input object, has to be of type RnBeadSet or RnBiseqSet")
   }
-  if(!(method%in%c('mean.cpgs','mean.samples','random','knn'))){
+  if(!(method%in%c('mean.cpgs','mean.samples','random','knn','median.cpgs','median.samples'))){
     if(method=='none'){
       if(inherits(rnb.set,"RnBeadSet")){
         logger.info("No imputation method selected, 'knn' method used.")
@@ -1196,6 +1267,13 @@ rnb.execute.imputation <- function(rnb.set,method=rnb.getOption("imputation.meth
   if(method=='knn'){
     rnb.set <- knn.imputation(rnb.set,...)
   }
+  if(method=='median.cpgs'){
+    rnb.set <- median.imputation(rnb.set,2)
+  }
+  if(method=='median.samples'){
+    rnb.set <- median.imputation(rnb.set,1)
+  }
+  rnb.set <- updateRegionSummaries(rnb.set)
   rnb.set@imputed <- TRUE
   logger.completed()
   return(rnb.set)
@@ -1232,9 +1310,17 @@ rnb.section.imputation <- function(report,rnb.set,old.values){
              " Sampling was done with replacement such that the number of missing values can be larger as the number of existing.\n")
   }
   if(rnb.getOption('imputation.method')=='knn'){
-    txt <- c(txt,"by k nearest neighbors imputation from the \"impute\" package. Briefly, missing values were replaced",
+    txt <- c(txt,"by k nearest neighbors imputation from the <a href=https://bioconductor.org/packages/release/bioc/html/impute.html>impute</a> package. Briefly, missing values were replaced",
              " by the average of the methylation values at that CpG in the closest samples. Closeness was defined with",
              " the euclidean distance.\n")
+  }
+  if(rnb.getOption('imputation.method')=='median.samples'){
+    txt <- c(txt,"by calculating the median methylation level for each CpG site across all samples",
+             " and replacing all missing values for this CpG site in individual samples with the median across all samples.\n")
+  }
+  if(rnb.getOption('imputation.method')=='mean.cpgs'){
+    txt <- c(txt,"by calculating the median methylation level for each sample across all CpG sites",
+             " and replacing all missing values for this sample at an individual CpG site with the median across all CpGs in the sample.\n")
   }
   new.values <- meth(rnb.set)
   missing.values <- apply(old.values,2,function(x)sum(is.na(x)))
@@ -1293,7 +1379,7 @@ rnb.step.imputation <- function(rnb.set, report, method=rnb.getOption("imputatio
     logger.info("No missing values present, imputation skipped")
     return(list(dataset=rnb.set,report=report))
   }
-  if((method%in%c('mean.cpgs','mean.samples','random','knn'))){
+  if(!(method%in%c('none'))){
     rnb.set <- rnb.execute.imputation(rnb.set)
   }
   report <- rnb.section.imputation(report,rnb.set,old.data)
