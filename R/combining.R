@@ -50,13 +50,15 @@ rnb.combine.matrices <- function(m1, m2, ii, nn, useff = rnb.getOption("disk.dum
 		mm <- matrix(na.value, nrow = nrow(ii), ncol = sum(nn))
 	}
 	if (!is.null(m1)) {
+        present<-which(!is.na(ii[,1]))
 		for (i in 1:(nn[1])) {
-			mm[, i] <- m1[ii[, 1], i]
+			mm[present, i] <- m1[ii[present, 1], i]
 		}
 	}
 	if (!is.null(m2)) {
+        present<-which(!is.na(ii[,2]))
 		for (i in 1:(nn[2])) {
-			mm[, nn[1] + i] <- m2[ii[, 2], i]
+			mm[present, nn[1] + i] <- m2[ii[present, 2], i]
 		}
 	}
 	mm
@@ -96,6 +98,7 @@ rnb.combine.pheno <- function(dataset1, dataset2) {
 #'
 #' @param dataset1 First input dataset as an object of type inheriting \code{\linkS4class{RnBeadSet}}.
 #' @param dataset2 Second input dataset as an object of type inheriting \code{\linkS4class{RnBeadSet}}.
+#' @param type Type of the combine operation as a character singleton, one of "common", "all.x", "all.y" and "all".
 #' @return Combined dataset as an object of type inheriting \code{\linkS4class{RnBeadSet}}.
 #'
 #' @details \describe{
@@ -118,7 +121,7 @@ rnb.combine.pheno <- function(dataset1, dataset2) {
 #' 
 #' @author Yassen Assenov
 #' @export
-rnb.combine.arrays <- function(dataset1, dataset2) {
+rnb.combine.arrays <- function(dataset1, dataset2, type="common") {
 	if (!inherits(dataset1, "RnBeadSet")) {
 		stop("Invalid value for dataset1")
 	}
@@ -141,17 +144,32 @@ rnb.combine.arrays <- function(dataset1, dataset2) {
 	is.raw <- (inherits(dataset1, "RnBeadRawSet") && inherits(dataset2, "RnBeadRawSet"))
 
 	## Combine sample annotation tables
-	tbl <- rnb.combine.pheno(dataset1, dataset2)
+	#tbl <- rnb.combine.pheno(dataset1, dataset2)
+    tbl<-plyr::rbind.fill(pheno(dataset1),pheno(dataset2))
 	nn <- c(nrow(dataset1@pheno), nrow(dataset2@pheno))
 
 	## Identify common probes
-	common.sites <- intersect(rownames(dataset1@sites), rownames(dataset2@sites))
+    if(type == "common"){
+	    common.sites <- intersect(rownames(dataset1@sites), rownames(dataset2@sites))
+    }else if(type == "all.x"){
+        common.sites <- rownames(dataset1@sites)
+    }else if(type == "all.y"){
+        common.sites <- rownames(dataset2@sites)
+    }else if(type == "all"){
+        common.sites <- unique(c(rownames(dataset1@sites), rownames(dataset2@sites)))
+    }else{
+        rnb.error("Unsupported value for type")
+    }
 	if (length(common.sites) == 0) {
 		stop("No common sites identified")
 	}
-	ii <- cbind( # probe names must be sorted in both datasets!
-		which(rownames(dataset1@sites) %in% common.sites),
-		which(rownames(dataset2@sites) %in% common.sites))
+#	ii <- cbind( # probe names must be sorted in both datasets!
+#		which(rownames(dataset1@sites) %in% common.sites),
+#		which(rownames(dataset2@sites) %in% common.sites))
+    ii <- cbind(
+        match(common.sites, rownames(dataset1@sites)),
+        match(common.sites, rownames(dataset2@sites))
+            )
 	useff <- rnb.getOption("disk.dump.big.matrices")
 	
 	## Combine the data matrices
