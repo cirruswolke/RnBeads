@@ -1071,19 +1071,12 @@ mean.imputation <- function(rnb.set,way=1){
   means <- apply(methData,way,mean,na.rm=TRUE)
   rm(methData)
   methData <- rnb.set@meth.sites
-  for(i in (1:(dim(nas)[way]))){
+  has.nas <- which(apply(nas,way,any))
+  for(i in has.nas){
     if(way==1){
-      if(any(nas[i,])){
-        methData[i,nas[i,]] <- means[i]
-      }else{
-        next
-      }
+      methData[i,nas[i,]] <- means[i]
     }else if(way==2){
-      if(any(nas[,i])){
-        methData[nas[,i],i] <- means[i]
-      }else{
-        next
-      }
+      methData[nas[,i],i] <- means[i]
     }
   }
   rnb.set@meth.sites <- methData
@@ -1112,15 +1105,12 @@ random.imputation <- function(rnb.set){
   }
   rm(methData)
   methData <- rnb.set@meth.sites
-  for(i in 1:dim(nas)[1]){
-    if(any(nas[i,])){
-      row <- methData[i,]
-      without_nas <- row[!nas[i,]]
-      replacement <- sample(without_nas,sum(nas[i,]),replace=TRUE)
-      methData[i,nas[i,]] <- replacement
-    }else{
-      next
-    }
+  has.nas <- which(apply(nas,1,any))
+  for(i in has.nas){
+    row <- methData[i,]
+    without_nas <- row[!nas[i,]]
+    replacement <- sample(without_nas,sum(nas[i,]),replace=TRUE)
+    methData[i,nas[i,]] <- replacement
   }
   rnb.set@meth.sites <- methData
   return(rnb.set)
@@ -1145,8 +1135,8 @@ knn.imputation <- function(rnb.set,k=10){
   dummy <- capture.output(methData <- (impute.knn(methData,colmax=1,k=k))$data)
   rm(dummy)
   new.meth <- rnb.set@meth.sites
-  for(i in 1:nrow(methData)){
-    new.meth[i,] <- methData[i,]
+  for(i in 1:ncol(methData)){
+    new.meth[,i] <- methData[,i]
   }
   rm(methData)
   rnb.set@meth.sites <- new.meth
@@ -1180,19 +1170,12 @@ median.imputation <- function(rnb.set,way=1){
   medians <- apply(methData,way,median,na.rm=TRUE)
   rm(methData)
   methData <- rnb.set@meth.sites
-  for(i in (1:(dim(nas)[way]))){
+  has.nas <- which(apply(nas,way,any))
+  for(i in has.nas){
     if(way==1){
-      if(any(nas[i,])){
-        methData[i,nas[i,]] <- medians[i]
-      }else{
-        next
-      }
+      methData[i,nas[i,]] <- medians[i]
     }else if(way==2){
-      if(any(nas[,i])){
-        methData[nas[,i],i] <- medians[i]
-      }else{
-        next
-      }
+      methData[nas[,i],i] <- medians[i]
     }
   }
   rnb.set@meth.sites <- methData
