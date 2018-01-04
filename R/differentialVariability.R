@@ -698,7 +698,8 @@ create.diffMeth.diffVar.subsample <- function(df2p,dens.subsample,is.special=NUL
     pp <- ggplot(df2p.sub) + aes_string(x=colnames(df2p)[1],y=colnames(df2p)[2]) + 
       stat_density2d(geom="tile", fill=DENS.COLORS.LOW[1], aes(,alpha=..density..^0.25), contour=FALSE, n=dens.n, h=stable.h) +
       scale_alpha(range = c(0.0, 1),guide=FALSE) +
-      geom_vline(xintercept = rank.cut.diffMeth,linetype='dotted') + geom_hline(yintercept = rank.cut.diffVar,linetype='dotted')
+      geom_vline(xintercept = rank.cut.diffMeth,linetype='dotted') + geom_hline(yintercept = rank.cut.diffVar,linetype='dotted')+
+      scale_color_manual(values=c(rnb.getOption("colors.category")[c(1,2,4)],DENS.COLORS.LOW[1]))
     if (sparse.points > 0){
       if (sparse.points <= 1){
         thres <- ceiling(nrow(df2p)*sparse.points)
@@ -706,7 +707,7 @@ create.diffMeth.diffVar.subsample <- function(df2p,dens.subsample,is.special=NUL
         thres <- sparse.points
       }
       df2p.loose <- df2p[dens.ranks<=thres,]#the sub data.frame in of the least dens points
-      pp <- pp + geom_point(data=df2p.loose,aes_string(x=colnames(df2p)[1],y=colnames(df2p)[2],colour=colnames(df2p)[3]),size=0.4)+scale_color_manual(values=c(rnb.getOption("colors.category")[c(1,2,4)],DENS.COLORS.LOW[1]))
+      pp <- pp + geom_point(data=df2p.loose,aes_string(x=colnames(df2p)[1],y=colnames(df2p)[2],colour=colnames(df2p)[3]),size=0.4)
     }
     if(!is.null(is.special)){
       df2p.special <- df2p[is.special,]
@@ -715,10 +716,10 @@ create.diffMeth.diffVar.subsample <- function(df2p,dens.subsample,is.special=NUL
         if(nrow(df2p.special)>ss){
           pp <- pp + stat_density2d(data = df2p.special, geom="tile", aes(fill=Color.diff,alpha=..density..^0.25), contour=FALSE, n =dens.n, h=stable.h)+scale_fill_manual(values=c(rnb.getOption("colors.category")[c(1,2,4)],DENS.COLORS.LOW[1]))
         }else{
-          pp <- pp + geom_point(data=df2p.special,aes_string(x=colnames(df2p)[1],y=colnames(df2p)[2],colour=colnames(df2p)[3]),size=1) + guides(fill=FALSE)+scale_color_manual(values=c(rnb.getOption("colors.category")[c(1,2,4)],DENS.COLORS.LOW[1]))
+          pp <- pp + geom_point(data=df2p.special,aes_string(x=colnames(df2p)[1],y=colnames(df2p)[2],colour=colnames(df2p)[3]),size=1) + guides(fill=FALSE)
         }
       }else{
-        pp <- pp + geom_point(data=df2p.special,aes_string(x=colnames(df2p)[1],y=colnames(df2p)[2],colour=colnames(df2p)[3]),size=1) + guides(fill=FALSE)+scale_color_manual(values=c(rnb.getOption("colors.category")[c(1,2,4)],DENS.COLORS.LOW[1]))
+        pp <- pp + geom_point(data=df2p.special,aes_string(x=colnames(df2p)[1],y=colnames(df2p)[2],colour=colnames(df2p)[3]),size=1) + guides(fill=FALSE)
       }
     }  
   }
