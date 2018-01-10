@@ -1069,18 +1069,17 @@ mean.imputation <- function(rnb.set,way=1){
     return(rnb.set)
   }
   means <- apply(methData,way,mean,na.rm=TRUE)
-  rm(methData)
-  methData <- rnb.set@meth.sites
   has.nas <- which(apply(nas,way,any))
-  for(i in has.nas){
-    if(way==1){
+  if(way==1){
+    for(i in has.nas){
       methData[i,nas[i,]] <- means[i]
-    }else if(way==2){
-      methData[nas[,i],i] <- means[i]
+    }
+  }else if(way==2){
+    for(i in has.nas){
+        methData[nas[,i],i] <- means[i]
     }
   }
-  rnb.set@meth.sites <- methData
-  return(rnb.set)
+  return(methData)
 }
 
 #######################################################################################################################
@@ -1103,8 +1102,6 @@ random.imputation <- function(rnb.set){
     logger.warning("There are CpG sites that have missing values in all samples, imputation not performed.")
     return(rnb.set)
   }
-  rm(methData)
-  methData <- rnb.set@meth.sites
   has.nas <- which(apply(nas,1,any))
   for(i in has.nas){
     row <- methData[i,]
@@ -1112,8 +1109,7 @@ random.imputation <- function(rnb.set){
     replacement <- sample(without_nas,sum(nas[i,]),replace=TRUE)
     methData[i,nas[i,]] <- replacement
   }
-  rnb.set@meth.sites <- methData
-  return(rnb.set)
+  return(methData)
 }
 #######################################################################################################################
 
@@ -1134,13 +1130,7 @@ knn.imputation <- function(rnb.set,k=10){
   methData <- meth(rnb.set)
   dummy <- capture.output(methData <- (impute.knn(methData,colmax=1,k=k))$data)
   rm(dummy)
-  new.meth <- rnb.set@meth.sites
-  for(i in 1:ncol(methData)){
-    new.meth[,i] <- methData[,i]
-  }
-  rm(methData)
-  rnb.set@meth.sites <- new.meth
-  return(rnb.set)
+  return(methData)
 }
 
 #######################################################################################################################
@@ -1168,18 +1158,17 @@ median.imputation <- function(rnb.set,way=1){
     return(rnb.set)
   }
   medians <- apply(methData,way,median,na.rm=TRUE)
-  rm(methData)
-  methData <- rnb.set@meth.sites
   has.nas <- which(apply(nas,way,any))
-  for(i in has.nas){
-    if(way==1){
+  if(way==1){
+    for(i in has.nas){
       methData[i,nas[i,]] <- medians[i]
-    }else if(way==2){
+    }
+  }else if(way==2){
+    for(i in has.nas){
       methData[nas[,i],i] <- medians[i]
     }
   }
-  rnb.set@meth.sites <- methData
-  return(rnb.set)
+  return(methData)
 }
 
 #######################################################################################################################
@@ -1239,24 +1228,24 @@ rnb.execute.imputation <- function(rnb.set,method=rnb.getOption("imputation.meth
   }
   logger.start(sprintf("Imputation procedure %s ",method))
   if(method=='mean.cpgs'){
-    rnb.set <- mean.imputation(rnb.set,2)
+    meth.data <- mean.imputation(rnb.set,2)
   }
   if(method=='mean.samples'){
-    rnb.set <- mean.imputation(rnb.set,1)
+    meth.data <- mean.imputation(rnb.set,1)
   }
   if(method=='random'){
-    rnb.set <- random.imputation(rnb.set)
+    meth.data <- random.imputation(rnb.set)
   }
   if(method=='knn'){
-    rnb.set <- knn.imputation(rnb.set,...)
+    meth.data <- knn.imputation(rnb.set,...)
   }
   if(method=='median.cpgs'){
-    rnb.set <- median.imputation(rnb.set,2)
+    meth.data <- median.imputation(rnb.set,2)
   }
   if(method=='median.samples'){
-    rnb.set <- median.imputation(rnb.set,1)
+    meth.data <- median.imputation(rnb.set,1)
   }
-  rnb.set <- updateRegionSummaries(rnb.set)
+  rnb.set <- updateMethylationSites(rnb.set,meth.data)
   rnb.set@imputed <- TRUE
   logger.completed()
   return(rnb.set)
