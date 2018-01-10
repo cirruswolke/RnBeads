@@ -367,7 +367,9 @@ performLolaEnrichment.diffMeth <- function(rnbSet, diffmeth, lolaDbPaths, rank.c
 	lolaDb <- loadLolaDbs(lolaDbPaths)
 	comps <- get.comparisons(diffmeth)
 	region.types <- get.region.types(diffmeth)
+	skipSites <- !includes.sites(diffmeth)
 	diff.col.reg <- "mean.mean.diff"
+	if (skipSites) diff.col.reg <- "mean.diff"
 	dm.lola.enrich <- list(probe=list(),region=list())
 	for (cc in comps){
 		dm.lola.enrich$probe[[cc]] <- list()
@@ -636,7 +638,9 @@ performLolaEnrichment.diffVar <- function(rnbSet, diffmeth, enrich.diffMeth=NULL
   lolaDb <- loadLolaDbs(lolaDbPaths)
   comps <- get.comparisons(diffmeth)
   region.types <- get.region.types(diffmeth)
+  skipSites <- !includes.sites(diffmeth)
   diff.col.reg <- "mean.var.diff"
+  if (skipSites) diff.col.reg <- "var.diff"
   if(!is.null(enrich.diffMeth)){
     enrich.diffMeth$region_var <- list()
     dv.lola.enrich <- enrich.diffMeth

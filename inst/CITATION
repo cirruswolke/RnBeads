@@ -14,7 +14,7 @@ citEntry(entry = "Article",
 	number = 11L,
 	pages = "1138--1140",
 	month = "nov",
-	url = "http://rnbeads.mpi-inf.mpg.de",
+	url = "https://rnbeads.org",
 	doi = "10.1038/nmeth.3115",
 	textVersion = "Yassen Assenov*, Fabian Mueller*, Pavlo Lutsik*, Joern Walter, Thomas Lengauer and Christoph Bock (2014) Comprehensive Analysis of DNA Methylation Data with RnBeads. Nature Methods, 11(11), 1138-1140."
 )

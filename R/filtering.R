@@ -815,13 +815,21 @@ rnb.execute.low.coverage.masking <- function(rnb.set, covg.threshold = rnb.getOp
 }
 
 rnb.execute.low.coverage.masking.internal <- function(rnb.set, sites2ignore, covg.threshold) {
-	coverage.matrix <- covg(rnb.set)
-	if (!(is.matrix(coverage.matrix) && all(dim(coverage.matrix) != 0))) {
+	# coverage.matrix <- covg(rnb.set)
+	if (!hasCovg(rnb.set)) {
 		return(NULL)
 	}
-	mask <- (coverage.matrix < covg.threshold) & (!is.na(coverage.matrix)) & (!is.na(meth(rnb.set)))
-	if (length(sites2ignore) != 0) {
-		mask[sites2ignore, ] <- FALSE
+	# mask <- (coverage.matrix < covg.threshold) & (!is.na(coverage.matrix)) & (!is.na(meth(rnb.set)))
+	N <- nsites(rnb.set)
+	M <- length(samples(rnb.set))
+	mask <- matrix(NA, nrow=N, ncol=M)
+	colnames(mask) <- samples(rnb.set)
+	for (j in 1:M){
+		cm <- covg(rnb.set, j=j)[,1]
+		mask[,j] <- (cm < covg.threshold) & !is.na(cm) & !is.na(meth(rnb.set, j=j)[,1])
+		if (length(sites2ignore) != 0) {
+			mask[sites2ignore, j] <- FALSE
+		}
 	}
 	return(mask)
 }
@@ -962,23 +970,23 @@ rnb.execute.high.coverage.removal <- function(rnb.set) {
 }
 
 rnb.execute.high.coverage.removal.internal <- function(rnb.set, sites2ignore) {
-	cover <- covg(rnb.set)
-	if (is.null(cover)) {
+	if (!hasCovg(rnb.set)) {
 		return(NULL)
 	}
-	cover[cover<1] <- NA
-	filtered <- matrix(FALSE, nrow = nrow(cover), ncol = ncol(cover)) # allocate indication matrix
-	for (i in 1:ncol(cover)) {
-		cv <- cover[, i]
+	filtered <- rep(FALSE, nsites(rnb.set))
+	for (j in 1:length(samples(rnb.set))) {
+		cv <- covg(rnb.set, j=j)[,1] # get coverage VECTOR for current sample
+		cv[cv<1] <- NA
+		cvq <- cv
 		if (length(sites2ignore) != 0) {
-			cv <- cv[-sites2ignore]
+			cvq <- cv[-sites2ignore]
 		}
 		if (sum(!is.na(cv)) != 0) {
-			qqs <- ceiling(quantile(cv, probs = HIGH.COVER.OUTLIER.QUANTILE, na.rm = TRUE)) * HIGH.COVER.OUTLIER.FACTOR
-			filtered[, i] <- (cover[, i] > qqs)
+			qqs <- ceiling(quantile(cvq, probs = HIGH.COVER.OUTLIER.QUANTILE, na.rm = TRUE)) * HIGH.COVER.OUTLIER.FACTOR
+			filtered <- filtered | cv > qqs
 		}
 	}
-	filtered <- which(apply(filtered, 1, any, na.rm = TRUE))
+	filtered <- which(filtered)
 	setdiff(filtered, sites2ignore)
 }
 

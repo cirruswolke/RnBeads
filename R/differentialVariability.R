@@ -341,9 +341,17 @@ addReportPlot.diffVar.scatter.site <- function (report, var.table, comparison.na
 }
 #' @noRd
 addReportPlot.diffVar.scatter.region <- function (report, var.table, comparison.name, region.name, rerank=TRUE,
-                                           ranking.cutoffs, auto.cutoff=NULL, group.name1="Group1",group.name2="Group2"){
+                                           ranking.cutoffs, auto.cutoff=NULL, group.name1="Group1",group.name2="Group2",useSiteCols=FALSE){
   ret <- list()
   
+  cn.x <- "mean.var.g1"
+  cn.y <- "mean.var.g2"
+  cn.pa <- "comb.p.adj.var.fdr"
+  if (useSiteCols){
+    cn.x <- "var.g1"
+    cn.y <- "var.g2"
+    cn.pa <- "diffVar.p.adj.fdr"
+  }
   al.x <- paste("Mean Variance",group.name1,sep=".")
   al.y <- paste("Mean Variance",group.name2,sep=".")
   
@@ -352,10 +360,10 @@ addReportPlot.diffVar.scatter.region <- function (report, var.table, comparison.
     dens.subsample <- DENS.SCATTER.SUBSAMPLE.THRES
   }
   
-  if("comb.p.adj.var.fdr" %in% colnames(var.table)){
-    var.sites <- var.table[,"comb.p.adj.var.fdr"] < P.VAL.CUT
-    plot <- create.densityScatter(var.table[,c("mean.var.g1","mean.var.g2")],is.special=var.sites,dens.subsample = dens.subsample) +
-      xlab(al.x) + ylab(al.y) + coord_fixed(xlim = c(0,max(var.table[,c("mean.var.g1","mean.var.g2")])),ylim = c(0,max(var.table[,c("mean.var.g1","mean.var.g2")])))
+  if(cn.pa %in% colnames(var.table)){
+    var.sites <- var.table[,cn.pa] < P.VAL.CUT
+    plot <- create.densityScatter(var.table[,c(cn.x,cn.y)],is.special=var.sites,dens.subsample = dens.subsample) +
+      xlab(al.x) + ylab(al.y)
     comp.type <- "fdrAdjPval"
     fig.name <- paste("diffVar_region",comparison.name,region.name,comp.type,sep = "_")
     plot <- createReportGgPlot(plot,fig.name,report=report,create.pdf = FALSE)
@@ -370,7 +378,7 @@ addReportPlot.diffVar.scatter.region <- function (report, var.table, comparison.
     cur.cut.name <- paste("rc",i,sep="")
     var.table$isDVR <- rrs < rc
     
-    pp <- create.densityScatter(var.table[,c("mean.var.g1","mean.var.g2")],is.special=var.table$isDVR,
+    pp <- create.densityScatter(var.table[,c(cn.x,cn.y)],is.special=var.table$isDVR,
                                 dens.subsample = dens.subsample, add.text.cor=TRUE) +
       labs(x=al.x, y=al.y) + coord_fixed(xlim = c(0,max(var.table[,c("mean.var.g1","mean.var.g2")])),ylim = c(0,max(var.table[,c("mean.var.g1","mean.var.g2")])))
     
@@ -382,7 +390,7 @@ addReportPlot.diffVar.scatter.region <- function (report, var.table, comparison.
   
   if (is.integer(auto.cutoff)){
     var.table$isDVR <- var.table[,"combinedRank.var"] <= auto.cutoff
-    pp <- create.densityScatter(var.table[,c("mean.var.g1","mean.var.g2")],is.special=var.table$isDVR,
+    pp <- create.densityScatter(var.table[,c(cn.x,cn.y)],is.special=var.table$isDVR,
                                 dens.subsample = dens.subsample, add.text.cor=TRUE) +
       labs(x=al.x, y=al.y) + coord_fixed(xlim = c(0,max(var.table[,c("mean.var.g1","mean.var.g2")])),ylim = c(0,max(var.table[,c("mean.var.g1","mean.var.g2")])))
     figName <- paste("diffVar_region",comparison.name,region.name,"rcAuto",sep="_")
@@ -438,11 +446,17 @@ addReportPlot.diffVar.volcano <- function (report, var.table, comparison.name,
 #' addReportPlot.diffVar.volcano.region
 #' @noRd
 addReportPlot.diffVar.volcano.region <- function(report, var.table,comparison.name,region.type,
-                                                  group.name1,group.name2){
+                                                  group.name1,group.name2, useSiteCols=FALSE){
   cn.d <- "mean.var.diff"
   cn.q <- "mean.var.log.ratio"
   cn.p <- "comb.p.val.var"
   cn.pa <- "comb.p.adj.var.fdr"
+  if (useSiteCols){
+    cn.d <- "var.diff"
+    cn.q <- "var.log.ratio"
+    cn.p <- "diffVar.p.val"
+    cn.pa <- "diffVar.p.adj.fdr"
+  }
 
   figPlots <- list()
   dont.plot.p.val <- all(is.na(var.table[,cn.p]))
@@ -954,6 +968,7 @@ rnb.section.diffVar.region <- function(rnb.set,diff.meth,report,gzTable=FALSE,le
     stop("no valid region types")
   }
 
+  skipSites <- !includes.sites(diff.meth)
   diffRegionRankCut <- c(100,500,1000)
   logger.start("Adding Region Level Information (Differential Variability)")
 
@@ -1013,7 +1028,7 @@ rnb.section.diffVar.region <- function(rnb.set,diff.meth,report,gzTable=FALSE,le
       var.table <- get.table(diff.meth,ccc,rr,return.data.frame=TRUE)
       res <- addReportPlot.diffVar.scatter.region(report,var.table,comparison.name=ccn,region.name=rrn,
                                                   ranking.cutoffs = diffRegionRankCut, rerank=TRUE,
-                                                  auto.cutoff = auto.rank.cut,group.name1 = grp.labels[ccc,1],group.name2 = grp.labels[ccc,2])
+                                                  auto.cutoff = auto.rank.cut,group.name1 = grp.labels[ccc,1],group.name2 = grp.labels[ccc,2], useSiteCols=skipSites)
       rnb.cleanMem()
       res
     }
@@ -1030,7 +1045,7 @@ rnb.section.diffVar.region <- function(rnb.set,diff.meth,report,gzTable=FALSE,le
         var.table <- get.table(diff.meth,ccc,rr,return.data.frame=TRUE)
         addedPlots <- c(addedPlots,addReportPlot.diffVar.scatter.region(report,var.table,comparison.name=ccn,region.name=rrn,
                                                     ranking.cutoffs = diffRegionRankCut,
-                                                    auto.cutoff = auto.rank.cut,group.name1 = grp.labels[ccc,1],group.name2 = grp.labels[ccc,2])
+                                                    auto.cutoff = auto.rank.cut,group.name1 = grp.labels[ccc,1],group.name2 = grp.labels[ccc,2], useSiteCols=skipSites)
         )
        rnb.cleanMem()
       }
@@ -1071,7 +1086,7 @@ rnb.section.diffVar.region <- function(rnb.set,diff.meth,report,gzTable=FALSE,le
       rrn <- ifelse(is.valid.fname(rr),rr,paste("reg",j,sep=""))
       var.table <- get.table(diff.meth,ccc,region.type=rr,return.data.frame=TRUE)
       res <- addReportPlot.diffVar.volcano.region(report,var.table,comparison.name=ccn,region.type=rrn,
-                                                        group.name1=grp.labels[ccc,1],group.name2=grp.labels[ccc,2])
+                                                        group.name1=grp.labels[ccc,1],group.name2=grp.labels[ccc,2], useSiteCols=skipSites)
       rnb.cleanMem()
       res
     }
@@ -1085,7 +1100,7 @@ rnb.section.diffVar.region <- function(rnb.set,diff.meth,report,gzTable=FALSE,le
         rrn <- ifelse(is.valid.fname(rr),rr,paste("reg",j,sep=""))
       var.table <- get.table(diff.meth,ccc,region.type=rr,return.data.frame=TRUE)
       addedPlots <- c(addedPlots,addReportPlot.diffVar.volcano.region(report,var.table,comparison.name=ccn,region.type=rrn,
-                                                        group.name1=grp.labels[ccc,1],group.name2=grp.labels[ccc,2])
+                                                        group.name1=grp.labels[ccc,1],group.name2=grp.labels[ccc,2], useSiteCols=skipSites)
       )
       rnb.cleanMem()
       }
