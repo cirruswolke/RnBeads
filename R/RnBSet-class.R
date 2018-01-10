@@ -811,6 +811,86 @@ setMethod("remove.sites", signature(object = "RnBSet"),
 
 ########################################################################################################################
 
+if (!isGeneric("updateMethylationSites")) {
+  setGeneric("updateMethylationSites", function(object, meth.data, verbose = TRUE) standardGeneric("updateMethylationSites"))
+}
+
+#' updateMethylationSites-methods
+#'
+#' Replaces the methylation info with the specified data frame.
+#'
+#' @param object    Dataset of interest.
+#' @param meth.data This object has to be a \code{data.frame} of equal dimension than the one already contained in 
+#'                  \code{object}, containing the methylation info that should be associated with the object.
+#' @param verbose	if \code{TRUE} additional diagnostic output is generated
+#'
+#' @return The modified dataset.
+#'#'
+#' @rdname updateMethylationSites-methods
+#' @aliases updateMethylationSites
+#' @aliases updateMethylationSites,RnBSet-method
+#' @docType methods
+#' @export
+setMethod("updateMethylationSites", signature(object = "RnBSet"),
+          function(object, meth.data, verbose=FALSE) {
+            if(verbose) {
+              rnb.logger.start("Updating sites")
+            }
+            if(!is.null(object@status) && object@status$disk.dump){
+              doBigFf <- !is.null(object@status$disk.dump.bigff)
+              bff.finalizer <- NULL
+              if (doBigFf) doBigFf <- object@status$disk.dump.bigff
+              if (doBigFf) bff.finalizer <- rnb.getOption("disk.dump.bigff.finalizer")
+              nSites <- nrow(object@meth.sites)
+              if(nSites!=nrow(meth.data)){
+                stop("Dimensions of provided and existing methylation info do not match.")
+              }
+              nSamples <- length(samples(object))
+              if(nSites!=nrow(meth.data)||nSamples!=ncol(meth.data)){
+                stop("Dimensions of provided and existing methylation info do not match.")
+              }
+              # methylation
+              newMat <- NULL
+              if (doBigFf){
+                newMat <- BigFfMat(row.n=nSites, col.n=nSamples, row.names=NULL, col.names=samples(object), finalizer=bff.finalizer)
+              } else {
+                newMat <- ff(NA, dim=c(nSites, nSamples), dimnames=list(NULL, samples(object)), vmode="double")
+              }
+              for (j in 1:nSamples){
+                newMat[,j] <- meth.data[,j]
+              }
+              if(isTRUE(object@status$discard.ff.matrices)){
+                delete(object@meth.sites)
+              }
+              object@meth.sites <- newMat
+                
+            } else {
+              nSites <- nrow(object@meth.sites)
+              if(nSites!=nrow(meth.data)){
+                stop("Dimensions of provided and existing methylation info do not match.")
+              }
+              nSamples <- length(samples(object))
+              if(nSites!=nrow(meth.data)||nSamples!=ncol(meth.data)){
+                stop("Dimensions of provided and existing methylation info do not match.")
+              }
+              object@meth.sites <- meth.data
+            }
+            if(verbose){
+              logger.completed()
+            }
+            if(verbose){
+              logger.start("Update regional methylation")
+            }
+            object <- updateRegionSummaries(object)
+            if(verbose){
+              logger.completed()
+            }
+            object
+          }
+)
+
+########################################################################################################################
+
 if (!isGeneric("mask.sites.meth")) {
 	setGeneric("mask.sites.meth", function(object, mask, verbose=FALSE) standardGeneric("mask.sites.meth"))
 }

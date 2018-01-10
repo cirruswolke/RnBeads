@@ -253,8 +253,9 @@ is available (see below). Attempting to get or set the value of a non-existing o
        are retained. Setting this option to 0 (default) disables filtering based on methylation variability.}
   \item{\bold{\code{imputation.method}}\code{ = "none"}}{
        Character indicating which imputation method should be used to replace missing values. This option has to be
-       one of the following values \code{"none"}, \code{"mean.cpgs"}, \code{"mean.samples"}, \code{"random"} or
-       \code{"knn"}. Setting this option to \code{"none"} inactivates imputation (default).}
+       one of the following values \code{"none"}, \code{"mean.cpgs"}, \code{"mean.samples"}, \code{"random"},
+       \code{"median.cpgs"}, \code{"median.samples"} or \code{"knn"}. Setting this option to \code{"none"} inactivates
+       imputation (default).}
   \item{\bold{\code{inference}}\code{ = FALSE}}{
        Flag indicating if the covariate inference analysis module is to be executed.}
   \item{\bold{\code{inference.targets.sva}}\code{ = character()}}{

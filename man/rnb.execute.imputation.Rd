@@ -11,7 +11,7 @@ rnb.execute.imputation(rnb.set, method = rnb.getOption("imputation.method"),
 \item{rnb.set}{Dataset object inheriting from \code{\linkS4class{RnBSet}}.}
 
 \item{method}{Imputation method to be used, must be one of \code{"mean.cpgs"}, \code{"mean.samples"},
-\code{"random"}, \code{"knn"} or \code{"none"}.}
+\code{"random"}, \code{"knn"}, \code{"median.cpgs"}, \code{"median.samples"}, or \code{"none"}.}
 
 \item{...}{Optional arguments passed to knn.imputation}
 }
@@ -31,6 +31,10 @@ Imputes missing values by applying on the following methods:
            \item{random:}{missing values are inferred by randomly selecting a (non-missing) methylation value
            from any other sample at this CpG site}
            \item{knn:}{missing values are inferred by k-nearest neighbors imputation (see \pkg{impute})}
+           \item{median.cpgs:}{missing values are inferred as the median methylation value from all other 
+           (non-mising) CpGs in this sample}
+           \item{median.samples:}{missing values are inferred as the median methylation value from all other 
+           (non-mising) values at this CpG sites in all other samples}
            \item{none:}{imputation should not be performed}
          }
 }
