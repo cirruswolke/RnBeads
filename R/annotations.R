@@ -1145,7 +1145,7 @@ rnb.load.annotation <- function(fname, type) {
 #' @author Fabian Mueller
 #' @export
 rnb.load.annotation.from.db <- function(types, assembly="hg19") {
-	db.url <- "http://rnbeads.mpi-inf.mpg.de/publication//data/regiondb"
+	db.url <- "http://rnbeads.mpi-inf.mpg.de/publication/data/regiondb"
 	if (!(is.character(types) && length(types) > 0 && (!any(is.na(types))))) {
 		stop("invalid value for types")
 	}
