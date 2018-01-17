@@ -224,7 +224,7 @@ rnb.combine.arrays <- function(dataset1, dataset2, type="common") {
 # Initial implementation of the combine method
 #
 #
-rnb.combine.seq<-function(x,y){
+rnb.combine.seq<-function(x,y,type="common"){
 #    if (class(x) != class(y)){
 #        stop("Could not combine RnBiseqSet objects: incompatible classes")
 #    }
@@ -262,14 +262,33 @@ rnb.combine.seq<-function(x,y){
     sites1<-x@sites
     sites2<-y@sites
     
-    common.chr<-union(unique(sites1[,2]), unique(sites2[,2]))
+    ## Identify common probes
+    if(type == "common"){
+        common.chr<-intersect(unique(sites1[,2]), unique(sites2[,2]))
+    }else if(type == "all.x"){
+        common.chr<-unique(sites1[,2])
+    }else if(type == "all.y"){
+        common.chr<-unique(sites12[,2])
+    }else if(type == "all"){
+        common.chr<-union(unique(sites1[,2]), unique(sites2[,2]))
+    }else{
+        rnb.error("Unsupported value for type")
+    }
     
     subs1<-list()
     subs2<-list()
     common.sites<-list()
     
     for(chr in common.chr){
-        sts<-sort(union(sites1[sites1[,2]==chr,3],sites2[sites2[,2]==chr,3]))
+        if(type == "common"){
+            sts<-sort(intersect(sites1[sites1[,2]==chr,3],sites2[sites2[,2]==chr,3]))
+        }else if(type == "all.x"){
+            sts<-sites1[sites1[,2]==chr,3]
+        }else if(type == "all.y"){
+            sts<-sites2[sites2[,2]==chr,3]
+        }else if(type == "all"){
+            sts<-sort(union(sites1[sites1[,2]==chr,3],sites2[sites2[,2]==chr,3]))
+        }
         subs1[[chr]]<-match(sites1[sites1[,2]==chr,3], sts)
         subs2[[chr]]<-match(sites2[sites2[,2]==chr,3], sts)
         common.sites[[chr]]<-cbind(rep(1,length(sts)), rep(chr,length(sts)), sts)
