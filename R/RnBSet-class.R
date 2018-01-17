@@ -211,6 +211,7 @@ setMethod("samples", signature(object="RnBSet"),
 
 			if (is.null(ids) || any(is.na(ids)) || anyDuplicated(ids) != 0) {
 				rnb.warning("The supplied identifiers column is not found or is not suitable")
+                ids <- as.character(1:nrow(object@pheno))
 			}
 			ids <- as.character(ids)
 		} else if (!is.null(colnames(object@meth.sites))) {
@@ -1130,7 +1131,9 @@ setMethod("mergeSamples", signature(object = "RnBSet"),
 #'
 #' @param x,y 		\code{\linkS4class{RnBeadSet}}, \code{\linkS4class{RnBeadRawSet}}
 #' 					or \code{\linkS4class{RnBiseqSet}} object
-#'
+#' @param type		\code{character} singleton defining the set operation applied to the two site sets, 
+#' 					one of "all", "all.x", "all.y" or "common"
+#' 
 #' @details The sample sets of \code{x} and \code{y} should be unique.
 #' Sample annotation information is merged only for columns which have identical names in both objects.
 #' CpG sites of the new object are a union of those present in both objects.
@@ -1161,7 +1164,7 @@ setMethod("mergeSamples", signature(object = "RnBSet"),
 #' (nrow(meth(rnb.set.example))-length(sites.rem.c)) == nrow(meth(rc))
 #' }
 setMethod("combine", signature(x="RnBSet",y="RnBSet"),
-	    function(x, y){
+	    function(x, y, type="all"){
             if(class(x)==class(y)){
                 if(inherits(x, "RnBeadSet")){
                     rnb.combine.arrays(x, y)
