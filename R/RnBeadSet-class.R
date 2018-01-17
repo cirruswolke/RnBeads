@@ -423,34 +423,6 @@ setAs("MethyLumiSet", "RnBeadSet",
 		object
 })
 
-#' as("RnBeadSet", "RnBiseqSet")
-#'
-#' Convert a \code{\linkS4class{RnBeadSet}} object to a "mock" \code{\linkS4class{RnBiseqSet}} object
-#' (used in the combine method)
-#' 
-#' @name coercion-methods
-#' 
-setAs("RnBeadSet", "RnBiseqSet",
-        
-        function(from, to){
-            
-            mapped.sites<-map.array.sites.to.genome(from)
-            
-            object<-RnBiseqSet(
-                pheno=pheno(from),
-                sites=mapped.sites,
-                meth=meth(from),
-                covg=NULL,
-                assembly=from@assembly,
-                target="CpG",
-                useff=rnb.set@status$disk.dump,
-                usebigff=rnb.set@status$disk.dump.bigff,
-                verbose=FALSE
-               )
-            
-            object
-        })
-
 ## ---------------------------------------------------------------------------------------------------------------------
 ## GETTERS
 ## ---------------------------------------------------------------------------------------------------------------------
