@@ -586,3 +586,32 @@ setMethod("show", "RnBiseqSet",
 )
 
 ########################################################################################################################
+#' as("RnBeadSet", "RnBiseqSet")
+#'
+#' Convert a \code{\linkS4class{RnBeadSet}} object to a "mock" \code{\linkS4class{RnBiseqSet}} object
+#' (used in the combine method)
+#' 
+#' @name coercion-methods
+#' 
+setAs("RnBeadSet", "RnBiseqSet",
+        
+        function(from, to){
+            
+            ann<-annotation(from)
+            site.info<-ann[,c("Chromosome", "Start", "Strand")]
+            
+            object<-RnBiseqSet(
+                    pheno=pheno(from),
+                    sites=site.info,
+                    meth=meth(from),
+                    covg=NULL,
+                    assembly=from@assembly,
+                    target="CpG",
+                    useff=isTRUE(from@status$disk.dump),
+                    usebigff=isTRUE(from@status$disk.dump.bigff),
+                    verbose=FALSE
+            )
+            
+            object
+        })
+########################################################################################################################
