@@ -229,6 +229,8 @@ rnb.execute.import<-function(data.source, data.type=rnb.getOption("import.defaul
 					skip.lines=0,
 					pos.coord.shift=0,
 					is.epp.style=TRUE,
+                    mean.meth.col=NA,
+                    coverage.col=NA,
 					nrows=nrows)
 		} else if (rnb.getOption("import.bed.style")=="Encode"){
 			result <- read.bed.files(base.dir=data.source[[1]], sample.sheet=data.source[[2]], file.names.col=filename.column,

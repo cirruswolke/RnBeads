@@ -308,7 +308,7 @@ addReportPlot.diffVar.scatter.site <- function (report, var.table, comparison.na
   if("diffVar.p.adj.fdr" %in% colnames(var.table)){
     var.sites <- var.table[,"diffVar.p.adj.fdr"] < P.VAL.CUT
     plot <- create.densityScatter(var.table[,c("var.g1","var.g2")],is.special=var.sites,dens.subsample=dens.subsample) +
-        xlab(paste("Variance",group.name1)) + ylab(paste("Variance",group.name2))
+        xlab(paste("Variance",group.name1)) + ylab(paste("Variance",group.name2)) + coord_fixed(xlim = c(0,max(var.table[,c("var.g1","var.g2")])),ylim = c(0,max(var.table[,c("var.g1","var.g2")])))
     comp.type <- "fdrAdjPval"
     fig.name <- paste("diffVar_site",comparison.name,comp.type,sep = "_")
     plot <- createReportGgPlot(plot,fig.name,report=report,create.pdf = FALSE, high.png = 200)
@@ -322,7 +322,7 @@ addReportPlot.diffVar.scatter.site <- function (report, var.table, comparison.na
     cutoff.name <- paste0("rc",i)
     var.table$isDVC <- ranks < number
     plot <- create.densityScatter(var.table[,c("var.g1","var.g2")], is.special = var.table$isDVC,dens.subsample=dens.subsample) +
-      xlab(paste("Variance",group.name1)) + ylab(paste("Variance",group.name2))
+      xlab(paste("Variance",group.name1)) + ylab(paste("Variance",group.name2)) + coord_fixed(xlim = c(0,max(var.table[,c("var.g1","var.g2")])),ylim = c(0,max(var.table[,c("var.g1","var.g2")])))
     fig.name <- paste("diffVar_site",comparison.name,cutoff.name,sep="_")
     plot <- createReportGgPlot(plot,fig.name,report=report,create.pdf = FALSE, high.png = 200)
     plot <- off(plot,handle.errors=TRUE)
@@ -331,7 +331,7 @@ addReportPlot.diffVar.scatter.site <- function (report, var.table, comparison.na
   if(is.integer(auto.cutoff)){
     var.table$isDVC <- ranks < auto.cutoff
     plot <- create.densityScatter(var.table[,c("var.g1","var.g2")], is.special = var.table$isDVC,dens.subsample=dens.subsample) +
-      xlab(paste("Variance",group.name1)) + ylab(paste("Variance",group.name2))
+      xlab(paste("Variance",group.name1)) + ylab(paste("Variance",group.name2))  + coord_fixed(xlim = c(0,max(var.table[,c("var.g1","var.g2")])),ylim = c(0,max(var.table[,c("var.g1","var.g2")])))
     fig.name <- paste("diffVar_site",comparison.name,"rcAuto",sep="_")
     plot <- createReportGgPlot(plot,fig.name,report=report,create.pdf = FALSE, high.png = 200)
     plot <- off(plot,handle.errors=TRUE)
@@ -380,7 +380,7 @@ addReportPlot.diffVar.scatter.region <- function (report, var.table, comparison.
     
     pp <- create.densityScatter(var.table[,c(cn.x,cn.y)],is.special=var.table$isDVR,
                                 dens.subsample = dens.subsample, add.text.cor=TRUE) +
-      labs(x=al.x, y=al.y) + coord_fixed()
+      labs(x=al.x, y=al.y) + coord_fixed(xlim = c(0,max(var.table[,c("mean.var.g1","mean.var.g2")])),ylim = c(0,max(var.table[,c("mean.var.g1","mean.var.g2")])))
     
     figName <- paste("diffVar_region",comparison.name,region.name,cur.cut.name,sep="_")
     report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
@@ -392,7 +392,7 @@ addReportPlot.diffVar.scatter.region <- function (report, var.table, comparison.
     var.table$isDVR <- var.table[,"combinedRank.var"] <= auto.cutoff
     pp <- create.densityScatter(var.table[,c(cn.x,cn.y)],is.special=var.table$isDVR,
                                 dens.subsample = dens.subsample, add.text.cor=TRUE) +
-      labs(x=al.x, y=al.y) + coord_fixed()
+      labs(x=al.x, y=al.y) + coord_fixed(xlim = c(0,max(var.table[,c("mean.var.g1","mean.var.g2")])),ylim = c(0,max(var.table[,c("mean.var.g1","mean.var.g2")])))
     figName <- paste("diffVar_region",comparison.name,region.name,"rcAuto",sep="_")
     report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
     report.plot <- off(report.plot,handle.errors=TRUE)
@@ -712,7 +712,8 @@ create.diffMeth.diffVar.subsample <- function(df2p,dens.subsample,is.special=NUL
     pp <- ggplot(df2p.sub) + aes_string(x=colnames(df2p)[1],y=colnames(df2p)[2]) + 
       stat_density2d(geom="tile", fill=DENS.COLORS.LOW[1], aes(,alpha=..density..^0.25), contour=FALSE, n=dens.n, h=stable.h) +
       scale_alpha(range = c(0.0, 1),guide=FALSE) +
-      geom_vline(xintercept = rank.cut.diffMeth,linetype='dotted') + geom_hline(yintercept = rank.cut.diffVar,linetype='dotted')
+      geom_vline(xintercept = rank.cut.diffMeth,linetype='dotted') + geom_hline(yintercept = rank.cut.diffVar,linetype='dotted')+
+      scale_color_manual(values=c(rnb.getOption("colors.category")[c(1,2,4)],DENS.COLORS.LOW[1]))
     if (sparse.points > 0){
       if (sparse.points <= 1){
         thres <- ceiling(nrow(df2p)*sparse.points)
@@ -720,19 +721,20 @@ create.diffMeth.diffVar.subsample <- function(df2p,dens.subsample,is.special=NUL
         thres <- sparse.points
       }
       df2p.loose <- df2p[dens.ranks<=thres,]#the sub data.frame in of the least dens points
-      pp <- pp + geom_point(data=df2p.loose,aes_string(x=colnames(df2p)[1],y=colnames(df2p)[2],colour=colnames(df2p)[3]),size=0.4)+scale_color_manual(values=c(rnb.getOption("colors.category")[c(1,2,4)],DENS.COLORS.LOW[1]))
+      pp <- pp + geom_point(data=df2p.loose,aes_string(x=colnames(df2p)[1],y=colnames(df2p)[2],colour=colnames(df2p)[3]),size=0.4)
     }
     if(!is.null(is.special)){
       df2p.special <- df2p[is.special,]
       if(is.numeric(dens.subsample) && dens.subsample>0){
         ss <- as.numeric(dens.subsample)
         if(nrow(df2p.special)>ss){
-          pp <- pp + stat_density2d(data = df2p.special, geom="tile", aes(fill=Color.diff,alpha=..density..^0.25), contour=FALSE, n =dens.n, h=stable.h)+scale_fill_manual(values=c(rnb.getOption("colors.category")[c(1,2,4)],DENS.COLORS.LOW[1]))
+          pp <- pp + geom_point(data=df2p.special,aes_string(x=colnames(df2p)[1],y=colnames(df2p)[2],colour=colnames(df2p)[3]),size=0.4) + guides(fill=FALSE)
+          #pp <- pp + stat_density2d(data = df2p.special, geom="tile", aes(fill=colnames(df2p)[3],alpha=..density..^0.25), contour=FALSE, n =dens.n, h=stable.h)+scale_fill_manual(values=c(rnb.getOption("colors.category")[c(1,2,4)],DENS.COLORS.LOW[1]))
         }else{
-          pp <- pp + geom_point(data=df2p.special,aes_string(x=colnames(df2p)[1],y=colnames(df2p)[2],colour=colnames(df2p)[3]),size=1) + guides(fill=FALSE)+scale_color_manual(values=c(rnb.getOption("colors.category")[c(1,2,4)],DENS.COLORS.LOW[1]))
+          pp <- pp + geom_point(data=df2p.special,aes_string(x=colnames(df2p)[1],y=colnames(df2p)[2],colour=colnames(df2p)[3]),size=1) + guides(fill=FALSE)
         }
       }else{
-        pp <- pp + geom_point(data=df2p.special,aes_string(x=colnames(df2p)[1],y=colnames(df2p)[2],colour=colnames(df2p)[3]),size=1) + guides(fill=FALSE)+scale_color_manual(values=c(rnb.getOption("colors.category")[c(1,2,4)],DENS.COLORS.LOW[1]))
+        pp <- pp + geom_point(data=df2p.special,aes_string(x=colnames(df2p)[1],y=colnames(df2p)[2],colour=colnames(df2p)[3]),size=1) + guides(fill=FALSE)
       }
     }  
   }
@@ -939,7 +941,8 @@ rnb.section.diffVar <- function(rnb.set,diff.meth,report,gzTable=FALSE,different
     'comparison' = comps,
     'rankCutoff' = diffVarType)
   description <- c('Scatterplot comparing differentially methylated (DMCs) and variable sites (DVCs), as well as sites ',
-  'that are both differentially methylated and variable.')
+  'that are both differentially methylated and variable. The dotted lines corrspond to the respective rank cutoffs used ',
+  'to call a site differentially methylated/variable.')
   report <- rnb.add.figure(report, description, plots, setting.names)
   logger.completed()
   
@@ -1164,7 +1167,8 @@ rnb.section.diffVar.region <- function(rnb.set,diff.meth,report,gzTable=FALSE,le
     'regions' = reg.types,
     'rankCutoff' = diffVarType)
   description <- c('Scatterplot comparing differentially methylated (DMRs) and variable regions (DVRs), as well as regions ',
-  'that are both differentially methylated and variable.')
+  'that are both differentially methylated and variable. The dotted lines corrspond to the respective rank cutoffs used ',
+  'to call a region differentially methylated/variable.')
   report <- rnb.add.figure(report, description, plots, setting.names)
   
 

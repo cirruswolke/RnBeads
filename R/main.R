@@ -1186,15 +1186,6 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 		sn <- ""
 	}
 
-	## Imputation
-	if(!(rnb.getOption("imputation.method")%in%c("mean.cpgs","mean.samples","random","knn"))){
-	  logger.info("Imputation was skipped, data set may still contain missing methylation values")
-	}else{
-	  imputation.result <- rnb.step.imputation(rnb.set,report)
-	  rnb.set <- imputation.result$dataset
-	  report <- imputation.result$report
-	}
-
 	## Postfiltering
 	mm <- NULL
 	if (length(rnb.getOption("filtering.context.removal")) != 0 && inherits(rnb.set, "RnBeadSet")) {
@@ -1234,6 +1225,15 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 
 	rnb.set <- rnb.filter.dataset(rnb.set, removed.samples, removed.sites, mask)
 
+	## Imputation
+	if((rnb.getOption("imputation.method")%in%c("none"))){
+	  logger.info("Imputation was skipped, data set may still contain missing methylation values")
+	}else{
+	  imputation.result <- rnb.step.imputation(rnb.set,report)
+	  rnb.set <- imputation.result$dataset
+	  report <- imputation.result$report
+	}
+	
 	if (rnb.getOption("region.subsegments") > 1L) {
 		res <- rnb.step.region.subsegmentation(rnb.set, report, region.types=rnb.getOption("region.subsegments.types"))
 		rnb.set <- res$rnb.set
