@@ -1125,6 +1125,8 @@ setMethod("mergeSamples", signature(object = "RnBSet"),
 )
 ########################################################################################################################
 
+setGeneric("combine", function(x,y, ...) standardGeneric("combine"))
+
 #' combine-methods
 #'
 #' Combine two objects inheriting from \code{\linkS4class{RnBSet}} class
