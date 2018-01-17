@@ -254,7 +254,11 @@ RnBiseqSet<-function(
 					ref.h <- ref.h[!multi.hit.bed]
 				}
 				
-				n.match <- length(match)
+                if(length(bed.h)!=length(ref.h)){
+                    stop("Something went wrong while matching the sites, exiting")
+                } 
+                
+				n.match <- length(bed.h)
 				
 				#chrmeths<-meth[chr.subset,,drop=FALSE][bed.h,,drop=FALSE]
 				#chrcovgs<-covg[chr.subset,,drop=FALSE][bed.h,,drop=FALSE]
