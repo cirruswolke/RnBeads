@@ -1205,10 +1205,6 @@ setMethod("mergeSamples", signature(object = "RnBSet"),
 )
 ########################################################################################################################
 
-<<<<<<< HEAD
-
-=======
->>>>>>> refs/heads/feature/updated_combine_method
 setGeneric("combine", function(x,y, type="all") standardGeneric("combine"))
 
 #' combine-methods
