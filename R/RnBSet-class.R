@@ -211,6 +211,7 @@ setMethod("samples", signature(object="RnBSet"),
 
 			if (is.null(ids) || any(is.na(ids)) || anyDuplicated(ids) != 0) {
 				rnb.warning("The supplied identifiers column is not found or is not suitable")
+                ids <- as.character(1:nrow(object@pheno))
 			}
 			ids <- as.character(ids)
 		} else if (!is.null(colnames(object@meth.sites))) {
@@ -1204,7 +1205,10 @@ setMethod("mergeSamples", signature(object = "RnBSet"),
 )
 ########################################################################################################################
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> refs/heads/feature/updated_combine_method
 setGeneric("combine", function(x,y, type="all") standardGeneric("combine"))
 
 #' combine-methods
