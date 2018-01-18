@@ -268,7 +268,7 @@ rnb.combine.seq<-function(x,y,type="common"){
     }else if(type == "all.x"){
         common.chr<-unique(sites1[,2])
     }else if(type == "all.y"){
-        common.chr<-unique(sites12[,2])
+        common.chr<-unique(sites2[,2])
     }else if(type == "all"){
         common.chr<-union(unique(sites1[,2]), unique(sites2[,2]))
     }else{

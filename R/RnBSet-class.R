@@ -1125,7 +1125,7 @@ setMethod("mergeSamples", signature(object = "RnBSet"),
 )
 ########################################################################################################################
 
-setGeneric("combine", function(x,y, ...) standardGeneric("combine"))
+setGeneric("combine", function(x,y, type="all") standardGeneric("combine"))
 
 #' combine-methods
 #'
@@ -1165,18 +1165,24 @@ setGeneric("combine", function(x,y, ...) standardGeneric("combine"))
 #' sites.rem.c <- intersect(sites.rem.r1,sites.rem.r2)
 #' (nrow(meth(rnb.set.example))-length(sites.rem.c)) == nrow(meth(rc))
 #' }
-setMethod("combine", signature(x="RnBSet",y="RnBSet"),
-	    function(x, y, type="all"){
+setMethod("combine", signature(x="RnBSet", y="RnBSet"),
+        function(x, y, type="all"){
             if(class(x)==class(y)){
                 if(inherits(x, "RnBeadSet")){
-                    rnb.combine.arrays(x, y)
+                    rnb.combine.arrays(x, y, type=type)
                 }else if(inherits(x, "RnBiseqSet")){
-                    basic_combine(x, y)
+                    rnb.combine.seq(x, y, type=type)
                 }else{
                     rnb.error("This combine operation is currently not supported")
                 }
             }else{
-                rnb.error("This combine operation is currently not supported")
+                if(inherits(x, "RnBiseqSet")){
+                    y.seq<-as(y, "RnBiseqSet")
+                    rnb.combine.seq(x, y.seq, type=type)
+                }else if(inherits(y, "RnBiseqSet")){
+                    x.seq<-as(x, "RnBiseqSet")
+                    rnb.combine.seq(x.seq, y, type=type)
+                }
             }
         }
 )
