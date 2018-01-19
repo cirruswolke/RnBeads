@@ -434,8 +434,12 @@ plot.heatmap.symm <- function(report, tbl.symm, tbl.failures = NULL, fname) {
 		theme(panel.border = element_blank(), plot.margin = unit(c(0.1, 1.9, 0.1, 0.1), "in"))
 	## Fix the areas for x and y axis labels
 	pp <- suppressWarnings(ggplot_gtable(ggplot_build(pp)))
-	pp$widths[[3]] <- unit(2, "in")
-	pp$heights[[length(pp$heights) - 2L]] <- unit(2, "in")
+	i <- which(pp$layout$name == "axis-b")
+	pp$layout[i, "clip"] <- "on"
+	pp$heights[pp$layout[i, "t"]] <- unit(2, "in")
+	i <- which(pp$layout$name == "axis-l")
+	pp$layout[i, "clip"] <- "on"
+	pp$width[pp$layout[i, "l"]] <- unit(2, "in")
 	rplot <- createReportPlot(fname, report, width = width, height = height)
 	grid.newpage()
 	grid.draw(pp)
