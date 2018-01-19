@@ -258,6 +258,10 @@ is available (see below). Attempting to get or set the value of a non-existing o
        imputation (default).}
   \item{\bold{\code{inference}}\code{ = FALSE}}{
        Flag indicating if the covariate inference analysis module is to be executed.}
+  \item{\bold{\code{inference.genome.methylation}}\code{= "Genome-wide methylation"}}{
+       Name of the column to add to the sample annotation, storing the genome-wide methylation level. If such a
+       column already exists, its values will be overwritten. Setting this option to \code{NULL} or an empty
+       \code{character} disables computing and adding genome-wide methylation levels.}
   \item{\bold{\code{inference.targets.sva}}\code{ = character()}}{
        Column names in the sample annotation table for which surrogate variable analysis (SVA) should be conducted.
 	  An empty vector (default) means that SVA is skipped.}
@@ -275,7 +279,7 @@ is available (see below). Attempting to get or set the value of a non-existing o
        Name of the method to be used for estimating the number of surrogate variables.
 	  must be either 'leek' or 'be', See \code{sva} function for details.}
   \item{\bold{\code{inference.age.column}}\code{ = "age"}}{
-       Name of the column in which the ages of the donors are annotated. This function can be of numeric, string or 
+       Name of the column in which the ages of the donors are annotated. This function can be of numeric, string or
 	  factor format.}
   \item{\bold{\code{inference.age.prediction}}\code{ = TRUE}}{
        Flag indicating if the epigenetic age prediction within the inference module is to be executed.}
@@ -283,7 +287,7 @@ is available (see below). Attempting to get or set the value of a non-existing o
        Flag indicating if a new predictor should be created based on the provided data set.}
   \item{\bold{\code{inference.age.prediction.cv}}\code{ = FALSE}}{
        Flag indicating if predictive power of a predictor that was trained in that run of the age prediction should
-	be assessed by cross-validation. This option only has an influence if 
+	be assessed by cross-validation. This option only has an influence if
 	\code{inference.age.prediction.training}\code{ = TRUE}.}
   \item{\bold{\code{inference.immune.cells}}\code{ = TRUE}}{
        Flag indicating if immune cell content estimation is to be performed. Immune cell content prediction is based
@@ -359,13 +363,13 @@ is available (see below). Attempting to get or set the value of a non-existing o
        t-test and "limma" for a linear modeling approach implemented in the \code{limma} package for differential expression
        in microarrays.}
   \item{\bold{\code{differential.variability}}\code{ = FALSE}}{
-       Flag indicating if differential variability analysis is to be conducted. If TRUE, the method specified in 
+       Flag indicating if differential variability analysis is to be conducted. If TRUE, the method specified in
        \code{differential.variability.method} is applied to detect sites that show differential variability between the groups
        that are specified.
        }
   \item{\bold{\code{differential.variability.method}}\code{ = "diffVar"}}{
        Method to be used for calculating p-values on the differential variable sites. Currently supported options are "diffVar"
-       implemented in the \code{missMethyl} package and "iEVORA".}      
+       implemented in the \code{missMethyl} package and "iEVORA".}
   \item{\bold{\code{differential.permutations}}\code{ = 0}}{
        Number of permutation tests performed to compute the p-value of rank permutation tests in the differential
        methylation analysis. This must be a non-negative \code{integer}. Setting this option to \code{0} (default)
