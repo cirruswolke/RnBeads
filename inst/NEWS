@@ -1,3 +1,12 @@
+RnBeads 1.11.6
+=============
+ 
+ * Improved combining methods for RnBSet objects of different data types
+ * Interpretation of sample mean methylation levels and other statistics
+ * Improved plots in exploratory analysis module
+ * Improved missing value imputation
+ * Several minor bugfixes
+
 RnBeads 1.11.5
 =============
  
