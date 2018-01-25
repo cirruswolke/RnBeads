@@ -1084,6 +1084,51 @@ mean.imputation <- function(rnb.set,way=1){
 
 #######################################################################################################################
 
+#' imputation.low.memory.samples
+#'
+#' Performs (sample-wise) imputation in a low memory-footprint way with the specified method
+#'
+#'@param rnb.set Object containing the methylation information to be changed. Has to be of
+#'               type \code{\linkS4class{RnBeadSet}} or \code{\linkS4class{RnBiseqSet}}.
+#'@param method Method to be used, should be either 'mean' or 'median'
+#'@return Modified rnb.set object.
+#'
+#'@author Michael Scherer
+#'@noRd
+imputation.low.memory.samples <- function(rnb.set,method=mean){
+  for(i in 1:nsites(rnb.set)){
+    rnb.set@meth.sites[i,which(is.na(meth(rnb.set,i=i)))] <- method(rnb.set@meth.sites[i,],na.rm=T)
+  }
+  return(rnb.set)
+}
+
+#######################################################################################################################
+
+#' imputation.low.memory.cpgs
+#'
+#' Performs (cpg-wise) imputation in a low memory-footprint way with the specified method
+#'
+#'@param rnb.set Object containing the methylation information to be changed. Has to be of
+#'               type \code{\linkS4class{RnBeadSet}} or \code{\linkS4class{RnBiseqSet}}.
+#'@param method Method to be used, should be either 'mean' or 'median'
+#'@return Modified rnb.set object.
+#'
+#'@author Michael Scherer
+#'@noRd
+imputation.low.memory.cpgs <- function(rnb.set,method=mean){
+  if(any(sampleMethApply(rnb.set,function(x){all(is.na(x))}))){
+    logger.warning("There are samples that have missing values at all CpG sites, imputation not performed.")
+    return(rnb.set)
+  }
+  for(i in 1:length(samples(rnb.set))){
+    rnb.set@meth.sites[which(is.na(meth(rnb.set,j=i))),i] <- method(rnb.set@meth.sites[,i],na.rm=T)
+  }
+  return(rnb.set)
+}
+
+
+#######################################################################################################################
+
 #' random.imputation
 #'
 #' Performs random imputation by replacing missing values with randomly selecting (with replacement) from the same CpG site in the samples
@@ -1225,6 +1270,28 @@ rnb.execute.imputation <- function(rnb.set,method=rnb.getOption("imputation.meth
     rnb.options("imputation.method"="mean.samples")
     method = "mean.samples"
     logger.info("Knn imputation not applicable to sequencing data sets, switched to 'mean.samples' method")
+  }
+  if(rnb.getOption("enforce.memory.management")){
+    logger.start("Low memory footprint version of imputation")
+    if(!method%in%c("mean.samples","mean.cpgs","median.samples","median.cpgs")){
+      logger.info(sprintf("Low memory imputation not compatible with method %s, switched to mean.samples",method))
+      method <- "mean.samples"
+    }
+    if(method=="mean.samples"){
+      rnb.set <- imputation.low.memory.samples(rnb.set,mean)
+    }
+    if(method=="median.samples"){
+      rnb.set <- imputation.low.memory.samples(rnb.set,median)
+    }
+    if(method=="mean.cpgs"){
+      rnb.set <- imputation.low.memory.cpgs(rnb.set,mean)
+    }
+    if(method=="median.cpgs"){
+      rnb.set <- imputation.low.memory.cpgs(rnb.set,median)
+    }
+    rnb.set <- updateRegionSummaries(rnb.set)
+    logger.completed()
+    return(rnb.set)
   }
   logger.start(sprintf("Imputation procedure %s ",method))
   if(method=='mean.cpgs'){
