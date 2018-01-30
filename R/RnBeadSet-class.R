@@ -341,6 +341,9 @@ rnb.show.rnbeadset <- function(object) {
 			cat(sprintf("\tBackground correction was performed with method %s.\n", object@status$background))			
 		}
 	}
+	if(isImputed(object)){
+	  cat("\tData set was imputed.")
+	}
 }
 
 setMethod("show", "RnBeadSet", rnb.show.rnbeadset)

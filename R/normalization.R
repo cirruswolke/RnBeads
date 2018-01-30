@@ -1097,7 +1097,10 @@ mean.imputation <- function(rnb.set,way=1){
 #'@noRd
 imputation.low.memory.samples <- function(rnb.set,method=mean){
   for(i in 1:nsites(rnb.set)){
-    rnb.set@meth.sites[i,which(is.na(meth(rnb.set,i=i)))] <- method(rnb.set@meth.sites[i,],na.rm=T)
+    cpg <- meth(rnb.set,i=i)
+    if(any(is.na(cpg))){
+      rnb.set@meth.sites[i,which(is.na(cpg))] <- method(cpg,na.rm=T)
+    }
   }
   return(rnb.set)
 }
@@ -1121,7 +1124,10 @@ imputation.low.memory.cpgs <- function(rnb.set,method=mean){
     return(rnb.set)
   }
   for(i in 1:length(samples(rnb.set))){
-    rnb.set@meth.sites[which(is.na(meth(rnb.set,j=i))),i] <- method(rnb.set@meth.sites[,i],na.rm=T)
+    ss <- meth(rnb.set,j=i)
+    if(any(is.na(ss))){
+      rnb.set@meth.sites[which(is.na(ss)),i] <- method(ss,na.rm=T)
+    }
   }
   return(rnb.set)
 }
@@ -1273,15 +1279,9 @@ rnb.execute.imputation <- function(rnb.set,method=rnb.getOption("imputation.meth
   }
   if(rnb.getOption("enforce.memory.management")){
     logger.start("Low memory footprint version of imputation")
-    if(!method%in%c("mean.samples","mean.cpgs","median.samples","median.cpgs")){
-      logger.info(sprintf("Low memory imputation not compatible with method %s, switched to mean.samples",method))
-      method <- "mean.samples"
-    }
-    if(method=="mean.samples"){
-      rnb.set <- imputation.low.memory.samples(rnb.set,mean)
-    }
-    if(method=="median.samples"){
-      rnb.set <- imputation.low.memory.samples(rnb.set,median)
+    if(!method%in%c("mean.cpgs","median.cpgs")){
+      logger.info(sprintf("Low memory imputation not compatible with method %s, switched to mean.cpgs",method))
+      method <- "mean.cpgs"
     }
     if(method=="mean.cpgs"){
       rnb.set <- imputation.low.memory.cpgs(rnb.set,mean)
@@ -1290,6 +1290,7 @@ rnb.execute.imputation <- function(rnb.set,method=rnb.getOption("imputation.meth
       rnb.set <- imputation.low.memory.cpgs(rnb.set,median)
     }
     rnb.set <- updateRegionSummaries(rnb.set)
+    rnb.set@imputed <- TRUE
     logger.completed()
     return(rnb.set)
   }
