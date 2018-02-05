@@ -1,3 +1,14 @@
+RnBeads 1.11.7
+=============
+ 
+ * enhanced cross-platform combination methods
+ * improved installation routines
+ * enhanced plots in exploratory analysis module
+ * better LOLA annotation
+ * improved performance of missing value imputation
+ * documentation updates
+ * several minor bugfixes
+
 RnBeads 1.11.6
 =============
  
