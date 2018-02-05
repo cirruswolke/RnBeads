@@ -47,6 +47,7 @@ Suggests:
     missMethyl,
     impute,
     shiny,
+    shinyjs,
     plotrix,
     RUnit
 Depends:
