@@ -6,11 +6,14 @@
 \alias{combine,RnBSet-method}
 \title{combine-methods}
 \usage{
-\S4method{combine}{RnBSet,RnBSet}(x, y)
+\S4method{combine}{RnBSet,RnBSet}(x, y, type = "all")
 }
 \arguments{
 \item{x, y}{\code{\linkS4class{RnBeadSet}}, \code{\linkS4class{RnBeadRawSet}}
 or \code{\linkS4class{RnBiseqSet}} object}
+
+\item{type}{\code{character} singleton defining the set operation applied to the two site sets, 
+one of "all", "all.x", "all.y" or "common"}
 }
 \value{
 combined \code{\linkS4class{RnBeadSet}}, \code{\linkS4class{RnBeadRawSet}} or

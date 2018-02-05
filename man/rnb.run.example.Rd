@@ -21,7 +21,7 @@ Executes the analysis pipeline for an example from the RnBeads web site.
 }
 \details{
 For more information about the examples, please visit the dedicated
-\href{http://rnbeads.mpi-inf.mpg.de/examples.php}{page on the RnBeads web site}.
+\href{https://rnbeads.org/examples.html}{page on the RnBeads web site}.
 }
 \examples{
 \donttest{

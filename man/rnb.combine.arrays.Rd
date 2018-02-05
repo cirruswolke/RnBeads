@@ -4,12 +4,14 @@
 \alias{rnb.combine.arrays}
 \title{Combine array-based datasets}
 \usage{
-rnb.combine.arrays(dataset1, dataset2)
+rnb.combine.arrays(dataset1, dataset2, type = "common")
 }
 \arguments{
 \item{dataset1}{First input dataset as an object of type inheriting \code{\linkS4class{RnBeadSet}}.}
 
 \item{dataset2}{Second input dataset as an object of type inheriting \code{\linkS4class{RnBeadSet}}.}
+
+\item{type}{Type of the combine operation as a character singleton, one of "common", "all.x", "all.y" and "all".}
 }
 \value{
 Combined dataset as an object of type inheriting \code{\linkS4class{RnBeadSet}}.

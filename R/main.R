@@ -517,7 +517,7 @@ rnb.run.xml <- function(fname, create.r.command = FALSE) {
 #' rnb.run.dj
 #'
 #' Starts the RnBeads Data Juggler (RnBeadsDJ) for configuring and running RnBeads analyses from the web browser
-#' 
+#'
 #' @return Nothing of particular interest
 #'
 #' @details
@@ -1257,11 +1257,25 @@ rnb.run.inference <- function(rnb.set, dir.reports,
 	module.start.log("Covariate Inference")
 
 	report <- init.pipeline.report("covariate_inference", dir.reports, init.configuration)
-	optionlist <- rnb.options("inference.targets.sva", "inference.sva.num.method", "covariate.adjustment.columns",
-		"export.to.ewasher", "inference.age.prediction", "inference.age.prediction.training",
-		"inference.age.prediction.predictor", "inference.age.column", "inference.age.prediction.cv",
-		"inference.immune.cells")
+	optionlist <- rnb.options("inference.genome.methylation", "inference.targets.sva", "inference.sva.num.method",
+		"covariate.adjustment.columns", "export.to.ewasher", "inference.age.prediction",
+		"inference.age.prediction.training", "inference.age.prediction.predictor", "inference.age.column",
+		"inference.age.prediction.cv", "inference.immune.cells")
+	if (is.null(optionlist[[1]])) {
+		optionlist[[1]] <- ""
+	}
 	report <- rnb.add.optionlist(report, optionlist)
+
+	## Genome-wide methylation levels
+	cname <- rnb.getOption("inference.genome.methylation")
+	if (nchar(cname) != 0) {
+		meth.levels <- rnb.execute.genomewide(rnb.set)
+		report <- rnb.section.genomewide(report, meth.levels)
+		if (!all(is.na(meth.levels))) {
+			rnb.set@pheno[[cname]] <- meth.levels
+		}
+		rm(meth.levels)
+	}
 
 	if (inherits(rnb.set,"RnBSet") && rnb.getOption("inference.age.prediction")){
 		ph <- pheno(rnb.set)
@@ -1618,7 +1632,7 @@ rnb.run.differential <- function(rnb.set, dir.reports,
 #'
 #' @details
 #' For more information about the examples, please visit the dedicated
-#' \href{http://rnbeads.mpi-inf.mpg.de/examples.php}{page on the RnBeads web site}.
+#' \href{https://rnbeads.org/examples.html}{page on the RnBeads web site}.
 #'
 #' @examples
 #' \donttest{

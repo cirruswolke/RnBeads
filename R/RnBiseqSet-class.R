@@ -254,7 +254,11 @@ RnBiseqSet<-function(
 					ref.h <- ref.h[!multi.hit.bed]
 				}
 				
-				n.match <- length(match)
+                if(length(bed.h)!=length(ref.h)){
+                    stop("Something went wrong while matching the sites, exiting")
+                } 
+                
+				n.match <- length(bed.h)
 				
 				#chrmeths<-meth[chr.subset,,drop=FALSE][bed.h,,drop=FALSE]
 				#chrcovgs<-covg[chr.subset,,drop=FALSE][bed.h,,drop=FALSE]
@@ -578,7 +582,39 @@ setMethod("show", "RnBiseqSet",
 			}
 		}
 		cat(sprintf("Coverage information is %s\n", ifelse(is.null(object@covg.sites), "absent", "present")))
+		if(isImputed(object)){
+		  cat("Data set was imputed.")
+		}
 	}
 )
 
+########################################################################################################################
+#' as("RnBeadSet", "RnBiseqSet")
+#'
+#' Convert a \code{\linkS4class{RnBeadSet}} object to a "mock" \code{\linkS4class{RnBiseqSet}} object
+#' (used in the combine method)
+#' 
+#' @name coercion-methods
+#' 
+setAs("RnBeadSet", "RnBiseqSet",
+        
+        function(from, to){
+            
+            ann<-annotation(from)
+            site.info<-ann[,c("Chromosome", "Start", "Strand")]
+            
+            object<-RnBiseqSet(
+                    pheno=pheno(from),
+                    sites=site.info,
+                    meth=meth(from),
+                    covg=NULL,
+                    assembly=from@assembly,
+                    target="CpG",
+                    useff=isTRUE(from@status$disk.dump),
+                    usebigff=isTRUE(from@status$disk.dump.bigff),
+                    verbose=FALSE
+            )
+            
+            object
+        })
 ########################################################################################################################

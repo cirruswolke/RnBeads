@@ -211,6 +211,7 @@ setMethod("samples", signature(object="RnBSet"),
 
 			if (is.null(ids) || any(is.na(ids)) || anyDuplicated(ids) != 0) {
 				rnb.warning("The supplied identifiers column is not found or is not suitable")
+                ids <- as.character(1:nrow(object@pheno))
 			}
 			ids <- as.character(ids)
 		} else if (!is.null(colnames(object@meth.sites))) {
@@ -1204,13 +1205,17 @@ setMethod("mergeSamples", signature(object = "RnBSet"),
 )
 ########################################################################################################################
 
+setGeneric("combine", function(x,y, type="all") standardGeneric("combine"))
+
 #' combine-methods
 #'
 #' Combine two objects inheriting from \code{\linkS4class{RnBSet}} class
 #'
 #' @param x,y 		\code{\linkS4class{RnBeadSet}}, \code{\linkS4class{RnBeadRawSet}}
 #' 					or \code{\linkS4class{RnBiseqSet}} object
-#'
+#' @param type		\code{character} singleton defining the set operation applied to the two site sets, 
+#' 					one of "all", "all.x", "all.y" or "common"
+#' 
 #' @details The sample sets of \code{x} and \code{y} should be unique.
 #' Sample annotation information is merged only for columns which have identical names in both objects.
 #' CpG sites of the new object are a union of those present in both objects.
@@ -1240,151 +1245,26 @@ setMethod("mergeSamples", signature(object = "RnBSet"),
 #' sites.rem.c <- intersect(sites.rem.r1,sites.rem.r2)
 #' (nrow(meth(rnb.set.example))-length(sites.rem.c)) == nrow(meth(rc))
 #' }
-setMethod("combine", signature(x="RnBSet",y="RnBSet"),
-		function(x,y){
-			if (class(x) != class(y)){
-				stop("Could not combine RnBSet objects: incompatible classes")
-			}
-			if (assembly(x) != assembly(y)){
-				stop("Could not combine RnBSet objects: incompatible assemblies")
-			}
-			if (x@target != y@target){
-				stop("Could not combine RnBSet objects: incompatible platforms")
-			}
-			common.samples <- intersect(samples(x),samples(y))
-			if (length(common.samples)>0){
-				stop(paste0("Could not combine RnBSet objects: the following samples overlap in both objects: ", paste(common.samples,collapse=",")))
-			}
-			useff <- x@status$disk.dump
-			if (x@status$disk.dump != y@status$disk.dump){
-				warning(paste0("disk dump status of the two objects to combine disagree. Using disk dump: ", useff))
-			}
-			usebigff <- useff
-			if (usebigff) usebigff <- !is.null(x@status$disk.dump.bigff)
-			if (usebigff) usebigff <- x@status$disk.dump.bigff
-			if(usebigff){
-				bff.finalizer <- rnb.getOption("disk.dump.bigff.finalizer")
-			}
-			# prepare a new object
-			new.set<-x
-			# if(nrow(pheno(x))>=nrow(pheno(y))){
-			# 	new.set<-y
-			# }else{
-			# 	new.set<-x
-			# }
-
-			new.set@pheno <- plyr::rbind.fill(pheno(x),pheno(y))
-
-			# combine sites
-			sites1<-x@sites
-			sites2<-y@sites
-
-			common.chr<-union(unique(sites1[,2]), unique(sites2[,2]))
-
-			subs1<-list()
-			subs2<-list()
-			common.sites<-list()
-
-			for(chr in common.chr){
-				sts<-sort(union(sites1[sites1[,2]==chr,3],sites2[sites2[,2]==chr,3]))
-				subs1[[chr]]<-match(sites1[sites1[,2]==chr,3], sts)
-				subs2[[chr]]<-match(sites2[sites2[,2]==chr,3], sts)
-				common.sites[[chr]]<-cbind(rep(1,length(sts)), rep(chr,length(sts)), sts)
-			}
-
-			total.sites<-sum(sapply(common.sites, nrow))
-
-			if("ff_matrix" %in% c(class(sites1), class(sites2))){
-				new.sites <- ff(vmode="integer", dim=c(total.sites,3))
-				ixx<-1
-				for(sts in common.sites){
-					new.sites[ixx:(ixx+nrow(sts)),]<-sts
-					ixx<-ixx+nrow(sts)+1
-				}
-			}else{
-				new.sites<-do.call("rbind", common.sites)
-			}
-
-			colnames(new.sites)<-NULL
-			new.set@sites<-new.sites
-
-			slot.names<-RNBSET.SLOTNAMES
-
-			if(inherits(x, "RnBeadSet")){
-				slot.names<-c(slot.names, RNBEADSET.SLOTNAMES)
-			}
-			if(inherits(x, "RnBeadRawSet")){
-				slot.names<-c(slot.names, RNBRAWSET.SLOTNAMES)
-			}
-
-			for(sl in slot.names){
-				if(all(!is.null(slot(x,sl)),!is.null(slot(y,sl)))){
-					if(useff){
-						#new.matrix<-ff(vmode=vmode(slot(x,sl)), dim=c(total.sites,nrow(pheno(new.set))))
-						if (usebigff){
-							new.matrix <- BigFfMat(row.n=total.sites, col.n=nrow(pheno(new.set)), vmode=vmode(slot(x,sl)), finalizer=bff.finalizer)
-						} else {
-							new.matrix <- create.empty.ff.matrix.tmp(vm=vmode(slot(x,sl)), dim=c(total.sites,nrow(pheno(new.set))))
-						}
-					}else{
-						new.matrix<-matrix(NA, nrow=total.sites, ncol=nrow(pheno(new.set)))
-					}
-					for(chr in common.chr){
-						#new.matrix[new.sites[,2]==chr,1:nrow(pheno(x))]<-slot(x,sl)[sites1[,2]==chr,][subs1[[chr]],]
-						#new.matrix[new.sites[,2]==chr,(nrow(pheno(x))+1):nrow(pheno(new.set))]<-slot(y,sl)[sites2[,2]==chr,][subs2[[chr]],]
-						ix<-which(new.sites[,2]==chr)
-						new.matrix[ix[subs1[[chr]]],1:nrow(pheno(x))]<-slot(x,sl)[sites1[,2]==chr,,drop=FALSE]
-						new.matrix[ix[subs2[[chr]]],(nrow(pheno(x))+1):nrow(pheno(new.set))]<-slot(y,sl)[sites2[,2]==chr,,drop=FALSE]
-					}
-					#colnames(new.matrix)<-c(colnames(slot(x,sl)), colnames(slot(y,sl)))
-					slot(new.set, sl)<-new.matrix
-					rm(new.matrix)
-					rnb.cleanMem()
-				}else{
-					slot(new.set, sl)<-NULL
-				}
-
-				if(x@status$disk.dump && isTRUE(x@status$discard.ff.matrices)){
-					delete(slot(x, sl))
-				}
-				if(y@status$disk.dump && isTRUE(y@status$discard.ff.matrices)){
-					delete(slot(y, sl))
-				}
-			}
-
-			if(inherits(x,"RnBeadSet")){
-				if(all(!is.null(qc(x)),!is.null(qc(y)))){
-					cpn<-intersect(rownames(qc(x)$Cy3), rownames(qc(x)$Cy3))
-					cy3.new<-cbind(qc(x)$Cy3[cpn,], qc(y)$Cy3[cpn,])
-					cy5.new<-cbind(qc(x)$Cy5[cpn,], qc(y)$Cy5[cpn,])
-					colnames(cy3.new)<-NULL
-					colnames(cy5.new)<-NULL
-					new.set@qc<-list(Cy3=cy3.new, Cy5=cy5.new)
-				}else{
-					new.set@qc<-NULL
-				}
-			}
-
-			new.set@status<-list()
-			if(inherits(new.set, "RnBeadSet")){
-				new.set@status$normalized<-"none"
-				new.set@status$background<-"none"
-			}
-			new.set@status$disk.dump<-useff
-			new.set@status$disk.dump.bigff<-usebigff
-
-			for (region.type in union(summarized.regions(x), summarized.regions(y))) {
-				if (region.type %in% rnb.region.types(assembly(new.set))) {
-					new.set <- summarize.regions(new.set, region.type)
-				}
-			}
-			new.set@inferred.covariates<-list()
-			new.set@imputed <- x@imputed && y@imputed
-
-			rm(common.sites, sites1, sites2, subs1, subs2, x, y)
-			rnb.cleanMem()
-			new.set
-		}
+setMethod("combine", signature(x="RnBSet", y="RnBSet"),
+        function(x, y, type="all"){
+            if(class(x)==class(y)){
+                if(inherits(x, "RnBeadSet")){
+                    rnb.combine.arrays(x, y, type=type)
+                }else if(inherits(x, "RnBiseqSet")){
+                    rnb.combine.seq(x, y, type=type)
+                }else{
+                    rnb.error("This combine operation is currently not supported")
+                }
+            }else{
+                if(inherits(x, "RnBiseqSet")){
+                    y.seq<-as(y, "RnBiseqSet")
+                    rnb.combine.seq(x, y.seq, type=type)
+                }else if(inherits(y, "RnBiseqSet")){
+                    x.seq<-as(x, "RnBiseqSet")
+                    rnb.combine.seq(x.seq, y, type=type)
+                }
+            }
+        }
 )
 
 ########################################################################################################################

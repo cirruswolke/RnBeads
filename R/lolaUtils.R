@@ -6,6 +6,30 @@
 ## Methods for LOLA enrichment analysis
 ########################################################################################################################
 
+#' getRoadmapMdFromId
+#'
+#' Helper function to retrieve metadata from Roadmap sample IDs
+#'
+#' @param sampleIds	vector of sample ids in Roadmap fort (e.g. "E014")
+#' @return a atble containing metadata for the supplied sample ids
+#'
+#' @author Fabian Mueller
+#' @noRd
+getRoadmapMdFromId <- function(sampleIds=NULL){
+	remcAnnotFn <- system.file(file.path("extdata", "remc_metadata_2013.tsv"), package = "RnBeads")
+	eidColname <- make.names("Epigenome ID (EID)")
+	nameColname <- make.names("Epigenome Mnemonic")
+	annot <- read.table(remcAnnotFn, header=TRUE, sep="\t", quote="", skip=0, comment.char="", stringsAsFactors=FALSE)
+	annot <- annot[!is.na(annot[,eidColname]) & nchar(annot[,eidColname])>0, ]
+	rownames(annot) <- annot[,eidColname]
+	if (length(sampleIds)<1) sampleIds <- annot[,eidColname]
+
+	snames <- annot[sampleIds,nameColname]
+	snames[is.na(snames)] <- sampleIds[is.na(snames)]
+	res <- data.frame(sampleId=sampleIds, sampleName=snames, stringsAsFactors=FALSE)
+	return(res)
+}
+
 #' getCellTypesFromLolaDb
 #'
 #' retrieve or guess cell types from a LOLA DB object
@@ -35,7 +59,8 @@ getCellTypesFromLolaDb <- function(lolaDb){
 	# special treatment for "roadmap_epigenomics" from LOLAExt
 	isInCollection <- tt$collection=="roadmap_epigenomics"
 	if (sum(isInCollection) > 0){
-		res[isInCollection] <- gsub("^(.+)-(.+)$", "\\1", tt$filename[isInCollection])
+		sampleIds <- gsub("^(.+)-(.+)$", "\\1", tt$filename[isInCollection])
+		res[isInCollection] <- paste0(getRoadmapMdFromId(sampleIds)[,"sampleName"], " (", sampleIds,")")
 	}
 
 	return(res)

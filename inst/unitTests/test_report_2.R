@@ -42,7 +42,7 @@ test_report_2 <- function() {
 			   <li>&Uuml;</li>
 			   </ul>
 			   </p>",
-			   '<p> A link: <a href="http://rnbeads.bioinf.mpi-inf.mpg.de/">RnBeads website</a></p>')
+			   '<p> A link: <a href="http://rnbeads.org/">RnBeads website</a></p>')
 	report <- rnb.add.section(report, "HTML code", stext)
 
 	report <- rnb.add.section(report, 'Plots', "")
