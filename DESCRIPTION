@@ -49,6 +49,7 @@ Suggests:
     shiny,
     shinyjs,
     plotrix,
+    hexbin,
     RUnit
 Depends:
     R (>= 3.0.0),
