@@ -1146,6 +1146,7 @@ setGeneric("combine", function(x,y, type="all") standardGeneric("combine"))
 #' @rdname combine-methods
 #' @docType methods
 #' @export
+#' @aliases combine
 #' @aliases combine,RnBSet-method
 #' @examples
 #' \donttest{
