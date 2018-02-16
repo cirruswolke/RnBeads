@@ -1125,7 +1125,7 @@ setMethod("mergeSamples", signature(object = "RnBSet"),
 )
 ########################################################################################################################
 
-setGeneric("combine", function(x,y, type="all") standardGeneric("combine"))
+#setGeneric("combine", function(x,y, ...) standardGeneric("combine"))
 
 #' combine-methods
 #'
