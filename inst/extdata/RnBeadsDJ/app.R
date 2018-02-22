@@ -2174,13 +2174,13 @@ server <- function(input, output, session) {
 	#apply the options stored in list 'ol'
 	applyOptList <- function(ol, ol.old=list()){
 		for (oname in names(ol)){
-			print(paste("DEBUG: Reading XML option:", oname))
+			# print(paste("DEBUG: Reading XML option:", oname))
 			rr <- tryCatch(
 				applyOptValue(oname, ol[[oname]]),
 				error = function(err) {
 					showNotification(tags$span(style="color:red", icon("warning"), paste0("Could not update option '", oname, " (", err$message, ")")))
 					if (is.element(oname, names(ol.old))){
-						print(paste("DEBUG: FAILED: Resetting to old option"))
+						# print(paste("DEBUG: FAILED: Resetting to old option"))
 						applyOptValue(oname, ol.old[[oname]], fallback=TRUE)
 						optSettingList <- list(ol.old[[oname]])
 						names(optSettingList) <- oname
