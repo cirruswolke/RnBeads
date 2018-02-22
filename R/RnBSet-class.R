@@ -1205,7 +1205,7 @@ setMethod("mergeSamples", signature(object = "RnBSet"),
 )
 ########################################################################################################################
 
-setGeneric("combine", function(x,y, type="all") standardGeneric("combine"))
+#setGeneric("combine", function(x,y, ...) standardGeneric("combine"))
 
 #' combine-methods
 #'
@@ -1226,6 +1226,7 @@ setGeneric("combine", function(x,y, type="all") standardGeneric("combine"))
 #' @rdname combine-methods
 #' @docType methods
 #' @export
+#' @aliases combine
 #' @aliases combine,RnBSet-method
 #' @examples
 #' \donttest{

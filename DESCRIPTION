@@ -9,8 +9,8 @@ Authors@R: c(
     role = c("aut")),
     person("Fabian", "Mueller", email = "rnbeads@mpi-inf.mpg.de",
     role = c("aut", "cre")))
-Date: 2018-02-06
-Version: 1.11.7
+Date: 2018-02-22
+Version: 1.11.8
 Suggests:
     Category,
     GOstats,
@@ -49,6 +49,7 @@ Suggests:
     shiny,
     shinyjs,
     plotrix,
+    hexbin,
     RUnit
 Depends:
     R (>= 3.0.0),

@@ -3,7 +3,7 @@
 \docType{methods}
 \name{combine,RnBSet,RnBSet-method}
 \alias{combine,RnBSet,RnBSet-method}
-\alias{combine,RnBSet-method}
+\alias{combine}
 \title{combine-methods}
 \usage{
 \S4method{combine}{RnBSet,RnBSet}(x, y, type = "all")

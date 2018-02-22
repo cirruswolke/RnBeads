@@ -277,6 +277,8 @@ rnb.combine.seq<-function(x,y,type="common"){
     
     subs1<-list()
     subs2<-list()
+    map1<-list()
+    map2<-list()
     common.sites<-list()
     
     for(chr in common.chr){
@@ -289,8 +291,14 @@ rnb.combine.seq<-function(x,y,type="common"){
         }else if(type == "all"){
             sts<-sort(union(sites1[sites1[,2]==chr,3],sites2[sites2[,2]==chr,3]))
         }
-        subs1[[chr]]<-match(sites1[sites1[,2]==chr,3], sts)
-        subs2[[chr]]<-match(sites2[sites2[,2]==chr,3], sts)
+        mtch1<-match(sites1[sites1[,2]==chr,3], sts)
+        valid1<-which(!is.na(mtch1))
+        map1[[chr]]<-valid1
+        subs1[[chr]]<-mtch1[valid1]
+        mtch2<-match(sites2[sites2[,2]==chr,3], sts)
+        valid2<-which(!is.na(mtch2))
+        map2[[chr]]<-valid2
+        subs2[[chr]]<-mtch2[valid2]
         common.sites[[chr]]<-cbind(rep(1,length(sts)), rep(chr,length(sts)), sts)
     }
     
@@ -332,11 +340,11 @@ rnb.combine.seq<-function(x,y,type="common"){
                 new.matrix<-matrix(NA, nrow=total.sites, ncol=nrow(pheno(new.set)))
             }
             for(chr in common.chr){
-                #new.matrix[new.sites[,2]==chr,1:nrow(pheno(x))]<-slot(x,sl)[sites1[,2]==chr,][subs1[[chr]],]
+                #new.matrix[new.sites[,2]==chr,1:nrow(pheno(x))]<-slot(x,sl)[sites1[map1[[chr]],2]==chr,][subs1[[chr]],]
                 #new.matrix[new.sites[,2]==chr,(nrow(pheno(x))+1):nrow(pheno(new.set))]<-slot(y,sl)[sites2[,2]==chr,][subs2[[chr]],]
                 ix<-which(new.sites[,2]==chr)
-                new.matrix[ix[subs1[[chr]]],1:nrow(pheno(x))]<-slot(x,sl)[sites1[,2]==chr,,drop=FALSE]
-                new.matrix[ix[subs2[[chr]]],(nrow(pheno(x))+1):nrow(pheno(new.set))]<-slot(y,sl)[sites2[,2]==chr,,drop=FALSE]
+                new.matrix[ix[subs1[[chr]]],1:nrow(pheno(x))]<-slot(x,sl)[which(sites1[,2]==chr)[map1[[chr]]],,drop=FALSE]
+                new.matrix[ix[subs2[[chr]]],(nrow(pheno(x))+1):nrow(pheno(new.set))]<-slot(y,sl)[which(sites2[,2]==chr)[map2[[chr]]],,drop=FALSE]
             }
             #colnames(new.matrix)<-c(colnames(slot(x,sl)), colnames(slot(y,sl)))
             slot(new.set, sl)<-new.matrix
