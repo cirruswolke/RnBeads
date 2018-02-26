@@ -5,13 +5,17 @@
 \title{rnb.execute.imputation}
 \usage{
 rnb.execute.imputation(rnb.set, method = rnb.getOption("imputation.method"),
-  ...)
+  update.ff = TRUE, ...)
 }
 \arguments{
 \item{rnb.set}{Dataset object inheriting from \code{\linkS4class{RnBSet}}.}
 
 \item{method}{Imputation method to be used, must be one of \code{"mean.cpgs"}, \code{"mean.samples"},
 \code{"random"}, \code{"knn"}, \code{"median.cpgs"}, \code{"median.samples"}, or \code{"none"}.}
+
+\item{update.ff}{flag indicating if the disk based matrices should be updated. Should be set to FALSE, if methylation
+matrix should only temporarly be changed. If this value is FALSE, the region level methylation values
+are not updated and only the site-wise matrix is changed temporarly.}
 
 \item{...}{Optional arguments passed to knn.imputation}
 }

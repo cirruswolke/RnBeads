@@ -9,13 +9,14 @@
 computeDiffTab.default.site(X, inds.g1, inds.g2,
   diff.method = rnb.getOption("differential.site.test.method"),
   variability.method = rnb.getOption("differential.variability.method"),
-  paired = FALSE, adjustment.table = NULL, eps = 0.01)
+  paired = FALSE, adjustment.table = NULL, eps = 0.01, imputed = FALSE)
 
 computeDiffTab.extended.site(X, inds.g1, inds.g2,
   diff.method = rnb.getOption("differential.site.test.method"),
   variability.method = rnb.getOption("differential.variability.method"),
   paired = FALSE, adjustment.table = NULL, eps = 0.01, covg = NULL,
-  covg.thres = rnb.getOption("filtering.coverage.threshold"))
+  covg.thres = rnb.getOption("filtering.coverage.threshold"),
+  imputed = FALSE)
 }
 \arguments{
 \item{X}{Matrix on which the difference measures are calculated for every row}
@@ -40,6 +41,8 @@ order, such that the first element of inds.g1 corresponds to the first element o
 \code{diff.method=="limma"}}
 
 \item{eps}{Epsilon for computing quotients (avoid division by 0 by adding this value to denominator and enumerator before calculating the quotient)}
+
+\item{imputed}{flag indicating if methylation matrix was already imputed}
 
 \item{covg}{coverage information (should be NULL for disabled or of equal dimensions as X)}
 

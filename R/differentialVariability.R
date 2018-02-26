@@ -39,11 +39,11 @@ rnb.execute.diffVar <- function(rnb.set,pheno.cols=rnb.getOption("differential.c
   
   variability.method <- rnb.getOption("differential.variability.method")
   diff.meth <- new("RnBDiffMeth",variability.method=variability.method,disk.dump=disk.dump,disk.path=disk.dump.dir)
+  if(!isImputed(rnb.set)) rnb.set <- rnb.execute.imputation(rnb.set,update.ff=FALSE)
 
   for(i in 1:length(cmp.info)){
     cmp.info.cur <- cmp.info[[i]]
     logger.start(c("Comparing ",cmp.info.cur$comparison))
-    if(!isImputed(rnb.set)) rnb.set <- rnb.execute.imputation(rnb.set)
     if(cmp.info.cur$paired){
       logger.status("Conducting PAIRED analysis")
     }
@@ -1219,6 +1219,7 @@ computeDiffVar.bin.site <- function(X,inds.g1,inds.g2,
         p.vals.var <- diffVar(X,inds.g1,inds.g2,adjustment.table=adjustment.table,paired = paired),
         error = function(ee) {
           logger.warning(c("Could not compute p-values using diffVar:",ee$message))
+          logger.completed()
         }
       )
     } else if (variability.method == "iEVORA"){
@@ -1229,6 +1230,7 @@ computeDiffVar.bin.site <- function(X,inds.g1,inds.g2,
           p.vals.var <- diffVar(X,inds.g1,inds.g2,adjustment.table=adjustment.table,paired=paired),
           error = function(ee) {
             logger.warning(c("Could not compute p-values using diffVar:",ee$message))
+            logger.completed()
           }
         )
       }else{
@@ -1236,6 +1238,7 @@ computeDiffVar.bin.site <- function(X,inds.g1,inds.g2,
           p.vals.var <- apply.iEVORA(X,inds.g1,inds.g2),
           error = function(ee) {
             logger.warning(c("Could not compute p-values using iEVORA:",ee$message))
+            logger.completed()
           }
         )
       }
@@ -1335,7 +1338,7 @@ computeDiffVar.default.region <- function(dmtp,regions2sites){
   p.vals.var.is.na <- is.na(p.vals.var)
   if (any(p.vals.var.is.na)){
     logger.info(c(sum(p.vals.var.is.na),"p-values are NA. They are treated as 1 in FDR adjustment"))
-    p.valsvar.na.adj[is.na(p.valsvar..na.adj)] <- 1
+    p.vals.var.na.adj[is.na(p.vals.var.na.adj)] <- 1
   }
   p.vals.var.adj <- p.adjust(p.vals.var.na.adj, method = "fdr")
   tt <- cbind(data.frame(mean.var.g1=mean.var.g1,mean.var.g2=mean.var.g2,mean.var.diff=diff.var,

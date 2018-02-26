@@ -1051,14 +1051,19 @@ rnb.step.normalization<-function(object, report, method = rnb.getOption("normali
 #' Performs mean imputation either for all samples (way=1) or for all CpGs (way=2).
 #'
 #'@param rnb.set Object containing the methylation information to be changed. Has to be of
-#'               type \code{\linkS4class{RnBeadSet}} or \code{\linkS4class{RnBiseqSet}}.
+#'               type \code{\linkS4class{RnBeadSet}} or \code{\linkS4class{RnBiseqSet}} or a data matrix containing
+#'               the methylation values.
 #'@param way Should the sample-wise mean (1) or CpG-wise mean (2) be used to replace the missing value.
 #'@return Modified rnb.set object.
 #'
 #'@author Michael Scherer
 #'@noRd
 mean.imputation <- function(rnb.set,way=1){
-  methData <- meth(rnb.set)
+  if(inherits(rnb.set,"RnBSet")){
+    methData <- meth(rnb.set)
+  }else{
+    methData <- as.matrix(rnb.set)
+  }
   nas <- is.na(methData)
   if(any(apply(nas,1,all))){
     logger.warning("There are CpG sites that have missing values in all samples, imputation not performed.")
@@ -1089,14 +1094,15 @@ mean.imputation <- function(rnb.set,way=1){
 #' Performs (sample-wise) imputation in a low memory-footprint way with the specified method
 #'
 #'@param rnb.set Object containing the methylation information to be changed. Has to be of
-#'               type \code{\linkS4class{RnBeadSet}} or \code{\linkS4class{RnBiseqSet}}.
+#'               type \code{\linkS4class{RnBeadSet}} or \code{\linkS4class{RnBiseqSet}} or a data matrix containing
+#'               the methylation values.
 #'@param method Method to be used, should be either 'mean' or 'median'
 #'@return Modified rnb.set object.
 #'
 #'@author Michael Scherer
 #'@noRd
 imputation.low.memory.samples <- function(rnb.set,method=mean){
-  for(i in 1:nsites(rnb.set)){
+ for(i in 1:nsites(rnb.set)){
     cpg <- meth(rnb.set,i=i)
     if(any(is.na(cpg))){
       rnb.set@meth.sites[i,which(is.na(cpg))] <- method(cpg,na.rm=T)
@@ -1112,7 +1118,8 @@ imputation.low.memory.samples <- function(rnb.set,method=mean){
 #' Performs (cpg-wise) imputation in a low memory-footprint way with the specified method
 #'
 #'@param rnb.set Object containing the methylation information to be changed. Has to be of
-#'               type \code{\linkS4class{RnBeadSet}} or \code{\linkS4class{RnBiseqSet}}.
+#'               type \code{\linkS4class{RnBeadSet}} or \code{\linkS4class{RnBiseqSet}} or a data matrix containing
+#'               the methylation values.
 #'@param method Method to be used, should be either 'mean' or 'median'
 #'@return Modified rnb.set object.
 #'
@@ -1141,13 +1148,18 @@ imputation.low.memory.cpgs <- function(rnb.set,method=mean){
 #' that do not contain missing values.
 #'
 #'@param rnb.set Object containing the methylation information to be changed. Has to be of
-#'               type \code{\linkS4class{RnBeadSet}} or \code{\linkS4class{RnBiseqSet}}.
+#'               type \code{\linkS4class{RnBeadSet}} or \code{\linkS4class{RnBiseqSet}} or a data matrix containing
+#'               the methylation values.
 #'@return Modified rnb.set object.
 #'
 #'@author Michael Scherer
 #'@noRd
 random.imputation <- function(rnb.set){
-  methData <- meth(rnb.set)
+  if(inherits(rnb.set,"RnBSet")){
+    methData <- meth(rnb.set)
+  }else{
+    methData <- as.matrix(rnb.set)
+  }
   nas <- is.na(methData)
   if(any(apply(nas,1,all))){
     logger.warning("There are CpG sites that have missing values in all samples, imputation not performed.")
@@ -1170,7 +1182,8 @@ random.imputation <- function(rnb.set){
 #' \pkg{impute} package.
 #'
 #'@param rnb.set Object containing the methylation information to be changed. Has to be of
-#'               type \code{\linkS4class{RnBeadSet}} or \code{\linkS4class{RnBiseqSet}}.
+#'               type \code{\linkS4class{RnBeadSet}} or \code{\linkS4class{RnBiseqSet}} or a data matrix containing
+#'               the methylation values.
 #'@param k parameter defining the number of nearest neighbors from which the missing value should be inferred
 #'@return Modified rnb.set object.
 #'
@@ -1178,7 +1191,11 @@ random.imputation <- function(rnb.set){
 #'@noRd
 knn.imputation <- function(rnb.set,k=10){
   rnb.require('impute')
-  methData <- meth(rnb.set)
+  if(inherits(rnb.set,"RnBSet")){
+    methData <- meth(rnb.set)
+  }else{
+    methData <- as.matrix(rnb.set)
+  }
   dummy <- capture.output(methData <- (impute.knn(methData,colmax=1,k=k))$data)
   rm(dummy)
   return(methData)
@@ -1191,22 +1208,27 @@ knn.imputation <- function(rnb.set,k=10){
 #' Performs median imputation either for all samples (way=1) or for all CpGs (way=2).
 #'
 #'@param rnb.set Object containing the methylation information to be changed. Has to be of
-#'               type \code{\linkS4class{RnBeadSet}} or \code{\linkS4class{RnBiseqSet}}.
+#'               type \code{\linkS4class{RnBeadSet}} or \code{\linkS4class{RnBiseqSet}} or a data matrix containing
+#'               the methylation values.
 #'@param way Should the sample-wise median (1) or CpG-wise median (2) be used to replace the missing value.
 #'@return Modified rnb.set object.
 #'
 #'@author Michael Scherer
 #'@noRd
 median.imputation <- function(rnb.set,way=1){
-  methData <- meth(rnb.set)
+  if(inherits(rnb.set,"RnBSet")){
+    methData <- meth(rnb.set)
+  }else{
+    methData <- as.matrix(rnb.set)
+  }
   nas <- is.na(methData)
   if(any(apply(nas,1,all))){
     logger.warning("There are CpG sites that have missing values in all samples, imputation not performed.")
-    return(rnb.set)
+    return(methData)
   }
   if(any(apply(nas,2,all))){
     logger.warning("There are samples that have only missing values at the CpG sites, imputation not performed.")
-    return(rnb.set)
+    return(methData)
   }
   medians <- apply(methData,way,median,na.rm=TRUE)
   has.nas <- which(apply(nas,way,any))
@@ -1231,6 +1253,9 @@ median.imputation <- function(rnb.set,way=1){
 #' @param rnb.set Dataset object inheriting from \code{\linkS4class{RnBSet}}.
 #' @param method Imputation method to be used, must be one of \code{"mean.cpgs"}, \code{"mean.samples"},
 #'                \code{"random"}, \code{"knn"}, \code{"median.cpgs"}, \code{"median.samples"}, or \code{"none"}.
+#' @param update.ff flag indicating if the disk based matrices should be updated. Should be set to FALSE, if methylation
+#'                  matrix should only temporarly be changed. If this value is FALSE, the region level methylation values
+#'                  are not updated and only the site-wise matrix is changed temporarly.
 #' @param ... Optional arguments passed to knn.imputation
 #' @return The modified rnb.set object without missing methylation values.
 #' 
@@ -1253,8 +1278,8 @@ median.imputation <- function(rnb.set,way=1){
 #' @author Michael Scherer
 #'
 #' @export
-rnb.execute.imputation <- function(rnb.set,method=rnb.getOption("imputation.method"),...){
-  if(!inherits(rnb.set,"RnBSet")){
+rnb.execute.imputation <- function(rnb.set,method=rnb.getOption("imputation.method"),update.ff=TRUE,...){
+  if(!(inherits(rnb.set,"RnBSet")||is.matrix(rnb.set)||is.data.frame(rnb.set))){
     stop("Invalid value for input object, has to be of type RnBeadSet or RnBiseqSet")
   }
   if(!(method%in%c('mean.cpgs','mean.samples','random','knn','median.cpgs','median.samples'))){
@@ -1263,7 +1288,7 @@ rnb.execute.imputation <- function(rnb.set,method=rnb.getOption("imputation.meth
         logger.info("No imputation method selected, 'knn' method used.")
         rnb.options(imputation.method='knn')
         method = 'knn'
-      }else if (inherits(rnb.set,"RnBiseqSet")){
+      }else if (inherits(rnb.set,"RnBiseqSet")||is.matrix(rnb.set)||is.data.frame(rnb.set)){
         logger.info("No imputation method selected, 'mean.samples' method used.")
         rnb.options(imputation.method='mean.samples')
         method = 'mean.samples'
@@ -1278,19 +1303,34 @@ rnb.execute.imputation <- function(rnb.set,method=rnb.getOption("imputation.meth
     logger.info("Knn imputation not applicable to sequencing data sets, switched to 'mean.samples' method")
   }
   if(rnb.getOption("enforce.memory.management")){
-    logger.start("Low memory footprint version of imputation")
     if(!method%in%c("mean.cpgs","median.cpgs")){
       logger.info(sprintf("Low memory imputation not compatible with method %s, switched to mean.cpgs",method))
       method <- "mean.cpgs"
     }
     if(method=="mean.cpgs"){
+      if(is.data.frame(rnb.set)||is.matrix(rnb.set)){
+        logger.info("No low memory footprint imputation available for matrix")
+        meth.data <- mean.imputation(rnb.set,way=2)
+        return(meth.data)
+      }
+      logger.start("Low memory footprint version of imputation")
       rnb.set <- imputation.low.memory.cpgs(rnb.set,mean)
+      logger.completed()
     }
     if(method=="median.cpgs"){
+      if(is.data.frame(rnb.set)||is.matrix(rnb.set)){
+        logger.info("No low memory footprint imputation available for matrix")
+        meth.data <- median.imputation(rnb.set,way=2)
+        return(meth.data)
+      }
+      logger.start("Low memory footprint version of imputation")
       rnb.set <- imputation.low.memory.cpgs(rnb.set,median)
+      logger.completed()
     }
-    rnb.set <- updateRegionSummaries(rnb.set)
-    rnb.set@imputed <- TRUE
+    if(inherits(rnb.set,"RnBSet")){
+      rnb.set <- updateRegionSummaries(rnb.set)
+      rnb.set@imputed <- TRUE
+    }
     logger.completed()
     return(rnb.set)
   }
@@ -1313,8 +1353,16 @@ rnb.execute.imputation <- function(rnb.set,method=rnb.getOption("imputation.meth
   if(method=='median.samples'){
     meth.data <- median.imputation(rnb.set,1)
   }
-  rnb.set <- updateMethylationSites(rnb.set,meth.data)
-  rnb.set@imputed <- TRUE
+  if(inherits(rnb.set,"RnBSet")){
+    if(update.ff){
+      rnb.set <- updateMethylationSites(rnb.set,meth.data)
+      rnb.set@imputed <- TRUE
+    }else{
+      rnb.set@meth.sites <- meth.data
+    }
+  }else{
+    rnb.set <- meth.data
+  }
   logger.completed()
   return(rnb.set)
 }
