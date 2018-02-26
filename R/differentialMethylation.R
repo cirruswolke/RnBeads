@@ -279,6 +279,7 @@ limmaP <- function(X,inds.g1,inds.g2=-inds.g1,adjustment.table=NULL,fun.conversi
 #' @param eps Epsilon for computing quotients (avoid division by 0 by adding this value to denominator and enumerator before calculating the quotient)
 #' @param covg coverage information (should be NULL for disabled or of equal dimensions as X)
 #' @param covg.thres a coverage threshold
+#' @param imputed flag indicating if methylation matrix was already imputed
 #' @return a dataframe containing the following variables:
 #' \item{mean.g1}{Mean of group 1}
 #' \item{mean.g2}{Mean of group 2}
@@ -310,7 +311,7 @@ limmaP <- function(X,inds.g1,inds.g2=-inds.g1,adjustment.table=NULL,fun.conversi
 computeDiffTab.default.site <- function(X,inds.g1,inds.g2,
 		diff.method=rnb.getOption("differential.site.test.method"),
 		variability.method=rnb.getOption("differential.variability.method"),
-		paired=FALSE,adjustment.table=NULL,eps=0.01){
+		paired=FALSE,adjustment.table=NULL,eps=0.01,imputed=FALSE){
 	if (!(diff.method %in% c("ttest","limma","refFreeEWAS"))) {
 		stop("Invalid method for differential site methylation test method")
 	}
@@ -378,6 +379,11 @@ computeDiffTab.default.site <- function(X,inds.g1,inds.g2,
 	tt <- data.frame(mean.g1=mean.g1,mean.g2=mean.g2,mean.diff=mean.diff,mean.quot.log2=mean.quot.log2,diffmeth.p.val=p.vals)
 
 	if(rnb.getOption("differential.variability")){
+	  if(!imputed){
+	    X <- rnb.execute.imputation(X)
+	    tab.g1 <- X[,inds.g1]
+	    tab.g2 <- X[,inds.g2]
+	  }
 	  p.vals.var <- rep(as.double(NA),nrow(X))
 	  do.p.vals <- ncol(tab.g1) > 1 || ncol(tab.g2) > 1
 	  if (do.p.vals) {
@@ -387,6 +393,7 @@ computeDiffTab.default.site <- function(X,inds.g1,inds.g2,
 	        p.vals.var <- diffVar(X,inds.g1,inds.g2,adjustment.table=adjustment.table,paired=paired),
 	        error = function(ee) {
 	          logger.warning(c("Could not compute p-values using diffVar:",ee$message))
+	          logger.completed()
 	        }
 	      )
 	    } else if (variability.method == "iEVORA"){
@@ -398,6 +405,7 @@ computeDiffTab.default.site <- function(X,inds.g1,inds.g2,
 	          p.vals.var <- diffVar(X,inds.g1,inds.g2,adjustment.table=adjustment.table,paired=paired),
 	          error = function(ee) {
 	            logger.warning(c("Could not compute p-values using diffVar:",ee$message))
+	            logger.completed()
 	          }
 	        )
 	      }else{
@@ -405,6 +413,7 @@ computeDiffTab.default.site <- function(X,inds.g1,inds.g2,
   	        p.vals.var <- apply.iEVORA(X,inds.g1,inds.g2),
   	        error = function(ee) {
   	          logger.warning(c("Could not compute p-values using iEVORA:",ee$message))
+  	          logger.completed()
   	        }
   	      )
 	      }
@@ -448,7 +457,7 @@ computeDiffTab.extended.site <- function(X,inds.g1,inds.g2,
 		diff.method=rnb.getOption("differential.site.test.method"),
 		variability.method=rnb.getOption("differential.variability.method"),
 		paired=FALSE,adjustment.table=NULL,
-		eps=0.01,covg=NULL,covg.thres=rnb.getOption("filtering.coverage.threshold")){
+		eps=0.01,covg=NULL,covg.thres=rnb.getOption("filtering.coverage.threshold"),imputed=FALSE){
 	# require(matrixStats)
 	tt.basic <- computeDiffTab.default.site(
 		X,inds.g1=inds.g1,inds.g2=inds.g2,
@@ -3019,7 +3028,6 @@ rnb.execute.computeDiffMeth <- function(x,pheno.cols,region.types=rnb.region.typ
 		return(NULL)
 	}
 
-	if(rnb.getOption("differential.variability") & !isImputed(x)) x <- rnb.execute.imputation(x)
 	diff.method <- rnb.getOption("differential.site.test.method")
 	variability.method <- rnb.getOption("differential.variability.method")
 	dot.args <- list(...)
@@ -3048,6 +3056,7 @@ rnb.execute.computeDiffMeth <- function(x,pheno.cols,region.types=rnb.region.typ
 					meth(x),inds.g1=cmp.info.cur$group.inds$group1,inds.g2=cmp.info.cur$group.inds$group2,
 					covg=covg(x),covg.thres=covg.thres,
 					paired=cmp.info.cur$paired, adjustment.table=cmp.info.cur$adjustment.table,
+					imputed=isImputed(x),
 					...
 			)
 			diffmeth <- addDiffMethTable(diffmeth,dm,cmp.info.cur$comparison,"sites",cmp.info.cur$group.names)

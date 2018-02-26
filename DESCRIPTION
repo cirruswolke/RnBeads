@@ -7,6 +7,8 @@ Authors@R: c(
     role = c("aut")),
     person("Pavlo", "Lutsik", email = "p.lutsik@mx.uni-saarland.de",
     role = c("aut")),
+    person("Michael", "Scherer", email = "mscherer@mpi-inf.mpg.de",
+    role = c("aut")),
     person("Fabian", "Mueller", email = "rnbeads@mpi-inf.mpg.de",
     role = c("aut", "cre")))
 Date: 2018-02-06
