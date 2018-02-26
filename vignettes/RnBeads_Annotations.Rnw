@@ -91,7 +91,7 @@
 
 \title{\cs{RnBeads} -- Annotations}
 
-\author{Yassen Assenov, Fabian M\"uller, Pavlo Lutsik}
+\author{Yassen Assenov, Fabian M\"uller, Pavlo Lutsik, Michael Scherer}
 
 \thispagestyle{empty}
 \maketitle

@@ -91,7 +91,7 @@
 
 \title{\cs{RnBeads} -- Comprehensive Analysis of DNA Methylation Data}
 
-\author{Fabian M\"uller, Yassen Assenov, Pavlo Lutsik \\
+\author{Fabian M\"uller, Yassen Assenov, Pavlo Lutsik, Michael Scherer \\
 	\small{Contact: \cs{rnbeads@mpi-inf.mpg.de}} \\
 	\small{Package version: \cs{1.9.4}}}
 
