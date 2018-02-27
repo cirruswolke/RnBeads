@@ -2,6 +2,7 @@ RnBeads 1.11.8
 =============
  
  * Fixes for bioconductor warnings (combine, etc.)
+ * docoupled missing value imputation from differential methylation
 
 RnBeads 1.11.7
 =============
