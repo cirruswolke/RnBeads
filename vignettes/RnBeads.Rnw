@@ -88,6 +88,7 @@
 \pagestyle{fancy}
 
 \begin{document}
+\SweaveOpts{concordance=TRUE}
 
 \title{\cs{RnBeads} -- Comprehensive Analysis of DNA Methylation Data}
 
@@ -678,13 +679,34 @@ rnb.options(qc.snp.boxplot=TRUE)
 		\caption{Mean signal increase in the X and Y chromosomes of 4587 female and 4633 male samples, represented by red and blue points, respectively. The presented dataset includes tumor and normal samples from 30 tumor types, downloaded from The Cancer Genome Atlas (TCGA). The solid black line shows the decision boundary in the classifier applied by RnBeads. Training a logistic regression model on the presented data produces an almost identical decision boundary.}
 	\end{figure}
 
-	\cs{RnBeads} includes a method for inferring the gender of methylation samples. It is accessible using the function \cs{rnb.execute.gender.prediction}. Currently, the classifier is applicable only for Infinium 450k datasets with signal intensity information. Gender prediction is automatically executed when loading Infinium 450k datasets from IDAT files; it can be disabled using the corresponding options, as shown below:
+	\cs{RnBeads} includes a method for inferring the gender of methylation samples. It is accessible using the function \cs{rnb.execute.gender.prediction}. Currently, the classifier is applicable for Infinium 450k, EPIC and bisulfite sequencing datasets with either signal intensity or coverage information. Gender prediction is automatically executed when loading those datasets from IDAT/BED files; it can be disabled using the corresponding options, as shown below:
 
 <<eval=FALSE>>=
 rnb.options(import.gender.prediction = FALSE)
 @
 
-	The assumption made in RnBeads is that the quantity (number) of X and Y chromosomes in a sample is reflected in the signal intensities on the array. The measurements used in the prediction are $MI_X$: \emph{mean increase in X} and $MI_Y$: \emph{mean increaase in Y}. These metrics are defined as $\overline{I}_{X} - \overline{I}_{a}$ and $\overline{I}_{Y} - \overline{I}_{a}$, where $\overline{I}_X$, $\overline{I}_Y$ and $\overline{I}_a$ denote the average probe signal intensity on the X chromosome, the Y chromosome and all autosomes, respectively. Probes known to be cross-reactive, as well as those overlapping with known SNPs, are ignored in the calculations presented here. \cs{RnBeads} uses these metrics in a logistic regression classifier to predict the gender of a sample, $MI_Y > 3 MI_X + 3$ indicates male gender. Figure~\ref{fig:increase-gen-infinium} shows the \emph{mean increase} values for over 9,200 samples with known gender, as well as the decision boundary of the classifier applied in \cs{RnBeads}.
+	The methods for inferring gender from Infinium datsets are different from those for bisulfite sequencing data sets. For Infinium datasets, the assumption made in RnBeads is that the quantity (number) of X and Y chromosomes in a sample is reflected in the signal intensities on the array. The measurements used in the prediction are $MI_X$: \emph{mean increase in X} and $MI_Y$: \emph{mean increaase in Y}. These metrics are defined as $\overline{I}_{X} - \overline{I}_{a}$ and $\overline{I}_{Y} - \overline{I}_{a}$, where $\overline{I}_X$, $\overline{I}_Y$ and $\overline{I}_a$ denote the average probe signal intensity on the X chromosome, the Y chromosome and all autosomes, respectively. Probes known to be cross-reactive, as well as those overlapping with known SNPs, are ignored in the calculations presented here. \cs{RnBeads} uses these metrics in a logistic regression classifier to predict the gender of a sample, $MI_Y > 3 MI_X + 3$ indicates male gender. Figure~\ref{fig:increase-gen-infinium} shows the \emph{mean increase} values for over 9,200 samples with known gender, as well as the decision boundary of the classifier applied in \cs{RnBeads}.\\
+	For bisulfite sequencing (RRBS or WGBS) datasets, \cs{RnBeads} compares the sequencing coverages for the sex chromosomes to those of the autosomes. From these values, a logistic regression classifier is employed to predict class probabilities of each sample for the male and female category. Both the predicted probability and the predicted class are added to the \cs{RnBSet's} sample annotation. Coefficients for the logistic regression classifier were trained on a large dataset (c.f. Figure ~\ref{tab:gender-prediction-bs}) containing gender annotated samples. 
+	
+	\begin{table}[h!]
+			\caption{Dataset used to train coefficients of the gender prediction logistic regression model for bisulfite sequencing datasets.}
+			\vspace{10px}
+		\begin{tabular}{|p{2.95cm}|p{2.7cm}|c|c|c|c|c|}
+		\hline
+		\textbf{Dataset} & \textbf{Source} & \textbf{Organism} & \textbf{Method} & \textbf{\#total} & \textbf{\#female} & \textbf{\#male}\\
+		\hline
+		\hline
+BLUEPRINT (08/2016 release) & \href{http://www.blueprint-epigenome.eu/}{BLUEPRINT} & human & WGBS & 188 & 99 & 89\\
+DEEP data (version 11/2016) & \href{http://www.deutsches-epigenom-programm.de/}{DEEP} & human & WGBS & 31 & 14 & 17\\
+Kiel Cohort & IKMB Kiel & human & RRBS & 239 & 106 & 133\\
+Ewing sarcoma tumor samples & GEO \href{https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE88826}{GSE88826} & human & RRBS & 96 & 53 & 42\\
+Reizel GEO & GEO \href{https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE60012}{GSE60012} & mouse & RRBS & 152 & 94 & 58\\
+\hline
+ \textbf{Complete} &  &  &  & \textbf{706} & \textbf{366} & \textbf{339}\\
+ \hline
+		\end{tabular}
+		\label{tab:gender-prediction-bs}
+	\end{table}
 
 
 \subsection{Preprocessing}
