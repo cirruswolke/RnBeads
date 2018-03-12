@@ -1331,7 +1331,6 @@ rnb.execute.imputation <- function(rnb.set,method=rnb.getOption("imputation.meth
       rnb.set <- updateRegionSummaries(rnb.set)
       rnb.set@imputed <- TRUE
     }
-    logger.completed()
     return(rnb.set)
   }
   logger.start(sprintf("Imputation procedure %s ",method))
