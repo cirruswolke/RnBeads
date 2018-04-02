@@ -94,7 +94,7 @@
 
 \author{Fabian M\"uller, Yassen Assenov, Pavlo Lutsik, Michael Scherer \\
 	\small{Contact: \cs{rnbeads@mpi-inf.mpg.de}} \\
-	\small{Package version: \cs{1.9.4}}}
+	\small{Package version: \cs{1.10.8}}}
 
 \thispagestyle{empty}
 \maketitle
@@ -117,8 +117,13 @@ suppressPackageStartupMessages(library(RnBeads))
 source("http://bioconductor.org/biocLite.R")
 biocLite(c("RnBeads", "RnBeads.hg38"))
 @
+	
+	Alternatively, we also provide a an easy-to-use installation script that ensures all dependencies are installed. This way, you can install RnBeads by running a single line of code in your R environment:
+<<eval=FALSE>>=
+source("http://rnbeads.mpi-inf.mpg.de/publication/source/install.R")
+@
 
-	Additionally, you might have to install \textit{Ghostscript} which \cs{RnBeads} uses for generating plot files. \textit{Ghostscript} is included in most Unix/Linux distributions by default, but may require installation on other operating systems. You can obtain the version corresponding to your operating system freely from the program's website\footnote{\href{http://www.ghostscript.com/download/gsdnld.html}{http://www.ghostscript.com/download/gsdnld.html}}. Follow their installation instructions. You might have to set path variables as well. Additional hints on installation of Ghostscript can be found on the FAQ section of the \href{http://rnbeads.mpi-inf.mpg.de/}{RnBeads website}\footnote{\href{http://rnbeads.mpi-inf.mpg.de/}{http://rnbeads.mpi-inf.mpg.de}}. The web site also describes alternative ways to install RnBeads and its dependencies.
+	Note that you might have to install \textit{Ghostscript} which \cs{RnBeads} uses for generating plot files. \textit{Ghostscript} is included in most Unix/Linux distributions by default, but may require installation on other operating systems. You can obtain the version corresponding to your operating system freely from the program's website\footnote{\href{http://www.ghostscript.com/download/gsdnld.html}{http://www.ghostscript.com/download/gsdnld.html}}. Follow their installation instructions. You might have to set path variables as well. Additional hints on installation of Ghostscript can be found on the FAQ section of the \href{http://rnbeads.mpi-inf.mpg.de/}{RnBeads website}\footnote{\href{http://rnbeads.mpi-inf.mpg.de/}{http://rnbeads.mpi-inf.mpg.de}}. The website also describes the installation process in detail.
 
 \subsection{Overview of \cs{RnBeads} Modules}
 	\cs{RnBeads} implements a comprehensive analysis pipeline from data import via
