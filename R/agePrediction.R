@@ -1224,7 +1224,7 @@ cv.array <- function(rnbSet,alpha=0.8){
 			ages <- as.character(ages)
 		}
 		if(is.character(ages)){
-			ages <- unlist(lapply(ages,convert.string.ages))
+			ages[!is.na(ages)] <- unlist(lapply(ages[!is.na(ages)],convert.string.ages))
 		}
 		ages <- as.numeric(ages)
 		if(length(ages)==0 || is.null(ages) || sum(is.na(ages)) == length(ages)){
@@ -1285,7 +1285,7 @@ cv.biseq <- function(rnbSet,alpha=0.8){
 			ages <- as.character(ages)
 		}
 		if(is.character(ages)){
-			ages <- unlist(lapply(ages,convert.string.ages))
+			ages[!is.na(ages)] <- unlist(lapply(ages[!is.na(ages)],convert.string.ages))
 		}
 		ages <- as.numeric(ages)
 		if(length(ages)==0 || is.null(ages) || sum(is.na(ages)) == length(ages)){
