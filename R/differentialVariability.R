@@ -1256,8 +1256,8 @@ computeDiffVar.bin.site <- function(X,inds.g1,inds.g2,
   } else {
     p.vals.var.adj <- rep(NA,length(p.vals.var))
   }
-  tab.g1 <- X[,inds.g1]
-  tab.g2 <- X[,inds.g2]
+  tab.g1 <- X[,inds.g1,drop=FALSE]
+  tab.g2 <- X[,inds.g2,drop=FALSE]
   if(length(inds.g1)<2) {
     logger.info("Group 1 has less than 2 members")
     tab.g1 <- as.matrix(tab.g1)

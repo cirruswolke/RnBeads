@@ -316,8 +316,8 @@ computeDiffTab.default.site <- function(X,inds.g1,inds.g2,
 		stop("Invalid method for differential site methylation test method")
 	}
 	# require(matrixStats)
-	tab.g1 <- X[,inds.g1]
-	tab.g2 <- X[,inds.g2]
+	tab.g1 <- X[,inds.g1,drop=FALSE]
+	tab.g2 <- X[,inds.g2,drop=FALSE]
 	if(length(inds.g1)<2) {
 		logger.info("Group 1 has less than 2 members")
 		tab.g1 <- as.matrix(tab.g1)
@@ -381,8 +381,8 @@ computeDiffTab.default.site <- function(X,inds.g1,inds.g2,
 	if(rnb.getOption("differential.variability")){
 	  if(!imputed){
 	    X <- rnb.execute.imputation(X)
-	    tab.g1 <- X[,inds.g1]
-	    tab.g2 <- X[,inds.g2]
+	    tab.g1 <- X[,inds.g1,drop=FALSE]
+	    tab.g2 <- X[,inds.g2,drop=FALSE]
 	  }
 	  p.vals.var <- rep(as.double(NA),nrow(X))
 	  do.p.vals <- ncol(tab.g1) > 1 || ncol(tab.g2) > 1
