@@ -338,8 +338,8 @@ rnb.read.geo <- function(accession = NULL, verbose = logger.isinitialized(), des
 		gse.url <- sprintf("%snnn/%s/matrix/%s", gse.url, accession, accession)
 		gse.url <- paste0("ftp://ftp.ncbi.nlm.nih.gov/geo/series/", gse.url, "_series_matrix.txt.gz")
 		if (verbose) {
-			rnb.logger.info(paste("Using URL", gse.url))
-			rnb.logger.info(paste("Using download method", getOption("download.file.method")))
+			rnb.info(paste("Using URL", gse.url))
+			rnb.info(paste("Using download method", getOption("download.file.method")))
 		}
 		result <- tryCatch( # quiet = TRUE would be cleaner, but it seems to fail on MacOS
 			download.file(gse.url, fname, quiet = FALSE, mode = "wb"),
@@ -349,7 +349,7 @@ rnb.read.geo <- function(accession = NULL, verbose = logger.isinitialized(), des
 			stop(paste("Could not download GEO Data Series, error code", result))
 		}
 		if (verbose) {
-			rnb.logger.status(paste("Downloaded GSE matrix to", fname))
+			rnb.status(paste("Downloaded GSE matrix to", fname))
 		}
 		rm(gse.url, result)
 	}
