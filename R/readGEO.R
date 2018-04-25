@@ -94,6 +94,10 @@ rnb.geo.parse.sample.anno <- function(txt) {
 			s.infos[, i] <- as.character(s.infos[, i])
 		}
 	}
+	## Auto-rename columns in case there are duplicates
+	if (ncol(s.infos) > 1) {
+		s.infos <- s.infos[, rep(TRUE, ncol(s.infos))]
+	}
 	s.infos
 }
 
