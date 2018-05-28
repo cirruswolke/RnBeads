@@ -1282,6 +1282,10 @@ rnb.execute.imputation <- function(rnb.set,method=rnb.getOption("imputation.meth
   if(!(inherits(rnb.set,"RnBSet")||is.matrix(rnb.set)||is.data.frame(rnb.set))){
     stop("Invalid value for input object, has to be of type RnBeadSet or RnBiseqSet")
   }
+  if(inherits(rnb.set,"RnBSet")&&isImputed(rnb.set)){
+    logger.info("RnBSet already imputed, imputation skipped.")
+    return(rnb.set)
+  }
   if(!(method%in%c('mean.cpgs','mean.samples','random','knn','median.cpgs','median.samples'))){
     if(method=='none'){
       if(inherits(rnb.set,"RnBeadSet")){

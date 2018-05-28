@@ -463,7 +463,8 @@ computeDiffTab.extended.site <- function(X,inds.g1,inds.g2,
 		X,inds.g1=inds.g1,inds.g2=inds.g2,
 		diff.method=diff.method,variability.method=variability.method,
 		paired=paired,
-		adjustment.table=adjustment.table,eps=eps
+		adjustment.table=adjustment.table,eps=eps,
+		imputed=imputed
 	)
 	tab.g1 <- X[,inds.g1]
 	tab.g2 <- X[,inds.g2]
