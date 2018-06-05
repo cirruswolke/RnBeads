@@ -1345,7 +1345,7 @@ rnb.run.inference <- function(rnb.set, dir.reports,
 		report <- rnb.section.export.ct.adj(res.exp,rnb.set,report)
 	}
 
-	#' Write new phenotypic table and add link in the report
+	# Write new phenotypic table and add link in the report
 	pheno.table <- pheno(rnb.set)
 	fname.rel <- rnb.write.table(
 	  pheno.table, fname="extended_pheno_table.csv", fpath=rnb.get.directory(report, "data", absolute = TRUE),
