@@ -583,7 +583,7 @@ setMethod("show", "RnBiseqSet",
 		}
 		cat(sprintf("Coverage information is %s\n", ifelse(is.null(object@covg.sites), "absent", "present")))
 		if(isImputed(object)){
-		  cat("Data set was imputed.")
+		  cat("Data set was imputed.\n")
 		}
 	}
 )

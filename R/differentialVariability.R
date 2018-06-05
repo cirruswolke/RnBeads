@@ -307,7 +307,8 @@ addReportPlot.diffVar.scatter.site <- function (report, var.table, comparison.na
   
   if("diffVar.p.adj.fdr" %in% colnames(var.table)){
     var.sites <- var.table[,"diffVar.p.adj.fdr"] < P.VAL.CUT
-    plot <- create.densityScatter(var.table[,c("var.g1","var.g2")],is.special=var.sites,dens.subsample=dens.subsample) +
+    plot <- create.densityScatter(var.table[,c("var.g1","var.g2")],is.special=var.sites,
+                                  dens.subsample=dens.subsample, add.text.cor=TRUE) +
         xlab(paste("Variance",group.name1)) + ylab(paste("Variance",group.name2)) + coord_fixed(xlim = c(0,max(var.table[,c("var.g1","var.g2")])),ylim = c(0,max(var.table[,c("var.g1","var.g2")])))
     comp.type <- "fdrAdjPval"
     fig.name <- paste("diffVar_site",comparison.name,comp.type,sep = "_")
@@ -321,7 +322,8 @@ addReportPlot.diffVar.scatter.site <- function (report, var.table, comparison.na
     number <- rank.cutoffs.numbers[i]
     cutoff.name <- paste0("rc",i)
     var.table$isDVC <- ranks < number
-    plot <- create.densityScatter(var.table[,c("var.g1","var.g2")], is.special = var.table$isDVC,dens.subsample=dens.subsample) +
+    plot <- create.densityScatter(var.table[,c("var.g1","var.g2")], is.special = var.table$isDVC,
+                                  dens.subsample=dens.subsample, add.text.cor=TRUE) +
       xlab(paste("Variance",group.name1)) + ylab(paste("Variance",group.name2)) + coord_fixed(xlim = c(0,max(var.table[,c("var.g1","var.g2")])),ylim = c(0,max(var.table[,c("var.g1","var.g2")])))
     fig.name <- paste("diffVar_site",comparison.name,cutoff.name,sep="_")
     plot <- createReportGgPlot(plot,fig.name,report=report,create.pdf = FALSE, high.png = 200)
@@ -330,7 +332,8 @@ addReportPlot.diffVar.scatter.site <- function (report, var.table, comparison.na
   }
   if(is.integer(auto.cutoff)){
     var.table$isDVC <- ranks < auto.cutoff
-    plot <- create.densityScatter(var.table[,c("var.g1","var.g2")], is.special = var.table$isDVC,dens.subsample=dens.subsample) +
+    plot <- create.densityScatter(var.table[,c("var.g1","var.g2")], is.special = var.table$isDVC,
+                                  dens.subsample=dens.subsample, add.text.cor=TRUE) +
       xlab(paste("Variance",group.name1)) + ylab(paste("Variance",group.name2))  + coord_fixed(xlim = c(0,max(var.table[,c("var.g1","var.g2")])),ylim = c(0,max(var.table[,c("var.g1","var.g2")])))
     fig.name <- paste("diffVar_site",comparison.name,"rcAuto",sep="_")
     plot <- createReportGgPlot(plot,fig.name,report=report,create.pdf = FALSE, high.png = 200)
@@ -362,8 +365,9 @@ addReportPlot.diffVar.scatter.region <- function (report, var.table, comparison.
   
   if(cn.pa %in% colnames(var.table)){
     var.sites <- var.table[,cn.pa] < P.VAL.CUT
-    plot <- create.densityScatter(var.table[,c(cn.x,cn.y)],is.special=var.sites,dens.subsample = dens.subsample) +
-      xlab(al.x) + ylab(al.y)
+    plot <- create.densityScatter(var.table[,c(cn.x,cn.y)],is.special=var.sites,
+                                  dens.subsample = dens.subsample, add.text.cor=TRUE) +
+      xlab(al.x) + ylab(al.y) + coord_fixed(xlim = c(0,max(var.table[,c("mean.var.g1","mean.var.g2")])),ylim = c(0,max(var.table[,c("mean.var.g1","mean.var.g2")])))
     comp.type <- "fdrAdjPval"
     fig.name <- paste("diffVar_region",comparison.name,region.name,comp.type,sep = "_")
     plot <- createReportGgPlot(plot,fig.name,report=report,create.pdf = FALSE)

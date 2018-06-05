@@ -342,7 +342,7 @@ rnb.show.rnbeadset <- function(object) {
 		}
 	}
 	if(isImputed(object)){
-	  cat("\tData set was imputed.")
+	  cat("\tData set was imputed.\n")
 	}
 }
 
