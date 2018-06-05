@@ -1345,6 +1345,16 @@ rnb.run.inference <- function(rnb.set, dir.reports,
 		report <- rnb.section.export.ct.adj(res.exp,rnb.set,report)
 	}
 
+	# Write new phenotypic table and add link in the report
+	pheno.table <- pheno(rnb.set)
+	fname.rel <- rnb.write.table(
+	  pheno.table, fname="extended_pheno_table.csv", fpath=rnb.get.directory(report, "data", absolute = TRUE),
+	  format="csv", gz=FALSE, row.names = FALSE, quote=FALSE
+	)
+	txt <- paste("The updated sample annotation sheet, with the inferred covariates added as additional columns, is available as a ",
+	         "<a href=",paste0(rnb.get.directory(report, "data"), "/",fname.rel),">comma-separated file</a>.")
+	report <- rnb.add.section(report,title="Updated Sample Sheet",description = txt)
+	
 	module.complete(report, close.report, show.report)
 	return(list(rnb.set = rnb.set, report = report))
 }

@@ -237,9 +237,11 @@ downloadLolaDbs <- function(dest, dbs=c("LOLACore")){
 	for (dbName in dbs){
 		dbDownloadLink <- NULL
 		if (dbName == "LOLACore"){
-			dbDownloadLink <- "http://regiondb.s3.amazonaws.com/LOLACoreCaches_170206.tgz"
+			# dbDownloadLink <- "http://regiondb.s3.amazonaws.com/LOLACoreCaches_170206.tgz"
+			dbDownloadLink <- "http://cloud.databio.org.s3.amazonaws.com/regiondb/LOLACoreCaches_170206.tgz"
 		} else if (dbName == "LOLAExt"){
-			dbDownloadLink <- "http://regiondb.s3.amazonaws.com/LOLAExtCaches_170206.tgz"
+			# dbDownloadLink <- "http://regiondb.s3.amazonaws.com/LOLAExtCaches_170206.tgz"
+			dbDownloadLink <- "http://cloud.databio.org.s3.amazonaws.com/regiondb/LOLAExtCaches_170206.tgz"
 		}
 		if (is.null(dbDownloadLink)){
 			logger.error(c("Invalid DB name:", dbName))
