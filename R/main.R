@@ -1268,7 +1268,7 @@ rnb.run.inference <- function(rnb.set, dir.reports,
 
 	## Genome-wide methylation levels
 	cname <- rnb.getOption("inference.genome.methylation")
-	if (nchar(cname) != 0) {
+	if (isTRUE(cname != "")) {
 		meth.levels <- rnb.execute.genomewide(rnb.set)
 		report <- rnb.section.genomewide(report, meth.levels)
 		if (!all(is.na(meth.levels))) {
