@@ -159,6 +159,10 @@ is available (see below). Attempting to get or set the value of a non-existing o
        [Bisulfite sequencing] Add sequencing coverage histogram for each sample.}
   \item{\bold{\code{qc.coverage.violins}}\code{ = FALSE}}{
        [Bisulfite sequencing] Add sequencing coverage violin plot for each sample.}
+  \item{\bold{\code{qc.cnv}}\code{ = FALSE}}{
+       [Microarrays] Add CNV estimation for each position in each sample.}
+  \item{\bold{\code{qc.cnv.rebased}}\code{ = TRUE}}{
+       [Microarrays] Should CNV estimation be performed with a reference (twin study) or with the mean over the samples.}
   \item{\bold{\code{preprocessing}}\code{ = TRUE}}{Flag controlling whether the data should be preprocessed
 		  (whether quality filtering and in case of Infinium microarray data normalization should be applied).}
   \item{\bold{\code{normalization}}\code{ = NULL}}{
@@ -258,7 +262,7 @@ is available (see below). Attempting to get or set the value of a non-existing o
        imputation (default).}
   \item{\bold{\code{inference}}\code{ = FALSE}}{
        Flag indicating if the covariate inference analysis module is to be executed.}
-  \item{\bold{\code{inference.genome.methylation}}\code{= "Genome-wide methylation"}}{
+  \item{\bold{\code{inference.genome.methylation}}\code{ = "Genome-wide methylation"}}{
        Name of the column to add to the sample annotation, storing the genome-wide methylation level. If such a
        column already exists, its values will be overwritten. Setting this option to \code{NULL} or an empty
        \code{character} disables computing and adding genome-wide methylation levels.}
