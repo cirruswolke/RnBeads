@@ -25,7 +25,13 @@
 #' @author Pavlo Lutsik, with modifications by Michael Scherer         
 rnb.get.cnv.annotations<-function(platform="probes450"){
   rnb.require("RnBeads.hg19")
-  cnv.reference.data <- readRDS(system.file("extdata/cnv.reference.RDS", package="RnBeads.hg19"))
+  ref.loc <- system.file("extdata/cnv.reference.RDS", package="RnBeads.hg19")
+  if(file.exists(ref.loc)){
+    cnv.reference.data <- readRDS(ref.loc)
+  }else{
+    logger.warning("Refernce dataset for CNV estimation not available. Please update RnBeads.hg19.")
+    cnv.reference.data <- NULL
+  }
 	return(cnv.reference.data)
 }
 
@@ -48,9 +54,8 @@ getGLADProfiles<-function(rnb.set,refbased=TRUE){
 	}
 	
   annot <- annotation(rnb.set)
-  if(rnb.getOption("qc.cnv.refbased")){
-	  cnv.reference.data<-rnb.get.cnv.annotations(rnb.set@target)
-	
+  cnv.reference.data<-rnb.get.cnv.annotations(rnb.set@target)
+  if(rnb.getOption("qc.cnv.refbased") && !is.null(cnv.reference.data)){
 	  matchi <- rownames(annot) %in% cnv.reference.data$bac.array.cps
 	  annot<-annot[matchi,]
 	  ref.int <- cnv.reference.data$ref.intensity[cnv.reference.data$bac.array.cps %in% row.names(annot)]
