@@ -1007,7 +1007,9 @@ rnb.run.qc <- function(rnb.set, dir.reports, init.configuration = !file.exists(f
 	  if(inherits(rnb.set,"RnBeadRawSet")){
 	   report <- rnb.step.cnv(rnb.set,report)
 	  }else{
-	    logger.info("CNV estimation only applicable for RnBeadRawSet objects.")
+	    logger.info("CNV estimation only applicable for RnBeadRawSet objects")
+	    txt <- "CNV estimation can only be performed for Illumina BeadChip data sets with signal intensity values available (RnBeadRawSet)"
+	    report <- rnb.add.section(report,"CNV",description = txt)
 	  }
 	}
 	module.complete(report, close.report, show.report)
