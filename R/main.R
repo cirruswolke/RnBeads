@@ -1009,7 +1009,7 @@ rnb.run.qc <- function(rnb.set, dir.reports, init.configuration = !file.exists(f
 	  }else{
 	    logger.info("CNV estimation only applicable for RnBeadRawSet objects")
 	    txt <- "CNV estimation can only be performed for Illumina BeadChip data sets with signal intensity values available (RnBeadRawSet)"
-	    report <- rnb.add.section(report,"CNV",description = txt)
+	    report <- rnb.add.section(report,"Copy number variation analysis",description = txt)
 	  }
 	}
 	module.complete(report, close.report, show.report)
