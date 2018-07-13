@@ -1065,13 +1065,10 @@ mean.imputation <- function(rnb.set,way=1){
     methData <- as.matrix(rnb.set)
   }
   nas <- is.na(methData)
-  if(any(apply(nas,1,all))){
-    logger.warning("There are CpG sites that have missing values in all samples, imputation not performed.")
-    return(rnb.set)
-  }
-  if(any(apply(nas,2,all))){
-    logger.warning("There are samples that have only missing values at the CpG sites, imputation not performed.")
-    return(rnb.set)
+  if(any(apply(nas,way,all))){
+    logger.warning(paste("There are", ifelse(way==1,"CpG sites","sampels"),"that have missing values in all",
+                         ifelse(way==1,"samples","CpG sites"),", imputation not performed."))
+    return(NULL)
   }
   means <- apply(methData,way,mean,na.rm=TRUE)
   has.nas <- which(apply(nas,way,any))
@@ -1163,7 +1160,7 @@ random.imputation <- function(rnb.set){
   nas <- is.na(methData)
   if(any(apply(nas,1,all))){
     logger.warning("There are CpG sites that have missing values in all samples, imputation not performed.")
-    return(rnb.set)
+    return(NULL)
   }
   has.nas <- which(apply(nas,1,any))
   for(i in has.nas){
@@ -1222,13 +1219,10 @@ median.imputation <- function(rnb.set,way=1){
     methData <- as.matrix(rnb.set)
   }
   nas <- is.na(methData)
-  if(any(apply(nas,1,all))){
-    logger.warning("There are CpG sites that have missing values in all samples, imputation not performed.")
-    return(methData)
-  }
-  if(any(apply(nas,2,all))){
-    logger.warning("There are samples that have only missing values at the CpG sites, imputation not performed.")
-    return(methData)
+  if(any(apply(nas,way,all))){
+    logger.warning(paste("There are", ifelse(way==1,"CpG sites","sampels"),"that have missing values in all",
+                ifelse(way==1,"samples","CpG sites"),", imputation not performed."))
+    return(NULL)
   }
   medians <- apply(methData,way,median,na.rm=TRUE)
   has.nas <- which(apply(nas,way,any))
@@ -1285,6 +1279,10 @@ rnb.execute.imputation <- function(rnb.set,method=rnb.getOption("imputation.meth
   if(inherits(rnb.set,"RnBSet")&&isImputed(rnb.set)){
     logger.info("RnBSet already imputed, imputation skipped.")
     return(rnb.set)
+  }
+  if(inherits(rnb.set,"RnBSet") && length(samples(rnb.set)==1) && !(method%in%c("median.cpgs","mean.cpgs"))){
+    logger.info(paste("Imputation cannot be employed with method",method,"median.cpgs used"))
+    method <- "median.cpgs"
   }
   if(!(method%in%c('mean.cpgs','mean.samples','random','knn','median.cpgs','median.samples'))){
     if(method=='none'){
@@ -1356,15 +1354,17 @@ rnb.execute.imputation <- function(rnb.set,method=rnb.getOption("imputation.meth
   if(method=='median.samples'){
     meth.data <- median.imputation(rnb.set,1)
   }
-  if(inherits(rnb.set,"RnBSet")){
-    if(update.ff){
-      rnb.set <- updateMethylationSites(rnb.set,meth.data)
-      rnb.set@imputed <- TRUE
+  if(!is.null(meth.data)){
+    if(inherits(rnb.set,"RnBSet")){
+      if(update.ff){
+        rnb.set <- updateMethylationSites(rnb.set,meth.data)
+        rnb.set@imputed <- TRUE
+      }else{
+        rnb.set@meth.sites <- meth.data
+      }
     }else{
-      rnb.set@meth.sites <- meth.data
+      rnb.set <- meth.data
     }
-  }else{
-    rnb.set <- meth.data
   }
   logger.completed()
   return(rnb.set)

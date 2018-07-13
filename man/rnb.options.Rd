@@ -258,7 +258,7 @@ is available (see below). Attempting to get or set the value of a non-existing o
        imputation (default).}
   \item{\bold{\code{inference}}\code{ = FALSE}}{
        Flag indicating if the covariate inference analysis module is to be executed.}
-  \item{\bold{\code{inference.genome.methylation}}\code{= "Genome-wide methylation"}}{
+  \item{\bold{\code{inference.genome.methylation}}\code{ = "Genome-wide methylation"}}{
        Name of the column to add to the sample annotation, storing the genome-wide methylation level. If such a
        column already exists, its values will be overwritten. Setting this option to \code{NULL} or an empty
        \code{character} disables computing and adding genome-wide methylation levels.}
