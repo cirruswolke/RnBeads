@@ -1003,8 +1003,12 @@ rnb.run.qc <- function(rnb.set, dir.reports, init.configuration = !file.exists(f
 		}
 		report <- rnb.section.gender.prediction(rnb.set, signal.increases, report)
 	}
-	if(inherits(rnb.set,"RnBeadSet") && rnb.getOption("qc.cnv")){
-	  report <- rnb.step.cnv(rnb.set,report)
+	if(rnb.getOption("qc.cnv")){
+	  if(inherits(rnb.set,"RnBeadRawSet")){
+	   report <- rnb.step.cnv(rnb.set,report)
+	  }else{
+	    logger.info("CNV estimation only applicable for RnBeadRawSet objects.")
+	  }
 	}
 	module.complete(report, close.report, show.report)
 	invisible(report)
