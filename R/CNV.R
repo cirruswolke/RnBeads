@@ -78,22 +78,24 @@ getGLADProfiles<-function(rnb.set,refbased=TRUE){
 	sample.names<-samples(rnb.set)
 	
 	primary.data<-lapply(sample.names, function(cl){
-				data.frame(
-						Clone=row.names(annot),
-						PosOrder=1:nrow(annot), 
-						LogRatio=log2(I[,cl]/ref.int),
-						PosBase=annot[,"Start"],
-						Chromosome=annot[,"Chromosome"],
-						BAC=row.names(annot))
-			})
+	  log2(I[,cl]/ref.int)
+	})
 	names(primary.data)<-sample.names
 	
 	if(parallel.isEnabled()){	
   	ncores <- parallel.getNumWorkers()
   	cgh.profiles <- mclapply(primary.data, function(df){
-  	  dummy <- capture.output(res <- as.profileCGH(df, value=3))
+  	  df.complete <- data.frame(
+  	    Clone=row.names(annot),
+  	    PosOrder=1:nrow(annot), 
+  	    LogRatio=df,
+  	    PosBase=annot[,"Start"],
+  	    Chromosome=annot[,"Chromosome"],
+  	    BAC=row.names(annot)
+  	  )
+  	  dummy <- capture.output(res <- as.profileCGH(df.complete, value=3))
   	  return(res)
-  	  }
+  	}
   	                         ,mc.cores = ncores)
   	names(cgh.profiles)<-sample.names
   	glad.profiles<-mclapply(cgh.profiles, function(cl){
@@ -103,7 +105,15 @@ getGLADProfiles<-function(rnb.set,refbased=TRUE){
   	names(glad.profiles)<-sample.names
 	}else{
 	  cgh.profiles <- lapply(primary.data, function(df){
-	    dummy <- capture.output(res <- as.profileCGH(df, value=3))
+	    df.complete <- data.frame(
+	      Clone=row.names(annot),
+	      PosOrder=1:nrow(annot), 
+	      LogRatio=df,
+	      PosBase=annot[,"Start"],
+	      Chromosome=annot[,"Chromosome"],
+	      BAC=row.names(annot)
+	    )
+	    dummy <- capture.output(res <- as.profileCGH(df.complete, value=3))
 	    return(res)
 	  })
 	  names(cgh.profiles)<-sample.names
