@@ -24,6 +24,10 @@
 #' @noRd
 #' @author Pavlo Lutsik, with modifications by Michael Scherer         
 rnb.get.cnv.annotations<-function(platform="probes450"){
+  if(!platform %in% c("probes450")){
+    logger.warning("Reference dataset only available for Infinium chips.")
+    return(NULL)
+  }
   rnb.require("RnBeads.hg19")
   ref.loc <- system.file("extdata/cnv.reference.RDS", package="RnBeads.hg19")
   if(file.exists(ref.loc)){
@@ -54,7 +58,11 @@ getGLADProfiles<-function(rnb.set,refbased=TRUE){
 	}
 	
   annot <- annotation(rnb.set)
-  cnv.reference.data<-rnb.get.cnv.annotations(rnb.set@target)
+  target <- rnb.set@target
+  if(target %in% c("probes27","probes450","probesEPIC")){
+    target <- "probes450"
+  }
+  cnv.reference.data<-rnb.get.cnv.annotations(target)
   if(rnb.getOption("qc.cnv.refbased") && !is.null(cnv.reference.data)){
 	  matchi <- rownames(annot) %in% cnv.reference.data$bac.array.cps
 	  annot<-annot[matchi,]
@@ -82,7 +90,11 @@ getGLADProfiles<-function(rnb.set,refbased=TRUE){
 	
 	if(parallel.isEnabled()){	
   	ncores <- parallel.getNumWorkers()
-  	cgh.profiles <- mclapply(primary.data, function(df) as.profileCGH(df, value=3),mc.cores = ncores)
+  	cgh.profiles <- mclapply(primary.data, function(df){
+  	  dummy <- capture.output(res <- as.profileCGH(df, value=3))
+  	  return(res)
+  	  }
+  	                         ,mc.cores = ncores)
   	names(cgh.profiles)<-sample.names
   	glad.profiles<-mclapply(cgh.profiles, function(cl){
   	  dummy <- capture.output(res <- daglad(cl,mediancenter=TRUE))
@@ -90,7 +102,10 @@ getGLADProfiles<-function(rnb.set,refbased=TRUE){
   	},mc.cores = ncores)
   	names(glad.profiles)<-sample.names
 	}else{
-	  cgh.profiles <- lapply(primary.data, function(df) as.profileCGH(df, value=3))
+	  cgh.profiles <- lapply(primary.data, function(df){
+	    dummy <- capture.output(res <- as.profileCGH(df, value=3))
+	    return(res)
+	  })
 	  names(cgh.profiles)<-sample.names
 	  glad.profiles<-lapply(cgh.profiles, function(cl){
 	    dummy <- capture.output(res <- daglad(cl,mediancenter=TRUE))
@@ -126,7 +141,8 @@ rnb.plot.GLAD.profile<-function(glad.profile, label, sample.names = NA, numeric.
 					ifelse(!is.na(sample.names) && numeric.names, 
 							match(label, sample.names), gsub("[ |_]", ".", label)) , sep="_"), ...)
 		
-	GLAD::plotProfile(glad.profile,cytoband=get("cytoband", envir = cytoband_env), Bkp=TRUE, Smoothing="Smoothing", main=paste(label))
+	GLAD::plotProfile(glad.profile,cytoband=get("cytoband", envir = cytoband_env), Bkp=TRUE, Smoothing="Smoothing", main=paste(label),
+	                  labels=F)
 		
 	off(plot.file)
 	return(plot.file)
@@ -234,9 +250,9 @@ rnb.section.cnv<-function(report, cnv.data){
 	logger.start("Copy Number Variation Section")
 	
 	report <- rnb.add.section(report, "Copy number variation analysis", 
-			"Visualization and analysis of the copy number variations based on Infinium data.")
+			"Visualization and analysis of copy number variations (CNVs) based on Infinium data.")
 	
-	txt <- 'CNV profile plots visualizes the results of CNV analysis using the <a href="http://bioconductor.org/packages/release/bioc/html/GLAD.html">GLAD</a> package'
+	txt <- 'CNV profile plots visualizes the results of CNV analysis using the <a href="http://bioconductor.org/packages/release/bioc/html/GLAD.html">GLAD</a> package.'
 	if(rnb.getOption("qc.cnv.refbased")){
 	  txt <- c(txt," \n A reference dataset was used to compute copy number gains and losses. The reference intensity values were obtained ",
 	           "from a twin dataset (<a href='https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE85647'>GSE85647</a>), as the median intensity value for each position in the twins.")
@@ -259,8 +275,8 @@ rnb.section.cnv<-function(report, cnv.data){
 	exp.list <- list("<b>-1:</b> represents a copy number loss",
 	                 "<b>1:</b> represents a copy number gain",
 	                 "<b>2:</b> represents an amplicon",
-	                 "<b>-10:</b> reresents a delection",
-	                 "<b>0:</b> represent the normal state")
+	                 "<b>-10:</b> represents a deletion",
+	                 "<b>0:</b> represents the normal state")
 	rnb.add.list(report,exp.list)
 	
 	logger.status("Added CpG counts")
@@ -316,7 +332,10 @@ rnb.step.cnv<-function(rnb.set, report){
 #' @noRd
 add.profile.plots<-function(report, cnv.profiles){
 	
-	descr<-"Profiles visualize copy number variation across the genome of Infinium profiled samples."
+	descr <- c("Profiles visualize copy number variation across the genome of Infinium profiled samples. Each point represents a CpG on ",
+"the chip. Yellow is the normal state, black is a deletion, blue an amplification, red a gain and green a loss. The CpGs are annotated ",
+"to their position in the genome, with the centromers of the chromosome depicted in red. Red dashed lines represent breakpoints of regions ",
+"with the identical amount of DNA.")
 	
 	ids<-names(cnv.profiles)
 	
