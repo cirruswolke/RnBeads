@@ -552,7 +552,7 @@ rnb.is.option <- function(txt) {
 #'        [Bisulfite sequencing] Add sequencing coverage violin plot for each sample.}
 #'   \item{\bold{\code{qc.cnv}}\code{ = FALSE}}{
 #'        [Microarrays] Add CNV estimation for each position in each sample.}
-#'   \item{\bold{\code{qc.cnv.rebased}}\code{ = TRUE}}{
+#'   \item{\bold{\code{qc.cnv.refbased}}\code{ = TRUE}}{
 #'        [Microarrays] Should CNV estimation be performed with a reference (twin study) or with the mean over the samples.}
 #'   \item{\bold{\code{preprocessing}}\code{ = TRUE}}{Flag controlling whether the data should be preprocessed
 #' 		  (whether quality filtering and in case of Infinium microarray data normalization should be applied).}
