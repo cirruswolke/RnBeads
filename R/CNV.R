@@ -33,7 +33,7 @@ rnb.get.cnv.annotations<-function(platform="probes450"){
   if(file.exists(ref.loc)){
     cnv.reference.data <- readRDS(ref.loc)
   }else{
-    logger.warning("Refernce dataset for CNV estimation not available. Please update RnBeads.hg19.")
+    logger.warning("Reference dataset for CNV estimation not available. Please update RnBeads.hg19.")
     cnv.reference.data <- NULL
   }
 	return(cnv.reference.data)
