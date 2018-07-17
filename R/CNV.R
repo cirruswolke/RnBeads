@@ -265,7 +265,7 @@ rnb.section.cnv<-function(report, cnv.data){
 	txt <- 'CNV profile plots visualizes the results of CNV analysis using the <a href="http://bioconductor.org/packages/release/bioc/html/GLAD.html">GLAD</a> package.'
 	if(rnb.getOption("qc.cnv.refbased")){
 	  txt <- c(txt," \n A reference dataset was used to compute copy number gains and losses. The reference intensity values were obtained ",
-	           "from a twin dataset (<a href='https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE85647'>GSE85647</a>), as the median intensity value for each position in the twins.")
+	           "from a female twin dataset (<a href='https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE85647'>GSE85647</a>), as the median intensity value for each position in the twins.")
 	}else{
 	  txt <- c(txt," \n The mean intensity value for each CpG in all samples was used as a reference to compute copy number alterations.")
 	}
@@ -349,10 +349,17 @@ add.profile.plots<-function(report, cnv.profiles){
 	
 	ids<-names(cnv.profiles)
 	
-	cplots<-lapply(ids, function(id) {
+	if(parallel.isEnabled()){
+	  cplots <- mclapply(ids, function(id) {
+	    rnb.plot.GLAD.profile(glad.profile=cnv.profiles[[id]], label=id, sample.names=ids, 
+	                          report=report, numeric.names=TRUE, width=8, height=7, low.png=100, high.png=300)
+	  },mc.cores=parallel.getNumWorkers())
+	}else{
+	  cplots<-lapply(ids, function(id) {
 				rnb.plot.GLAD.profile(glad.profile=cnv.profiles[[id]], label=id, sample.names=ids, 
 						report=report, numeric.names=TRUE, width=8, height=7, low.png=100, high.png=300)
 			})
+	}
 	
 	names(cplots)<-1:length(ids)
 	
