@@ -982,7 +982,7 @@ rnb.run.qc <- function(rnb.set, dir.reports, init.configuration = !file.exists(f
 	report <- init.pipeline.report("quality_control", dir.reports, init.configuration)
 	optionlist <- rnb.options("qc.boxplots", "qc.barplots", "qc.negative.boxplot")
 	if (inherits(rnb.set, "RnBeadSet")) {
-		snp.options <- list("qc.snp.heatmap", "qc.snp.barplot", "qc.snp.boxplot", "qc.snp.distances", "qc.snp.purity")
+		snp.options <- list("qc.snp.heatmap", "qc.snp.barplot", "qc.snp.boxplot", "qc.snp.distances", "qc.snp.purity","qc.cnv","qc.cnv.refbased")
 		snp.options <- do.call(rnb.options, snp.options)
 		optionlist <- c(optionlist, snp.options)
 		snp.options <- any(unlist(snp.options, use.names = FALSE))
@@ -1002,6 +1002,15 @@ rnb.run.qc <- function(rnb.set, dir.reports, init.configuration = !file.exists(f
 			signal.increases <- rnb.get.XY.shifts.biseq(rnb.set)
 		}
 		report <- rnb.section.gender.prediction(rnb.set, signal.increases, report)
+	}
+	if(rnb.getOption("qc.cnv")){
+	  if(inherits(rnb.set,"RnBeadRawSet")){
+	   report <- rnb.step.cnv(rnb.set,report)
+	  }else{
+	    logger.info("CNV estimation only applicable for RnBeadRawSet objects")
+	    txt <- "CNV estimation can only be performed for Illumina BeadChip data sets with signal intensity values available (RnBeadRawSet)"
+	    report <- rnb.add.section(report,"Copy number variation analysis",description = txt)
+	  }
 	}
 	module.complete(report, close.report, show.report)
 	invisible(report)
@@ -1268,7 +1277,7 @@ rnb.run.inference <- function(rnb.set, dir.reports,
 
 	## Genome-wide methylation levels
 	cname <- rnb.getOption("inference.genome.methylation")
-	if (isTRUE(cname != "")) {
+	if (nchar(cname) != 0) {
 		meth.levels <- rnb.execute.genomewide(rnb.set)
 		report <- rnb.section.genomewide(report, meth.levels)
 		if (!all(is.na(meth.levels))) {

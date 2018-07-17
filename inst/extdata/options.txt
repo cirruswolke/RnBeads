@@ -43,6 +43,8 @@ qc.coverage.threshold.plot	integer.vector	no	yes	[1,	(1,2,3,4,5,6,7,8,9,10)
 qc.coverage.histograms	logical	no	no		TRUE
 qc.coverage.violins	logical	no	no		TRUE
 qc.sample.batch.size	integer	no	no		500
+qc.cnv	logical	no	no		FALSE
+qc.cnv.refbased	logical	no	no		TRUE
 preprocessing	logical	no	no		TRUE
 normalization	logical	no	yes		NULL
 normalization.method	character	no	no	(none,bmiq,illumina,swan,minfi.funnorm,wm.dasen,wm.nasen,wm.betaqn,wm.naten,wm.nanet,wm.nanes,wm.danes,wm.danet,wm.danen,wm.daten1,wm.daten2,wm.tost,wm.fuks,wm.swan)	wm.dasen
