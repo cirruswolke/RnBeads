@@ -321,6 +321,25 @@ setMethod("run",
 		rnb.set.file <- file.path(cluster.dir,paste0("import","_RnBSet"))
 		depend.jobs <- jid.import
 
+		if (rnb.getOption("qc")){
+			mm <- "qc"
+			logger.start(c("Running:",mm))
+				log.file <- file.path(log.dir,paste0(mm,".log"))
+				jid <- paste(analysis.id,mm,sep="_")
+				res.req <- rnb.cr@module.res.req[[mm]]
+				script.file <- system.file(file.path("extdata","Rscript",paste0("rscript_",mm,".R")), package = "RnBeads")
+				cmd.tokens <- c(
+					r.exec,script.file,
+					"-x",config.xml,
+					"-s",rnb.set.file,
+					"-c",getModuleNumCores(rnb.cr)[mm]
+				)
+				cmds.submit[mm] <- submit.job(mm, cmd.tokens, log=log.file, job.name=jid, res.req=res.req, depend.jobs=depend.jobs)
+				deps.wrapup <- c(deps.wrapup,jid)
+				depend.jobs <- jid
+			logger.completed()
+		}
+
 		mm <- "preprocessing"
 		logger.start(c("Running:",mm))
 			log.file <- file.path(log.dir,paste0(mm,".log"))
@@ -339,24 +358,6 @@ setMethod("run",
 			deps.wrapup <- c(deps.wrapup,jid)
 		logger.completed()
 		jid.preprocessing <- jid
-
-		if (rnb.getOption("qc")){
-			mm <- "qc"
-			logger.start(c("Running:",mm))
-				log.file <- file.path(log.dir,paste0(mm,".log"))
-				jid <- paste(analysis.id,mm,sep="_")
-				res.req <- rnb.cr@module.res.req[[mm]]
-				script.file <- system.file(file.path("extdata","Rscript",paste0("rscript_",mm,".R")), package = "RnBeads")
-				cmd.tokens <- c(
-					r.exec,script.file,
-					"-x",config.xml,
-					"-s",rnb.set.file,
-					"-c",getModuleNumCores(rnb.cr)[mm]
-				)
-				cmds.submit[mm] <- submit.job(mm, cmd.tokens, log=log.file, job.name=jid, res.req=res.req, depend.jobs=depend.jobs)
-				deps.wrapup <- c(deps.wrapup,jid)
-			logger.completed()
-		}
 
 		rnb.set.file <- file.path(cluster.dir,paste0("preprocessing","_RnBSet"))
 		depend.jobs <- jid.preprocessing

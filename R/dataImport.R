@@ -1642,31 +1642,37 @@ get.bed.column.classes<-function(bed.top,
 #' @author Pavlo Lutsik
 #' @noRd
 rnb.detect.infinium.platform <- function(idat.fnames){
-
-	inf27k.idats.present <- any(grepl("_[ABCDEFGHIJKL]_", idat.fnames))
-	inf450kEPIC.idats.present <- any(grepl("_R0[1-6]C0[1-2]_", idat.fnames))
-
-	if (inf27k.idats.present) {
-		if (inf450kEPIC.idats.present) {
-			rnb.error("Undefined platform; detected HumanMethylation27 and HumanMethylation450")
-		}
-		return("probes27")
-	}
-	if (inf450kEPIC.idats.present) {
-		
-		file.sizes <- as.numeric(na.omit(file.info(idat.fnames)[, "size"]))
-		if (length(file.sizes) == 0) {
-			rnb.error("Undefined platform; cannot read the specified IDAT files")
-		}
-		if (all(file.sizes>10000000)) {
-			return("probesEPIC")
-		}
-		if (all(file.sizes<10000000)) {
-			return("probes450")
-		}
-		rnb.error("Undefined platform; detected HumanMethylation450 and MethylationEPIC")
-	}
-	rnb.error("Undefined platform; unexpected or missing IDAT files")
+  
+  platform <- rnb.getOption("import.idat.platform")
+  if(platform=="auto"){
+    
+  	inf27k.idats.present <- any(grepl("_[ABCDEFGHIJKL]_", idat.fnames))
+  	inf450kEPIC.idats.present <- any(grepl("_R0[1-6]C0[1-2]_", idat.fnames))
+  
+  	if (inf27k.idats.present) {
+  		if (inf450kEPIC.idats.present) {
+  			rnb.error("Undefined platform; detected HumanMethylation27 and HumanMethylation450")
+  		}
+  		return("probes27")
+  	}
+  	if (inf450kEPIC.idats.present) {
+  		
+  		file.sizes <- as.numeric(na.omit(file.info(idat.fnames)[, "size"]))
+  		if (length(file.sizes) == 0) {
+  			rnb.error("Undefined platform; cannot read the specified IDAT files")
+  		}
+  		if (all(file.sizes>10000000)) {
+  			return("probesEPIC")
+  		}
+  		if (all(file.sizes<10000000)) {
+  			return("probes450")
+  		}
+  		rnb.error("Undefined platform; detected HumanMethylation450 and MethylationEPIC")
+  	}
+  	rnb.error("Undefined platform; unexpected or missing IDAT files")
+  }else{
+    return(platform)
+  }
 }
 
 ########################################################################################################################
