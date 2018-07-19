@@ -575,12 +575,13 @@ rnb.add.snp.distances <- function(report, object) {
 			theme(panel.grid.major = element_blank(), panel.background = element_blank()) +
 			theme(panel.border = element_blank(), plot.margin = unit(c(0.1, 1.1, 0.1, 0.1), "in"))
 		## Fix the areas for x and y axis labels
-		pp <- suppressWarnings(ggplot_gtable(ggplot_build(pp)))
-		pp$widths[[3]] <- unit(2, "in")
-		pp$heights[[length(pp$heights) - 2L]] <- unit(2, "in")
+#		pp <- suppressWarnings(ggplot_gtable(ggplot_build(pp)))
+#		pp$widths[[3]] <- unit(2, "in")
+#		pp$heights[[length(pp$heights) - 2L]] <- unit(2, "in")
 		rplot <- createReportPlot("snp_low_dimensional", report, width = i.width, height = i.height)
-		grid.newpage()
-		grid.draw(pp)
+#		grid.newpage()
+#		grid.draw(pp)
+		print(pp)
 		report.plots <- c(report.plots, off(rplot))
 		txt <- c(txt, paste("Distances between pairs of samples based on", ncol(snp.betas), "SNP probes."))
 		rm(colors.g)
