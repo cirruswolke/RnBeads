@@ -99,7 +99,7 @@ getGLADProfiles<-function(rnb.set,refbased=TRUE){
   	                         ,mc.cores = ncores)
   	names(cgh.profiles)<-sample.names
   	glad.profiles<-mclapply(cgh.profiles, function(cl){
-  	  dummy <- capture.output(res <- daglad(cl,mediancenter=TRUE))
+  	  dummy <- capture.output(res <- daglad(cl,mediancenter=TRUE,param=c(d=9)))
   	  return(res)
   	},mc.cores = ncores)
   	names(glad.profiles)<-sample.names
@@ -118,7 +118,7 @@ getGLADProfiles<-function(rnb.set,refbased=TRUE){
 	  })
 	  names(cgh.profiles)<-sample.names
 	  glad.profiles<-lapply(cgh.profiles, function(cl){
-	    dummy <- capture.output(res <- daglad(cl,mediancenter=TRUE))
+	    dummy <- capture.output(res <- daglad(cl,mediancenter=TRUE,param=c(d=9)))
 	    return(res)
 	  })
 	  names(glad.profiles)<-sample.names
