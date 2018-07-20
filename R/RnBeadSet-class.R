@@ -748,7 +748,7 @@ match.probes2annotation<-function(probes, target="probes450", assembly="hg19"){
 	
 	dupl<-duplicated(probes)
 	if(any(dupl)){
-		stop(sprintf("some supplied probe IDs are duplicated: e.g. %s"), paste(probes[which(dupl)[1:3]],collapse=", ")) 
+		stop(sprintf("some supplied probe IDs are duplicated: e.g. %s", paste(probes[which(dupl)[1:3]],collapse=", ")))
 	}
 		
 	## Load probe annotation table
