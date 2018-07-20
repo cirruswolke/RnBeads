@@ -352,12 +352,12 @@ add.profile.plots<-function(report, cnv.profiles){
 	if(parallel.isEnabled()){
 	  cplots <- mclapply(ids, function(id) {
 	    rnb.plot.GLAD.profile(glad.profile=cnv.profiles[[id]], label=id, sample.names=ids, 
-	                          report=report, numeric.names=TRUE, width=8, height=7, low.png=100, high.png=300)
+	                          report=report, numeric.names=TRUE, width=8, height=7, low.png=100, high.png=300, create.pdf=F)
 	  },mc.cores=parallel.getNumWorkers())
 	}else{
 	  cplots<-lapply(ids, function(id) {
 				rnb.plot.GLAD.profile(glad.profile=cnv.profiles[[id]], label=id, sample.names=ids, 
-						report=report, numeric.names=TRUE, width=8, height=7, low.png=100, high.png=300)
+						report=report, numeric.names=TRUE, width=8, height=7, low.png=100, high.png=300, create.pdf=F)
 			})
 	}
 	
