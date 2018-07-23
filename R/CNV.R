@@ -186,11 +186,15 @@ getCGCounts<-function(cnv.profiles, rnb.set){
 				
 		sample.cgh<-as.data.frame(profile)
 		sample.bkps<-profile$BkpInfo
-					
-		sample.ranges<-GRanges(seqnames=sample.bkps$Chromosome, 
-				IRanges(start=sample.bkps$PosBase,width=1), strand=rep("*", nrow(sample.bkps)),
-				#seqinfo=si,
-				regid=sample.bkps[,1])
+		
+		if(!any(is.na(sample.bkps))){			
+	  	sample.ranges<-GRanges(seqnames=sample.bkps$Chromosome, 
+		  		IRanges(start=sample.bkps$PosBase,width=1), strand=rep("*", nrow(sample.bkps)),
+			  	#seqinfo=si,
+				  regid=sample.bkps[,1])
+		}else{
+		  sample.ranges <- GRanges()
+		}
 		sample.ranges<-c(chr.basic, sample.ranges)
 		sample.ranges<-disjoin(sample.ranges)
 		start(sample.ranges[which(width(sample.ranges)==1)+1L])<-start(sample.ranges[which(width(sample.ranges)==1)+1L])-1

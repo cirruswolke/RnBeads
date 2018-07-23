@@ -1,7 +1,7 @@
 ############################################################################
 #' test_utils.R
 #'
-#' Tests for the imputation and age prediction methods in RnBeads
+#' Tests for the imputation, CNV estimation and age prediction methods in RnBeads
 ############################################################################
 
 test_cnv <- function(){
