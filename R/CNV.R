@@ -269,7 +269,7 @@ rnb.section.cnv<-function(report, cnv.data){
 	txt <- 'CNV profile plots visualizes the results of CNV analysis using the <a href="http://bioconductor.org/packages/release/bioc/html/GLAD.html">GLAD</a> package.'
 	if(rnb.getOption("qc.cnv.refbased")){
 	  txt <- c(txt," \n A reference dataset was used to compute copy number gains and losses. The reference intensity values were obtained ",
-	           "from a female twin dataset (<a href='https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE85647'>GSE85647</a>), as the median intensity value for each position in the twins.")
+	           "from a twin dataset (<a href='https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE100940'>GSE100940</a>), as the median intensity value for each position in the twins.")
 	}else{
 	  txt <- c(txt," \n The mean intensity value for each CpG in all samples was used as a reference to compute copy number alterations.")
 	}

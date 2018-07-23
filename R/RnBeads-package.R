@@ -64,3 +64,17 @@ NULL
 #'         \pkg{RnBeads} for the corresponding platform.
 #' @author Yassen Assenov
 NULL
+
+#' LUMP Support (hg38)
+#'
+#' Those are the same sites as reported in \code{lump.hg19}, but lifted to `hg38` with UCSC's liftOver functionality. This only
+#' applies for the CpG-wise sites; i.e. those used for sequencing data sets, since `hg38` is not supported for array-based data
+#' sets.
+#'
+#' @docType data
+#' @keywords datasets
+#' @name lump.hg38
+#' @format \code{lump.*} is a \code{list} of non-empty \code{integer} matrices, one per supported platform. Here, only `CpG` is 
+#'          available for BS datasets.
+#' @author Michael Scherer
+NULL
