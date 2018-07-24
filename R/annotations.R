@@ -380,8 +380,8 @@ append.cpg.stats <- function(genome.data, regionlist) {
 #'
 #' @author Yassen Assenov
 #' @export
-data.frame2GRanges <- function(dframe, ids = rownames(dframe), chrom.column = "chromosome", start.column = "start",
-	end.column = "end", strand.column = NULL, assembly = "hg19", sort.result = TRUE) {
+data.frame2GRanges <- function(dframe, ids = rownames(dframe), chrom.column = "Chromosome", start.column = "Start",
+	end.column = "End", strand.column = NULL, assembly = "hg19", sort.result = TRUE) {
 	if (is.character(chrom.column)) { chrom.column <- which(colnames(dframe) == chrom.column) }
 	if (is.character(start.column)) { start.column <- which(colnames(dframe) == start.column) }
 	if (is.character(end.column)) { end.column <- which(colnames(dframe) == end.column) }
