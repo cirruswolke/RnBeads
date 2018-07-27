@@ -713,9 +713,12 @@ rnb.plot.snp.heatmap <- function(dataset, writeToFile = FALSE, ...) {
 		rnb.message.plot("Heatmap is not available due to insufficient data.")
 	} else {
 		sample.ids <- abbreviate.names(colnames(dataset))
-		heatmap.2(dataset, scale = "none", trace = "none", margins = c(8,8),
-				labRow = rownames(dataset), labCol = sample.ids, col = get.methylation.color.panel())
-				#lmat=matrix(c(3,4,1,2), ncol=2, byrow=TRUE), lwid=c(0.75, 0.25), lhei=c(0.2,0.8))
+		meth.colors <- get.methylation.color.panel()
+		meth.breaks <- seq(0, 1, length.out = length(meth.colors) + 1L)
+		suppressWarnings(heatmap.2(dataset, scale = "none", na.rm = FALSE,
+				breaks = meth.breaks, col = meth.colors, trace = "none",
+				margins = c(8, 8), labRow = rownames(dataset), labCol = sample.ids,
+				density.info = "density", key.title = NA, key.xlab = expression(beta), key.ylab = "Density"))
 	}
 	if (writeToFile) {
 		off(plot.file)
