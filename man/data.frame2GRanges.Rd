@@ -5,7 +5,7 @@
 \title{data.frame2GRanges}
 \usage{
 data.frame2GRanges(dframe, ids = rownames(dframe),
-  chrom.column = "chromosome", start.column = "start", end.column = "end",
+  chrom.column = "Chromosome", start.column = "Start", end.column = "End",
   strand.column = NULL, assembly = "hg19", sort.result = TRUE)
 }
 \arguments{

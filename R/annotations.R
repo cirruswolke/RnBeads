@@ -452,7 +452,7 @@ load.annotations <- function(assembly = NULL, sites = NULL) {
 
 	if (!is.null(assembly)) {
 		updated <- character()
-		if (!exists(assembly, where = .rnb.annotations)) {
+		if (!exists(assembly, where = .rnb.annotations, inherits = F)) {
 			## Add scaffold for sites, probes and control probes
 			if (!load.f(paste0(assembly, ".RData"))) {
 				return(FALSE)

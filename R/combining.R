@@ -219,11 +219,25 @@ rnb.combine.arrays <- function(dataset1, dataset2, type="common") {
 	result
 }
 ###############################################################################
-# rnb.combine.seq
-#
-# Initial implementation of the combine method
-#
-#
+#' rnb.combine.seq
+#'
+#' Initial implementation of the combine method for sequencing datasets.
+#' 
+#' @param x An object of type \code{\link{RnBiseqSet-class}} used for concatenation
+#' @param y Another object of type \code{\link{RnBiseqSet-class}} used for concatenation
+#' @param type A character representing the type of combination. Needs to be one of \code{"common"},
+#'          \code{all.x}, \code{all.y} or \code{all}.
+#' @return An \code{\link{RnBiseqSet-class}} object with combined information
+#' @details The type parameters determines the mode of combination:
+#'           \itemize{
+#'             \item{\code{"common"}}{ The intersection between the sites present in the two 
+#'                             datasets is used for the new dataset.}
+#'             \item{\code{"all.x"}}{ All sites present in x are used.}
+#'             \item{\code{"all.y"}}{ All sites present in y are used.}
+#'             \item{\code{"all"}}{ The union between the sites of both datasets is used.}
+#'           }
+#'
+#' @export
 rnb.combine.seq<-function(x,y,type="common"){
 #    if (class(x) != class(y)){
 #        stop("Could not combine RnBiseqSet objects: incompatible classes")
