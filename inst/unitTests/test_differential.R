@@ -31,7 +31,7 @@ test_limmaP_2 <- function() {
 	X <- meth(rnb.set.example)
 	tbl <- data.frame(
 		stype = c("a", "b", "a", "b", "a", "b", "b", "b", "b", "a", "b", "a"),
-		gender = c("f", "m", "f", "f", "f", "f", "m", "m", "f", "f", "m", "m"),
+		sex = c("f", "m", "f", "f", "f", "f", "m", "m", "f", "f", "m", "m"),
 		group = c("1", "2", "1", "1", "1", "1", "2", "2", "1", "1", "2", "2"))
 
 	p.vals <- limmaP(X, tbl$stype == "a", tbl$stype == "b", tbl[, -1])
@@ -110,7 +110,7 @@ test_diffVar_covariate <- function() {
   X <- meth(rnb.set.example)
   tbl <- data.frame(
     stype = c("a", "b", "a", "b", "a", "b", "b", "b", "b", "a", "b", "a"),
-    gender = c("f", "m", "f", "f", "f", "f", "m", "m", "f", "f", "m", "m"),
+    sex = c("f", "m", "f", "f", "f", "f", "m", "m", "f", "f", "m", "m"),
     group = c("1", "2", "1", "1", "1", "1", "2", "2", "1", "1", "2", "2"))
   
   p.vals <- diffVar(X, tbl$stype == "a", tbl$stype == "b", tbl[, -1])

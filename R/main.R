@@ -995,13 +995,13 @@ rnb.run.qc <- function(rnb.set, dir.reports, init.configuration = !file.exists(f
 	if (snp.options) {
 		report <- rnb.step.snp.probes(rnb.set, report)
 	}
-	if (.hasSlot(rnb.set, "inferred.covariates") && isTRUE(rnb.set@inferred.covariates$gender)) {
+	if (.hasSlot(rnb.set, "inferred.covariates") && isTRUE(rnb.set@inferred.covariates$sex)) {
 		if (inherits(rnb.set, "RnBeadRawSet")) {
 			signal.increases <- rnb.get.XY.shifts(rnb.set)
 		} else if (inherits(rnb.set, "RnBiseqSet")) {
 			signal.increases <- rnb.get.XY.shifts.biseq(rnb.set)
 		}
-		report <- rnb.section.gender.prediction(rnb.set, signal.increases, report)
+		report <- rnb.section.sex.prediction(rnb.set, signal.increases, report)
 	}
 	if(rnb.getOption("qc.cnv")){
 	  if(inherits(rnb.set,"RnBeadRawSet")){

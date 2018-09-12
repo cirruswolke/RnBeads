@@ -795,7 +795,7 @@ setMethod("remove.sites", signature(object = "RnBSet"),
 
 			## Remove information on inferred covariates (they are likely to change when sites are removed)
 			if (.hasSlot(object, "inferred.covariates")) {
-				i.covariates <- setdiff(names(object@inferred.covariates), "gender")
+				i.covariates <- setdiff(names(object@inferred.covariates), "sex")
 				if (length(i.covariates) != 0) {
 					object@inferred.covariates[i.covariates] <- NULL
 					if(verbose){
@@ -1059,7 +1059,7 @@ setMethod("remove.samples", signature(object = "RnBSet"),
 
 				## Remove information on inferred covariates (they are likely to change when samples are removed)
 				if (.hasSlot(object, "inferred.covariates")) {
-					i.covariates <- setdiff(names(object@inferred.covariates), "gender")
+					i.covariates <- setdiff(names(object@inferred.covariates), "sex")
 					if (length(i.covariates) != 0) {
 						## FIXME: Wouldn't it make more sense to simply take the samples out?
 						object@inferred.covariates[i.covariates] <- NULL

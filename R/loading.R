@@ -569,13 +569,13 @@ rnb.step.import <- function(data.source, data.type = rnb.getOption("import.defau
 	}
 	logger.status(c("Loaded data from", d.source))
 
-	## Perform gender prediction
-	if (rnb.getOption("import.gender.prediction") && inherits(object, c("RnBeadRawSet","RnBiseqSet")) && object@target %in% c("probes450","probesEPIC","CpG")) {
-		object <- rnb.execute.gender.prediction(object)
-		if (is.null(object@inferred.covariates$gender)) {
-			object@inferred.covariates$gender <- FALSE
+	## Perform sex prediction
+	if (rnb.getOption("import.sex.prediction") && inherits(object, c("RnBeadRawSet","RnBiseqSet")) && object@target %in% c("probes450","probesEPIC","CpG")) {
+		object <- rnb.execute.sex.prediction(object)
+		if (is.null(object@inferred.covariates$sex)) {
+			object@inferred.covariates$sex <- FALSE
 		} else {
-			logger.status("Predicted gender for the loaded samples")
+			logger.status("Predicted sex for the loaded samples")
 		}
 	}
 

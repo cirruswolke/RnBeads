@@ -153,6 +153,18 @@ rnb.option.compatibility <- function(oname, ovalue) {
 			}
 			res[["modified"]] <- TRUE
 		}
+	} else if (oname == "import.gender.prediction"){
+	  oldValid <- is.logical(ovalue) || isCharValue
+	  if (oldValid){
+	    msg <- paste0("The option '", "import.gender.prediction", "' is now called '", "import.sex.prediction", "'")
+	    logger.warning(msg)
+	    res[["oname"]] <- "import.sex.prediction"
+	    if (isCharValue){
+	      ov <- as.logical(ovalue)
+	      res[["ovalue"]] <- ov
+	    }
+	    res[["modified"]] <- TRUE
+	  }
 	} else if (is.element(oname, noEffectOptions)){
 		msg <- paste0("The option '", oname, "' no longer exists. It will not have an effect on the current analysis")
 		logger.warning(msg)
@@ -519,8 +531,8 @@ rnb.is.option <- function(txt) {
 #'		  Character specifying the Infinium platform that is uses. Has to be one of \code{'probes27'},
 #'		  \code{'probes450'} or \code{'probesEPIC'}. If \code{'auto'}, the platform is automatically detected
 #'		  from the IDAT file names.}
-#'   \item{\bold{\code{import.gender.prediction}}\code{ = TRUE}}{
-#'        Flag indicating if gender prediction is to be performed. Gender prediction is supported for Infinium 450k, EPIC
+#'   \item{\bold{\code{import.sex.prediction}}\code{ = TRUE}}{
+#'        Flag indicating if sex prediction is to be performed. Sex prediction is supported for Infinium 450k, EPIC
 #'        and bisulfite sequencing datasets with signal intensity or coverage information.
 #'        The value of this option is ignored for 27k datasets.}
 #'   \item{\bold{\code{qc}}\code{ = TRUE}}{

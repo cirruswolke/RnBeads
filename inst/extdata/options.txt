@@ -29,7 +29,7 @@ import.bed.test.only	logical	no	no		FALSE
 import.skip.object.check	logical	no	no		FALSE
 import.idat.chunk.size	integer	no	yes	(1,	NULL
 import.idat.platform	character	no	no	(probes27,probes450,probesEPIC,auto)	auto
-import.gender.prediction	logical	no	no		TRUE
+import.sex.prediction	logical	no	no		TRUE
 qc	logical	no	no		TRUE
 qc.boxplots	logical	no	no		TRUE
 qc.barplots	logical	no	no		TRUE
