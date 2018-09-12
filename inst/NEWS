@@ -3,6 +3,7 @@ RnBeads 1.13.3
  
  * added CNV estimation using the GLAD package to QC module
  * some bugfixes
+ * changed 'gender' to 'sex', affected functions and options are 'rnb.execute.gender.prediction' and 'import.gender.prediction'
 
 RnBeads 1.13.2
 =============
