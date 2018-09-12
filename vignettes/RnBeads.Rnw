@@ -114,8 +114,9 @@ suppressPackageStartupMessages(library(RnBeads))
 \subsection{Installation}
 	Automatic installation of \cs{RnBeads} and one or more of its companion data packages is performed just like any other Bioconductor package. As an example, the following commands install RnBeads and its annotation package for the human genome annotation hg38:
 <<eval=FALSE>>=
-source("http://bioconductor.org/biocLite.R")
-biocLite(c("RnBeads", "RnBeads.hg38"))
+if (!requireNamespace("BiocManager", quietly=TRUE))
+    install.packages("BiocManager")
+BiocManager::install(c("RnBeads", "RnBeads.hg38"))
 @
 	
 	Alternatively, we also provide a an easy-to-use installation script that ensures all dependencies are installed. This way, you can install RnBeads by running a single line of code in your R environment:
