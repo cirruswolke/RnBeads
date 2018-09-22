@@ -1284,6 +1284,16 @@ server <- function(input, output, session) {
 	reportDir <- reactive({
 		file.path(readDirectoryInput(session, 'outDir'), input$reportSubDir)
 	})
+	setNumCoresFromSlider <- reactive({
+		res <- input$numCores
+		if (res > 1){
+			parallel.setup(res)
+		} else {
+			parallel.teardown()
+		}
+		logger.close()
+		res
+	})
 	anaStatus <- reactive({
 		refreshTimer()
 		res <- list(status="invalid", statusTab=NULL, rnbSet.paths=c(), logFile=NA)
@@ -2288,20 +2298,13 @@ server <- function(input, output, session) {
 			tags$p(tags$span(style="color:red", icon("warning"), "Unable to run the analysis. Please make sure that you selected a non-existing report directory ('Analysis' tab) and that you specified the sample annotation file and data directory correctly ('Input' tab)"))
 		}
 	})
-	observeEvent(input$numCores, {
-		if (input$numCores > 1){
-			parallel.setup(input$numCores)
-		} else {
-			parallel.teardown()
-		}
-		logger.close()
-	})
 	observeEvent(input$ggplotTheme, {
 		eval(parse(text=paste0("theme_set(theme_", input$ggplotTheme, "())")))
 	})
 	observeEvent(input$runRnb, {
 		if(input$runRnb == 0) return()
         shinyjs::disable("runRnb")
+    	setNumCoresFromSlider()
 
     	logger.close() # close the server's current logger s.t. a new log file is created in the report directory
 		withProgress({
@@ -2417,6 +2420,7 @@ server <- function(input, output, session) {
 		modImportStatus$dataset.loaded <- TRUE
 		withProgress({
 			tryCatch({
+					setNumCoresFromSlider()
 					if(!dir.exists(reportDir())) rnb.initialize.reports(reportDir())
 					logger.start(fname=file.path(reportDir(), "analysis.log"))
 					res <- rnb.run.import(c(inputDataDir(), sampleAnnotFile()), data.type=rnb.getOption("import.default.data.type"), dir.reports=reportDir())
@@ -2512,6 +2516,7 @@ server <- function(input, output, session) {
 	observeEvent(input$modQC.run, {
 		withProgress({
 			tryCatch({
+					setNumCoresFromSlider()
 					if(!dir.exists(reportDir())) rnb.initialize.reports(reportDir())
 					if (reportExists.quality_control() && input$modQC.overwrite){
 						unlink(file.path(reportDir(), paste0("quality_control","*")), recursive=TRUE)
@@ -2569,6 +2574,7 @@ server <- function(input, output, session) {
 	observeEvent(input$modPreprocessing.run, {
 		withProgress({
 			tryCatch({
+					setNumCoresFromSlider()
 					if(!dir.exists(reportDir())) rnb.initialize.reports(reportDir())
 					if (reportExists.preprocessing() && input$modPreprocessing.overwrite){
 						unlink(file.path(reportDir(), paste0("preprocessing","*")), recursive=TRUE)
@@ -2636,6 +2642,7 @@ server <- function(input, output, session) {
 	observeEvent(input$modTNT.run, {
 		withProgress({
 			tryCatch({
+					setNumCoresFromSlider()
 					if(!dir.exists(reportDir())) rnb.initialize.reports(reportDir())
 					if (reportExists.tracks_and_tables() && input$modTNT.overwrite){
 						unlink(file.path(reportDir(), paste0("tracks_and_tables","*")), recursive=TRUE)
@@ -2693,6 +2700,7 @@ server <- function(input, output, session) {
 	observeEvent(input$modInference.run, {
 		withProgress({
 			tryCatch({
+					setNumCoresFromSlider()
 					if(!dir.exists(reportDir())) rnb.initialize.reports(reportDir())
 					if (reportExists.covariate_inference() && input$modInference.overwrite){
 						unlink(file.path(reportDir(), paste0("covariate_inference","*")), recursive=TRUE)
@@ -2760,6 +2768,7 @@ server <- function(input, output, session) {
 	observeEvent(input$modExploratory.run, {
 		withProgress({
 			tryCatch({
+					setNumCoresFromSlider()
 					if(!dir.exists(reportDir())) rnb.initialize.reports(reportDir())
 					if (reportExists.exploratory_analysis() && input$modExploratory.overwrite){
 						unlink(file.path(reportDir(), paste0("exploratory_analysis","*")), recursive=TRUE)
@@ -2817,6 +2826,7 @@ server <- function(input, output, session) {
 	observeEvent(input$modDifferential.run, {
 		withProgress({
 			tryCatch({
+					setNumCoresFromSlider()
 					if(!dir.exists(reportDir())) rnb.initialize.reports(reportDir())
 					if (reportExists.differential_methylation() && input$modDifferential.overwrite){
 						unlink(file.path(reportDir(), paste0("differential_methylation","*")), recursive=TRUE)
