@@ -505,25 +505,25 @@ ui <- tagList(useShinyjs(), navbarPage(
 				wellPanel(
 					tags$h3("Load Option Profile"),
 					fluidRow(
-						column(3, wellPanel(
+						column(3, tags$div(title="Load option profile store from a preexisting analysis. Existing analysis directory must be specified.", wellPanel(
 							actionButton("loadOptsAnaDirDo", "Load from Analysis Directory")
-						)),
-						column(5, wellPanel(
+						))),
+						column(5, tags$div(title="Load option profile from XML file.", wellPanel(
 							localFileInput("loadOptsXmlFile", "XML file"),
 							actionButton("loadOptsXmlDo", "Load from XML")
-						)),
-						column(4, wellPanel(
+						))),
+						column(4, tags$div(title="Load option profile from preset. Several options for more or less comprehensive and resource-demanding analyses are available.", wellPanel(
 							selectInput("loadOptsProfileSel", "Predefined Option Profile", RNB.OPTION.PROFILES),
 							actionButton("loadOptsProfileDo", "Load Option Profile")
-						))
+						)))
 					)
 				)
 			),
 			column(3,
-				wellPanel(
+				tags$div(title="Save the current option profile to an XML file. This file can be loaded later for running a different analysis with the same parameters.", wellPanel(
 					tags$h3("Saving Option Profile"),
 					downloadButton("saveOptsXml", "Save to XML")
-				)
+				))
 			)
 		),
 		tabsetPanel(
