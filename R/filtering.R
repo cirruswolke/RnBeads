@@ -346,9 +346,16 @@ rnb.section.cross.reactive.removal.internal <- function(report, filtered, anno.t
 		return(report)
 	}
 
-	refText <- paste0("Chen, Y., Lemire, M., Choufani, S., Butcher, D.T.,  Grafodatskaya, D., Zanke, B.W., ",
-		"Gallinger, S., Hudson, T.J., Weksberg, R. (2013) Discovery of cross-reactive probes and polymorphic CpGs in ",
-		"the Illumina Infinium HumanMethylation450 microarray. <i>Epigenetics</i>, <b>8</b>(2), 203-209")
+	if (nrow(anno.table) < 500000L) {
+		refText <- paste0("Chen, Y., Lemire, M., Choufani, S., Butcher, D.T.,  Grafodatskaya, D., Zanke, B.W., ",
+			"Gallinger, S., Hudson, T.J., Weksberg, R. (2013) Discovery of cross-reactive probes and polymorphic ",
+			"CpGs in the Illumina Infinium HumanMethylation450 microarray. <i>Epigenetics</i>, <b>8</b>(2), 203-209")
+	} else {
+		refText <- paste0("Pidsley, R., Zotenko, E., Peters, T.J., Lawrence, M.G., Risbridger, G.P., Molloy, P., ",
+			"Djik, S.V., Muhlhausler, B., Strizaker, C., Clark, S.J. (2016) Critical evaluation of the Illumina ",
+			"MethylationEPIC BeadChip microarray for whole-genome DNA methylation profiling. <i>Genome Biology</i>, ",
+			"<b>17</b>:208")
+	}
 	report <- rnb.add.reference(report, refText)
 	txt <- " non-specific and "
 	N <- length(filtered)
