@@ -99,7 +99,8 @@ rnb.section.lump <- function(report, immune.content) {
 		" between 0 and 1 and ", ifelse(iss, "is", "are") , " based on ",
 		ifelse(iss, "", "up to "), attr(immune.content, "sites"), " sites", ifelse(iss, "", " per sample"), ".")
 	if (!iss) {
-		txt <- c(txt, " The figure below shows the distribution of immune cell content values.")
+		txt <- c(txt, " Blood samples, for example, should have a LUMP value close to 1. The figure below shows ",
+			"the distribution of immune cell content values.")
 	}
 	report <- rnb.add.section(report, s.title, txt)
 	if (!iss) {
