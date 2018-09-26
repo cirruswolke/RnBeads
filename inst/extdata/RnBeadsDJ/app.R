@@ -367,7 +367,9 @@ observeDirectoryInput <- function(input, session, inputId){
 		handlerExpr={
 			if (input[[inputId]] > 0) {	      
 				# launch the directory selection dialog with initial path read from the widget
-				path = choose.dir(default = readDirectoryInput(session, inputId))
+				defaultPath <- readDirectoryInput(session, inputId)
+				if (defaultPath == "[NULL]") defaultPath <- NA
+				path = choose.dir(default = defaultPath)
 				# update the widget value
 				updateDirectoryInput(session, inputId, value=path)
 			}
@@ -381,7 +383,9 @@ observeLocalFileInput <- function(input, session, inputId){
 			if (input[[inputId]] > 0) {
 				# launch the file selection dialog with initial path read from the widget 
 				filt <- matrix(c("comma-separated", ".csv", "tab-separated", ".tsv", "Text", ".txt", "All files", "*"), 4, 2, byrow = TRUE)
-				path = choose.files(default = readLocalFileInput(session, inputId), filters=filt)
+				defaultPath <- readLocalFileInput(session, inputId)
+				if (defaultPath == "[NULL]") defaultPath <- NA
+				path = choose.files(default = defaultPath, filters=filt)
 				# update the widget value
 				updateLocalFileInput(session, inputId, value=path)
 			}
@@ -799,6 +803,30 @@ ui <- tagList(useShinyjs(), navbarPage(
 							),
 							tags$td(
 								verbatimTextOutput("rnbOptsO.filtering.cross.reactive")
+							)
+						),
+						tags$tr(
+							tags$td(
+								tags$div(title=RNB.OPTION.DESC["filtering.whitelist"], tags$code("filtering.whitelist"))
+							),
+							tags$td(
+									localFileInput("rnbOptsI.filtering.whitelist", NULL),
+									actionButton("rnbOptsResetWhitelist", "Reset whitelist")
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.filtering.whitelist")
+							)
+						),
+						tags$tr(
+							tags$td(
+								tags$div(title=RNB.OPTION.DESC["filtering.blacklist"], tags$code("filtering.blacklist"))
+							),
+							tags$td(
+									localFileInput("rnbOptsI.filtering.blacklist", NULL),
+									actionButton("rnbOptsResetblacklist", "Reset blacklist")
+							),
+							tags$td(
+								verbatimTextOutput("rnbOptsO.filtering.blacklist")
 							)
 						),
 						tags$tr(
@@ -1444,6 +1472,8 @@ server <- function(input, output, session) {
 			shinyjs::enable("rnbOptsI.filtering.high.coverage.outliers")
 			updateCheckboxInput(session, "rnbOptsI.filtering.greedycut", value=FALSE)
 			shinyjs::disable("rnbOptsI.filtering.greedycut")
+			# shinyjs::disable("rnbOptsI.filtering.whitelist")
+			# shinyjs::disable("rnbOptsI.filtering.blacklist")
 			shinyjs::disable("rnbOptsI.filtering.cross.reactive")
 			shinyjs::disable("rnbOptsI.normalization.method")
 			shinyjs::disable("rnbOptsI.normalization.background.method")
@@ -1457,6 +1487,8 @@ server <- function(input, output, session) {
 			updateCheckboxInput(session, "rnbOptsI.filtering.greedycut", value=TRUE)
 			shinyjs::enable("rnbOptsI.filtering.greedycut")
 			shinyjs::enable("rnbOptsI.filtering.cross.reactive")
+			# shinyjs::enable("rnbOptsI.filtering.whitelist")
+			# shinyjs::enable("rnbOptsI.filtering.blacklist")
 			shinyjs::enable("rnbOptsI.normalization.method")
 			shinyjs::enable("rnbOptsI.normalization.background.method")
 			shinyjs::enable("rnbOptsI.exploratory.correlation.qc")
@@ -1754,6 +1786,22 @@ server <- function(input, output, session) {
 	output$rnbOptsO.filtering.cross.reactive <- renderText({
 		rnb.options(filtering.cross.reactive=input$rnbOptsI.filtering.cross.reactive)
 		rnb.getOption("filtering.cross.reactive")
+	})
+	output$rnbOptsO.filtering.whitelist <- renderText({
+		wl <- rnbOpts.filtering.whitelist.fn()
+		if (is.null(wl) || nchar(wl) < 1 || wl=="[NULL]") wl <- NULL
+		rnb.options(filtering.whitelist=wl)
+		res <- rnb.getOption("filtering.whitelist")
+		if (is.null(res)) res <- "NULL"
+		res
+	})
+	output$rnbOptsO.filtering.blacklist <- renderText({
+		bl <- rnbOpts.filtering.blacklist.fn()
+		if (is.null(bl) || nchar(bl) < 1 || bl=="[NULL]") bl <- NULL
+		rnb.options(filtering.blacklist=bl)
+		res <- rnb.getOption("filtering.blacklist")
+		if (is.null(res)) res <- "NULL"
+		res
 	})
 	output$rnbOptsO.normalization.method <- renderText({
 		interfaceSetting <- input$rnbOptsI.normalization.method
@@ -2270,6 +2318,21 @@ server <- function(input, output, session) {
 		} else {
 			showNotification(tags$span(style="color:red", icon("warning"), paste0("Option profile does not exist")))
 		}
+	})
+
+	observeLocalFileInput(input, session, 'rnbOptsI.filtering.whitelist')
+	rnbOpts.filtering.whitelist.fn <- reactive({
+		readLocalFileInput(session, 'rnbOptsI.filtering.whitelist')
+	})
+	observeEvent(input$rnbOptsResetWhitelist, {
+		updateLocalFileInput(session, 'rnbOptsI.filtering.whitelist', value='[NULL]')
+	})
+	observeLocalFileInput(input, session, 'rnbOptsI.filtering.blacklist')
+	rnbOpts.filtering.blacklist.fn <- reactive({
+		readLocalFileInput(session, 'rnbOptsI.filtering.blacklist')
+	})
+	observeEvent(input$rnbOptsResetblacklist, {
+		updateLocalFileInput(session, 'rnbOptsI.filtering.blacklist', value='[NULL]')
 	})
 
 	output$saveOptsXml <- downloadHandler(
