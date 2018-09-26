@@ -1004,7 +1004,7 @@ computeDiffMeth.bin.site <- function(b,inds.g1,inds.g2,n.perm=0,...){
 ### @param inds.g2 column indices in \code{b} of group 2 members
 ### @param n.perm number of permutations to be performed for the ranking permutaion tests. Set to values < 1 to disable permutation tests
 ### @return blubb
-computeDiffMeth.bin.region <- function(rnbSet,dmtp,inds.g1,inds.g2,region.types=rnb.region.types(assembly(rnbSet)), ...){
+computeDiffMeth.bin.region <- function(rnbSet,dmtp,inds.g1,inds.g2,region.types=rnb.region.types.for.analysis(rnbSet), ...){
 	#sanity checks
 	if (length(union(inds.g1,inds.g2)) != (length(inds.g1)+length(inds.g2))){
 		logger.error("Overlapping sample sets in differential methylation analysis")

@@ -159,10 +159,12 @@ setMethod("destroy", signature(object="RnBDiffMeth"),
 				if (!is.null(object@sites[[cci]])){
 					delete(object@sites[[cci]])
 				}
-				for (rri in 1:n.region.types){
-					rr <- object@region.types[rri]
-					if (!is.null(object@regions[[rri]][[cci]])){
-						delete(object@regions[[rri]][[cci]])
+				if (n.region.types > 0){
+					for (rri in 1:n.region.types){
+						rr <- object@region.types[rri]
+						if (!is.null(object@regions[[rri]][[cci]])){
+							delete(object@regions[[rri]][[cci]])
+						}
 					}
 				}
 			}
@@ -614,11 +616,13 @@ setMethod("save.tables", signature(object="RnBDiffMeth"),
 						ee[[paste("sites",ccn,sep=".")]] <- object@sites[[cci]]
 					}
 				}
-				for (rri in 1:n.region.types){
-					rr <- object@region.types[rri]
-					rrn <- paste0("reg",rri)
-					if (!is.null(object@regions[[rri]][[cci]])){
-						ee[[paste("regions",rrn,ccn,sep=".")]] <- object@regions[[rri]][[cci]]
+				if (n.region.types > 0){
+					for (rri in 1:n.region.types){
+						rr <- object@region.types[rri]
+						rrn <- paste0("reg",rri)
+						if (!is.null(object@regions[[rri]][[cci]])){
+							ee[[paste("regions",rrn,ccn,sep=".")]] <- object@regions[[rri]][[cci]]
+						}
 					}
 				}
 			}
@@ -671,9 +675,7 @@ setMethod("reload", signature(object="RnBDiffMeth"),
 			warning("RnBDiffMeth object is not dumped to disk. Returning unmodified object")
 			return(object)
 		}
-#		if (!file.exists(disk.path)) {
-#			stop(paste("RnBDiffMeth dump directory does not exist:",disk.path))
-#		}
+
 		n.comps <- length(object@comparisons)
 		n.region.types <- length(object@region.types)
 		
@@ -697,15 +699,17 @@ setMethod("reload", signature(object="RnBDiffMeth"),
 			} else {
 				object@sites[cci] <- list(NULL)
 			}
-			for (rri in 1:n.region.types){
-				rr <- object@region.types[rri]
-				rrn <- paste0("reg",rri)
-				reg.obj.name <- paste("regions",rrn,ccn,sep=".")
-				if (exists(reg.obj.name,ee)){
-					object@regions[[rri]][[cci]] <- get(reg.obj.name,ee)
-				} else {
-					logger.warning(c("Could not relink:",rr,"--",cc))
-					object@regions[[rri]][cci] <- list(NULL)
+			if (n.region.types > 0){
+				for (rri in 1:n.region.types){
+					rr <- object@region.types[rri]
+					rrn <- paste0("reg",rri)
+					reg.obj.name <- paste("regions",rrn,ccn,sep=".")
+					if (exists(reg.obj.name,ee)){
+						object@regions[[rri]][[cci]] <- get(reg.obj.name,ee)
+					} else {
+						logger.warning(c("Could not relink:",rr,"--",cc))
+						object@regions[[rri]][cci] <- list(NULL)
+					}
 				}
 			}
 		}
@@ -1005,18 +1009,20 @@ setMethod("is.valid", signature(object="RnBDiffMeth"),
 					}
 				}
 			}
-			for (rri in 1:n.region.types){
-				rr <- object@region.types[rri]
-				rrn <- paste0("reg",rri)
-				if (is.null(object@regions[[rr]][[cc]])){
-					if (verbose) logger.info(paste0("No table found for comparison '",cc,"' (region: '",rr,"')"))
-					return(FALSE)
-				}
-				if (object@disk.dump){
-					fileN <- file.path(object@disk.path,paste0(paste("regions",rrn,ccn,sep="_"),".ff"))
-					if (!file.exists(fileN)){
-						if (verbose) logger.info(paste0("Disk dump file ['",fileN,"'] not found for comparison '",cc,"' (region: '",rr,"')"))
+			if (n.region.types > 0){
+				for (rri in 1:n.region.types){
+					rr <- object@region.types[rri]
+					rrn <- paste0("reg",rri)
+					if (is.null(object@regions[[rr]][[cc]])){
+						if (verbose) logger.info(paste0("No table found for comparison '",cc,"' (region: '",rr,"')"))
 						return(FALSE)
+					}
+					if (object@disk.dump){
+						fileN <- file.path(object@disk.path,paste0(paste("regions",rrn,ccn,sep="_"),".ff"))
+						if (!file.exists(fileN)){
+							if (verbose) logger.info(paste0("Disk dump file ['",fileN,"'] not found for comparison '",cc,"' (region: '",rr,"')"))
+							return(FALSE)
+						}
 					}
 				}
 			}
