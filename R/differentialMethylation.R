@@ -2295,7 +2295,13 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 	
 	sectionText <- "No GO Enrichment Analysis was conducted"
 	if (class(dm.go.enrich)=="DiffMeth.go.enrich" & length(dm.go.enrich$region)>0){
-		sectionText <- "GO Enrichment Analysis was conducted. The wordclouds and tables below contains significant GO terms as determined by a hypergeometric test."
+		refText.gostats <- c("Falcon, S., & Gentleman, R. (2007). Using GOstats to test gene lists for GO term association. <i>Bioinformatics</i>, <b>23</b>(2), 257–258")
+		report <- rnb.add.reference(report, refText.gostats)
+		sectionText <- c(
+			"GO Enrichment Analysis was conducted using a hypergeometric test that addresses the hierarchical structure of the ontology ",
+			"(see ", rnb.get.reference(report, refText.gostats), " for details). ",
+			"The wordclouds and tables below contain significant GO terms according to these tests."
+		)
 	}
 	report <- rnb.add.section(report, 'GO Enrichment Analysis', sectionText, level = 2)
 	if (class(dm.go.enrich)=="DiffMeth.go.enrich" && length(dm.go.enrich$region)>0){
@@ -2435,7 +2441,7 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 		  hyper.hypo <- c("hypervariable","hypovariable")
 		  names(hyper.hypo) <- c("hyper","hypo")
 		  setting.names$'Hypermethylation/hypomethylation' <- hyper.hypo
-		  sec.text <- "GO enrichment analysis was also performed for differentially variable regions."
+		  sec.text <- "GO enrichment analysis was also performed for differentially variable regions (see differential methylation section for details on the methods)."
 		  report <- rnb.add.section(report, title = "Differential Variability",description = sec.text,level = 3)
 		  description <- "Workclouds for GO enrichment terms (Differential Variability)"
 		  report <- rnb.add.figure(report,description,addedPlots.var,setting.names)
