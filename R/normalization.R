@@ -1280,7 +1280,7 @@ rnb.execute.imputation <- function(rnb.set,method=rnb.getOption("imputation.meth
     logger.info("RnBSet already imputed, imputation skipped.")
     return(rnb.set)
   }
-  if(inherits(rnb.set,"RnBSet") && length(samples(rnb.set)==1) && !(method%in%c("median.cpgs","mean.cpgs"))){
+  if(inherits(rnb.set,"RnBSet") && (length(samples(rnb.set))==1) && !(method%in%c("median.cpgs","mean.cpgs"))){
     logger.info(paste("Imputation cannot be employed with method",method,"median.cpgs used"))
     method <- "median.cpgs"
   }
