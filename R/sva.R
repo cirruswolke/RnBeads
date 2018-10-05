@@ -353,14 +353,17 @@ rnb.section.sva <- function(report, sva.obj) {
 		colnames(tbl) <- c("Trait", "Test")
 		rnb.add.table(report, tbl)
 
-		append.table <- function(tbl, fname.plot, fname.tab, heatmap.fun, header.r) {
+		append.table <- function(tbl, fname.plot, fname.tab, heatmap.fun, header.r, max.col.count = NULL) {
 			mytbl <- cbind(rownames(tbl), as.data.frame(tbl, check.names = FALSE))
 			colnames(mytbl)[1] <- paste0(header.r, " \\ SV") 
 			fname.tab.abs <- file.path(data.dir.abs,fname.tab)
 			fname.tab.rel <- paste(data.dir.rel, fname.tab, sep = "/")
 			utils::write.csv(mytbl, file = fname.tab.abs, na = "", row.names = FALSE)
 			sprintf("<a href=\"%s\">csv</a>", fname.tab.rel)
-			hmap <- heatmap.fun(report, tbl, fname.plot)
+			if(!is.null(max.col.count)){
+			  width <- 0.25 + max.col.count * 0.28 + 1.6
+			}
+			hmap <- heatmap.fun(report, tbl, fname.plot,width = width)
 			list(link = sprintf("<a href=\"%s\">csv</a>", fname.tab.rel), plot = hmap$plot, description = hmap$description)
 		}
 
@@ -368,6 +371,9 @@ rnb.section.sva <- function(report, sva.obj) {
 		#Traits: correlations
 		file.tbl <- matrix(character(), nrow = 0, ncol = 2, dimnames = list(NULL, c("Target", "File Name")))
 		rplots <- list()
+		max.col.count <- max(unlist(lapply(sva.obj$assoc$sva,function(x){
+		  x[["traits"]]$correlations
+		})),na.rm = T)
 		for (i in 1:length(targets)){
 			tt <- targets[i]
 			tn <- names(targets)[i]
@@ -379,7 +385,7 @@ rnb.section.sva <- function(report, sva.obj) {
 				dimnames(tbl) = list(names.traits,"Surrogate Variable"=1:ncol(tbl))
 				fname.plot <- paste0("heatmap_cor_sva_trait_",tn)
 				fname.tab  <- paste0("cor_sva_trait_",tn,".csv")
-				result <- append.table(tbl, fname.plot, fname.tab, plot.heatmap.pc.correlations, tab.header.r)
+				result <- append.table(tbl, fname.plot, fname.tab, plot.heatmap.pc.correlations, tab.header.r, max.col.count)
 				file.tbl <- rbind(file.tbl, c(targets[tn], result$link))
 				rplots[[targets[tn]]] <- result$plot
 				description <- result$description
@@ -407,7 +413,7 @@ rnb.section.sva <- function(report, sva.obj) {
 				dimnames(tbl) = list(names.traits,"Surrogate Variable"=1:ncol(tbl))
 				fname.plot <- paste0("heatmap_pval_sva_trait_",tn)
 				fname.tab  <- paste0("pval_sva_trait_",tn,".csv")
-				result <- append.table(tbl, fname.plot, fname.tab, plot.heatmap.pc.pvalues, tab.header.r)
+				result <- append.table(tbl, fname.plot, fname.tab, plot.heatmap.pc.pvalues, tab.header.r, max.col.count)
 				file.tbl <- rbind(file.tbl, c(targets[tn], result$link))
 				rplots[[targets[tn]]] <- result$plot
 				description <- result$description
@@ -440,7 +446,7 @@ rnb.section.sva <- function(report, sva.obj) {
 				dimnames(tbl) = list("Principal Component"=1:nrow(tbl),"Surrogate Variable"=1:ncol(tbl))
 				fname.plot <- paste0("heatmap_cor_sva_pca_",tn)
 				fname.tab  <- paste0("cor_sva_pca_",tn,".csv")
-				result <- append.table(tbl, fname.plot, fname.tab, plot.heatmap.pc.correlations, tab.header.r)
+				result <- append.table(tbl, fname.plot, fname.tab, plot.heatmap.pc.correlations, tab.header.r, max.col.count)
 				file.tbl <- rbind(file.tbl, c(targets[tn], result$link))
 				rplots[[targets[tn]]] <- result$plot
 				description <- result$description
