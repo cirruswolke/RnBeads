@@ -244,6 +244,9 @@ rnb.execute.sex.prediction <- function(rnb.set) {
 #' rnb.execute.gender.prediction
 #' 
 #' Deprecated function name, now called \code{\link{rnb.execute.sex.prediction}}.
+#' @param rnb.set Methylation dataset after running the sex prediction step, as an object of type
+#'                \code{\linkS4class{RnBSet}}.
+#' @return The possibly modified dataset. If sex could be predicted, the sample annotation table is enriched with
 #' @seealso rnb.execute.sex.prediction
 rnb.execute.gender.prediction <- function(rnb.set){
   rnb.execute.sex.prediction(rnb.set)
