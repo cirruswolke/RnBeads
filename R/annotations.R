@@ -766,7 +766,7 @@ rnb.get.annotation <- function(type = "CpG", assembly = "hg19") {
 #'                    annotation tables of CpG dinucleotides, and Infinium methylation and control probes, respectively.
 #' @param regions     BED file defining regions (see \emph{Details}). Alternatively, the value of this parameter can be
 #'                    a table of genomic regions in the form of a \code{\link{data.frame}}, containing at least the
-#'                    following three columns - \code{"chromosome"}, \code{"start"} and \code{"end"} (notice the lower
+#'                    following three columns - \code{"Chromosome"}, \code{"Start"} and \code{"End"} (notice the upper
 #'                    case). The \code{"chromosome"} column must be a \code{character} or \code{factor} vector that
 #'                    lists chromosome names. The \code{"start"} and \code{"end"} columns are expected to contain
 #'                    genomic positions as \code{integer}s. The row names of this \code{data.frame} are used as region
@@ -819,9 +819,9 @@ rnb.set.annotation <- function(type, regions, description = NULL, assembly = "hg
 		}
 		regions <- rnb.load.bed(regions)
 	}
-	if (!(ncol(regions) >= 3 && all(c("chromosome", "start", "end") %in% colnames(regions)) &&
-			(is.character(regions[["chromosome"]]) || is.factor(regions[["chromosome"]])) &&
-			is.integer(regions[["start"]]) && is.integer(regions[["end"]]))) {
+	if (!(ncol(regions) >= 3 && all(c("Chromosome", "Start", "End") %in% colnames(regions)) &&
+			(is.character(regions[["Chromosome"]]) || is.factor(regions[["Chromosome"]])) &&
+			is.integer(regions[["Start"]]) && is.integer(regions[["End"]]))) {
 		stop("invalid format for regions")
 	}
 	if (!is.null(description)) {
@@ -840,7 +840,7 @@ rnb.set.annotation <- function(type, regions, description = NULL, assembly = "hg
 	}
 
 	## Construct list of region annotation tables with sorted coordinates, one per chromosome
-	strand.column <- which(colnames(regions) == "strand")
+	strand.column <- which(colnames(regions) == "Strand")
 	if (length(strand.column) == 0) {
 		strand.column <- NULL
 	}
