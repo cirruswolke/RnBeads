@@ -1524,7 +1524,7 @@ tab.enhancers <- tab.chromHMM.h1[grep("Enhancer", tab.chromHMM.h1$name), ]
 
 # Select the interesting parts of the table and rename columns
 tab.enhancers <- tab.enhancers[, c("chrom", "chromStart", "chromEnd", "name")]
-colnames(tab.enhancers) <- c("chromosome", "start", "end", "name")
+colnames(tab.enhancers) <- c("Chromosome", "Start", "End", "name")
 
 # Create RnBeads annotation by providing a data.frame
 rnb.set.annotation("enhancersH1EscChromHMM", tab.enhancers, assembly="hg19")
