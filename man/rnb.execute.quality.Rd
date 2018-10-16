@@ -5,7 +5,8 @@
 \title{rnb.execute.quality}
 \usage{
 rnb.execute.quality(object, type = "sites",
-  qc.coverage.plots = rnb.getOption("qc.coverage.plots"), verbose = TRUE)
+  qc.coverage.plots = rnb.getOption("qc.coverage.plots"),
+  verbose = TRUE)
 }
 \arguments{
 \item{object}{Methylation dataset as an object of class \code{\linkS4class{RnBeadSet}},

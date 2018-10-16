@@ -4,8 +4,9 @@
 \alias{create.hex.summary.plot}
 \title{create.hex.summary.plot}
 \usage{
-create.hex.summary.plot(df2p, x = colnames(df2p)[1], y = colnames(df2p)[2],
-  q = colnames(df2p)[3], bins = 128, fun = median, ...)
+create.hex.summary.plot(df2p, x = colnames(df2p)[1],
+  y = colnames(df2p)[2], q = colnames(df2p)[3], bins = 128,
+  fun = median, ...)
 }
 \arguments{
 \item{df2p}{\code{data.frame} to be plotted.}

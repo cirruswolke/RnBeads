@@ -3,7 +3,6 @@
 \name{rnb.options}
 \alias{rnb.options}
 \alias{rnb.getOption}
-\alias{rnb.getOption}
 \title{RnBeads Options}
 \usage{
 rnb.options(...)

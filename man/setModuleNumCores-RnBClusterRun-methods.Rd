@@ -6,8 +6,8 @@
 \alias{setModuleNumCores}
 \title{setModuleNumCores-methods}
 \usage{
-\S4method{setModuleNumCores}{RnBClusterRun,integer,character}(object, num.cores,
-  modules = "all")
+\S4method{setModuleNumCores}{RnBClusterRun,integer,character}(object,
+  num.cores, modules = "all")
 }
 \arguments{
 \item{object}{\code{\linkS4class{RnBClusterRun}} object}
