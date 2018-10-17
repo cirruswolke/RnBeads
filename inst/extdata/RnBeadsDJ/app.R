@@ -670,7 +670,7 @@ ui <- tagList(useShinyjs(), navbarPage(
 								selectInput("rnbOptsI.import.bed.style", NULL, RNB.BED.STYLES)
 							),
 							tags$td(
-								verbatimTextOutput("rnbOptsO.import.import.bed.style")
+								verbatimTextOutput("rnbOptsO.import.bed.style")
 							)
 						)
 					)
