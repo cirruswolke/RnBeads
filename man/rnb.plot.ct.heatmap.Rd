@@ -4,8 +4,7 @@
 \alias{rnb.plot.ct.heatmap}
 \title{rnb.plot.ct.heatmap}
 \usage{
-rnb.plot.ct.heatmap(ct.obj, type = "nonnegative", writeToFile = FALSE,
-  ...)
+rnb.plot.ct.heatmap(ct.obj, type = "nonnegative", writeToFile = FALSE, ...)
 }
 \arguments{
 \item{ct.obj}{Object of class \code{CellTypeInferenceResult} as returned by \link{rnb.execute.ct.estimation}.}

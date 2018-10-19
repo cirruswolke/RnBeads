@@ -21,6 +21,8 @@
 #'             \item{\code{ref.intensity}} Reference intensity values used to compute CNVs
 #'             \item{\code{bac.array.cpg}} CpG identifieres of the entries in \code{ref.intensity}
 #'          }
+#' @details The reference profiles have been obtained as the median signal intensities of twins from two twin studies:
+#'    GSE85647 and GSE100940. 
 #' @noRd
 #' @author Pavlo Lutsik, with modifications by Michael Scherer         
 rnb.get.cnv.annotations<-function(platform="probes450"){
@@ -303,7 +305,7 @@ rnb.section.cnv<-function(report, cnv.data){
 
 #' rnb.step.cnv
 #'
-#' Performs copy nubmer calling from the Infinium intenstity data and adds the results to the report
+#' Performs copy number calling from the Infinium intenstity data and adds the results to the report
 #'
 #' @param rnb.set	An object of type \code{\linkS4class{RnBeadRawSet}}
 #' @param report  Report on quality control to contain the generated sections. This must be an object of type

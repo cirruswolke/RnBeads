@@ -5,8 +5,7 @@
 \title{createReportGgPlot}
 \usage{
 createReportGgPlot(ggp, fname, report = NULL, width = 7, height = 7,
-  create.pdf = TRUE, low.png = as.integer(100),
-  high.png = as.integer(0))
+  create.pdf = TRUE, low.png = as.integer(100), high.png = as.integer(0))
 }
 \arguments{
 \item{ggp}{\code{ggplot} object to be plotted}

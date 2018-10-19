@@ -38,6 +38,8 @@ an object of class RnBeadSet
 }
 \description{
 Stores the preprocessed information from HumanMethylation experiments
+
+Wrapper function RnBeadSet
 }
 \details{
 There are multiple ways to create an object of type \code{RnBeadSet}:

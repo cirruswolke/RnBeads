@@ -45,7 +45,7 @@ qc.coverage.histograms	logical	no	no		TRUE
 qc.coverage.violins	logical	no	no		TRUE
 qc.sample.batch.size	integer	no	no		500
 qc.cnv	logical	no	no		FALSE
-qc.cnv.refbased	logical	no	no		TRUE
+qc.cnv.refbased	logical	no	no		FALSE
 preprocessing	logical	no	no		TRUE
 normalization	logical	no	yes		NULL
 normalization.method	character	no	no	(none,bmiq,illumina,swan,minfi.funnorm,wm.dasen,wm.nasen,wm.betaqn,wm.naten,wm.nanet,wm.nanes,wm.danes,wm.danet,wm.danen,wm.daten1,wm.daten2,wm.tost,wm.fuks,wm.swan)	wm.dasen
@@ -87,7 +87,7 @@ exploratory.correlation.pvalue.threshold	double	no	no	[0,1]	0.01
 exploratory.correlation.permutations	integer	no	no	[0,	10000
 exploratory.correlation.qc	logical	no	no		TRUE
 exploratory.beta.distribution	logical	no	no		TRUE
-exploratory.intersample	logical	no	no		TRUE
+exploratory.intersample	logical	no	yes		NULL
 exploratory.deviation.plots	logical	no	yes		NULL
 exploratory.clustering	character	no	no	(all,none,top)	all
 exploratory.clustering.top.sites	integer.vector	no	no	[1,	(1000)

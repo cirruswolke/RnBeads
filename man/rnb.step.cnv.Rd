@@ -16,7 +16,7 @@ rnb.step.cnv(rnb.set, report)
 The modified report.
 }
 \description{
-Performs copy nubmer calling from the Infinium intenstity data and adds the results to the report
+Performs copy number calling from the Infinium intenstity data and adds the results to the report
 }
 \author{
 Pavlo Lutsik

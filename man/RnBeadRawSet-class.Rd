@@ -54,6 +54,8 @@ an object of class RnBeadRawSet
 }
 \description{
 Main class for storing HumanMethylation micorarray data which includes intensity information
+
+Wrapper function RnBeadRawSet
 }
 \section{Slots}{
 

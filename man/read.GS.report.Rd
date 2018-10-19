@@ -5,8 +5,8 @@
 \title{read.GS.report}
 \usage{
 read.GS.report(gsReportFile, pd = NULL,
-  sep = rnb.getOption("import.table.separator"),
-  keep.methylumi = FALSE, verbose = TRUE)
+  sep = rnb.getOption("import.table.separator"), keep.methylumi = FALSE,
+  verbose = TRUE)
 }
 \arguments{
 \item{gsReportFile}{location of the GS report file}

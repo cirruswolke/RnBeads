@@ -1486,7 +1486,11 @@ rnb.run.exploratory <- function(rnb.set, dir.reports,
 	}
 
 	## Inter-sample variability
-	if (rnb.getOption("exploratory.intersample")) {
+	do.intersample <- rnb.getOption("exploratory.intersample")
+	if(is.null(do.intersample)){
+	  do.intersample <- inherits(rnb.set,"RnBeadSet")
+	}
+	if (do.intersample) {
 		report <- rnb.step.intersample.internal(rnb.set, report, sample.inds, rinfos)
 	}
 

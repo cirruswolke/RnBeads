@@ -4,9 +4,8 @@
 \alias{rnb.color.legends}
 \title{rnb.color.legends}
 \usage{
-rnb.color.legends(report, legends,
-  fprefix = ifelse(is.character(legends), "legend", "legend_"),
-  description = "Color legend.", setting.names = NULL,
+rnb.color.legends(report, legends, fprefix = ifelse(is.character(legends),
+  "legend", "legend_"), description = "Color legend.", setting.names = NULL,
   size.factor = 3)
 }
 \arguments{

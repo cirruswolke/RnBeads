@@ -45,6 +45,8 @@ an object of class RnBiseqSet
 }
 \description{
 A class for storing the DNA methylation and quality information from bisulfite sequencing experiments
+
+Wrapper function RnBiseqSet
 }
 \details{
 TBA

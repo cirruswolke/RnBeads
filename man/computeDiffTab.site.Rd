@@ -9,8 +9,7 @@
 computeDiffTab.default.site(X, inds.g1, inds.g2,
   diff.method = rnb.getOption("differential.site.test.method"),
   variability.method = rnb.getOption("differential.variability.method"),
-  paired = FALSE, adjustment.table = NULL, eps = 0.01,
-  imputed = FALSE)
+  paired = FALSE, adjustment.table = NULL, eps = 0.01, imputed = FALSE)
 
 computeDiffTab.extended.site(X, inds.g1, inds.g2,
   diff.method = rnb.getOption("differential.site.test.method"),

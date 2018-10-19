@@ -2,6 +2,7 @@
 % Please edit documentation in R/RnBeadSet-class.R, R/RnBiseqSet-class.R
 \name{coercion-methods}
 \alias{coercion-methods}
+\alias{coercion-methods}
 \title{as("RnBeadSet", "MethyLumiSet")}
 \description{
 Convert a \code{\linkS4class{RnBeadSet}} object to \code{\linkS4class{MethyLumiSet}}

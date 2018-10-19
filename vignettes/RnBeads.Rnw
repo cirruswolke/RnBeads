@@ -714,6 +714,32 @@ Reizel GEO & GEO \href{https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE600
 		\label{tab:gender-prediction-bs}
 	\end{table}
 
+	\subsubsection{CNV estimation}
+	Copy number variation (CNV) can be estimated from signal intensity values
+	of BeadArray data sets. RnBeads' CNV estimation module comes with two flavors:
+	a reference-based and a reference-free approach. We recommend to use the 
+	reference-free approach, since validation of the reference data set is still to be
+	conducted. CNV estimation is only to be executed within the QC module and not 
+	individually. It is activated by:
+	
+<<eval=FALSE>>=
+rnb.options(qc.cnv=TRUE)
+result <- run.run.qc(rnb.set.unfiltered,dir.reports=report.dir)
+@
+
+	The estimation is based on the \href{http://bioconductor.org/packages/release/bioc/html/GLAD.html}{GLAD} package.
+	We obtained the reference data set from two published twin studies 
+	(\href{https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE85647}{GSE85647} and 
+	\href{https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE100940}{GSE100940}) as the median
+	signal intensity for the probes. To activate the reference-based mode, you need to set:
+
+<<eval=FALSE>>=
+rnb.options(qc.cnv.refbased=TRUE)
+@
+
+	In the default mode, RnBeads computes median signal intensities for all samples in
+	the data set and uses this as the reference to detect potential outliers with respect
+	to signal intensity. 
 
 \subsection{Preprocessing}
 	Several steps might be required to prepare the data for downstream analysis.

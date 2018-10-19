@@ -3,6 +3,7 @@
 \name{rnb.options}
 \alias{rnb.options}
 \alias{rnb.getOption}
+\alias{rnb.getOption}
 \title{RnBeads Options}
 \usage{
 rnb.options(...)
@@ -330,9 +331,10 @@ is available (see below). Attempting to get or set the value of a non-existing o
   \item{\bold{\code{exploratory.beta.distribution}}\code{ = TRUE}}{
        Flag indicating whether beta value distributions for sample groups and probe or site categories should be
        computed.}
-  \item{\bold{\code{exploratory.intersample}}\code{ = TRUE}}{
+  \item{\bold{\code{exploratory.intersample}}\code{ = NULL}}{
        Flag indicating if methylation variability in sample groups should be computed as part of the exploratory
-       analysis module.}
+       analysis module. If NULL (default), the plots are created for Bead Array data sets and deactivated for sequencing
+       data sets.}
   \item{\bold{\code{exploratory.deviation.plots}}\code{ = NULL}}{
        Flag indicating if the inter-sample methylation variability step in the exploratory analysis module should
        include deviation plots. Deviation plots show intra-group methylation variability at the covered sites and
