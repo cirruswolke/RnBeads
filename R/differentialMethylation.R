@@ -2295,7 +2295,7 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL
 	
 	sectionText <- "No GO Enrichment Analysis was conducted"
 	if (class(dm.go.enrich)=="DiffMeth.go.enrich" & length(dm.go.enrich$region)>0){
-		refText.gostats <- c("Falcon, S., & Gentleman, R. (2007). Using GOstats to test gene lists for GO term association. <i>Bioinformatics</i>, <b>23</b>(2), 257–258")
+		refText.gostats <- c("Falcon, S., & Gentleman, R. (2007). Using GOstats to test gene lists for GO term association. <i>Bioinformatics</i>, <b>23</b>(2), 257-258")
 		report <- rnb.add.reference(report, refText.gostats)
 		sectionText <- c(
 			"GO Enrichment Analysis was conducted using a hypergeometric test that addresses the hierarchical structure of the ontology ",
