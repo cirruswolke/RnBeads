@@ -1,3 +1,12 @@
+RnBeads 1.13.5
+=============
+ 
+ * RnBeadsDJ: updated documentation and tooltips
+ * deactivated intersample plots (exploratory module) as default option for BS-seq data
+ * Roxygen documentation updates
+ * Extended methods descriptions in reports (imputation, filtering, differential, ...)
+ * Miscellaneous bugfixes and performance improvements in RnBeadsDJ, imputation, ...
+
 RnBeads 1.13.3
 =============
  
