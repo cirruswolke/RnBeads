@@ -1216,9 +1216,14 @@ setMethod("mergeSamples", signature(object = "RnBSet"),
 #' @param type		\code{character} singleton defining the set operation applied to the two site sets, 
 #' 					one of "all", "all.x", "all.y" or "common"
 #' 
-#' @details The sample sets of \code{x} and \code{y} should be unique.
-#' Sample annotation information is merged only for columns which have identical names in both objects.
-#' CpG sites of the new object are a union of those present in both objects.
+#' @details Combine method supports a merge of any two RnBSet objects that contain data of the same specie.
+#' In case a non-synonymous merge is performed, the class conversion will follow the following hierarchy: 
+#' \code{RnBeadSet} < \class{RnBeadRawSet} < \class{RnBiseqSet}.
+#' In case \code{x} and \code{y} are both array data containers (\code{RnBeadSet} or \code{RnBeadRawSet}), 
+#' the resulting object will have an annotation that corresponds to the newer array version 
+#' (\code{27k} < \code{450k} < \code{EPIC}).
+#' The sample sets of \code{x} and \code{y} should be unique. Sample annotation information is merged only for columns 
+#' which have identical names in both objects. CpG sites of the new object are a union of those present in both objects.
 #'
 #' @return combined \code{\linkS4class{RnBeadSet}}, \code{\linkS4class{RnBeadRawSet}} or
 #' \code{\linkS4class{RnBiseqSet}} object
