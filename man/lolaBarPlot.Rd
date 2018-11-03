@@ -4,9 +4,10 @@
 \alias{lolaBarPlot}
 \title{lolaBarPlot}
 \usage{
-lolaBarPlot(lolaDb, lolaRes, scoreCol = "pValueLog", orderCol = scoreCol,
-  signifCol = "qValue", includedCollections = c(), pvalCut = 0.01,
-  maxTerms = 50, colorpanel = sample(rainbow(maxTerms, v = 0.5)),
+lolaBarPlot(lolaDb, lolaRes, scoreCol = "pValueLog",
+  orderCol = scoreCol, signifCol = "qValue",
+  includedCollections = c(), pvalCut = 0.01, maxTerms = 50,
+  colorpanel = sample(rainbow(maxTerms, v = 0.5)),
   groupByCollection = TRUE, orderDecreasing = NULL)
 }
 \arguments{

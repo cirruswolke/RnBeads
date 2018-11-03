@@ -4,8 +4,8 @@
 \alias{rnb.execute.imputation}
 \title{rnb.execute.imputation}
 \usage{
-rnb.execute.imputation(rnb.set, method = rnb.getOption("imputation.method"),
-  update.ff = TRUE, ...)
+rnb.execute.imputation(rnb.set,
+  method = rnb.getOption("imputation.method"), update.ff = TRUE, ...)
 }
 \arguments{
 \item{rnb.set}{Dataset object inheriting from \code{\linkS4class{RnBSet}}.}

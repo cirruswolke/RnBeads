@@ -4,7 +4,8 @@
 \alias{rnb.set.annotation}
 \title{rnb.set.annotation}
 \usage{
-rnb.set.annotation(type, regions, description = NULL, assembly = "hg19")
+rnb.set.annotation(type, regions, description = NULL,
+  assembly = "hg19")
 }
 \arguments{
 \item{type}{One-element \code{character} vector giving the name of the annotation. If this region type is

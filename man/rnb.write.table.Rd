@@ -4,7 +4,8 @@
 \alias{rnb.write.table}
 \title{rnb.write.table}
 \usage{
-rnb.write.table(tt, fname, fpath = "", format = "csv", gz = FALSE, ...)
+rnb.write.table(tt, fname, fpath = "", format = "csv", gz = FALSE,
+  ...)
 }
 \arguments{
 \item{tt}{Table to be written to file, usually in the form of a \code{matrix} or \code{data.frame}.}

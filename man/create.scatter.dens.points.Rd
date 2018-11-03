@@ -4,8 +4,8 @@
 \alias{create.scatter.dens.points}
 \title{create.scatter.dens.points}
 \usage{
-create.scatter.dens.points(df2p, is.special = NULL, dens.special = TRUE,
-  mock = FALSE)
+create.scatter.dens.points(df2p, is.special = NULL,
+  dens.special = TRUE, mock = FALSE)
 }
 \arguments{
 \item{df2p}{\code{data.frame} to be plotted. Only the fist two columns are taken into account as
