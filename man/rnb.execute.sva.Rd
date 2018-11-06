@@ -4,8 +4,10 @@
 \alias{rnb.execute.sva}
 \title{rnb.execute.sva}
 \usage{
-rnb.execute.sva(rnb.set, cmp.cols = rnb.getOption("inference.targets.sva"),
-  columns.adj = rnb.getOption("covariate.adjustment.columns"), assoc = TRUE,
+rnb.execute.sva(rnb.set,
+  cmp.cols = rnb.getOption("inference.targets.sva"),
+  columns.adj = rnb.getOption("covariate.adjustment.columns"),
+  assoc = TRUE,
   numSVmethod = rnb.getOption("inference.sva.num.method"))
 }
 \arguments{

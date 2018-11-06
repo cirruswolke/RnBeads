@@ -4,8 +4,8 @@
 \alias{rnb.plot.num.sites.covg}
 \title{rnb.plot.num.sites.covg}
 \usage{
-rnb.plot.num.sites.covg(rnbs, addSampleNames = (length(samples(rnbs)) < 100),
-  bar.percentiles = c(0.25, 0.75))
+rnb.plot.num.sites.covg(rnbs, addSampleNames = (length(samples(rnbs)) <
+  100), bar.percentiles = c(0.25, 0.75))
 }
 \arguments{
 \item{rnbs}{RnBiseqSet object}

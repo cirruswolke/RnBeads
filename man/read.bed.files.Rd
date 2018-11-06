@@ -4,12 +4,14 @@
 \alias{read.bed.files}
 \title{read.bed.files}
 \usage{
-read.bed.files(base.dir = NULL, file.names = NULL, sample.sheet = NULL,
-  file.names.col = 0, assembly = rnb.getOption("assembly"),
+read.bed.files(base.dir = NULL, file.names = NULL,
+  sample.sheet = NULL, file.names.col = 0,
+  assembly = rnb.getOption("assembly"),
   region.types = rnb.region.types.for.analysis(assembly),
   pos.coord.shift = 1L, skip.lines = 1,
   sep.samples = rnb.getOption("import.table.separator"),
-  merge.bed.files = TRUE, useff = rnb.getOption("disk.dump.big.matrices"),
+  merge.bed.files = TRUE,
+  useff = rnb.getOption("disk.dump.big.matrices"),
   usebigff = rnb.getOption("disk.dump.bigff"), verbose = TRUE, ...)
 }
 \arguments{

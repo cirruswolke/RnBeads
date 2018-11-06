@@ -6,8 +6,9 @@
 \alias{reload}
 \title{reload-methods}
 \usage{
-\S4method{reload}{RnBDiffMeth}(object, save.file, disk.path = tempfile(pattern
-  = "diffmeth_", tmpdir = getOption("fftempdir")))
+\S4method{reload}{RnBDiffMeth}(object, save.file,
+  disk.path = tempfile(pattern = "diffmeth_", tmpdir =
+  getOption("fftempdir")))
 }
 \arguments{
 \item{object}{\code{\linkS4class{RnBDiffMeth}} object}
