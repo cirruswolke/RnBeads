@@ -1139,7 +1139,7 @@ intensities.by.color<-function(raw.set,
 			dII.red, dI.red.meth, dI.red.umeth, dI.grn.meth.oob, dI.grn.umeth.oob)
 	invisible(gc())
 
-	if(address.rownames) {
+	if(add.oob & address.rownames) {
 		intensities.by.channel$Cy5<-intensities.by.channel$Cy5[rownames(intensities.by.channel$Cy3),,drop=FALSE]
 	}
 	if (add.controls) {
