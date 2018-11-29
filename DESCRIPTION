@@ -77,7 +77,7 @@ Imports:
 License: GPL-3
 biocViews: DNAMethylation, MethylationArray, MethylSeq, Epigenetics,
     QualityControl, Preprocessing, BatchEffect, DifferentialMethylation,
-    Sequencing, CpGIsland, TwoChannel, DataImport
+    Sequencing, CpGIsland, ImmunoOncology, TwoChannel, DataImport
 Collate: 
     'CNV.R'
     'Report-class.R'
