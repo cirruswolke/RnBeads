@@ -1218,7 +1218,7 @@ setMethod("mergeSamples", signature(object = "RnBSet"),
 #' 
 #' @details Combine method supports a merge of any two RnBSet objects that contain data of the same specie.
 #' In case a non-synonymous merge is performed, the class conversion will follow the following hierarchy: 
-#' \code{RnBeadSet} < \class{RnBeadRawSet} < \class{RnBiseqSet}.
+#' \code{RnBeadSet} < \code{\linkS4class{RnBeadRawSet}} < \code{\linkS4class{RnBiseqSet}}.
 #' In case \code{x} and \code{y} are both array data containers (\code{RnBeadSet} or \code{RnBeadRawSet}), 
 #' the resulting object will have an annotation that corresponds to the newer array version 
 #' (\code{27k} < \code{450k} < \code{EPIC}).
