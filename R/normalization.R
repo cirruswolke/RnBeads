@@ -75,7 +75,7 @@ rnb.execute.normalization<-function(
 					  ' method', ifelse(txt == '', '', ': '), txt, '. Changed the method to "none"')
 		rnb.warning(txt)
 		if (is.method) {
-			rnb.options(normalization.method = "none")
+		  rnb.options(normalization.method = "none")
 			method <<- "none"
 			method.to.set <<- object@status$normalized
 			secondary.bmiq <<- FALSE
@@ -1303,11 +1303,13 @@ rnb.execute.imputation <- function(rnb.set,method=rnb.getOption("imputation.meth
     rnb.options("imputation.method"="mean.samples")
     method = "mean.samples"
     logger.info("Knn imputation not applicable to sequencing data sets, switched to 'mean.samples' method")
+    rnb.options("imputation.method"=method)
   }
   if(rnb.getOption("enforce.memory.management")){
     if(!method%in%c("mean.cpgs","median.cpgs")){
       logger.info(sprintf("Low memory imputation not compatible with method %s, switched to mean.cpgs",method))
       method <- "mean.cpgs"
+      rnb.options("imputation.method"=method)
     }
     if(method=="mean.cpgs"){
       if(is.data.frame(rnb.set)||is.matrix(rnb.set)){
