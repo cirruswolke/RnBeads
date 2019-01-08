@@ -129,9 +129,10 @@ Collate:
     'readGEO.R'
     'regionDescription.R'
     'regionProfiles.R'
+    'segmentation.R'
     'sex.R'
     'subSegments.R'
     'sva.R'
     'utilities.R'
     'wbcInference.R'
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1
