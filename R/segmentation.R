@@ -20,8 +20,9 @@
 #' @param n.cores The number of cores available for analysis
 #' @param plot.path Location on disk on which diagnostic plots are to be stored. Defaults to the working directory.
 #' @param temp.dir The temporary directory. Defaults to the R temporary directory.
-#' @return An object of type \code{\link{GRanges}} containing segmentation information on the object. Furthermore, three new
-#'          annotations are set globally containing segmentation into PMDs, UMRs/LMRs, and HMRs for the sample that was specified.
+#' @return An object of type \code{\link{GRanges}} containing segmentation information on the sites that are available in
+#'         \code{rnb.set}. Furthermore, three new annotations are set globally containing segmentation into PMDs, UMRs/LMRs,
+#'         and HMRs for the sample that was specified.
 #' @details For further descriptions on the methods, see \code{MethylSeekR}-documentation. The new annotations can be accessed
 #'          via \code{rnb.get.annotation("[PMDs,UMRsLMRs,HMRs]_[sample.name]")}.
 #' @author Michael Scherer, based on a script by Abdulrahman Salhab
@@ -118,16 +119,18 @@ rnb.execute.segmentation <- function(rnb.set,
   values(anno.rnb)$PMD[queryHits(op.pmds)] <- values(PMDsegments.gr)$type[subjectHits(op.pmds)]
   op.umr.lmr <- findOverlaps(anno.rnb,UMRLMRsegments.gr)
   values(anno.rnb)$UMR_LMR <- rep(NA,length(anno.rnb))
-  values(anno.rnb)$UMR_LMR[queryHits(op.umr.lmr)] <- values(PMDsegments.gr)$type[subjectHits(op.umr.lmr)]
+  values(anno.rnb)$UMR_LMR[queryHits(op.umr.lmr)] <- values(UMRLMRsegments.gr)$type[subjectHits(op.umr.lmr)]
   values(anno.rnb)$HMR <- rep(NA,length(anno.rnb))
   values(anno.rnb)$HMR[is.na(values(anno.rnb)$UMR_LMR) & (values(anno.rnb)$PMD %in% "notPMD")] <- "HMR"
   
   # set new annotations PMD, UMR/LMR, HMR
-  anno.frame <- rnb.annotation2data.frame(anno.rnb)
-  rnb.set.annotation(paste0("PMDs_",sample.name),regions=anno.frame[,c("Chromosome","Start","End","PMD")],description = "Partially Methylated Domains by MethylSeekR",assembly = asb)
-  rnb.set.annotation(paste0("UMRsLMRs_",sample.name),regions=anno.frame[,c("Chromosome","Start","End","UMR_LMR")],description = "Unmethylated and Lowly Methylated Regions by MethylSeekR",assembly = asb)
-  rnb.set.annotation(paste0("HMRs_",sample.name),regions=anno.frame[,c("Chromosome","Start","End","HMR")],description = "Highly Methylated Regions by MethylSeekR",assembly = asb)
-  
+  pmd.frame <- data.frame(Chromosome=seqnames(PMDsegments.gr),Start=start(PMDsegments.gr),End=end(PMDsegments.gr),
+                           PMD=values(PMDsegments.gr)$type)
+  rnb.set.annotation(paste0("PMDs_",sample.name),regions=pmd.frame,description = "Partially Methylated Domains by MethylSeekR",assembly = asb)
+  umr.lmr.frame <- data.frame(Chromosome=seqnames(UMRLMRsegments.gr),Start=start(UMRLMRsegments.gr),End=end(UMRLMRsegments.gr),
+                          UMR_LMR=values(UMRLMRsegments.gr)$type)
+  rnb.set.annotation(paste0("UMRsLMRs_",sample.name),regions=umr.lmr.frame,description = "Unmethylated and Lowly Methylated Regions by MethylSeekR",assembly = asb)
+
   unlink(tmp.file.meth)
   unlink(tmp.file.snps)
   return(anno.rnb)
@@ -143,7 +146,7 @@ rnb.execute.segmentation <- function(rnb.set,
 #' @param n.regions Number of regions
 #' @param meth.cutoff The methylation cutoff
 #' @author Michael Scherer
-#' @export
+#' @noRd
 rnb.plot.segmentation.final <- function(data.gr,
                                         UMR.LMR.segments.gr,
                                         PMD.segments,
@@ -160,7 +163,7 @@ rnb.plot.segmentation.final <- function(data.gr,
 #'
 #'@param data.gr The data object as \code{\link{GRanges}} object
 #'@author Michael Scherer
-#'@export
+#'@noRd
 rnb.plot.segmentation.distributions <- function(data.gr){
   df <- as.data.frame(data.gr)
   df$meth <- df$M/df$T
