@@ -130,6 +130,7 @@ Collate:
     'readGEO.R'
     'regionDescription.R'
     'regionProfiles.R'
+    'segmentation.R'
     'sex.R'
     'subSegments.R'
     'sva.R'
