@@ -9,7 +9,8 @@
 #' rnb.execute.segmentation
 #' 
 #' This function computes methylation segmentation by MethylSeekR into PMDs, UMRs/LMRs, and HMRs. It is recommened to only
-#' execute this function on WGBS data, but could also be used for any BS data containing coverage information.
+#' execute this function on WGBS data  (with coverage >=10 according to the developer's recommendation), but could also be
+#' used with RRBS_HaeIII without guarantee and the results should be interpreted carefully.
 #' 
 #' @param rnb.set An object of type \code{\link{RnBiseqSet-class}} containing methylation and coverage information.
 #' @param sample.name The sample for which segmentation is to be executed. Segemntation can only be exectued for each sample
@@ -20,9 +21,8 @@
 #' @param n.cores The number of cores available for analysis
 #' @param plot.path Location on disk on which diagnostic plots are to be stored. Defaults to the working directory.
 #' @param temp.dir The temporary directory. Defaults to the R temporary directory.
-#' @return An object of type \code{\link{GRanges}} containing segmentation information on the sites that are available in
-#'         \code{rnb.set}. Furthermore, three new annotations are set globally containing segmentation into PMDs, UMRs/LMRs,
-#'         and HMRs for the sample that was specified.
+#' @return The input RnBSet object with segementation added as an additional region type. Furthermore, three new annotations
+#'          are set globally containing segmentation into PMDs, UMRs/LMRs, and HMRs for the sample that was specified.
 #' @details For further descriptions on the methods, see \code{MethylSeekR}-documentation. The new annotations can be accessed
 #'          via \code{rnb.get.annotation("[PMDs,UMRsLMRs,HMRs]_[sample.name]")}.
 #' @author Michael Scherer, based on a script by Abdulrahman Salhab
@@ -98,6 +98,10 @@ rnb.execute.segmentation <- function(rnb.set,
   PMDsegments.gr <- segmentPMDs(m=data.gr,pdfFilename=file.path(plot.path,paste(sample.name,"alpha.model.fit.pdf",sep=".")), chr.sel="chr2",seqLengths=sLengths, num.cores=n.cores)
   logger.completed()
   
+  logger.start("Plotting alpha distribution")
+  plotAlphaDistributionOneChr(m=data.gr, chr.sel="chr2",pdfFilename=file.path(plot.path,paste(sample.name,"alpha_distribution.pdf",sep=".")),num.cores=n.cores)
+  logger.completed()
+  
   ### FDR calculation
   logger.start("FDR calculation")
   stats <- calculateFDRs(m=data.gr, CGIs=CpGislands.gr,PMDs=PMDsegments.gr, nCpG.cutoffs =seq(1, 17, by=3),pdfFilename=file.path(plot.path,paste(sample.name,"FDR.pdf",sep=".")),num.cores=n.cores)
@@ -113,15 +117,14 @@ rnb.execute.segmentation <- function(rnb.set,
   logger.completed()
   
   # create final segmentation
-  final.gr <- anno.rnb
-  op.pmds <- findOverlaps(anno.rnb,PMDsegments.gr)
-  values(anno.rnb)$PMD <- rep(NA,length(anno.rnb))
-  values(anno.rnb)$PMD[queryHits(op.pmds)] <- values(PMDsegments.gr)$type[subjectHits(op.pmds)]
-  op.umr.lmr <- findOverlaps(anno.rnb,UMRLMRsegments.gr)
-  values(anno.rnb)$UMR_LMR <- rep(NA,length(anno.rnb))
-  values(anno.rnb)$UMR_LMR[queryHits(op.umr.lmr)] <- values(UMRLMRsegments.gr)$type[subjectHits(op.umr.lmr)]
-  values(anno.rnb)$HMR <- rep(NA,length(anno.rnb))
-  values(anno.rnb)$HMR[is.na(values(anno.rnb)$UMR_LMR) & (values(anno.rnb)$PMD %in% "notPMD")] <- "HMR"
+  tile.type <- rnb.region.types.for.analysis(rnb.set)[grep("tiling",rnb.region.types.for.analysis(rnb.set))]
+  hmr.segments <- annotation(rnb.set,tile.type)
+  hmr.segments <- GRanges(Rle(hmr.segments$Chromosome),IRanges(start = hmr.segments$Start,end=hmr.segments$End))
+  op.pmds <- findOverlaps(hmr.segments,PMDsegments.gr[values(PMDsegments.gr)$type %in% "notPMD"])
+  hmr.segments <- hmr.segments[queryHits(op.pmds)]
+  op.umr.lmr <- findOverlaps(hmr.segments,UMRLMRsegments.gr)
+  hmr.segments <- hmr.segments[-queryHits(op.umr.lmr)]
+  values(hmr.segments)$HMR <- rep("HMR",length(hmr.segments))
   
   # set new annotations PMD, UMR/LMR, HMR
   pmd.frame <- data.frame(Chromosome=seqnames(PMDsegments.gr),Start=start(PMDsegments.gr),End=end(PMDsegments.gr),
@@ -130,10 +133,44 @@ rnb.execute.segmentation <- function(rnb.set,
   umr.lmr.frame <- data.frame(Chromosome=seqnames(UMRLMRsegments.gr),Start=start(UMRLMRsegments.gr),End=end(UMRLMRsegments.gr),
                           UMR_LMR=values(UMRLMRsegments.gr)$type)
   rnb.set.annotation(paste0("UMRsLMRs_",sample.name),regions=umr.lmr.frame,description = "Unmethylated and Lowly Methylated Regions by MethylSeekR",assembly = asb)
-
+  hmr.frame <- data.frame(Chromosome=seqnames(hmr.segments),Start=start(hmr.segments),End=end(hmr.segments),
+                              UMR_LMR=values(hmr.segments)$HMR)
+  rnb.set.annotation(paste0("HMRs_",sample.name),regions=hmr.frame,description = "Highly Methylated Regions by MethylSeekR",assembly = asb)
+  
+  rnb.set <- summarize.regions(rnb.set,paste("PMDs",sample.name,sep="_"))
+  rnb.set <- summarize.regions(rnb.set,paste("UMRsLMRs",sample.name,sep="_"))
+  rnb.set <- summarize.regions(rnb.set,paste("HMRs",sample.name,sep="_"))
+  
   unlink(tmp.file.meth)
   unlink(tmp.file.snps)
-  return(anno.rnb)
+  return(rnb.set)
+}
+
+#' rnb.bed.from.segmentation
+#' 
+#' This function creates a BED file from the segmentation result of \code{rnb.execute.segmentation} and stores it on disk.
+#' 
+#' @param rnb.set An \code{\link{RnBSet-class}} object obtained by executing \code{rnb.execute.segmentation}.
+#' @param sample.name The sample name for which segmentation was computed.
+#' @param type The type of segmentation (\code{PMDs}, \code{UMRsLMRs} or \code{HMRs}).
+#' @param store.path Path to which the BED file is to be stored.
+#' @author Michael Scherer
+#' @export
+rnb.bed.from.segmentation <- function(rnb.set,
+                                      sample.name,
+                                      type="PMD",
+                                      store.path=getwd()){
+  if(!type %in% c("PMDs","UMRsLMRs","HMRs")){
+    logger.error("Invalid value for type, needs to be PMDs, UMRsLMRs or HMRs.")
+  }
+  region.name <- paste(type,sample.name,sep = "_")
+  if(!(region.name %in% summarized.regions(rnb.set))){
+    logger.error("Segmentation not yet available, execute rnb.execute.segementation first")
+  }
+  bed.frame <- annotation(rnb.set,region.name)
+  meth.seg <- meth(rnb.set)[,sample.name]
+  bed.frame <- data.frame(bed.frame[,c("chromosome","start","end")],AvgMeth=meth.seg)
+  write.table(bed.frame,file.path(store.path,paste0(sample.name,"_",type,".bed")),sep="\t",row.names=F)
 }
 
 #' rnb.plot.segmentation.final
