@@ -117,6 +117,7 @@ rnb.execute.segmentation <- function(rnb.set,
   logger.completed()
   
   # create final segmentation
+  logger.start("Create final segmentation")
   tile.type <- rnb.region.types.for.analysis(rnb.set)[grep("tiling",rnb.region.types.for.analysis(rnb.set))]
   hmr.segments <- annotation(rnb.set,tile.type)
   hmr.segments <- GRanges(Rle(hmr.segments$Chromosome),IRanges(start = hmr.segments$Start,end=hmr.segments$End))
@@ -125,8 +126,10 @@ rnb.execute.segmentation <- function(rnb.set,
   op.umr.lmr <- findOverlaps(hmr.segments,UMRLMRsegments.gr)
   hmr.segments <- hmr.segments[-queryHits(op.umr.lmr)]
   values(hmr.segments)$HMR <- rep("HMR",length(hmr.segments))
+  logger.completed()
   
   # set new annotations PMD, UMR/LMR, HMR
+  logger.start("Set new annotations and summarize methylation")
   pmd.frame <- data.frame(Chromosome=seqnames(PMDsegments.gr),Start=start(PMDsegments.gr),End=end(PMDsegments.gr),
                            PMD=values(PMDsegments.gr)$type)
   rnb.set.annotation(paste0("PMDs_",sample.name),regions=pmd.frame,description = "Partially Methylated Domains by MethylSeekR",assembly = asb)
@@ -140,6 +143,7 @@ rnb.execute.segmentation <- function(rnb.set,
   rnb.set <- summarize.regions(rnb.set,paste("PMDs",sample.name,sep="_"))
   rnb.set <- summarize.regions(rnb.set,paste("UMRsLMRs",sample.name,sep="_"))
   rnb.set <- summarize.regions(rnb.set,paste("HMRs",sample.name,sep="_"))
+  logger.completed()
   
   unlink(tmp.file.meth)
   unlink(tmp.file.snps)
@@ -158,7 +162,7 @@ rnb.execute.segmentation <- function(rnb.set,
 #' @export
 rnb.bed.from.segmentation <- function(rnb.set,
                                       sample.name,
-                                      type="PMD",
+                                      type="PMDs",
                                       store.path=getwd()){
   if(!type %in% c("PMDs","UMRsLMRs","HMRs")){
     logger.error("Invalid value for type, needs to be PMDs, UMRsLMRs or HMRs.")
