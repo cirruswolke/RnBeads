@@ -131,13 +131,13 @@ rnb.execute.segmentation <- function(rnb.set,
   # set new annotations PMD, UMR/LMR, HMR
   logger.start("Set new annotations and summarize methylation")
   pmd.frame <- data.frame(Chromosome=seqnames(PMDsegments.gr),Start=start(PMDsegments.gr),End=end(PMDsegments.gr),
-                           PMD=values(PMDsegments.gr)$type)
+                           PMDs=values(PMDsegments.gr)$type)
   rnb.set.annotation(paste0("PMDs_",sample.name),regions=pmd.frame,description = "Partially Methylated Domains by MethylSeekR",assembly = asb)
   umr.lmr.frame <- data.frame(Chromosome=seqnames(UMRLMRsegments.gr),Start=start(UMRLMRsegments.gr),End=end(UMRLMRsegments.gr),
-                          UMR_LMR=values(UMRLMRsegments.gr)$type)
+                              UMRsLMRs=values(UMRLMRsegments.gr)$type)
   rnb.set.annotation(paste0("UMRsLMRs_",sample.name),regions=umr.lmr.frame,description = "Unmethylated and Lowly Methylated Regions by MethylSeekR",assembly = asb)
   hmr.frame <- data.frame(Chromosome=seqnames(hmr.segments),Start=start(hmr.segments),End=end(hmr.segments),
-                              UMR_LMR=values(hmr.segments)$HMR)
+                          HMRs=values(hmr.segments)$HMR)
   rnb.set.annotation(paste0("HMRs_",sample.name),regions=hmr.frame,description = "Highly Methylated Regions by MethylSeekR",assembly = asb)
   
   rnb.set <- summarize.regions(rnb.set,paste("PMDs",sample.name,sep="_"))
@@ -172,9 +172,9 @@ rnb.bed.from.segmentation <- function(rnb.set,
     logger.error("Segmentation not yet available, execute rnb.execute.segementation first")
   }
   bed.frame <- annotation(rnb.set,region.name)
-  meth.seg <- meth(rnb.set)[,sample.name]
-  bed.frame <- data.frame(bed.frame[,c("chromosome","start","end")],AvgMeth=meth.seg)
-  write.table(bed.frame,file.path(store.path,paste0(sample.name,"_",type,".bed")),sep="\t",row.names=F)
+  meth.seg <- meth(rnb.set,region.name)[,sample.name]
+  bed.frame <- data.frame(bed.frame[,c("Chromosome","Start","End",type)],AvgMeth=meth.seg)
+  write.table(bed.frame,file.path(store.path,paste0(sample.name,"_",type,".bed")),sep="\t",row.names=F,quote = F)
 }
 
 #' rnb.plot.segmentation.final
