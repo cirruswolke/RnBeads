@@ -170,11 +170,11 @@ rnb.bed.from.segmentation <- function(rnb.set,
   if(!(sample.name %in% samples(rnb.set))){
     logger.error("Specify a sample that is available in the rnb.set")
   }
-  region.name <- paste(type,sample.name,sep = "_")
-  if(!(region.name %in% summarized.regions(rnb.set))){
-    logger.error("Segmentation not yet available, execute rnb.execute.segementation first")
-  }
   if(type != "final"){
+    region.name <- paste(type,sample.name,sep = "_")
+    if(!(region.name %in% summarized.regions(rnb.set))){
+      logger.error("Segmentation not yet available, execute rnb.execute.segementation first")
+    }
     bed.frame <- annotation(rnb.set,region.name)
     meth.seg <- meth(rnb.set,region.name)[,sample.name]
     bed.frame <- data.frame(bed.frame[,c("Chromosome","Start","End",type)],AvgMeth=meth.seg)
@@ -204,11 +204,11 @@ rnb.boxplot.from.segmentation <- function(rnb.set,
   if(!(sample.name %in% samples(rnb.set))){
     logger.error("Specify a sample that is available in the rnb.set")
   }
-  region.name <- paste(type,sample.name,sep = "_")
-  if(!(region.name %in% summarized.regions(rnb.set))){
-    logger.error("Segmentation not yet available, execute rnb.execute.segementation first")
-  }
   if(type != "final"){
+    region.name <- paste(type,sample.name,sep = "_")
+    if(!(region.name %in% summarized.regions(rnb.set))){
+      logger.error("Segmentation not yet available, execute rnb.execute.segementation first")
+    }
     bed.frame <- annotation(rnb.set,region.name)
     meth.seg <- meth(rnb.set,region.name)[,sample.name]
     to.plot <- data.frame(bed.frame[,type],AvgMeth=meth.seg)
