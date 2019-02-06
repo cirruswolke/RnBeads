@@ -24,7 +24,7 @@
 #' @return The input RnBSet object with segementation added as an additional region type. Furthermore, three new annotations
 #'          are set globally containing segmentation into PMDs, UMRs/LMRs, and HMRs for the sample that was specified.
 #' @details For further descriptions on the methods, see \code{MethylSeekR}-documentation. The new annotations can be accessed
-#'          via \code{rnb.get.annotation("[PMDs,UMRsLMRs,HMRs]_[sample.name]")}.
+#'          via \code{rnb.get.annotation("[PMDs,UMRs,LMRs,HMRs]_[sample.name]")}.
 #' @author Michael Scherer, based on a script by Abdulrahman Salhab
 #' @export
 rnb.execute.segmentation <- function(rnb.set,
@@ -54,8 +54,14 @@ rnb.execute.segmentation <- function(rnb.set,
   }
 
   sLengths <- seqlengths(rnb.get.annotation("CpG",assembly = asb))
+  sLengths.gr <- GRanges(Rle(names(sLengths)),IRanges(start = 1,end=sLengths))
   CpGislands.gr <- rnb.get.annotation("cpgislands",assembly = asb)
   CpGislands.gr <-suppressWarnings(resize(CpGislands.gr, 5000, fix="center"))
+  session <- browserSession(url = 'http://genome-euro.ucsc.edu/cgi-bin/')
+  genome(session) <- asb
+  query <- ucscTableQuery(session, table="gap")
+  gaps <- getTable(query)
+  gaps.gr <- makeGRangesFromDataFrame(gaps, starts.in.df.are.0based=TRUE) # the second argument to be discussed 0/1 based
   
   if(any(!(rnb.region.types.for.analysis(rnb.set) %in% rnb.region.types(assembly(rnb.set))))){
     rnb.load.annotation.from.db(rnb.region.types.for.analysis(rnb.set)[!(rnb.region.types.for.analysis(rnb.set) %in% rnb.region.types(assembly(rnb.set)))],assembly(rnb.set))
@@ -117,14 +123,10 @@ rnb.execute.segmentation <- function(rnb.set,
   
   # create final segmentation
   logger.start("Create final segmentation")
-  tile.type <- rnb.region.types.for.analysis(rnb.set)[grep("tiling",rnb.region.types.for.analysis(rnb.set))]
-  hmr.segments <- annotation(rnb.set,tile.type)
-  hmr.segments <- GRanges(Rle(hmr.segments$Chromosome),IRanges(start = hmr.segments$Start,end=hmr.segments$End))
-  op.pmds <- findOverlaps(hmr.segments,PMDsegments.gr[values(PMDsegments.gr)$type %in% "notPMD"])
-  hmr.segments <- hmr.segments[queryHits(op.pmds)]
-  op.umr.lmr <- findOverlaps(hmr.segments,UMRLMRsegments.gr)
-  hmr.segments <- hmr.segments[-queryHits(op.umr.lmr)]
-  hmr.segments <- reduce(hmr.segments)
+  PMDsegments.gr <- PMDsegments.gr[PMDsegments.gr$type=="PMD"]
+  PMDsegments.gr <- setdiff(PMDsegments.gr,gaps.gr)
+  PMDsegments.gr$type <- "PMD"
+  hmr.segments<- setdiff(sLengths.gr,c(PMDsegments.gr,UMRLMRsegments.gr,gaps.gr))
   values(hmr.segments)$HMR <- rep("HMR",length(hmr.segments))
   logger.completed()
   
@@ -135,13 +137,17 @@ rnb.execute.segmentation <- function(rnb.set,
   rnb.set.annotation(paste0("PMDs_",sample.name),regions=pmd.frame,description = "Partially Methylated Domains by MethylSeekR",assembly = asb)
   umr.lmr.frame <- data.frame(Chromosome=seqnames(UMRLMRsegments.gr),Start=start(UMRLMRsegments.gr),End=end(UMRLMRsegments.gr),
                               UMRsLMRs=values(UMRLMRsegments.gr)$type)
-  rnb.set.annotation(paste0("UMRsLMRs_",sample.name),regions=umr.lmr.frame,description = "Unmethylated and Lowly Methylated Regions by MethylSeekR",assembly = asb)
+  umr.frame <- umr.lmr.frame[umr.lmr.frame$UMRsLMRs=="UMR",]
+  rnb.set.annotation(paste0("UMRs_",sample.name),regions=umr.frame,description = "Unmethylated Regions by MethylSeekR",assembly = asb)  
+  lmr.frame <- umr.lmr.frame[umr.lmr.frame$UMRsLMRs=="LMR",]
+  rnb.set.annotation(paste0("LMRs_",sample.name),regions=lmr.frame,description = "Lowly Methylated Regions by MethylSeekR",assembly = asb)
   hmr.frame <- data.frame(Chromosome=seqnames(hmr.segments),Start=start(hmr.segments),End=end(hmr.segments),
                           HMRs=values(hmr.segments)$HMR)
   rnb.set.annotation(paste0("HMRs_",sample.name),regions=hmr.frame,description = "Highly Methylated Regions by MethylSeekR",assembly = asb)
   
   rnb.set <- summarize.regions(rnb.set,paste("PMDs",sample.name,sep="_"))
-  rnb.set <- summarize.regions(rnb.set,paste("UMRsLMRs",sample.name,sep="_"))
+  rnb.set <- summarize.regions(rnb.set,paste("UMRs",sample.name,sep="_"))
+  rnb.set <- summarize.regions(rnb.set,paste("LMRs",sample.name,sep="_"))
   rnb.set <- summarize.regions(rnb.set,paste("HMRs",sample.name,sep="_"))
   logger.completed()
   
@@ -156,16 +162,16 @@ rnb.execute.segmentation <- function(rnb.set,
 #' 
 #' @param rnb.set An \code{\link{RnBSet-class}} object obtained by executing \code{rnb.execute.segmentation}.
 #' @param sample.name The sample name for which segmentation was computed.
-#' @param type The type of segmentation (\code{PMDs}, \code{UMRsLMRs}, \code{HMRs} or \code{final}).
+#' @param type The type of segmentation (\code{PMDs}, \code{UMRs}, \code{LMRs}, \code{HMRs} or \code{final}).
 #' @param store.path Path to which the BED file is to be stored.
 #' @author Michael Scherer
 #' @export
 rnb.bed.from.segmentation <- function(rnb.set,
                                       sample.name,
-                                      type="PMDs",
+                                      type="final",
                                       store.path=getwd()){
-  if(!type %in% c("PMDs","UMRsLMRs","HMRs","final")){
-    logger.error("Invalid value for type, needs to be PMDs, UMRsLMRs or HMRs.")
+  if(!type %in% c("PMDs","UMRs","LMRs","HMRs","final")){
+    logger.error("Invalid value for type, needs to be PMDs, UMRs, LMRs or HMRs.")
   }
   if(!(sample.name %in% samples(rnb.set))){
     logger.error("Specify a sample that is available in the rnb.set")
@@ -190,16 +196,16 @@ rnb.bed.from.segmentation <- function(rnb.set,
 #' 
 #' @param rnb.set An \code{\link{RnBSet-class}} object obtained by executing \code{rnb.execute.segmentation}.
 #' @param sample.name The sample name for which segmentation was computed.
-#' @param type The type of segmentation (\code{PMDs}, \code{UMRsLMRs}, \code{HMRs} or \code{final}).
+#' @param type The type of segmentation (\code{PMDs}, \code{UMRs}, \code{LMRs}, \code{HMRs} or \code{final}).
 #' @return An object of type \code{ggplot} visualizing the methylation values in the segments.
 #' @author Michael Scherer
 #' @export
 rnb.boxplot.from.segmentation <- function(rnb.set,
                                           sample.name,
-                                          type="PMDs",
+                                          type="final",
                                           store.path=getwd()){
-  if(!type %in% c("PMDs","UMRsLMRs","HMRs","final")){
-    logger.error("Invalid value for type, needs to be PMDs, UMRsLMRs or HMRs.")
+  if(!type %in% c("PMDs","UMRs","LMRs","HMRs","final")){
+    logger.error("Invalid value for type, needs to be PMDs, UMRs, LMRs or HMRs.")
   }
   if(!(sample.name %in% samples(rnb.set))){
     logger.error("Specify a sample that is available in the rnb.set")
@@ -216,6 +222,7 @@ rnb.boxplot.from.segmentation <- function(rnb.set,
   }else{
     to.plot <- rnb.final.segmentation(rnb.set,sample.name)
     colnames(to.plot)[4] <- "Segment"
+    to.plot[,"Segment"] <- factor(to.plot[,"Segment"], levels=c("HMR","PMD","LMR","UMR"))
   }
   plot <- ggplot(to.plot,aes(x=Segment,y=AvgMeth,fill=Segment))+geom_boxplot()+scale_fill_manual(values=rnb.getOption("colors.category"))
   return(plot)
@@ -234,7 +241,7 @@ rnb.final.segmentation <- function(rnb.set,
   if(!(sample.name %in% samples(rnb.set))){
     logger.error("Specify a sample that is available in the rnb.set")
   }
-  region.names <- c(paste("PMDs",sample.name,sep = "_"),paste("HMRs",sample.name,sep = "_"),paste("UMRsLMRs",sample.name,sep = "_"))
+  region.names <- c(paste("PMDs",sample.name,sep = "_"),paste("HMRs",sample.name,sep = "_"),paste("UMRs",sample.name,sep = "_"),paste("UMRs",sample.name,sep = "_"))
   if(any(!(region.names %in% summarized.regions(rnb.set)))){
     logger.error("Segmentation not yet available, execute rnb.execute.segementation first")
   }
@@ -256,7 +263,7 @@ rnb.final.segmentation <- function(rnb.set,
   color.code <- rep("202,0,32",nrow(final.frame))
   color.code[final.frame$Segment %in% "PMD"] <- "244,165,130"
   color.code[final.frame$Segment %in% "UMR"] <- "5,113,176"
-  color.code[final.frame$Segment %in% "LMR"] <- "146,197,22"
+  color.code[final.frame$Segment %in% "LMR"] <- "146,197,222"
   final.frame <- data.frame(final.frame[,c(1,2,3,5,6)],rep(".",nrow(final.frame)),final.frame[,c(2,3)],color.code)
   return(final.frame)
 }
