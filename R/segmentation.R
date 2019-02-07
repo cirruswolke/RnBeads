@@ -241,7 +241,7 @@ rnb.final.segmentation <- function(rnb.set,
   if(!(sample.name %in% samples(rnb.set))){
     logger.error("Specify a sample that is available in the rnb.set")
   }
-  region.names <- c(paste("PMDs",sample.name,sep = "_"),paste("HMRs",sample.name,sep = "_"),paste("UMRs",sample.name,sep = "_"),paste("UMRs",sample.name,sep = "_"))
+  region.names <- c(paste("PMDs",sample.name,sep = "_"),paste("HMRs",sample.name,sep = "_"),paste("UMRs",sample.name,sep = "_"),paste("LMRs",sample.name,sep = "_"))
   if(any(!(region.names %in% summarized.regions(rnb.set)))){
     logger.error("Segmentation not yet available, execute rnb.execute.segementation first")
   }
@@ -253,13 +253,16 @@ rnb.final.segmentation <- function(rnb.set,
   hmr.meth <- meth(rnb.set,region.names[2])[,sample.name]
   hmr.frame <- data.frame(hmr.frame,AvgMeth=hmr.meth)
   colnames(hmr.frame)[5] <- "Segment"
-  umr.lmr.frame <- annotation(rnb.set,region.names[3])
-  umr.lmr.meth <- meth(rnb.set,region.names[3])[,sample.name]
-  umr.lmr.frame <- data.frame(umr.lmr.frame,AvgMeth=umr.lmr.meth)
-  colnames(umr.lmr.frame)[5] <- "Segment"
-  final.frame <- data.frame(rbind(pmd.frame,rbind(hmr.frame,umr.lmr.frame)))
+  umr.frame <- annotation(rnb.set,region.names[3])
+  umr.meth <- meth(rnb.set,region.names[3])[,sample.name]
+  umr.frame <- data.frame(umr.frame,AvgMeth=umr.meth)
+  colnames(umr.frame)[5] <- "Segment"
+  lmr.frame <- annotation(rnb.set,region.names[4])
+  lmr.meth <- meth(rnb.set,region.names[4])[,sample.name]
+  lmr.frame <- data.frame(lmr.frame,AvgMeth=lmr.meth)
+  colnames(lmr.frame)[5] <- "Segment"
+  final.frame <- data.frame(rbind(pmd.frame,rbind(hmr.frame,umr.frame,lmr.frame)))
   final.frame <- final.frame[order(final.frame$Chromosome,final.frame$Start,final.frame$End),]
-  final.frame <- final.frame[!(final.frame$Segment %in% "notPMD"),]
   color.code <- rep("202,0,32",nrow(final.frame))
   color.code[final.frame$Segment %in% "PMD"] <- "244,165,130"
   color.code[final.frame$Segment %in% "UMR"] <- "5,113,176"
