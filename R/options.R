@@ -214,11 +214,19 @@ rnb.validate.option <- function(oname, ovalue) {
 		}
 	} else if (oname == "import.bed.columns") {
 		if (is.character(ovalue) && length(ovalue) >= 1) {
-			v.names <- as.character(ovalue)
-			ovalue <- 1:length(ovalue)
-			names(ovalue) <- v.names
-			supported.columns <- c("chr", "start", "end", "strand", "meth", "coverage", "c", "t")
-			ovalue <- ovalue[v.names %in% supported.columns]
+		  if(!is.na(as.numeric(ovalue[1]))){
+		    v.names <- names(ovalue)
+		    supported.columns <- c("chr", "start", "end", "strand", "meth", "coverage", "c", "t")
+        ovalue <- as.numeric(ovalue)
+        names(ovalue) <- v.names
+        ovalue < ovalue[v.names %in% supported.columns]
+		  }else{
+  			v.names <- as.character(ovalue)
+  			ovalue <- 1:length(ovalue)
+  			names(ovalue) <- v.names
+  			supported.columns <- c("chr", "start", "end", "strand", "meth", "coverage", "c", "t")
+  			ovalue <- ovalue[v.names %in% supported.columns]
+		  }
 		}
 	} else if (oname == "filtering.snp") {
 		if ((is.double(ovalue) || is.integer(ovalue)) && length(ovalue) == 1) {
