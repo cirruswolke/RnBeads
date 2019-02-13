@@ -217,7 +217,6 @@ rnb.validate.option <- function(oname, ovalue) {
 			v.names <- as.character(ovalue)
 			ovalue <- 1:length(ovalue)
 			names(ovalue) <- v.names
-			rm(v.names)
 			supported.columns <- c("chr", "start", "end", "strand", "meth", "coverage", "c", "t")
 			ovalue <- ovalue[v.names %in% supported.columns]
 		}
