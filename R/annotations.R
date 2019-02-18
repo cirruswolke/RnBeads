@@ -242,14 +242,14 @@ rnb.chromosome.lengths <- function(assembly, file.chrom = NULL) {
 #' (at least 3 columns), as well as for integer values in columns 2 and 3.
 #'
 #' @param fname BED file to load.
-#' @return \code{data.frame} with at least 3 and at most 6 columns. The column names are: \code{"chromosome"},
-#'         \code{"start"}, \code{"end"}, \code{"id"}, \code{"score"} and \code{"strand"}. Columns after the sixth one,
+#' @return \code{data.frame} with at least 3 and at most 6 columns. The column names are: \code{"Chromosome"},
+#'         \code{"Start"}, \code{"End"}, \code{"id"}, \code{"score"} and \code{"strand"}. Columns after the sixth one,
 #'         if present, are dropped.
 #'
 #' @author Yassen Assenov
 #' @noRd
 rnb.load.bed <- function(fname) {
-	BED.COLUMNS <- c("chromosome", "start", "end", "id", "score", "strand")
+	BED.COLUMNS <- c("Chromosome", "Start", "End", "id", "score", "strand")
 	tbl <- tryCatch(suppressWarnings(read.delim(fname, header = FALSE, quote = "", comment.char = "#",
 				stringsAsFactors = FALSE, na.strings = "")), error = function(e) { e })
 	if (inherits(tbl, "error")) {
