@@ -99,6 +99,7 @@ Collate:
     'cellTypeAdjustment.R'
     'clusterArchitecture.R'
     'clusterArchitectureSGE.R'
+    'clusterArchitectureSLURM.R'
     'clustering.R'
     'combining.R'
     'computeCluster.R'
