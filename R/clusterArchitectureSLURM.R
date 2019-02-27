@@ -101,10 +101,10 @@ setMethod("getSubCmdTokens",
 	  res.req.token <- NULL
 		if(length(res.req)>0){
 		  if("clock.limit" %in% names(res.req)){
-		    res.req.token <- paste0(res.req.token,"-t",clock.limit,collapse = "")
+		    res.req.token <- paste(res.req.token,"-t",res.req["clock.limit"]," ",collapse = "")
 		  }
 		  if("mem.size" %in% names(res.req)){
-		    res.req.token <- paste0(res.req.token,c("--mem=",mem.size),collapse="")
+		    res.req.token <- paste0(res.req.token,"--mem=",res.req["mem.size"],collapse="")
 		    
 		  }
 		}
@@ -122,7 +122,7 @@ setMethod("getSubCmdTokens",
 		}
 		wrap.token <- NULL
 		if(sub.binary){
-		  wrap.token <- "--wrap=="
+		  wrap.token <- "--wrap="
 		}
 		if (quote.cmd){
 			cmd.tokens <- paste0("'",paste(cmd.tokens,collapse=" "),"'")
