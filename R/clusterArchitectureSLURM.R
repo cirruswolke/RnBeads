@@ -101,10 +101,10 @@ setMethod("getSubCmdTokens",
 	  res.req.token <- NULL
 		if(length(res.req)>0){
 		  if("clock.limit" %in% names(res.req)){
-		    res.req.token <- paste(res.req.token,"-t",clock.limit)
+		    res.req.token <- paste0(res.req.token,"-t",clock.limit,collapse = "")
 		  }
-		  if("memory.size" %in% names(res.req)){
-		    res.req.token <- paste(res.req.token,c("--mem=",memory.size))
+		  if("mem.size" %in% names(res.req)){
+		    res.req.token <- paste0(res.req.token,c("--mem=",mem.size)),collapse=""
 		    
 		  }
 		}
@@ -114,11 +114,11 @@ setMethod("getSubCmdTokens",
 		}
 		job.name.token <- NULL
 		if (nchar(job.name)>0) {
-			job.name.token <- paste(job.name.token,"--job-name=",job.name,collapse = "")
+			job.name.token <- paste0(job.name.token,"--job-name=",job.name,collapse = "")
 		}
 		dependency.token <- NULL
 		if (length(depend.jobs)>0){
-			dependency.token <- paste(dependency.token, "--depend=", paste0(paste(depend.jobs,collapse=",")),collapse = "")
+			dependency.token <- paste0(dependency.token, "--depend=", paste0(paste(depend.jobs,collapse=",")),collapse = "")
 		}
 		wrap.token <- NULL
 		if(sub.binary){
