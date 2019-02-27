@@ -122,11 +122,19 @@ setMethod("getSubCmdTokens",
 		}
 		wrap.token <- NULL
 		if(sub.binary){
-		  wrap.token <- "--wrap="
+		  if (quote.cmd){
+		    cmd.tokens <- paste0("--wrap=",paste0("'",paste(cmd.tokens,collapse=" "),"'"),collapse="")
+		  }else{
+		    cmd.tokens <- paste0("--wrap=",paste(cmd.tokens,collapse=" "),collapse="")
+		  }
+		}else{
+		  if (quote.cmd){
+		    cmd.tokens <- paste0("'",paste(cmd.tokens,collapse=" "),"'")
+		  }else{
+		    cmd.tokens <- paste(cmd.tokens,collapse=" ")
+		  }
 		}
-		if (quote.cmd){
-			cmd.tokens <- paste0("'",paste(cmd.tokens,collapse=" "),"'")
-		}
+
 		res <- c(
 			"sbatch",
 			"--export=ALL",
