@@ -118,6 +118,11 @@ setMethod("getSubCmdTokens",
 		}
 		dependency.token <- NULL
 		if (length(depend.jobs)>0){
+		  get.job.id <- function(x){
+		    cmd <- paste0("$(squeue --noheader --format %i --name",x,")")
+		    system(cmd,intern = T)
+		  }
+		  depend.jobs <- sapply(depend.jobs,get.job.id)
 			dependency.token <- paste0(dependency.token, "--depend=", paste0(paste(depend.jobs,collapse=",")),collapse = "")
 		}
 		wrap.token <- NULL
