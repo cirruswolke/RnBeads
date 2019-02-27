@@ -100,7 +100,7 @@ setMethod("getSubCmdTokens",
 	) {
 	  res.req.token <- NULL
 		if(length(res.req)>0){
-		  if("clock.limit" %in% names(req.req)){
+		  if("clock.limit" %in% names(res.req)){
 		    res.req.token <- paste(res.req.token,"-t",clock.limit)
 		  }
 		  if("memory.size" %in% names(res.req)){
