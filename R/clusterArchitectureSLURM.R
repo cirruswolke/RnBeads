@@ -89,34 +89,36 @@ setMethod("getSubCmdTokens",
 		object="ClusterArchitectureSLURM"
 	),
 	function(
-		object,
-		cmd.tokens,
-		log,
-		job.name = "",
-		clock.limit = character(0),
-		memory.size = character(0),
-		sub.binary=T,
-		depend.jobs = character(0),
-		quote.cmd = TRUE
+	  object,
+	  cmd.tokens,
+	  log,
+	  job.name = "",
+	  res.req = character(0),
+	  depend.jobs = character(0),
+	  sub.binary = TRUE,
+	  quote.cmd = TRUE
 	) {
 	  res.req.token <- NULL
-		if(length(clock.limit)>0){
-		  res.req.token <- paste(res.req.token,"-t",clock.limit)
+		if(length(res.req)>0){
+		  if("clock.limit" %in% names(req.req)){
+		    res.req.token <- paste(res.req.token,"-t",clock.limit)
+		  }
+		  if("memory.size" %in% names(res.req)){
+		    res.req.token <- paste(res.req.token,c("--mem=",memory.size))
+		    
+		  }
 		}
-	  if(length(memory.size)>0){
-	    res.req.token <- paste(res.req.token,c("--mem=",memory.size))
-	  }
 		log.token <- NULL
 		if (nchar(log)>0) {
 			log.token <- c("-o",log)
 		}
 		job.name.token <- NULL
 		if (nchar(job.name)>0) {
-			job.name.token <- c(job.name.token,"--job-name=",job.name)
+			job.name.token <- paste(job.name.token,"--job-name=",job.name,collapse = "")
 		}
 		dependency.token <- NULL
 		if (length(depend.jobs)>0){
-			dependency.token <- c(dependency.token, "--depend=", paste0(paste(depend.jobs,collapse=",")))
+			dependency.token <- paste(dependency.token, "--depend=", paste0(paste(depend.jobs,collapse=",")),collapse = "")
 		}
 		wrap.token <- NULL
 		if(sub.binary){
