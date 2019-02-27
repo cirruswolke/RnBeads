@@ -104,7 +104,7 @@ setMethod("getSubCmdTokens",
 		    res.req.token <- paste0(res.req.token,"-t",clock.limit,collapse = "")
 		  }
 		  if("mem.size" %in% names(res.req)){
-		    res.req.token <- paste0(res.req.token,c("--mem=",mem.size)),collapse=""
+		    res.req.token <- paste0(res.req.token,c("--mem=",mem.size),collapse="")
 		    
 		  }
 		}
