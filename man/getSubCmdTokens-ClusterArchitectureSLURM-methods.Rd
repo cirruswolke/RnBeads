@@ -6,8 +6,8 @@
 \title{getSubCmdTokens-methods}
 \usage{
 \S4method{getSubCmdTokens}{ClusterArchitectureSLURM}(object, cmd.tokens,
-  log, job.name = "", clock.limit = NULL, memory.size = NULL,
-  depend.jobs = character(0), quote.cmd = TRUE)
+  log, job.name = "", res.req = character(0),
+  depend.jobs = character(0), sub.binary = TRUE, quote.cmd = TRUE)
 }
 \arguments{
 \item{object}{\code{\linkS4class{ClusterArchitectureSLURM}} object}
@@ -18,13 +18,13 @@
 
 \item{job.name}{name of the submitted job}
 
-\item{clock.limit}{wall clock limit}
-
-\item{memory.size}{memory size}
-
 \item{depend.jobs}{character vector containg names or ids of jobs the submitted job will depend on.}
 
 \item{quote.cmd}{Flag indicating whether the submitted cammed should also be wrapped in quotes}
+
+\item{clock.limit}{wall clock limit}
+
+\item{memory.size}{memory size}
 }
 \value{
 A character vector containing the submission command tokens

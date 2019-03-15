@@ -1,6 +1,25 @@
 citHeader("To cite package 'RnBeads' in publications please use:")
 
 citEntry(entry = "Article",
+	title = "RnBeads 2.0: comprehensive analysis of DNA methylation data",
+	author = personList(as.person("Fabian Mueller"),
+		as.person("Michael Scherer"),
+		as.person("Yassen Assenov"),
+		as.person("Pavlo Lutsik"),
+		as.person("Joern Walter"),
+		as.person("Thomas Lengauer"),
+		as.person("Christoph Bock")),
+	journal = "Genome Biology",
+	year = 2019L,
+	volume = 20L,
+	number = 55L,
+	month = "mar",
+	url = "https://rnbeads.org",
+	doi = "10.1186/s13059-019-1664-9",
+	textVersion = "Fabian Mueller*, Michael Scherer*, Yassen Assenov*, Pavlo Lutsik*, Joern Walter, Thomas Lengauer and Christoph Bock (2019) RnBeads 2.0: comprehensive analysis of DNA methylation data. Genome Biology, 20:55."
+)
+
+citEntry(entry = "Article",
 	title = "Compehensive Analysis of DNA Methylation Data with RnBeads",
 	author = personList(as.person("Yassen Assenov"),
 		as.person("Fabian Mueller"),
