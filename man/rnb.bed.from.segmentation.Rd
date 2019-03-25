@@ -4,7 +4,7 @@
 \alias{rnb.bed.from.segmentation}
 \title{rnb.bed.from.segmentation}
 \usage{
-rnb.bed.from.segmentation(rnb.set, sample.name, type = "PMDs",
+rnb.bed.from.segmentation(rnb.set, sample.name, type = "final",
   store.path = getwd())
 }
 \arguments{
@@ -12,7 +12,7 @@ rnb.bed.from.segmentation(rnb.set, sample.name, type = "PMDs",
 
 \item{sample.name}{The sample name for which segmentation was computed.}
 
-\item{type}{The type of segmentation (\code{PMDs}, \code{UMRsLMRs}, \code{HMRs} or \code{final}).}
+\item{type}{The type of segmentation (\code{PMDs}, \code{UMRs}, \code{LMRs}, \code{HMRs} or \code{final}).}
 
 \item{store.path}{Path to which the BED file is to be stored.}
 }

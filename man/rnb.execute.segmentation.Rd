@@ -5,8 +5,8 @@
 \title{rnb.execute.segmentation}
 \usage{
 rnb.execute.segmentation(rnb.set, sample.name, meth.level = 0.5,
-  fdr = 5, min.cover = 5, n.cores = 1, plot.path = getwd(),
-  temp.dir = tempdir())
+  fdr = 5, min.cover = 5, n.cores = 1, chr.sel = "chr2",
+  plot.path = getwd(), temp.dir = tempdir())
 }
 \arguments{
 \item{rnb.set}{An object of type \code{\link{RnBiseqSet-class}} containing methylation and coverage information.}
@@ -21,6 +21,8 @@ individually.}
 \item{min.cover}{The coverage threshold}
 
 \item{n.cores}{The number of cores available for analysis}
+
+\item{chr.sel}{Selected chromosome for model training in "chrAB" format. Defaults to "chr2".}
 
 \item{plot.path}{Location on disk on which diagnostic plots are to be stored. Defaults to the working directory.}
 
@@ -37,7 +39,7 @@ used with RRBS_HaeIII without guarantee and the results should be interpreted ca
 }
 \details{
 For further descriptions on the methods, see \code{MethylSeekR}-documentation. The new annotations can be accessed
-         via \code{rnb.get.annotation("[PMDs,UMRsLMRs,HMRs]_[sample.name]")}.
+         via \code{rnb.get.annotation("[PMDs,UMRs,LMRs,HMRs]_[sample.name]")}.
 }
 \author{
 Michael Scherer, based on a script by Abdulrahman Salhab

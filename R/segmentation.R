@@ -19,6 +19,7 @@
 #' @param fdr False discovery rate cutoff to be used in percent
 #' @param min.cover The coverage threshold
 #' @param n.cores The number of cores available for analysis
+#' @param chr.sel Selected chromosome for model training in "chrAB" format. Defaults to "chr2".
 #' @param plot.path Location on disk on which diagnostic plots are to be stored. Defaults to the working directory.
 #' @param temp.dir The temporary directory. Defaults to the R temporary directory.
 #' @return The input RnBSet object with segementation added as an additional region type. Furthermore, three new annotations
@@ -33,6 +34,7 @@ rnb.execute.segmentation <- function(rnb.set,
                                      fdr=5,
                                      min.cover=5,
                                      n.cores=1,
+                                     chr.sel="chr2",
                                      plot.path=getwd(),
                                      temp.dir=tempdir()){
   if(!inherits(rnb.set,"RnBiseqSet")){
@@ -100,11 +102,11 @@ rnb.execute.segmentation <- function(rnb.set,
   
   ### find PMD and plot
   logger.start("Detecting PMDs")
-  PMDsegments.gr <- segmentPMDs(m=data.gr,pdfFilename=file.path(plot.path,paste(sample.name,"alpha.model.fit.pdf",sep=".")), chr.sel="chr2",seqLengths=sLengths, num.cores=n.cores)
+  PMDsegments.gr <- segmentPMDs(m=data.gr,pdfFilename=file.path(plot.path,paste(sample.name,"alpha.model.fit.pdf",sep=".")), chr.sel=chr.sel,seqLengths=sLengths, num.cores=n.cores)
   logger.completed()
   
   logger.start("Plotting alpha distribution")
-  plotAlphaDistributionOneChr(m=data.gr, chr.sel="chr2",pdfFilename=file.path(plot.path,paste(sample.name,"alpha_distribution.pdf",sep=".")),num.cores=n.cores)
+  plotAlphaDistributionOneChr(m=data.gr, chr.sel=chr.sel,pdfFilename=file.path(plot.path,paste(sample.name,"alpha_distribution.pdf",sep=".")),num.cores=n.cores)
   logger.completed()
   
   ### FDR calculation
@@ -235,7 +237,7 @@ rnb.boxplot.from.segmentation <- function(rnb.set,
 #' @param rnb.set The \code{\link{RnBSet-class}}-object, for which segmentation was computed using \code{\link{rnb.execute.segmentation}}
 #' @param sample.name The sample name in \code{rnb.set} for which segmentation was conducted.
 #' @author Michael Scherer
-#' @noRD
+#' @noRd
 rnb.final.segmentation <- function(rnb.set,
                                    sample.name){
   if(!(sample.name %in% samples(rnb.set))){

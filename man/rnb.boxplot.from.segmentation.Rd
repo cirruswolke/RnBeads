@@ -4,7 +4,7 @@
 \alias{rnb.boxplot.from.segmentation}
 \title{rnb.boxplot.from.segmentation}
 \usage{
-rnb.boxplot.from.segmentation(rnb.set, sample.name, type = "PMDs",
+rnb.boxplot.from.segmentation(rnb.set, sample.name, type = "final",
   store.path = getwd())
 }
 \arguments{
@@ -12,7 +12,7 @@ rnb.boxplot.from.segmentation(rnb.set, sample.name, type = "PMDs",
 
 \item{sample.name}{The sample name for which segmentation was computed.}
 
-\item{type}{The type of segmentation (\code{PMDs}, \code{UMRsLMRs}, \code{HMRs} or \code{final}).}
+\item{type}{The type of segmentation (\code{PMDs}, \code{UMRs}, \code{LMRs}, \code{HMRs} or \code{final}).}
 }
 \value{
 An object of type \code{ggplot} visualizing the methylation values in the segments.
