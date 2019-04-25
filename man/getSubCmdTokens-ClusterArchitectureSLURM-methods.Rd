@@ -18,13 +18,13 @@
 
 \item{job.name}{name of the submitted job}
 
+\item{res.req}{named vector of requested resources. Two options are available: \code{"clock.limit"} and \code{"memory.size"}}
+
 \item{depend.jobs}{character vector containg names or ids of jobs the submitted job will depend on.}
 
+\item{sub.binary}{flag indicating if the command is to be submitted using the \code{"wrap"} option of SLURM}
+
 \item{quote.cmd}{Flag indicating whether the submitted cammed should also be wrapped in quotes}
-
-\item{clock.limit}{wall clock limit}
-
-\item{memory.size}{memory size}
 }
 \value{
 A character vector containing the submission command tokens

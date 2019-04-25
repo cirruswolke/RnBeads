@@ -535,7 +535,7 @@ setAs("RGChannelSet", "RnBeadRawSet", function(from, to) {
 		if (!(is.character(assay.name) && length(assay.name) == 1 && isTRUE(assay.name != ""))) {
 			stop("Unsupported platform; expected one-element character")
 		}
-		if (assay.name == "IlluminaMethylationEPIC") {
+		if (assay.name == "IlluminaHumanMethylationEPIC") {
 			assay.name <- "probesEPIC"
 			platform.name <- "EPIC"
 		} else if (assay.name == "IlluminaHumanMethylation450k") {
@@ -636,9 +636,9 @@ setAs("RGChannelSet", "RnBeadRawSet", function(from, to) {
 				qc <- NULL
 			}
 		}
-
+    p.data <- as.data.frame(pData(from))
 		## Construct the resulting object
-		RnBeadRawSet(pData(from), rownames(probes.all), M, U, M0, U0, beads.M, beads.U, NULL, qc, platform.name)
+		RnBeadRawSet(p.data, rownames(probes.all), M, U, M0, U0, beads.M, beads.U, NULL, qc, platform.name)
 	}
 )
 

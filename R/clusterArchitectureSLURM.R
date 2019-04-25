@@ -66,8 +66,8 @@ setMethod("initialize","ClusterArchitectureSLURM",
 #' @param cmd.tokens a character vector specifying the executable command that should be wrapped in the cluster submission command
 #' @param log file name and path of the log file that the submitted job writes to
 #' @param job.name name of the submitted job
-#' @param clock.limit wall clock limit
-#' @param memory.size memory size
+#' @param res.req named vector of requested resources. Two options are available: \code{"clock.limit"} and \code{"memory.size"}
+#' @param sub.binary flag indicating if the command is to be submitted using the \code{"wrap"} option of SLURM
 #' @param depend.jobs character vector containg names or ids of jobs the submitted job will depend on.
 #' @param quote.cmd Flag indicating whether the submitted cammed should also be wrapped in quotes
 #' @return A character vector containing the submission command tokens
