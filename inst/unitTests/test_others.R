@@ -4,17 +4,17 @@
 #' Tests for the imputation, CNV estimation and age prediction methods in RnBeads
 ############################################################################
 
-test_cnv <- function(){
-  require(RnBeads.hg19)
-  dir.report <- file.path(tempdir(),"report43/")
-  unlink(dir.report,recursive = TRUE)
-  report <- createReport(file.path(dir.report,'index.html'),'MyReport',init.configuration=TRUE)
-  data(small.example.object)
-  report <- rnb.step.cnv(rnb.set.example,report)
-  passed <- inherits(report,"Report")
-  unlink(dir.report,recursive = TRUE)
-  checkTrue(passed)
-}
+#test_cnv <- function(){
+#  require(RnBeads.hg19)
+#  dir.report <- file.path(tempdir(),"report43/")
+#  unlink(dir.report,recursive = TRUE)
+#  report <- createReport(file.path(dir.report,'index.html'),'MyReport',init.configuration=TRUE)
+#  data(small.example.object)
+#  report <- rnb.step.cnv(rnb.set.example,report)
+#  passed <- inherits(report,"Report")
+#  unlink(dir.report,recursive = TRUE)
+#  checkTrue(passed)
+#}
 
 test_imputation <- function(){
   require(RnBeads.hg19)
@@ -49,9 +49,9 @@ test_utils <- function(){
   logger.start("Testing age prediction")
   test_age.prediction()
   logger.completed()
-  logger.start("Testing CNV computation")
-  test_cnv()
-  logger.completed()
+#  logger.start("Testing CNV computation")
+#  test_cnv()
+#  logger.completed()
 }
 
 test_utils()
