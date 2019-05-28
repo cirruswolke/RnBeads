@@ -8,7 +8,7 @@
 
 #' rnb.execute.segmentation
 #' 
-#' This function computes methylation segmentation by MethylSeekR into PMDs, UMRs/LMRs, and HMRs. It is recommened to only
+#' This function computes methylation segmentation by MethylSeekR into PMDs, UMRs/LMRs, and HMDs. It is recommened to only
 #' execute this function on WGBS data  (with coverage >=10 according to the developer's recommendation), but could also be
 #' used with RRBS_HaeIII without guarantee and the results should be interpreted carefully.
 #' 
@@ -23,9 +23,9 @@
 #' @param plot.path Location on disk on which diagnostic plots are to be stored. Defaults to the working directory.
 #' @param temp.dir The temporary directory. Defaults to the R temporary directory.
 #' @return The input RnBSet object with segementation added as an additional region type. Furthermore, three new annotations
-#'          are set globally containing segmentation into PMDs, UMRs/LMRs, and HMRs for the sample that was specified.
+#'          are set globally containing segmentation into PMDs, UMRs/LMRs, and HMDs for the sample that was specified.
 #' @details For further descriptions on the methods, see \code{MethylSeekR}-documentation. The new annotations can be accessed
-#'          via \code{rnb.get.annotation("[PMDs,UMRs,LMRs,HMRs]_[sample.name]")}.
+#'          via \code{rnb.get.annotation("[PMDs,UMRs,LMRs,HMDs]_[sample.name]")}.
 #' @author Michael Scherer, based on a script by Abdulrahman Salhab
 #' @export
 rnb.execute.segmentation <- function(rnb.set,
@@ -144,13 +144,13 @@ rnb.execute.segmentation <- function(rnb.set,
   lmr.frame <- umr.lmr.frame[umr.lmr.frame$UMRsLMRs=="LMR",]
   rnb.set.annotation(paste0("LMRs_",sample.name),regions=lmr.frame,description = "Lowly Methylated Regions by MethylSeekR",assembly = asb)
   hmr.frame <- data.frame(Chromosome=seqnames(hmr.segments),Start=start(hmr.segments),End=end(hmr.segments),
-                          HMRs=values(hmr.segments)$HMR)
-  rnb.set.annotation(paste0("HMRs_",sample.name),regions=hmr.frame,description = "Highly Methylated Regions by MethylSeekR",assembly = asb)
+                          HMDs=values(hmr.segments)$HMR)
+  rnb.set.annotation(paste0("HMDs_",sample.name),regions=hmr.frame,description = "Highly Methylated Regions by MethylSeekR",assembly = asb)
   
   rnb.set <- summarize.regions(rnb.set,paste("PMDs",sample.name,sep="_"))
   rnb.set <- summarize.regions(rnb.set,paste("UMRs",sample.name,sep="_"))
   rnb.set <- summarize.regions(rnb.set,paste("LMRs",sample.name,sep="_"))
-  rnb.set <- summarize.regions(rnb.set,paste("HMRs",sample.name,sep="_"))
+  rnb.set <- summarize.regions(rnb.set,paste("HMDs",sample.name,sep="_"))
   logger.completed()
   
   unlink(tmp.file.meth)
@@ -164,7 +164,7 @@ rnb.execute.segmentation <- function(rnb.set,
 #' 
 #' @param rnb.set An \code{\link{RnBSet-class}} object obtained by executing \code{rnb.execute.segmentation}.
 #' @param sample.name The sample name for which segmentation was computed.
-#' @param type The type of segmentation (\code{PMDs}, \code{UMRs}, \code{LMRs}, \code{HMRs} or \code{final}).
+#' @param type The type of segmentation (\code{PMDs}, \code{UMRs}, \code{LMRs}, \code{HMDs} or \code{final}).
 #' @param store.path Path to which the BED file is to be stored.
 #' @author Michael Scherer
 #' @export
@@ -172,8 +172,8 @@ rnb.bed.from.segmentation <- function(rnb.set,
                                       sample.name,
                                       type="final",
                                       store.path=getwd()){
-  if(!type %in% c("PMDs","UMRs","LMRs","HMRs","final")){
-    logger.error("Invalid value for type, needs to be PMDs, UMRs, LMRs or HMRs.")
+  if(!type %in% c("PMDs","UMRs","LMRs","HMDs","final")){
+    logger.error("Invalid value for type, needs to be PMDs, UMRs, LMRs or HMDs.")
   }
   if(!(sample.name %in% samples(rnb.set))){
     logger.error("Specify a sample that is available in the rnb.set")
@@ -198,16 +198,15 @@ rnb.bed.from.segmentation <- function(rnb.set,
 #' 
 #' @param rnb.set An \code{\link{RnBSet-class}} object obtained by executing \code{rnb.execute.segmentation}.
 #' @param sample.name The sample name for which segmentation was computed.
-#' @param type The type of segmentation (\code{PMDs}, \code{UMRs}, \code{LMRs}, \code{HMRs} or \code{final}).
+#' @param type The type of segmentation (\code{PMDs}, \code{UMRs}, \code{LMRs}, \code{HMDs} or \code{final}).
 #' @return An object of type \code{ggplot} visualizing the methylation values in the segments.
 #' @author Michael Scherer
 #' @export
 rnb.boxplot.from.segmentation <- function(rnb.set,
                                           sample.name,
-                                          type="final",
-                                          store.path=getwd()){
-  if(!type %in% c("PMDs","UMRs","LMRs","HMRs","final")){
-    logger.error("Invalid value for type, needs to be PMDs, UMRs, LMRs or HMRs.")
+                                          type="final"){
+  if(!type %in% c("PMDs","UMRs","LMRs","HMDs","final")){
+    logger.error("Invalid value for type, needs to be PMDs, UMRs, LMRs or HMDs.")
   }
   if(!(sample.name %in% samples(rnb.set))){
     logger.error("Specify a sample that is available in the rnb.set")
@@ -243,7 +242,7 @@ rnb.final.segmentation <- function(rnb.set,
   if(!(sample.name %in% samples(rnb.set))){
     logger.error("Specify a sample that is available in the rnb.set")
   }
-  region.names <- c(paste("PMDs",sample.name,sep = "_"),paste("HMRs",sample.name,sep = "_"),paste("UMRs",sample.name,sep = "_"),paste("LMRs",sample.name,sep = "_"))
+  region.names <- c(paste("PMDs",sample.name,sep = "_"),paste("HMDs",sample.name,sep = "_"),paste("UMRs",sample.name,sep = "_"),paste("LMRs",sample.name,sep = "_"))
   if(any(!(region.names %in% summarized.regions(rnb.set)))){
     logger.error("Segmentation not yet available, execute rnb.execute.segementation first")
   }

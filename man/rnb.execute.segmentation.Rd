@@ -30,16 +30,16 @@ individually.}
 }
 \value{
 The input RnBSet object with segementation added as an additional region type. Furthermore, three new annotations
-         are set globally containing segmentation into PMDs, UMRs/LMRs, and HMRs for the sample that was specified.
+         are set globally containing segmentation into PMDs, UMRs/LMRs, and HMDs for the sample that was specified.
 }
 \description{
-This function computes methylation segmentation by MethylSeekR into PMDs, UMRs/LMRs, and HMRs. It is recommened to only
+This function computes methylation segmentation by MethylSeekR into PMDs, UMRs/LMRs, and HMDs. It is recommened to only
 execute this function on WGBS data  (with coverage >=10 according to the developer's recommendation), but could also be
 used with RRBS_HaeIII without guarantee and the results should be interpreted carefully.
 }
 \details{
 For further descriptions on the methods, see \code{MethylSeekR}-documentation. The new annotations can be accessed
-         via \code{rnb.get.annotation("[PMDs,UMRs,LMRs,HMRs]_[sample.name]")}.
+         via \code{rnb.get.annotation("[PMDs,UMRs,LMRs,HMDs]_[sample.name]")}.
 }
 \author{
 Michael Scherer, based on a script by Abdulrahman Salhab
