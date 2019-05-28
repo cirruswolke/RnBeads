@@ -53,7 +53,8 @@ Suggests:
     shinyjs,
     plotrix,
     hexbin,
-    RUnit
+    RUnit,
+    MethylSeekR
 Depends:
     R (>= 3.0.0),
     BiocGenerics,
@@ -130,6 +131,7 @@ Collate:
     'readGEO.R'
     'regionDescription.R'
     'regionProfiles.R'
+    'segmentation.R'
     'sex.R'
     'subSegments.R'
     'sva.R'
