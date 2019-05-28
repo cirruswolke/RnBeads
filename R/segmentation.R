@@ -26,6 +26,9 @@
 #'          are set globally containing segmentation into PMDs, UMRs/LMRs, and HMDs for the sample that was specified.
 #' @details For further descriptions on the methods, see \code{MethylSeekR}-documentation. The new annotations can be accessed
 #'          via \code{rnb.get.annotation("[PMDs,UMRs,LMRs,HMDs]_[sample.name]")}.
+#' @references 1. Burger, Lukas, Gaidatzis, Dimos, Schuebeler, Dirk, and Stadler, Michael B. (2013)
+#'             Identification of active regulatory regions from DNA methylation data.
+#'             Nucleic Acids Research 41(16):e155.
 #' @author Michael Scherer, based on a script by Abdulrahman Salhab
 #' @export
 rnb.execute.segmentation <- function(rnb.set,
