@@ -1317,7 +1317,7 @@ rnb.run.inference <- function(rnb.set, dir.reports,
 	## LUMP estimates
 	if (rnb.getOption("inference.immune.cells")) {
 		immune.content <- tryCatch(rnb.execute.lump(rnb.set), error = function(err) { err$message })
-		report <- rnb.section.lump(report, immune.content)
+		report <- rnb.section.lump(report, immune.content,s.groups=rnb.sample.groups(rnb.set))
 		if (is.double(immune.content)) {
 			rnb.set@pheno$`Immune Cell Content (LUMP)` <- as.double(immune.content)
 			rnb.set@inferred.covariates$`LUMP` <- TRUE

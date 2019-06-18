@@ -71,11 +71,12 @@ rnb.execute.lump <- function(dataset) {
 #' @param report         Report on covariate inference to contain the immune cell content section. This must be an
 #'                       object of type \code{\linkS4class{Report}}.
 #' @param immune.content Estimation of the immune cell content, as returned by \code{\link{rnb.execute.lump}}.
+#' @param s.groups       Sample groups as defined by \code{\link{rnb.sample.groups}}
 #' @return The modified report.
 #'
 #' @author Yassen Assenov
 #' @noRd
-rnb.section.lump <- function(report, immune.content) {
+rnb.section.lump <- function(report, immune.content,s.groups) {
 	s.title <- "Immune Cell Content Estimation"
 	txt <- NULL
 	refText <- paste("Aran, D. et al. (2015) Systematic pan-cancer analysis of tumour purity.",
@@ -113,7 +114,55 @@ rnb.section.lump <- function(report, immune.content) {
 		rplot <- off(rplot)
 		txt <- paste("Histogram of all", length(immune.content), "estimates obtained after runnin LUMP.")
 		report <- rnb.add.figure(report, txt, rplot)
+		txt <- "Plotting immune cell content in different sample groups"
+		report <- rnb.add.section(report, "Immune Stratification Plot", txt, level = 2)
+		report <- add.stratification.plot.immune(report,immune.content,s.groups)
+		rnb.status(c("Added", "Immune Stratification Plot"))
 	}
 
 	return(report)
+}
+
+#######################################################################################
+#' add.stratification.plot.immune
+#'
+#' This function creates a plot comparing estimated immune cell content 
+#' in the different sample groups defined by \code{\link{rnb.sample.groups}}
+#'
+#' @param report	report object to be modified.
+#' @param immune.contents		estimated immune cell contents for the samples.
+#' @param sample.groups sample groups as defined by \code{\link{rnb.sample.groups}}
+#'
+#' @return		modified report object with the immune cell stratification stratification plot
+#'
+#' @author	Michael Scherer
+#' @noRd
+
+add.stratification.plot.immune <- function(report,immune.contents,sample.groups){
+  report.plots <- list()
+  nsamples <- length(immune.contents)
+  report.plots <- foreach(c=1:length(sample.groups),.combine = c) %dopar%{
+    sample.group <- sample.groups[[c]]
+    cvalues <- rep(rnb.getOption("colors.category"),length.out=length(sample.group))
+    cat <- rep(NA,nsamples)
+    for(i in 1:length(sample.group)){
+      cat[sample.group[[i]]] <- names(sample.group)[i]
+    }
+    trait <- gsub("[[:punct:]]","",names(sample.groups)[c])
+    trait <- gsub(" ","",trait)
+    to.plot <- data.frame(Immune=immune.contents,Group=cat)
+    plot <- ggplot(to.plot,aes(x=Group,y=Immune,fill=Group))+geom_boxplot()+scale_fill_manual(values=cvalues)+ylab("LUMP estimate")+
+      theme(axis.text.x=element_text(angle=90,hjust=1))
+    report.plot <- createReportPlot(paste("lump_stratification",trait,sep="_"),report)
+    print(plot)
+    report.plot <- off(report.plot)
+    return(c(report.plots,report.plot))
+  }
+  s.groups <- gsub("[[:punct:]]","",names(sample.groups))
+  s.groups <- gsub(" ","",s.groups)
+  names(s.groups) <- s.groups
+  s.names <- list(Group=s.groups)
+  descr <- "Immune Cell Content estimated by LUMP is stratified over different sample groups."
+  report <- rnb.add.figure(report,descr,report.plots,s.names)
+  return(report)
 }

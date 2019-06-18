@@ -95,9 +95,9 @@ rnb.section.ageprediction <- function(object,report){
 	txt <- c(header, " and is available as a <a href=\"",prediction_path,"\">","comma-separated file</a>.")
 	rnb.add.paragraph(report, txt)
 
-	add.info <- function(stitle, ffunction, txt, actualAges, predictedAges) {
+	add.info <- function(stitle, ffunction, txt, actualAges, predictedAges,...) {
 		result <- rnb.add.section(report, stitle, txt, level = 2)
-		result <- ffunction(report, object,actualAges,predictedAges)
+		result <- ffunction(report, object,actualAges,predictedAges,...)
 		rnb.status(c("Added", stitle))
 		result
 	}
@@ -139,6 +139,11 @@ rnb.section.ageprediction <- function(object,report){
 				report <- add.info("Error Plot",add.combination.plot,txt,actualAgesNumeric,predictedAges)
 				#txt <- "Plotting quantiles for the difference between predicted and annotated ages."
 				#report <- add.info("Quantile Plot",add.quantile.plot,txt,actualAgesNumeric,predictedAges)
+				# stratification in sample groups
+				txt <- "Plotting predicted ages in different sample groups."
+				report <- rnb.add.section(report,"Stratification Plot",txt,level=2)
+				report <- add.stratification.plot(report,actualAgesNumeric,predictedAges,sample.groups=rnb.sample.groups(object))
+				rnb.status(c("Added","Stratification Plot"))
 			}else{
 				if(is.factor(actualAges)){
 					actualAges <- as.character(actualAges)
@@ -334,7 +339,9 @@ add.agecomparison.plot <- function(report, object, actualAges, predictedAges){
 		report.plot <- off(report.plot)
 		report.plots <- c(report.plots,report.plot)
 	}else{
-		for(trait in traits){
+		report.plots.add <- foreach(i=1:length(traits),.combine=c) %dopar%{
+		  trait <- traits[i]
+		  report.plots.inner <- list()
 			if(trait %in% colnames(ph)){
 				placeholder <- ph[,trait]
 				if(!is.null(placeholder)){
@@ -364,7 +371,7 @@ add.agecomparison.plot <- function(report, object, actualAges, predictedAges){
 										plot <- ggplot(data,aes(x=actualAges,y=predictedAges,group=placeholder),environment=environment())+geom_point(aes(colour=placeholder,shape=placeholder2))+geom_text(aes(label=ifelse(diff > 15, as.character(Sample),"")),hjust=0,vjust=0,size=3)+xlim(-1,100)+ylim(-1,100)+geom_abline(intercept=0,slope=1)+xlab("Annotated Ages")+ylab("Predicted Age")+scale_colour_manual(name=trait,na.value = ifelse(trait=="Default","black","#C0C0C0"), values = cvalues)+scale_shape_manual(name=secondTrait,na.value=ifelse(trait=="Default",20,1L),values=ptvalues)
 										print(plot)
 										report.plot <- off(report.plot)
-										report.plots <- c(report.plots,report.plot)
+										report.plots.inner <- c(report.plots.inner,report.plot)
 									}
 								}else{
 placeholder2 <- as.factor(placeholder2)
@@ -386,16 +393,17 @@ placeholder2 <- as.factor(placeholder2)
 										plot <- ggplot(data,aes(x=actualAges,y=predictedAges,group=placeholder),environment=environment())+geom_point(aes(colour=placeholder,shape=placeholder2))+geom_text(aes(label=ifelse(diff > 15, as.character(Sample),"")),hjust=0,vjust=0,size=3)+xlim(-1,100)+ylim(-1,100)+geom_abline(intercept=0,slope=1)+xlab("Annotated Ages")+ylab("Predicted Age")+scale_colour_manual(name=trait,na.value = ifelse(trait=="Default","black","#C0C0C0"), values = cvalues)+scale_shape_manual(name=secondTrait,na.value=ifelse(trait=="Default",20,1L),values=ptvalues)
 										print(plot)
 										report.plot <- off(report.plot)
-										report.plots <- c(report.plots,report.plot)
-
+										report.plots.inner <- c(report.plots.inner,report.plot)
 								}
 							}
 						}
 					}
+					return(report.plots.inner)
 				}
 			}
 		}
 	}
+	report.plots <- c(report.plots,report.plots.add)
 	traits <- gsub(" ","",traits)
 	traits <- gsub("[[:punct:]]","",traits)
 	setting_names <- list("Compare first trait"=traits,"Compare second trait"=traits[])
@@ -608,6 +616,64 @@ add.age.histogram <- function(report,ages){
 	return(report)
 }
 
+#######################################################################################
+#' add.stratification.plot
+#'
+#' This function creates a plot comparing predicted ages and the difference between annotated and 
+#' predicted ages in the different sample groups defined by \code{\link{rnb.sample.groups}}
+#'
+#' @param report	report object to be modified.
+#' @param annotated.ages		annotated ages for the individuals.
+#' @param predicted.ages  ages as predicted by the age prediction algorithm
+#' @param sample.groups sample groups as defined by \code{\link{rnb.sample.groups}}
+#'
+#' @return		modified report object with the age stratification plot
+#'
+#' @author	Michael Scherer
+#' @noRd
+
+add.stratification.plot <- function(report,annotated.ages,predicted.ages,sample.groups){
+  report.plots <- list()
+  nsamples <- length(annotated.ages)
+  report.plots <- foreach(c=1:length(sample.groups),.combine = c) %dopar%{
+    sample.group <- sample.groups[[c]]
+    cvalues <- rep(rnb.getOption("colors.category"),length.out=length(sample.group))
+    cat <- rep(NA,nsamples)
+    for(i in 1:length(sample.group)){
+      cat[sample.group[[i]]] <- names(sample.group)[i]
+    }
+    trait <- gsub("[[:punct:]]","",names(sample.groups)[c])
+    trait <- gsub(" ","",trait)
+    to.plot <- data.frame(Increase=predicted.ages-annotated.ages,Group=cat)
+    plot <- ggplot(to.plot,aes(x=Group,y=Increase,fill=Group))+geom_boxplot()+scale_fill_manual(values=cvalues)+ylab("Predicted Age - Annotated Age")+
+      theme(axis.text.x=element_text(angle=90,hjust=1))
+    report.plot.1 <- createReportPlot(paste("age_stratification",trait,"increase",sep="_"),report)
+    print(plot)
+    report.plot.1 <- off(report.plot.1)
+    to.plot <- data.frame(Predicted=predicted.ages,Group=cat)
+    plot <- ggplot(to.plot,aes(x=Group,y=Predicted,fill=Group))+geom_boxplot()+scale_fill_manual(values=cvalues)+ylab("Predicted Age")+
+      theme(axis.text.x=element_text(angle=90,hjust=1))
+    report.plot.2 <- createReportPlot(paste("age_stratification",trait,"predicted",sep="_"),report)
+    print(plot)
+    report.plot.2 <- off(report.plot.2)
+    to.plot <- data.frame(Annotated=annotated.ages,Group=cat)
+    plot <- ggplot(to.plot,aes(x=Group,y=Annotated,fill=Group))+geom_boxplot()+scale_fill_manual(values=cvalues)+ylab("Annotated Age")+
+      theme(axis.text.x=element_text(angle=90,hjust=1))
+    report.plot.3 <- createReportPlot(paste("age_stratification",trait,"annotated",sep="_"),report)
+    print(plot)
+    report.plot.3 <- off(report.plot.3)
+    return(c(report.plots,report.plot.1,report.plot.2,report.plot.3))
+  }
+  s.groups <- gsub("[[:punct:]]","",names(sample.groups))
+  s.groups <- gsub(" ","",s.groups)
+  names(s.groups) <- s.groups
+  p.types <- c("Predicted Ages - Annotated Ages","Predicted Ages","Annotates Ages")
+  names(p.types) <- c("increase","predicted","annotated")
+  s.names <- list(Group=s.groups,Type=p.types)
+  descr <- "Predicted Ages are stratified over different sample groups."
+  report <- rnb.add.figure(report,descr,unlist(report.plots),s.names)
+  return(report)
+}
 
 #######################################################################################
 #' age.transformation
