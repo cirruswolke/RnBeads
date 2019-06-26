@@ -1920,6 +1920,39 @@ setMethod("getSubCmdTokens",
 ?`getSubCmdTokens,ClusterArchitectureSGE-method`
 @
 	It might also be helpful to have a look at the source code for the SGE class. You can find it in the source files of RnBeads (location: \cs{R/clusterArchitectureSGE.R}).
+	
+\subsection{Genome-wide segmentation of the methylome}
+
+Global DNA methylation has been shown to be organized into larger domains using whole-genome bisulfite sequencing data \cite{Salhab2018}. The strategy is based on a hidden-markov model that first classifies the regions into either partially methylated domains (PMDs) and into the remaining. The latter is then further classified into fully methylated domains (FMDs), lowly methylated regions (LMRs), and unmethylated regions (UMRs) according to overall methylation state and CpG content \cite{Burger2013}. Each of these categories is annotated to a distinct biological function. \cs{RnBeads} support segmentation according to this proposed \cs{MethylSeekR} approach.
+
+MethylSeekR is only applicable to larger WGBS datasets and produces a segmentation for each sample individually. Such a dataset is too large to be shiped together with \cs{RnBeads}, thus we assume we loaded a larger, preprocessed \cs{RnBiseqSet} object obtained from WGBS data called \cs{rnb.set}. 
+
+<<eval=FALSE>>=
+?rnb.execute.segmentation
+rnb.set <- rnb.execute.segmentation(rnb.set=rnb.set,
+	sample.name=samples(rnb.set)[1])
+rnb.set
+@
+
+The dataset now contains further regions types representing the segmentation described above. This segmentation can now be exported to BED files or the methylation values of the CpGs in the different segments can be plotted.
+
+<<eval=FALSE>>=
+segmentation.results <- "~/segmentation"
+rnb.bed.from.segmentation(rnb.set = rnb.set, 
+	sample.name = samples(rnb.set)[1], store.path = segmentation.results)
+plot <- rnb.boxplot.from.segmentation(rnb.set = rnb.set,
+	 sample.name = samples(rnb.set)[1])+theme_bw()
+@
+
+The resulting BED file and plots will look as shown in Figure \ref{fig:segmentation}, but might vary from sample to sample.
+
+	\begin{figure}
+		\noindent \begin{centering}
+			\includegraphics[width=1.00\textwidth]{"figures/segmentation"}
+		\par \end{centering}
+		\caption{An example BED files (left) and methylation distribution (right) according to the different segments defined by the MethylSeekR approach.}
+		\label{fig:segmentation}
+	\end{figure}
 
 \section{Beyond DNA Methylation Analysis}
 
@@ -2179,6 +2212,8 @@ draw.lotto()
       Listgarten, J. (2014). \newblock \emph{Epigenome-wide association studies without the need for cell-type composition}. \newblock Nature Methods. 11, 309-311.
       \bibitem{Fortin2014} Fortin, J.-P., Labbe, A., Lemire, M., Zanke, B. W., Hudson, T. J., Fertig, E. J., \emph{et al.} (2014). \newblock \emph{Functional normalization of 450k methylation array data improves replication in large cancer studies}. \newblock Genome Biology, 15(12), 503
       \bibitem{Aran2015} Aran, D., Sirota, M., Butte, A.J. (2014). \newblock \emph{Systematic pan-cancer analysis of tumour purity}. \newblock Nature Communications, 6, 8971
+      \bibitem{Salhab2018} Salhab, A., Nordstr\"om, K., Gasparoni, G., Kattler, K., Ebert, P., et.al. (2018) \newblock \emph{A comprehensive analysis of 195 DNA methylomes reveals shared and cell-specific features of partially methylated domains.} \newblock Genome Biology, 19(1), 9-11.
+      \bibitem{Burger2013} Burger, L., Gaidatzis, D., Sch\"ubeler, D., and Stadler, M. B. (2013). \newblock\emph{Identification of active regulatory regions from DNA methylation data}. \newblock Nucleic Acids Research, 41(16), e155. https://doi.org/10.1093/nar/gkt599
 	\end{thebibliography}
 
 \end{document}
