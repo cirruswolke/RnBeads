@@ -1,3 +1,8 @@
+RnBeads 2.3.3
+=============
+
+ * Fixed non ASCII column names in age prediction and immune estimation
+
 RnBeads 2.3.2
 =============
 

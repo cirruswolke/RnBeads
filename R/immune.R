@@ -149,6 +149,7 @@ add.stratification.plot.immune <- function(report,immune.contents,sample.groups)
       cat[sample.group[[i]]] <- names(sample.group)[i]
     }
     trait <- gsub("[[:punct:]]","",names(sample.groups)[c])
+    trait <- gsub("[^ -~]","",trait)
     trait <- gsub(" ","",trait)
     to.plot <- data.frame(Immune=immune.contents,Group=cat)
     plot <- ggplot(to.plot,aes(x=Group,y=Immune,fill=Group))+geom_boxplot()+scale_fill_manual(values=cvalues)+ylab("LUMP estimate")+
@@ -159,6 +160,7 @@ add.stratification.plot.immune <- function(report,immune.contents,sample.groups)
     return(c(report.plots,report.plot))
   }
   s.groups <- gsub("[[:punct:]]","",names(sample.groups))
+  s.groups <- gsub("[^ -~]","",s.groups)
   s.groups <- gsub(" ","",s.groups)
   names(s.groups) <- s.groups
   s.names <- list(Group=s.groups)

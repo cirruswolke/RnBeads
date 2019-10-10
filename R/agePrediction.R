@@ -324,6 +324,8 @@ add.agecomparison.plot <- function(report, object, actualAges, predictedAges){
 	sample_names <- sample_names[!notPredicted]
 
 	traits <- names(rnb.sample.groups(object))
+	# Remove non-ASCII characters
+	traits <- traits[!grepl("[^ -~]",traits)]
 	traits <- c("Default",traits)
 	remove.age <- traits %in% rnb.getOption("inference.age.column")
 	traits <- traits[!remove.age]
@@ -340,7 +342,7 @@ add.agecomparison.plot <- function(report, object, actualAges, predictedAges){
 		report.plots <- c(report.plots,report.plot)
 	}else{
 		report.plots.add <- foreach(i=1:length(traits),.combine=c) %dopar%{
-		  trait <- traits[i]
+	    trait <- traits[i]
 		  report.plots.inner <- list()
 			if(trait %in% colnames(ph)){
 				placeholder <- ph[,trait]
@@ -355,8 +357,10 @@ add.agecomparison.plot <- function(report, object, actualAges, predictedAges){
 										placeholder2 <- as.factor(placeholder2)
 										trait <- gsub(" ","",trait)
 										trait <- gsub("[[:punct:]]","",trait)
+										trait <- gsub("[^ -~]","",trait)
 										secondTrait <- gsub(" ","",secondTrait)
 										secondTrait <- gsub("[[:punct:]]","",secondTrait)
+										secondTrait <- gsub("[^ -~]","",secondTrait)
 										report.plot <- createReportPlot(paste0("age_comparison_",trait,"_",secondTrait), report)
 										if(length(placeholder)==0){
 											placeholder <- rep(NA,length(actualAges))
@@ -377,8 +381,10 @@ add.agecomparison.plot <- function(report, object, actualAges, predictedAges){
 placeholder2 <- as.factor(placeholder2)
 										trait <- gsub(" ","",trait)
 										trait <- gsub("[[:punct:]]","",trait)
+										trait <- gsub("[^ -~]","",trait)
 										secondTrait <- gsub(" ","",secondTrait)
 										secondTrait <- gsub("[[:punct:]]","",secondTrait)
+										secondTrait <- gsub("[^ -~]","",secondTrait)
 										report.plot <- createReportPlot(paste0("age_comparison_",trait,"_",secondTrait), report)
 										if(length(placeholder)==0){
 											placeholder <- rep(NA,length(actualAges))
@@ -405,6 +411,7 @@ placeholder2 <- as.factor(placeholder2)
 	}
 	report.plots <- c(report.plots,report.plots.add)
 	traits <- gsub(" ","",traits)
+	traits <- gsub("[^ -~]","",traits)
 	traits <- gsub("[[:punct:]]","",traits)
 	setting_names <- list("Compare first trait"=traits,"Compare second trait"=traits[])
 	names(setting_names[[1]]) <- traits
@@ -643,6 +650,7 @@ add.stratification.plot <- function(report,annotated.ages,predicted.ages,sample.
       cat[sample.group[[i]]] <- names(sample.group)[i]
     }
     trait <- gsub("[[:punct:]]","",names(sample.groups)[c])
+    trait <- gsub("[^ -~]","",trait)
     trait <- gsub(" ","",trait)
     to.plot <- data.frame(Increase=predicted.ages-annotated.ages,Group=cat)
     plot <- ggplot(to.plot,aes(x=Group,y=Increase,fill=Group))+geom_boxplot()+scale_fill_manual(values=cvalues)+ylab("Predicted Age - Annotated Age")+
@@ -665,6 +673,7 @@ add.stratification.plot <- function(report,annotated.ages,predicted.ages,sample.
     return(c(report.plots,report.plot.1,report.plot.2,report.plot.3))
   }
   s.groups <- gsub("[[:punct:]]","",names(sample.groups))
+  s.groups <- gsub("[^ -~]","",s.groups)
   s.groups <- gsub(" ","",s.groups)
   names(s.groups) <- s.groups
   p.types <- c("Predicted Ages - Annotated Ages","Predicted Ages","Annotates Ages")
