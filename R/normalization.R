@@ -1411,7 +1411,7 @@ rnb.section.imputation <- function(report,rnb.set,old.values){
     txt <- c(txt,"by calculating the median methylation level for each CpG site across all samples",
              " and replacing all missing values for this CpG site in individual samples with the median across all samples.\n")
   }
-  if(rnb.getOption('imputation.method')=='mean.cpgs'){
+  if(rnb.getOption('imputation.method')=='median.cpgs'){
     txt <- c(txt,"by calculating the median methylation level for each sample across all CpG sites",
              " and replacing all missing values for this sample at an individual CpG site with the median across all CpGs in the sample.\n")
   }
