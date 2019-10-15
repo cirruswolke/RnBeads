@@ -94,7 +94,7 @@
 
 \author{Fabian M\"uller, Yassen Assenov, Pavlo Lutsik, Michael Scherer \\
 	\small{Contact: \cs{rnbeads@mpi-inf.mpg.de}} \\
-	\small{Package version: \cs{1.10.8}}}
+	\small{Package version: \cs{2.4.0}}}
 
 \thispagestyle{empty}
 \maketitle
@@ -121,7 +121,7 @@ BiocManager::install(c("RnBeads", "RnBeads.hg38"))
 	
 	Alternatively, we also provide a an easy-to-use installation script that ensures all dependencies are installed. This way, you can install RnBeads by running a single line of code in your R environment:
 <<eval=FALSE>>=
-source("http://rnbeads.mpi-inf.mpg.de/publication/source/install.R")
+source("http://rnbeads.org/data/install.R")
 @
 
 	Note that you might have to install \textit{Ghostscript} which \cs{RnBeads} uses for generating plot files. \textit{Ghostscript} is included in most Unix/Linux distributions by default, but may require installation on other operating systems. You can obtain the version corresponding to your operating system freely from the program's website\footnote{\href{http://www.ghostscript.com/download/gsdnld.html}{http://www.ghostscript.com/download/gsdnld.html}}. Follow their installation instructions. You might have to set path variables as well. Additional hints on installation of Ghostscript can be found on the FAQ section of the \href{http://rnbeads.mpi-inf.mpg.de/}{RnBeads website}\footnote{\href{http://rnbeads.mpi-inf.mpg.de/}{http://rnbeads.mpi-inf.mpg.de}}. The website also describes the installation process in detail.
