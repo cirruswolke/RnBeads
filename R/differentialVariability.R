@@ -121,7 +121,7 @@ diffVar <- function(meth.matrix,inds.g1,inds.g2,adjustment.table=NULL,paired=FAL
     df <- cbind(df,adjustment.table)
   }
   if(paired){
-    if(n.g1 != ng.2){
+    if(n.g1 != n.g2){
       stop("Could not conduct paired diffVar analysis: unequal groupsizes")
     }
     df$xp <- as.factor(rep(1:n.g1,2))
@@ -130,7 +130,13 @@ diffVar <- function(meth.matrix,inds.g1,inds.g2,adjustment.table=NULL,paired=FAL
   design.m <- model.matrix(as.formula(formula.text),data=df)
   colnames(design.m) <- make.names(colnames(design.m),unique=TRUE)
   colnames(design.m)[1:2] <- c("group1","group2")
-  var.fit <- varFit(data=meth.matrix,design=design.m)
+  var.fit <- tryCatch(varFit(data=meth.matrix,design=design.m),error=function(e){
+    logger.warning("Could not compute p-values with diffVar, returning NA")
+    return(NULL)
+  })
+  if(is.null(var.fit)){
+    return(rep(NA,nrow(meth.matrix)))
+  }
   contrasts.m <- makeContrasts(group1vs2=group1-group2,levels=design.m)
   var.fit <- contrasts.fit(var.fit,contrasts.m)
   var.fit <- eBayes(var.fit)
