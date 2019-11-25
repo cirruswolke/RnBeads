@@ -130,7 +130,7 @@ diffVar <- function(meth.matrix,inds.g1,inds.g2,adjustment.table=NULL,paired=FAL
   design.m <- model.matrix(as.formula(formula.text),data=df)
   colnames(design.m) <- make.names(colnames(design.m),unique=TRUE)
   colnames(design.m)[1:2] <- c("group1","group2")
-  var.fit <- varFit(data=meth.matrix,design=design.m)
+  var.fit <- missMethyl::varFit(data=meth.matrix,design=design.m)
   contrasts.m <- makeContrasts(group1vs2=group1-group2,levels=design.m)
   var.fit <- contrasts.fit(var.fit,contrasts.m)
   var.fit <- eBayes(var.fit)
