@@ -117,6 +117,18 @@ test_diffVar_covariate <- function() {
   checkTrue(is.numeric(p.vals) && all(p.vals>=0) && all(p.vals<=1))
 }
 
+test_diffVar_paired <- function() {
+  require(RnBeads.hg19)
+  data(small.example.object)
+  X <- meth(rnb.set.example)
+  tbl <- data.frame(
+    stype = c("a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b"),
+    donor = c("1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "6", "6"))
+  
+  p.vals <- diffVar(X, tbl$stype == "a", tbl$stype == "b", paired=T)
+  checkTrue(length(p.vals) == nrow(X))
+}
+
 test_iEVORA <- function(){
   require(RnBeads.hg19)
   data(small.example.object)
