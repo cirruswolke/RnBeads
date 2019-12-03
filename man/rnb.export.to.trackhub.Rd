@@ -4,8 +4,13 @@
 \alias{rnb.export.to.trackhub}
 \title{rnb.export.to.trackhub}
 \usage{
-rnb.export.to.trackhub(rnb.set, out.dir, reg.type = "sites",
-  data.type = "bigBed", ...)
+rnb.export.to.trackhub(
+  rnb.set,
+  out.dir,
+  reg.type = "sites",
+  data.type = "bigBed",
+  ...
+)
 }
 \arguments{
 \item{rnb.set}{Object of class \code{\linkS4class{RnBSet}}}

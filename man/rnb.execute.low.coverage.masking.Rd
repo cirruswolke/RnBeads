@@ -4,8 +4,10 @@
 \alias{rnb.execute.low.coverage.masking}
 \title{rnb.execute.low.coverage.masking}
 \usage{
-rnb.execute.low.coverage.masking(rnb.set,
-  covg.threshold = rnb.getOption("filtering.coverage.threshold"))
+rnb.execute.low.coverage.masking(
+  rnb.set,
+  covg.threshold = rnb.getOption("filtering.coverage.threshold")
+)
 }
 \arguments{
 \item{rnb.set}{Methylation dataset as an object of type inheriting \code{\linkS4class{RnBSet}}.}

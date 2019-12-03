@@ -4,8 +4,12 @@
 \alias{combineTestPvalsMeth}
 \title{combineTestPvalsMeth}
 \usage{
-combineTestPvalsMeth(pvalues, testWeights = NULL, correlated = FALSE,
-  methExpectedTestCorrelation = 0.8)
+combineTestPvalsMeth(
+  pvalues,
+  testWeights = NULL,
+  correlated = FALSE,
+  methExpectedTestCorrelation = 0.8
+)
 }
 \arguments{
 \item{pvalues}{p-values to combine}

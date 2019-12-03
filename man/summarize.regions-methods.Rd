@@ -6,8 +6,12 @@
 \alias{summarize.regions}
 \title{summarize.regions-methods}
 \usage{
-\S4method{summarize.regions}{RnBSet}(object, region.type,
-  aggregation = rnb.getOption("region.aggregation"), overwrite = TRUE)
+\S4method{summarize.regions}{RnBSet}(
+  object,
+  region.type,
+  aggregation = rnb.getOption("region.aggregation"),
+  overwrite = TRUE
+)
 }
 \arguments{
 \item{object}{Dataset of interest.}

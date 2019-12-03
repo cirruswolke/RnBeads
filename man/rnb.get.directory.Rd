@@ -4,8 +4,11 @@
 \alias{rnb.get.directory}
 \title{rnb.get.directory}
 \usage{
-rnb.get.directory(report, dir = c("data", "images", "images-high",
-  "pdfs"), absolute = FALSE)
+rnb.get.directory(
+  report,
+  dir = c("data", "images", "images-high", "pdfs"),
+  absolute = FALSE
+)
 }
 \arguments{
 \item{report}{Report of interest.}

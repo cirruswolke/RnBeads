@@ -4,8 +4,14 @@
 \alias{createReport}
 \title{createReport}
 \usage{
-createReport(fname, title, page.title = "RnBeads report",
-  authors = NULL, dirs = NULL, init.configuration = FALSE)
+createReport(
+  fname,
+  title,
+  page.title = "RnBeads report",
+  authors = NULL,
+  dirs = NULL,
+  init.configuration = FALSE
+)
 }
 \arguments{
 \item{fname}{Single-element \code{character} vector denoting the name of the file to contain the HTML

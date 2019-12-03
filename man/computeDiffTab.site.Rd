@@ -6,18 +6,31 @@
 \alias{computeDiffTab.extended.site}
 \title{computeDiffTab.site}
 \usage{
-computeDiffTab.default.site(X, inds.g1, inds.g2,
+computeDiffTab.default.site(
+  X,
+  inds.g1,
+  inds.g2,
   diff.method = rnb.getOption("differential.site.test.method"),
   variability.method = rnb.getOption("differential.variability.method"),
-  paired = FALSE, adjustment.table = NULL, eps = 0.01,
-  imputed = FALSE)
+  paired = FALSE,
+  adjustment.table = NULL,
+  eps = 0.01,
+  imputed = FALSE
+)
 
-computeDiffTab.extended.site(X, inds.g1, inds.g2,
+computeDiffTab.extended.site(
+  X,
+  inds.g1,
+  inds.g2,
   diff.method = rnb.getOption("differential.site.test.method"),
   variability.method = rnb.getOption("differential.variability.method"),
-  paired = FALSE, adjustment.table = NULL, eps = 0.01, covg = NULL,
+  paired = FALSE,
+  adjustment.table = NULL,
+  eps = 0.01,
+  covg = NULL,
   covg.thres = rnb.getOption("filtering.coverage.threshold"),
-  imputed = FALSE)
+  imputed = FALSE
+)
 }
 \arguments{
 \item{X}{Matrix on which the difference measures are calculated for every row}

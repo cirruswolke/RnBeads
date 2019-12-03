@@ -4,8 +4,7 @@
 \alias{diffVar}
 \title{diffVar}
 \usage{
-diffVar(meth.matrix, inds.g1, inds.g2, adjustment.table = NULL,
-  paired = FALSE)
+diffVar(meth.matrix, inds.g1, inds.g2, adjustment.table = NULL, paired = FALSE)
 }
 \arguments{
 \item{meth.matrix}{Matrix containing the methylation information used to calculate differentially variable sites 

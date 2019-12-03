@@ -4,9 +4,16 @@
 \alias{rnb.plot.dreduction}
 \title{rnb.plot.dreduction}
 \usage{
-rnb.plot.dreduction(rnb.set, plot.type = "pca", dimensions = 1:2,
-  distance.metric = "euclidean", target = "sites", point.types = 0L,
-  point.colors = 0L, legend.space = 2)
+rnb.plot.dreduction(
+  rnb.set,
+  plot.type = "pca",
+  dimensions = 1:2,
+  distance.metric = "euclidean",
+  target = "sites",
+  point.types = 0L,
+  point.colors = 0L,
+  legend.space = 2
+)
 }
 \arguments{
 \item{rnb.set}{Methylation dataset as an object of type inheriting \code{\linkS4class{RnBSet}}. This dataset

@@ -4,8 +4,14 @@
 \alias{rnb.plot.biseq.coverage.violin}
 \title{rnb.plot.biseq.coverage.violin}
 \usage{
-rnb.plot.biseq.coverage.violin(rnbs.set, samples, fname = NULL,
-  type = "sites", covg.range = NULL, ...)
+rnb.plot.biseq.coverage.violin(
+  rnbs.set,
+  samples,
+  fname = NULL,
+  type = "sites",
+  covg.range = NULL,
+  ...
+)
 }
 \arguments{
 \item{rnbs.set}{RnBiseqSet object}

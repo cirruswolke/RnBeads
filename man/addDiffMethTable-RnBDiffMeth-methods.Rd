@@ -6,8 +6,13 @@
 \alias{addDiffMethTable}
 \title{addDiffMethTable-methods}
 \usage{
-\S4method{addDiffMethTable}{RnBDiffMeth}(object, dmt, comparison,
-  region.type, grp.labs = c("group1", "group2"))
+\S4method{addDiffMethTable}{RnBDiffMeth}(
+  object,
+  dmt,
+  comparison,
+  region.type,
+  grp.labs = c("group1", "group2")
+)
 }
 \arguments{
 \item{object}{\code{\linkS4class{RnBDiffMeth}} object}

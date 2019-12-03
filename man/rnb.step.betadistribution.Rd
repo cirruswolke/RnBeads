@@ -4,9 +4,12 @@
 \alias{rnb.step.betadistribution}
 \title{rnb.step.betadistribution}
 \usage{
-rnb.step.betadistribution(rnb.set, report,
+rnb.step.betadistribution(
+  rnb.set,
+  report,
   columns = rnb.getOption("exploratory.columns"),
-  points.per.group = rnb.getOption("distribution.subsample"))
+  points.per.group = rnb.getOption("distribution.subsample")
+)
 }
 \arguments{
 \item{rnb.set}{HumanMethylation450K dataset as an object of type \code{\linkS4class{RnBSet}}.}

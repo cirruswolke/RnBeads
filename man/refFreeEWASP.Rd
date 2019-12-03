@@ -4,9 +4,16 @@
 \alias{refFreeEWASP}
 \title{refFreeEWASP}
 \usage{
-refFreeEWASP(X, inds.g1, inds.g2 = -inds.g1, adjustment.table = NULL,
-  paired = FALSE, nboot = 100, ignore.na = TRUE,
-  rescale.residual = TRUE)
+refFreeEWASP(
+  X,
+  inds.g1,
+  inds.g2 = -inds.g1,
+  adjustment.table = NULL,
+  paired = FALSE,
+  nboot = 100,
+  ignore.na = TRUE,
+  rescale.residual = TRUE
+)
 }
 \arguments{
 \item{X}{Matrix on which the test is performed for every row}

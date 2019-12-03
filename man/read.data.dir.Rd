@@ -4,8 +4,15 @@
 \alias{read.data.dir}
 \title{read.data.dir}
 \usage{
-read.data.dir(dir, pheno, betas, p.values, bead.counts,
-  sep = rnb.getOption("import.table.separator"), verbose = TRUE)
+read.data.dir(
+  dir,
+  pheno,
+  betas,
+  p.values,
+  bead.counts,
+  sep = rnb.getOption("import.table.separator"),
+  verbose = TRUE
+)
 }
 \arguments{
 \item{dir}{directory containing the table files}

@@ -4,8 +4,13 @@
 \alias{rowWelchP}
 \title{rowWelchP}
 \usage{
-rowWelchP(X, inds.g1, inds.g2 = -inds.g1, na.rm = FALSE,
-  alternative = "two.sided")
+rowWelchP(
+  X,
+  inds.g1,
+  inds.g2 = -inds.g1,
+  na.rm = FALSE,
+  alternative = "two.sided"
+)
 }
 \arguments{
 \item{X}{Matrix on which the test is performed for every row}

@@ -4,9 +4,13 @@
 \alias{rnb.plot.negative.boxplot}
 \title{rnb.plot.negative.boxplot}
 \usage{
-rnb.plot.negative.boxplot(rnb.set,
-  sample.subset = 1:length(samples(rnb.set)), writeToFile = FALSE,
-  name.prefix = NULL, ...)
+rnb.plot.negative.boxplot(
+  rnb.set,
+  sample.subset = 1:length(samples(rnb.set)),
+  writeToFile = FALSE,
+  name.prefix = NULL,
+  ...
+)
 }
 \arguments{
 \item{rnb.set}{\code{\linkS4class{RnBeadSet}} object with valid quality control information}

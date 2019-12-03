@@ -4,8 +4,15 @@
 \alias{exportDMRs2regionFile}
 \title{exportDMRs2regionFile}
 \usage{
-exportDMRs2regionFile(rnbSet, diffmeth, dest, comp.name, region.type,
-  rank.cut = NULL, rerank = FALSE)
+exportDMRs2regionFile(
+  rnbSet,
+  diffmeth,
+  dest,
+  comp.name,
+  region.type,
+  rank.cut = NULL,
+  rerank = FALSE
+)
 }
 \arguments{
 \item{rnbSet}{the RnBSet object for which the DMRs were computed.}

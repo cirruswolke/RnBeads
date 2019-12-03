@@ -4,9 +4,13 @@
 \alias{intensities.by.color}
 \title{intensities.by.color}
 \usage{
-intensities.by.color(raw.set, address.rownames = TRUE,
+intensities.by.color(
+  raw.set,
+  address.rownames = TRUE,
   add.oob = all(!is.null(M0(raw.set)), !is.null(U0(raw.set))),
-  add.controls = !is.null(qc(raw.set)), add.missing = TRUE)
+  add.controls = !is.null(qc(raw.set)),
+  add.missing = TRUE
+)
 }
 \arguments{
 \item{raw.set}{Methylation dataset as an instance of \code{RnBeadRawSet} object.}

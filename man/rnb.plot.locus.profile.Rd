@@ -4,10 +4,19 @@
 \alias{rnb.plot.locus.profile}
 \title{rnb.plot.locus.profile}
 \usage{
-rnb.plot.locus.profile(rnbSet, chrom, start, end, grps = NULL,
-  plot.m.regions = NULL, plot.m.heatmap = TRUE, plot.m.smooth = TRUE,
+rnb.plot.locus.profile(
+  rnbSet,
+  chrom,
+  start,
+  end,
+  grps = NULL,
+  plot.m.regions = NULL,
+  plot.m.heatmap = TRUE,
+  plot.m.smooth = TRUE,
   cvals.grps = rnb.getOption("colors.category"),
-  cvals.meth = rnb.getOption("colors.meth"), smooth.profile = "wide")
+  cvals.meth = rnb.getOption("colors.meth"),
+  smooth.profile = "wide"
+)
 }
 \arguments{
 \item{rnbSet}{RnBSet object}

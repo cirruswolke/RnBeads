@@ -4,9 +4,13 @@
 \alias{rnb.plot.beta.comparison}
 \title{rnb.plot.beta.comparison}
 \usage{
-rnb.plot.beta.comparison(beta.values, fprefix, report = NULL,
+rnb.plot.beta.comparison(
+  beta.values,
+  fprefix,
+  report = NULL,
   qq.length = 501L,
-  points.per.group = rnb.getOption("distribution.subsample"))
+  points.per.group = rnb.getOption("distribution.subsample")
+)
 }
 \arguments{
 \item{beta.values}{Two beta value sequences in the form of a named \code{list} of two non-empty vectors of type

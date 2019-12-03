@@ -6,8 +6,7 @@
 \alias{updateMethylationSites}
 \title{updateMethylationSites-methods}
 \usage{
-\S4method{updateMethylationSites}{RnBSet}(object, meth.data,
-  verbose = FALSE)
+\S4method{updateMethylationSites}{RnBSet}(object, meth.data, verbose = FALSE)
 }
 \arguments{
 \item{object}{Dataset of interest.}

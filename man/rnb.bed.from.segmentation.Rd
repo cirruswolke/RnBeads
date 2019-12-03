@@ -4,8 +4,12 @@
 \alias{rnb.bed.from.segmentation}
 \title{rnb.bed.from.segmentation}
 \usage{
-rnb.bed.from.segmentation(rnb.set, sample.name, type = "final",
-  store.path = getwd())
+rnb.bed.from.segmentation(
+  rnb.set,
+  sample.name,
+  type = "final",
+  store.path = getwd()
+)
 }
 \arguments{
 \item{rnb.set}{An \code{\link{RnBSet-class}} object obtained by executing \code{rnb.execute.segmentation}.}

@@ -6,8 +6,7 @@
 \alias{annotation}
 \title{annotation-methods}
 \usage{
-\S4method{annotation}{RnBSet}(object, type = "sites",
-  add.names = FALSE, include.regions = FALSE)
+\S4method{annotation}{RnBSet}(object, type = "sites", add.names = FALSE, include.regions = FALSE)
 }
 \arguments{
 \item{object}{dataset as an object of type inheriting \code{RnBSet}.}

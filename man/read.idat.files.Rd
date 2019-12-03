@@ -4,9 +4,14 @@
 \alias{read.idat.files}
 \title{read.idat.files}
 \usage{
-read.idat.files(base.dir, barcodes = NULL, sample.sheet = NULL,
-  sep.samples = rnb.getOption("import.table.separator"), useff = FALSE,
-  verbose = TRUE)
+read.idat.files(
+  base.dir,
+  barcodes = NULL,
+  sample.sheet = NULL,
+  sep.samples = rnb.getOption("import.table.separator"),
+  useff = FALSE,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{base.dir}{Directory that contains the \code{.idat} files to be read; or a character vector of such

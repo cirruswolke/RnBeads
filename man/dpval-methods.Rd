@@ -6,8 +6,7 @@
 \alias{dpval}
 \title{dpval-methods}
 \usage{
-\S4method{dpval}{RnBeadSet}(object, type = "sites", row.names = FALSE,
-  i = NULL, j = NULL)
+\S4method{dpval}{RnBeadSet}(object, type = "sites", row.names = FALSE, i = NULL, j = NULL)
 }
 \arguments{
 \item{object}{\code{\linkS4class{RnBeadSet}} or \code{\linkS4class{RnBeadRawSet}} object}

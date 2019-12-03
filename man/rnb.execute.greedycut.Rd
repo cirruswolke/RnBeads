@@ -4,8 +4,10 @@
 \alias{rnb.execute.greedycut}
 \title{rnb.execute.greedycut}
 \usage{
-rnb.execute.greedycut(rnb.set,
-  rc.ties = rnb.getOption("filtering.greedycut.rc.ties"))
+rnb.execute.greedycut(
+  rnb.set,
+  rc.ties = rnb.getOption("filtering.greedycut.rc.ties")
+)
 }
 \arguments{
 \item{rnb.set}{HumanMethylation450K dataset as an object of type \code{\linkS4class{RnBeadSet}}.}

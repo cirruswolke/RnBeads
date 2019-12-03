@@ -4,9 +4,13 @@
 \alias{rnb.sample.groups}
 \title{rnb.sample.groups}
 \usage{
-rnb.sample.groups(annotations, columns = NULL, columns.pairs = NULL,
+rnb.sample.groups(
+  annotations,
+  columns = NULL,
+  columns.pairs = NULL,
   min.group.size = rnb.getOption("min.group.size"),
-  max.group.count = rnb.getOption("max.group.count"))
+  max.group.count = rnb.getOption("max.group.count")
+)
 }
 \arguments{
 \item{annotations}{Methylation dataset as an object of type inheriting \code{\linkS4class{RnBSet}},

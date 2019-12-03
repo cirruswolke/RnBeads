@@ -4,11 +4,20 @@
 \alias{lolaBoxPlotPerTarget}
 \title{lolaBoxPlotPerTarget}
 \usage{
-lolaBoxPlotPerTarget(lolaDb, lolaRes, scoreCol = "pValueLog",
-  orderCol = scoreCol, signifCol = "qValue",
-  includedCollections = c(), pvalCut = 0.01, maxTerms = 50,
-  colorpanel = c(), groupByCollection = TRUE, orderDecreasing = NULL,
-  scoreDecreasing = NULL)
+lolaBoxPlotPerTarget(
+  lolaDb,
+  lolaRes,
+  scoreCol = "pValueLog",
+  orderCol = scoreCol,
+  signifCol = "qValue",
+  includedCollections = c(),
+  pvalCut = 0.01,
+  maxTerms = 50,
+  colorpanel = c(),
+  groupByCollection = TRUE,
+  orderDecreasing = NULL,
+  scoreDecreasing = NULL
+)
 }
 \arguments{
 \item{lolaDb}{LOLA DB object as returned by \code{LOLA::loadRegionDB} or \code{\link{loadLolaDbs}}}

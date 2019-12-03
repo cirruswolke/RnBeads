@@ -4,10 +4,17 @@
 \alias{prepareSOFTfileForGEO}
 \title{prepareSOFTfileForGEO}
 \usage{
-prepareSOFTfileForGEO(rnb.set, filename, sample.source.col = NULL,
-  sample.description.col = NULL, sample.title.col = NULL,
-  export.cols = seq(ncol(pheno(rnb.set))), rnb.set.raw = NULL,
-  sample.extra.info = NULL, series.info = NULL)
+prepareSOFTfileForGEO(
+  rnb.set,
+  filename,
+  sample.source.col = NULL,
+  sample.description.col = NULL,
+  sample.title.col = NULL,
+  export.cols = seq(ncol(pheno(rnb.set))),
+  rnb.set.raw = NULL,
+  sample.extra.info = NULL,
+  series.info = NULL
+)
 }
 \arguments{
 \item{rnb.set}{Object inheriting from class \code{RnBeadSet}
