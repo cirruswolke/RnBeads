@@ -4,13 +4,11 @@
 \alias{rnb.execute.sva}
 \title{rnb.execute.sva}
 \usage{
-rnb.execute.sva(
-  rnb.set,
+rnb.execute.sva(rnb.set,
   cmp.cols = rnb.getOption("inference.targets.sva"),
   columns.adj = rnb.getOption("covariate.adjustment.columns"),
   assoc = TRUE,
-  numSVmethod = rnb.getOption("inference.sva.num.method")
-)
+  numSVmethod = rnb.getOption("inference.sva.num.method"))
 }
 \arguments{
 \item{rnb.set}{The \code{RnBSet} object on which the SVA should be conducted}

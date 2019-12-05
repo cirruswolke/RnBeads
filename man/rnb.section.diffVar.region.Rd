@@ -4,13 +4,8 @@
 \alias{rnb.section.diffVar.region}
 \title{rnb.section.diffVar.region}
 \usage{
-rnb.section.diffVar.region(
-  rnb.set,
-  diff.meth,
-  report,
-  gzTable = FALSE,
-  level = 1
-)
+rnb.section.diffVar.region(rnb.set, diff.meth, report, gzTable = FALSE,
+  level = 1)
 }
 \arguments{
 \item{rnb.set}{Object of type \code{\linkS4class{RnBSet}} containing methylation information}

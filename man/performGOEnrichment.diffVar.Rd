@@ -4,17 +4,9 @@
 \alias{performGOEnrichment.diffVar}
 \title{performGOEnrichment.diffVar}
 \usage{
-performGOEnrichment.diffVar(
-  rnbSet,
-  diffmeth,
-  enrich.diffMeth = NULL,
-  ontologies = c("BP", "MF"),
-  rank.cuts.region = c(100, 500, 1000),
-  add.auto.rank.cut = TRUE,
-  rerank = TRUE,
-  verbose = TRUE,
-  ...
-)
+performGOEnrichment.diffVar(rnbSet, diffmeth, enrich.diffMeth = NULL,
+  ontologies = c("BP", "MF"), rank.cuts.region = c(100, 500, 1000),
+  add.auto.rank.cut = TRUE, rerank = TRUE, verbose = TRUE, ...)
 }
 \arguments{
 \item{rnbSet}{RnBSet object for which dirrential variability was computed}

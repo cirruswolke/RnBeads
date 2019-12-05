@@ -4,18 +4,10 @@
 \alias{rnb.run.analysis}
 \title{RnBeads Analysis Pipeline}
 \usage{
-rnb.run.analysis(
-  dir.reports,
-  data.source = NULL,
-  sample.sheet = NULL,
-  data.dir = NULL,
-  GS.report = NULL,
-  GEO.acc = NULL,
+rnb.run.analysis(dir.reports, data.source = NULL, sample.sheet = NULL,
+  data.dir = NULL, GS.report = NULL, GEO.acc = NULL,
   data.type = rnb.getOption("import.default.data.type"),
-  initialize.reports = TRUE,
-  build.index = TRUE,
-  save.rdata = TRUE
-)
+  initialize.reports = TRUE, build.index = TRUE, save.rdata = TRUE)
 }
 \arguments{
 \item{dir.reports}{Directory to host the generated report files. This must be a \code{character} of length one

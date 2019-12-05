@@ -3,6 +3,7 @@
 \docType{package}
 \name{RnBeads}
 \alias{RnBeads}
+\alias{RnBeads-package}
 \title{Analysis of genome-scale DNA methylation data with RnBeads}
 \description{
 RnBeads facilitates comprehensive analysis of various types of DNA methylation data at the genome scale. It extends

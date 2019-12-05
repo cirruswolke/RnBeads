@@ -4,15 +4,9 @@
 \alias{performLolaEnrichment.diffMeth}
 \title{performLolaEnrichment.diffMeth}
 \usage{
-performLolaEnrichment.diffMeth(
-  rnbSet,
-  diffmeth,
-  lolaDbPaths,
-  rank.cuts.region = c(100, 500, 1000),
-  add.auto.rank.cut = TRUE,
-  rerank = TRUE,
-  verbose = TRUE
-)
+performLolaEnrichment.diffMeth(rnbSet, diffmeth, lolaDbPaths,
+  rank.cuts.region = c(100, 500, 1000), add.auto.rank.cut = TRUE,
+  rerank = TRUE, verbose = TRUE)
 }
 \arguments{
 \item{rnbSet}{RnBSet object for which dirrential methylation was computed}

@@ -4,13 +4,8 @@
 \alias{rnb.plot.snp.barplot}
 \title{rnb.plot.snp.barplot}
 \usage{
-rnb.plot.snp.barplot(
-  dataset,
-  probeID,
-  writeToFile = FALSE,
-  numeric.names = FALSE,
-  ...
-)
+rnb.plot.snp.barplot(dataset, probeID, writeToFile = FALSE,
+  numeric.names = FALSE, ...)
 }
 \arguments{
 \item{dataset}{Dataset as an instance of \code{\linkS4class{RnBeadRawSet}} or \code{\linkS4class{RnBeadSet}}.

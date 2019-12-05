@@ -7,19 +7,11 @@
 \alias{initialize,RnBiseqSet-method}
 \title{RnBiseqSet Class}
 \usage{
-RnBiseqSet(
-  pheno,
-  sites,
-  meth,
-  covg = NULL,
-  assembly = "hg19",
-  target = "CpG",
-  summarize.regions = TRUE,
+RnBiseqSet(pheno, sites, meth, covg = NULL, assembly = "hg19",
+  target = "CpG", summarize.regions = TRUE,
   region.types = rnb.region.types.for.analysis(assembly),
   useff = rnb.getOption("disk.dump.big.matrices"),
-  usebigff = rnb.getOption("disk.dump.bigff"),
-  verbose = FALSE
-)
+  usebigff = rnb.getOption("disk.dump.bigff"), verbose = FALSE)
 }
 \arguments{
 \item{pheno}{phenotypic data.}

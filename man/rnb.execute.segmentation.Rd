@@ -4,17 +4,9 @@
 \alias{rnb.execute.segmentation}
 \title{rnb.execute.segmentation}
 \usage{
-rnb.execute.segmentation(
-  rnb.set,
-  sample.name,
-  meth.level = 0.5,
-  fdr = 5,
-  min.cover = 5,
-  n.cores = 1,
-  chr.sel = "chr2",
-  plot.path = getwd(),
-  temp.dir = tempdir()
-)
+rnb.execute.segmentation(rnb.set, sample.name, meth.level = 0.5,
+  fdr = 5, min.cover = 5, n.cores = 1, chr.sel = "chr2",
+  plot.path = getwd(), temp.dir = tempdir())
 }
 \arguments{
 \item{rnb.set}{An object of type \code{\link{RnBiseqSet-class}} containing methylation and coverage information.}

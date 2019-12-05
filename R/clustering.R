@@ -45,7 +45,6 @@ AGGLOMERATIONS <- c("average" = "average", "complete" = "complete", "median" = "
 #' @name RnBeadClustering-class
 #' @rdname RnBeadClustering-class
 #' @aliases initialize,RnBeadClustering-method
-#' @aliases samples,RnBeadClustering-method
 #' @author Yassen Assenov
 #' @exportClass RnBeadClustering
 setClass("RnBeadClustering",

@@ -4,15 +4,9 @@
 \alias{rnb.plot.biseq.coverage.hist}
 \title{rnb.plot.biseq.coverage.hist}
 \usage{
-rnb.plot.biseq.coverage.hist(
-  rnbs.set,
-  sample,
-  type = "sites",
-  writeToFile = FALSE,
-  numeric.names = FALSE,
-  covg.max.percentile = 1,
-  ...
-)
+rnb.plot.biseq.coverage.hist(rnbs.set, sample, type = "sites",
+  writeToFile = FALSE, numeric.names = FALSE,
+  covg.max.percentile = 1, ...)
 }
 \arguments{
 \item{rnbs.set}{RnBiseqSet object}

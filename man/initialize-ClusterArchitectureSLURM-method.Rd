@@ -5,7 +5,8 @@
 \alias{initialize,ClusterArchitectureSLURM-method}
 \title{initialize.ClusterArchitectureSLURM}
 \usage{
-\S4method{initialize}{ClusterArchitectureSLURM}(.Object, name = "ClusterArchitectureSLURM", ...)
+\S4method{initialize}{ClusterArchitectureSLURM}(.Object,
+  name = "ClusterArchitectureSLURM", ...)
 }
 \arguments{
 \item{.Object}{New instance of \code{ClusterArchitectureSLURM}.}

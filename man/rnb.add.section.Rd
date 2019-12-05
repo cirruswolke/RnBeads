@@ -4,7 +4,8 @@
 \alias{rnb.add.section}
 \title{rnb.add.section}
 \usage{
-rnb.add.section(report, title, description, level = 1L, collapsed = FALSE)
+rnb.add.section(report, title, description, level = 1L,
+  collapsed = FALSE)
 }
 \arguments{
 \item{report}{Report to write the text to.}

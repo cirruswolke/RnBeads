@@ -4,13 +4,9 @@
 \alias{rnb.plot.pheno.categories}
 \title{rnb.plot.pheno.categories}
 \usage{
-rnb.plot.pheno.categories(
-  annotations,
-  columns = NULL,
-  fileprefix = "barchart_pheno",
-  report = NULL,
-  color.values = rnb.getOption("colors.category")
-)
+rnb.plot.pheno.categories(annotations, columns = NULL,
+  fileprefix = "barchart_pheno", report = NULL,
+  color.values = rnb.getOption("colors.category"))
 }
 \arguments{
 \item{annotations}{Methylation dataset as an object of type inheriting \code{\linkS4class{RnBSet}}, or its sample

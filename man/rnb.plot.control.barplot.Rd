@@ -4,16 +4,9 @@
 \alias{rnb.plot.control.barplot}
 \title{rnb.plot.control.barplot}
 \usage{
-rnb.plot.control.barplot(
-  rnb.set,
-  probe,
-  sample.subset = 1:length(samples(rnb.set)),
-  writeToFile = FALSE,
-  numeric.names = FALSE,
-  name.prefix = NULL,
-  verbose = FALSE,
-  ...
-)
+rnb.plot.control.barplot(rnb.set, probe,
+  sample.subset = 1:length(samples(rnb.set)), writeToFile = FALSE,
+  numeric.names = FALSE, name.prefix = NULL, verbose = FALSE, ...)
 }
 \arguments{
 \item{rnb.set}{\code{\linkS4class{RnBeadRawSet}} or \code{\linkS4class{RnBeadSet}} object with valid

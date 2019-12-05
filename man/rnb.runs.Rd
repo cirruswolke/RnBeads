@@ -10,62 +10,34 @@
 \alias{rnb.run.differential}
 \title{RnBeads Modules in the Analysis Pipeline}
 \usage{
-rnb.run.import(
-  data.source,
-  data.type = rnb.getOption("import.default.data.type"),
-  dir.reports,
-  init.configuration = !file.exists(file.path(dir.reports, "configuration")),
-  close.report = TRUE,
-  show.report = FALSE
-)
+rnb.run.import(data.source,
+  data.type = rnb.getOption("import.default.data.type"), dir.reports,
+  init.configuration = !file.exists(file.path(dir.reports,
+  "configuration")), close.report = TRUE, show.report = FALSE)
 
-rnb.run.qc(
-  rnb.set,
-  dir.reports,
-  init.configuration = !file.exists(file.path(dir.reports, "configuration")),
-  close.report = TRUE,
-  show.report = FALSE
-)
+rnb.run.qc(rnb.set, dir.reports,
+  init.configuration = !file.exists(file.path(dir.reports,
+  "configuration")), close.report = TRUE, show.report = FALSE)
 
-rnb.run.preprocessing(
-  rnb.set,
-  dir.reports,
-  init.configuration = !file.exists(file.path(dir.reports, "configuration")),
-  close.report = TRUE,
-  show.report = FALSE
-)
+rnb.run.preprocessing(rnb.set, dir.reports,
+  init.configuration = !file.exists(file.path(dir.reports,
+  "configuration")), close.report = TRUE, show.report = FALSE)
 
-rnb.run.inference(
-  rnb.set,
-  dir.reports,
-  init.configuration = !file.exists(file.path(dir.reports, "configuration")),
-  close.report = TRUE,
-  show.report = FALSE
-)
+rnb.run.inference(rnb.set, dir.reports,
+  init.configuration = !file.exists(file.path(dir.reports,
+  "configuration")), close.report = TRUE, show.report = FALSE)
 
-rnb.run.tnt(
-  rnb.set,
-  dir.reports,
-  init.configuration = !file.exists(file.path(dir.reports, "configuration")),
-  close.report = TRUE,
-  show.report = FALSE
-)
+rnb.run.tnt(rnb.set, dir.reports,
+  init.configuration = !file.exists(file.path(dir.reports,
+  "configuration")), close.report = TRUE, show.report = FALSE)
 
-rnb.run.exploratory(
-  rnb.set,
-  dir.reports,
-  init.configuration = !file.exists(file.path(dir.reports, "configuration")),
-  close.report = TRUE,
-  show.report = FALSE
-)
+rnb.run.exploratory(rnb.set, dir.reports,
+  init.configuration = !file.exists(file.path(dir.reports,
+  "configuration")), close.report = TRUE, show.report = FALSE)
 
-rnb.run.differential(
-  rnb.set,
-  dir.reports,
-  init.configuration = !file.exists(file.path(dir.reports, "configuration")),
-  close.report = TRUE,
-  show.report = FALSE
-)
+rnb.run.differential(rnb.set, dir.reports,
+  init.configuration = !file.exists(file.path(dir.reports,
+  "configuration")), close.report = TRUE, show.report = FALSE)
 }
 \arguments{
 \item{data.source}{\code{character} vector specifying the location of the data items on disk. The expected

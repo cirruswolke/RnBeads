@@ -4,19 +4,16 @@
 \alias{get.comparison.info}
 \title{get.comparison.info}
 \usage{
-get.comparison.info(
-  x,
+get.comparison.info(x,
   pheno.cols = rnb.getOption("differential.comparison.columns"),
   region.types = rnb.region.types.for.analysis(x),
- 
-    pheno.cols.all.pairwise = rnb.getOption("differential.comparison.columns.all.pairwise"),
+  pheno.cols.all.pairwise = rnb.getOption("differential.comparison.columns.all.pairwise"),
   columns.pairs = rnb.getOption("columns.pairing"),
   columns.adj = rnb.getOption("covariate.adjustment.columns"),
   adjust.sva = rnb.getOption("differential.adjustment.sva"),
   pheno.cols.adjust.sva = rnb.getOption("inference.targets.sva"),
   adjust.celltype = rnb.getOption("differential.adjustment.celltype"),
-  adjust.na.rm = TRUE
-)
+  adjust.na.rm = TRUE)
 }
 \arguments{
 \item{x}{\code{RnBSet} object}

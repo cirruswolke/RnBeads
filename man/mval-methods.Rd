@@ -6,7 +6,8 @@
 \alias{mval}
 \title{mval-methods}
 \usage{
-\S4method{mval}{RnBSet}(object, type = "sites", row.names = FALSE, epsilon = 0)
+\S4method{mval}{RnBSet}(object, type = "sites", row.names = FALSE,
+  epsilon = 0)
 }
 \arguments{
 \item{object}{dataset of interest.}

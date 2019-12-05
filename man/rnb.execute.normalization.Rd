@@ -4,12 +4,10 @@
 \alias{rnb.execute.normalization}
 \title{rnb.execute.normalization}
 \usage{
-rnb.execute.normalization(
-  object,
+rnb.execute.normalization(object,
   method = rnb.getOption("normalization.method"),
   bgcorr.method = rnb.getOption("normalization.background.method"),
-  verbose = TRUE
-)
+  verbose = TRUE)
 }
 \arguments{
 \item{object}{Methylation dataset as an object of type \code{\linkS4class{MethyLumiSet}} or

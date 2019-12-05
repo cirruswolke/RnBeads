@@ -6,7 +6,8 @@
 \alias{getNumNaMeth}
 \title{getNumNaMeth-methods}
 \usage{
-\S4method{getNumNaMeth}{RnBSet}(object, type = "sites", chunkSize = 1e+05, mask = NULL)
+\S4method{getNumNaMeth}{RnBSet}(object, type = "sites",
+  chunkSize = 1e+05, mask = NULL)
 }
 \arguments{
 \item{object}{object inheriting from \code{\linkS4class{RnBSet}}}

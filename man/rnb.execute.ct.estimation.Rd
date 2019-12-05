@@ -4,14 +4,9 @@
 \alias{rnb.execute.ct.estimation}
 \title{rnb.execute.ct.estimation}
 \usage{
-rnb.execute.ct.estimation(
-  rnb.set,
-  cell.type.column = NA,
-  test.max.markers = NA,
-  top.markers = 500,
-  method = "houseman1",
-  verbose = TRUE
-)
+rnb.execute.ct.estimation(rnb.set, cell.type.column = NA,
+  test.max.markers = NA, top.markers = 500, method = "houseman1",
+  verbose = TRUE)
 }
 \arguments{
 \item{rnb.set}{object of class \code{\linkS4class{RnBSet}}}

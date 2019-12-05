@@ -4,10 +4,11 @@
 \name{setModuleResourceRequirements,RnBClusterRun,character,character-method}
 \alias{setModuleResourceRequirements,RnBClusterRun,character,character-method}
 \alias{setModuleResourceRequirements}
-\alias{setModuleResourceRequirements,RnBClusterRun-method}
 \title{setModuleResourceRequirements-methods}
 \usage{
-\S4method{setModuleResourceRequirements}{RnBClusterRun,character,character}(object, resources, modules = "all")
+
+  \S4method{setModuleResourceRequirements}{RnBClusterRun,character,character}(object,
+  resources, modules = "all")
 }
 \arguments{
 \item{object}{\code{\linkS4class{RnBClusterRun}} object}

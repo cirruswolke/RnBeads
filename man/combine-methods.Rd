@@ -4,7 +4,6 @@
 \name{combine,RnBSet,RnBSet-method}
 \alias{combine,RnBSet,RnBSet-method}
 \alias{combine}
-\alias{combine,RnBSet-method}
 \title{combine-methods}
 \usage{
 \S4method{combine}{RnBSet,RnBSet}(x, y, type = "all")

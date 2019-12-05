@@ -7,25 +7,12 @@
 \alias{initialize,RnBeadRawSet-method}
 \title{RnBeadRawSet-class}
 \usage{
-RnBeadRawSet(
-  pheno,
-  probes,
-  M,
-  U,
-  M0 = NULL,
-  U0 = NULL,
-  bead.counts.M = NULL,
-  bead.counts.U = NULL,
-  p.values = NULL,
-  qc = NULL,
-  platform = "450k",
-  beta.offset = 100,
-  summarize.bead.counts = TRUE,
-  summarize.regions = TRUE,
+RnBeadRawSet(pheno, probes, M, U, M0 = NULL, U0 = NULL,
+  bead.counts.M = NULL, bead.counts.U = NULL, p.values = NULL,
+  qc = NULL, platform = "450k", beta.offset = 100,
+  summarize.bead.counts = TRUE, summarize.regions = TRUE,
   region.types = rnb.region.types.for.analysis("hg19"),
-  useff = rnb.getOption("disk.dump.big.matrices"),
-  ffcleanup = FALSE
-)
+  useff = rnb.getOption("disk.dump.big.matrices"), ffcleanup = FALSE)
 }
 \arguments{
 \item{pheno}{Phenotypic data.}

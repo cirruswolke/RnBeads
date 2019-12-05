@@ -5,14 +5,11 @@
 \alias{initialize,RnBDiffMeth-method}
 \title{initialize.RnBDiffMeth}
 \usage{
-\S4method{initialize}{RnBDiffMeth}(
-  .Object,
+\S4method{initialize}{RnBDiffMeth}(.Object,
   site.test.method = rnb.getOption("differential.site.test.method"),
   variability.method = rnb.getOption("differential.variability.method"),
   covg.thres = rnb.getOption("filtering.coverage.threshold"),
-  disk.dump = FALSE,
-  disk.path = NULL
-)
+  disk.dump = FALSE, disk.path = NULL)
 }
 \arguments{
 \item{.Object}{New instance of \code{RnBDiffMeth}.}

@@ -4,13 +4,9 @@
 \alias{rnb.plot.betadistribution.sampleGroups}
 \title{rnb.plot.betadistribution.sampleGroups}
 \usage{
-rnb.plot.betadistribution.sampleGroups(
-  beta.matrix,
-  sample.group.inds,
-  annotation = "Group",
-  log.str = NULL,
-  points.per.group = rnb.getOption("distribution.subsample")
-)
+rnb.plot.betadistribution.sampleGroups(beta.matrix, sample.group.inds,
+  annotation = "Group", log.str = NULL,
+  points.per.group = rnb.getOption("distribution.subsample"))
 }
 \arguments{
 \item{beta.matrix}{Beta values in the form of a non-empty \code{matrix} of type \code{double}. Rows in this

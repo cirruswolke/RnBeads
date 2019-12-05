@@ -4,14 +4,8 @@
 \alias{estimateProportionsCP}
 \title{estimateProportionsCP}
 \usage{
-estimateProportionsCP(
-  rnb.set,
-  cell.type.column,
-  n.most.variable = NA,
-  n.markers = 500L,
-  constrained = TRUE,
-  full.output = FALSE
-)
+estimateProportionsCP(rnb.set, cell.type.column, n.most.variable = NA,
+  n.markers = 500L, constrained = TRUE, full.output = FALSE)
 }
 \arguments{
 \item{rnb.set}{RnBSet object}

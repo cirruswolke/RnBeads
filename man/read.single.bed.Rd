@@ -4,22 +4,10 @@
 \alias{read.single.bed}
 \title{read.single.bed}
 \usage{
-read.single.bed(
-  file,
-  chr.col = 1L,
-  start.col = 2L,
-  end.col = 3L,
-  strand.col = 6L,
-  mean.meth.col = 7L,
-  coverage.col = 8L,
-  c.col = NA,
-  t.col = NA,
-  is.epp.style = FALSE,
-  coord.shift = 0L,
-  ffread = FALSE,
-  context = "cg",
-  ...
-)
+read.single.bed(file, chr.col = 1L, start.col = 2L, end.col = 3L,
+  strand.col = 6L, mean.meth.col = 7L, coverage.col = 8L,
+  c.col = NA, t.col = NA, is.epp.style = FALSE, coord.shift = 0L,
+  ffread = FALSE, context = "cg", ...)
 }
 \arguments{
 \item{file}{the input BED file}

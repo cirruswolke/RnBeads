@@ -4,12 +4,8 @@
 \alias{rnb.set.annotation.and.cpg.stats}
 \title{rnb.set.annotation.and.cpg.stats}
 \usage{
-rnb.set.annotation.and.cpg.stats(
-  type,
-  regions,
-  description = NULL,
-  assembly = "hg19"
-)
+rnb.set.annotation.and.cpg.stats(type, regions, description = NULL,
+  assembly = "hg19")
 }
 \arguments{
 \item{type, description, assembly}{Parameters handled exactly as in \code{\link{rnb.set.annotation}}}

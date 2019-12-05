@@ -4,16 +4,9 @@
 \alias{performGoEnrichment.diffMeth}
 \title{performGoEnrichment.diffMeth}
 \usage{
-performGoEnrichment.diffMeth(
-  rnbSet,
-  diffmeth,
-  ontologies = c("BP", "MF"),
-  rank.cuts.region = c(100, 500, 1000),
-  add.auto.rank.cut = TRUE,
-  rerank = TRUE,
-  verbose = TRUE,
-  ...
-)
+performGoEnrichment.diffMeth(rnbSet, diffmeth, ontologies = c("BP",
+  "MF"), rank.cuts.region = c(100, 500, 1000),
+  add.auto.rank.cut = TRUE, rerank = TRUE, verbose = TRUE, ...)
 }
 \arguments{
 \item{rnbSet}{RnBSet object for which dirrential methylation was computed}

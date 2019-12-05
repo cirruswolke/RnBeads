@@ -6,13 +6,8 @@
 \alias{get.table}
 \title{get.table-methods}
 \usage{
-\S4method{get.table}{RnBDiffMeth}(
-  object,
-  comparison,
-  region.type,
-  undump = TRUE,
-  return.data.frame = FALSE
-)
+\S4method{get.table}{RnBDiffMeth}(object, comparison, region.type,
+  undump = TRUE, return.data.frame = FALSE)
 }
 \arguments{
 \item{object}{\code{\linkS4class{RnBDiffMeth}} object}

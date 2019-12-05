@@ -4,7 +4,6 @@
 \name{RnBeadClustering-class}
 \alias{RnBeadClustering-class}
 \alias{initialize,RnBeadClustering-method}
-\alias{samples,RnBeadClustering-method}
 \title{RnBeadClustering Class}
 \description{
 Storage class for the results of a clustering algorithm applied on an \code{\linkS4class{RnBSet}} dataset.

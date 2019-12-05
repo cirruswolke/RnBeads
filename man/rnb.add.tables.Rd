@@ -4,14 +4,8 @@
 \alias{rnb.add.tables}
 \title{rnb.add.tables}
 \usage{
-rnb.add.tables(
-  report,
-  tables,
-  setting.names,
-  selected.table = 1L,
-  indent = 2L,
-  ...
-)
+rnb.add.tables(report, tables, setting.names, selected.table = 1L,
+  indent = 2L, ...)
 }
 \arguments{
 \item{report}{Report to write the text to.}

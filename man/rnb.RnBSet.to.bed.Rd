@@ -4,15 +4,9 @@
 \alias{rnb.RnBSet.to.bed}
 \title{Export to BED files}
 \usage{
-rnb.RnBSet.to.bed(
-  rnb.set,
-  out.dir,
-  reg.type = "sites",
-  names.quant.meth = TRUE,
-  add.track.line = TRUE,
-  lexicographic = FALSE,
-  verbose = TRUE
-)
+rnb.RnBSet.to.bed(rnb.set, out.dir, reg.type = "sites",
+  names.quant.meth = TRUE, add.track.line = TRUE,
+  lexicographic = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{rnb.set}{Methylation dataset as an object of type inheriting \code{\linkS4class{RnBSet}}.}

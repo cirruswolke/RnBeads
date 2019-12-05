@@ -5,16 +5,9 @@
 \alias{getSubCmdTokens,ClusterArchitectureSLURM-method}
 \title{getSubCmdTokens-methods}
 \usage{
-\S4method{getSubCmdTokens}{ClusterArchitectureSLURM}(
-  object,
-  cmd.tokens,
-  log,
-  job.name = "",
-  res.req = character(0),
-  depend.jobs = character(0),
-  sub.binary = TRUE,
-  quote.cmd = TRUE
-)
+\S4method{getSubCmdTokens}{ClusterArchitectureSLURM}(object, cmd.tokens,
+  log, job.name = "", res.req = character(0),
+  depend.jobs = character(0), sub.binary = TRUE, quote.cmd = TRUE)
 }
 \arguments{
 \item{object}{\code{\linkS4class{ClusterArchitectureSLURM}} object}

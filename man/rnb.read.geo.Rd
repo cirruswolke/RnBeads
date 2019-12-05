@@ -4,11 +4,8 @@
 \alias{rnb.read.geo}
 \title{Import methylation data from GEO}
 \usage{
-rnb.read.geo(
-  accession = NULL,
-  verbose = logger.isinitialized(),
-  destdir = tempdir()
-)
+rnb.read.geo(accession = NULL, verbose = logger.isinitialized(),
+  destdir = tempdir())
 }
 \arguments{
 \item{accession}{Character string, starting with \code{"GSE"}, representing the GEO series for download and parsing.

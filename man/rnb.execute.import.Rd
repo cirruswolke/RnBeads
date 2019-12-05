@@ -4,12 +4,9 @@
 \alias{rnb.execute.import}
 \title{rnb.execute.import}
 \usage{
-rnb.execute.import(
-  data.source,
+rnb.execute.import(data.source,
   data.type = rnb.getOption("import.default.data.type"),
-  dry.run = FALSE,
-  verbose = TRUE
-)
+  dry.run = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{data.source}{non-empty \code{character} vector or \code{list} specifying the location of the data items. The
