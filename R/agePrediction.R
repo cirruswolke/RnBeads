@@ -408,8 +408,8 @@ placeholder2 <- as.factor(placeholder2)
 				}
 			}
 		}
+		report.plots <- c(report.plots,report.plots.add)
 	}
-	report.plots <- c(report.plots,report.plots.add)
 	traits <- gsub(" ","",traits)
 	traits <- gsub("[^ -~]","",traits)
 	traits <- gsub("[[:punct:]]","",traits)
