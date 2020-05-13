@@ -4,9 +4,15 @@
 \alias{get.adjustment.variables}
 \title{get.adjustment.variables}
 \usage{
-get.adjustment.variables(rnbSet, inds.g1, inds.g2 = -inds.g1,
-  colnames.adj = c(), colname.target = "", adjust.sva = FALSE,
-  adjust.celltype = FALSE)
+get.adjustment.variables(
+  rnbSet,
+  inds.g1,
+  inds.g2 = -inds.g1,
+  colnames.adj = c(),
+  colname.target = "",
+  adjust.sva = FALSE,
+  adjust.celltype = FALSE
+)
 }
 \arguments{
 \item{rnbSet}{RnBSet object}

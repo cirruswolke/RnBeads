@@ -4,8 +4,11 @@
 \alias{rnb.RnBSet.to.GRangesList}
 \title{rnb.RnBSet.to.GRangesList}
 \usage{
-rnb.RnBSet.to.GRangesList(rnb.set, reg.type = "sites",
-  return.regular.list = FALSE)
+rnb.RnBSet.to.GRangesList(
+  rnb.set,
+  reg.type = "sites",
+  return.regular.list = FALSE
+)
 }
 \arguments{
 \item{rnb.set}{Object of class \code{\linkS4class{RnBSet}}}

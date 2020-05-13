@@ -4,6 +4,7 @@
 \name{getExecutable,ClusterArchitecture,character-method}
 \alias{getExecutable,ClusterArchitecture,character-method}
 \alias{getExecutable}
+\alias{getExecutable,ClusterArchitecture-method}
 \title{getExecutable-methods}
 \usage{
 \S4method{getExecutable}{ClusterArchitecture,character}(object, exec.name)

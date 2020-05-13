@@ -6,8 +6,14 @@
 \alias{run}
 \title{run-methods}
 \usage{
-\S4method{run}{RnBClusterRun}(object, analysis.id, config.xml,
-  split.differential = TRUE, dry.run = FALSE, long.cmd.thres = 1024L)
+\S4method{run}{RnBClusterRun}(
+  object,
+  analysis.id,
+  config.xml,
+  split.differential = TRUE,
+  dry.run = FALSE,
+  long.cmd.thres = 1024L
+)
 }
 \arguments{
 \item{object}{\code{\linkS4class{RnBClusterRun}} object}

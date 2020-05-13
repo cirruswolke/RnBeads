@@ -5,8 +5,7 @@
 \alias{initialize,ClusterArchitecture-method}
 \title{initialize.ClusterArchitecture}
 \usage{
-\S4method{initialize}{ClusterArchitecture}(.Object,
-  name = "ClusterArchitecture")
+\S4method{initialize}{ClusterArchitecture}(.Object, name = "ClusterArchitecture")
 }
 \arguments{
 \item{.Object}{New instance of \code{ClusterArchitecture}.}

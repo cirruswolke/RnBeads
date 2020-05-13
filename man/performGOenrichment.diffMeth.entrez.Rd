@@ -4,8 +4,13 @@
 \alias{performGOenrichment.diffMeth.entrez}
 \title{performGOenrichment.diffMeth.entrez}
 \usage{
-performGOenrichment.diffMeth.entrez(gids, uids, ontology,
-  assembly = "hg19", ...)
+performGOenrichment.diffMeth.entrez(
+  gids,
+  uids,
+  ontology,
+  assembly = "hg19",
+  ...
+)
 }
 \arguments{
 \item{gids}{gene ids to test (entrez IDs)}

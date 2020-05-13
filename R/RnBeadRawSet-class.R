@@ -642,6 +642,110 @@ setAs("RGChannelSet", "RnBeadRawSet", function(from, to) {
 	}
 )
 
+setAs("RnBeadRawSet", "RGChannelSet", function(from, to){
+	assay.name <- from@target
+#	probes.all <- rnb.get.annotation(assay.name, "hg19")
+#	probes.all <- lapply(probes.all, function(x) {
+#			result <- as.data.frame(mcols(x)[, c("Design", "Color", "AddressA", "AddressB")])
+#			rownames(result) <- names(x)
+#			result
+#		}
+#	)
+#	probes.all <- do.call(rbind, unname(probes.all))
+	probes.all <- annotation(from)[,c("Design", "Color", "AddressA", "AddressB")]
+	controls.all <- rnb.get.annotation(sub("^probes", "controls", assay.name), "hg19")
+	controls.all <- controls.all[, "ID"]
+
+	# Obtain methylated and unmethylated intensities
+	M <- M(from)
+	U <- U(from)
+#	beads.M <- from@bead.counts.M
+#	beads.U <- from@bead.counts.U
+	M0 <- from@M0
+	U0 <- from@U0
+
+	#mm.green <- matrix(NA_real_, nrow=nrow(probes.all), ncol=ncol(M))
+	#mm.red <- matrix(NA_real_, nrow=nrow(probes.all), ncol=ncol(M))
+
+	is.type.II <- which(probes.all[,"Design"]%in%"II")
+	addresses <- probes.all[is.type.II,"AddressA"]
+	mm.green <- M[is.type.II,]
+	mm.red <- U[is.type.II,]
+#	mm.beads <- beads.M[is.type.II,,drop=F]
+	row.names(mm.green) <- addresses
+	row.names(mm.red) <- addresses
+
+	is.type.I.green <- which(probes.all[, "Design"] == "I" & probes.all[, "Color"] == "Grn")
+	addresses <- probes.all[is.type.I.green,"AddressB"]
+	r.names <- c(row.names(mm.green),addresses)
+	mm.green <- rbind(mm.green,M[is.type.I.green,])
+	row.names(mm.green) <- r.names
+	r.names <- c(row.names(mm.red),addresses)
+	mm.red <- rbind(mm.red,M0[is.type.I.green,,drop=F])
+	row.names(mm.red) <- r.names
+#	mm.beads <- rbind(mm.beads,beads.M[is.type.I.green,,drop=F])
+#	mm.beads <- rbind(mm.beads,beads.U[is.type.I.green,,drop=F])
+
+	addresses <- probes.all[is.type.I.green,"AddressA"]
+	r.names <- c(row.names(mm.green),addresses)
+	mm.green <- rbind(mm.green,U[is.type.I.green,])
+	row.names(mm.green) <- r.names
+	r.names <- c(row.names(mm.red),addresses)
+	mm.red <- rbind(mm.red,U0[is.type.I.green,,drop=F])
+	row.names(mm.red) <- r.names
+
+	is.type.I.red <- which(probes.all[, "Design"] == "I" & probes.all[, "Color"] == "Red")
+	addresses <- probes.all[is.type.I.red,"AddressB"]
+	r.names <- c(row.names(mm.red),addresses)
+	mm.red <- rbind(mm.red,M[is.type.I.red,])
+	row.names(mm.red) <- r.names
+	r.names <- c(row.names(mm.green),addresses)
+	mm.green <- rbind(mm.green,M0[is.type.I.red,,drop=F])
+	row.names(mm.green) <- r.names
+#	mm.beads <- rbind(mm.beads,beads.M[is.type.I.red,,drop=F])
+#	mm.beads <- rbind(mm.beads,beads.U[is.type.I.red,,drop=F])
+
+	addresses <- probes.all[is.type.I.red,"AddressA"]
+	r.names <- c(row.names(mm.red),addresses)
+	mm.red <- rbind(mm.red,U[is.type.I.red,])
+	row.names(mm.red) <- r.names
+	r.names <- c(row.names(mm.green),addresses)
+	mm.green <- rbind(mm.green,U0[is.type.I.red,,drop=F])
+	row.names(mm.green) <- r.names
+
+	r.names <- c(row.names(mm.green),controls.all)
+	mm.green <- rbind(mm.green,qc(from)[[1]])
+	row.names(mm.green) <- r.names
+	r.names <- c(row.names(mm.red),controls.all)
+	mm.red <- rbind(mm.red,qc(from)[[2]])
+	row.names(mm.red) <- r.names
+#	mm.beads <- rbind(mm.beads,
+#		matrix(NA,nrow=nrow(qc(from)[[1]]),ncol=ncol(mm.beads)))
+
+	if(assay.name %in% "probesEPIC"){
+		anno <- "IlluminaHumanMethylationEPIC"
+	}else if(assay.name %in% "probes450"){
+		anno <- "IlluminaHumanMethylation450k"
+	}else if(assay.name %in% "probes27"){
+		anno <- "IlluminaHumanMethylation27k"
+	}else{
+		stop("Unsupported platform")
+	}
+	p.data <- pheno(from)
+	if(!is.null(rnb.getOption("identifiers.column"))){
+		row.names(p.data) <- p.data[,rnb.getOption("identifiers.column")]
+		colnames(mm.green) <- colnames(mm.red) <- p.data[,rnb.getOption("identifiers.column")]
+	}
+	to <- RGChannelSet(Green=mm.green,
+			Red=mm.red,
+	#		NBeads=mm.beads,
+	#		GreenSD=matrix(NA,nrow=nrow(mm.green),ncol=ncol(mm.green)),
+	#		RedSD=matrix(NA,nrow=nrow(mm.red),ncol=ncol(mm.red)),
+			annotation=anno,
+			colData=pheno(from))
+	return(to)
+})
+
 ########################################################################################################################
 		
 ## ---------------------------------------------------------------------------------------------------------------------

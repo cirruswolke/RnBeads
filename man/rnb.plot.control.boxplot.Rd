@@ -4,9 +4,13 @@
 \alias{rnb.plot.control.boxplot}
 \title{rnb.plot.control.boxplot}
 \usage{
-rnb.plot.control.boxplot(rnb.set,
+rnb.plot.control.boxplot(
+  rnb.set,
   type = rnb.infinium.control.targets(rnb.set@target)[1],
-  writeToFile = FALSE, numeric.names = FALSE, ...)
+  writeToFile = FALSE,
+  numeric.names = FALSE,
+  ...
+)
 }
 \arguments{
 \item{rnb.set}{\code{\linkS4class{RnBeadRawSet}} or \code{\linkS4class{RnBeadSet}} object with valid quality

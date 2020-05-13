@@ -4,8 +4,13 @@
 \alias{rnb.RnBSet.to.bedGraph}
 \title{rnb.RnBSet.to.bedGraph}
 \usage{
-rnb.RnBSet.to.bedGraph(rnb.set, out.dir = ".", reg.type = "sites",
-  parameters = character(), digits = NULL)
+rnb.RnBSet.to.bedGraph(
+  rnb.set,
+  out.dir = ".",
+  reg.type = "sites",
+  parameters = character(),
+  digits = NULL
+)
 }
 \arguments{
 \item{rnb.set}{Dataset as an instance of class \code{\linkS4class{RnBSet}}.}

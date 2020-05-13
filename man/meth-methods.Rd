@@ -6,8 +6,7 @@
 \alias{meth}
 \title{meth-methods}
 \usage{
-\S4method{meth}{RnBSet}(object, type = "sites", row.names = FALSE,
-  i = NULL, j = NULL)
+\S4method{meth}{RnBSet}(object, type = "sites", row.names = FALSE, i = NULL, j = NULL)
 }
 \arguments{
 \item{object}{dataset of interest.}

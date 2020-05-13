@@ -4,8 +4,15 @@
 \alias{rnb.plot.biseq.coverage}
 \title{rnb.plot.biseq.coverage}
 \usage{
-rnb.plot.biseq.coverage(rnbs.set, sample, type = "sites",
-  writeToFile = FALSE, numeric.names = FALSE, covg.lists = NULL, ...)
+rnb.plot.biseq.coverage(
+  rnbs.set,
+  sample,
+  type = "sites",
+  writeToFile = FALSE,
+  numeric.names = FALSE,
+  covg.lists = NULL,
+  ...
+)
 }
 \arguments{
 \item{rnbs.set}{RnBiseqSet object}

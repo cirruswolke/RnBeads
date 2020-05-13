@@ -4,8 +4,13 @@
 \alias{rnb.plot.region.profile.density}
 \title{rnb.plot.region.profiles}
 \usage{
-rnb.plot.region.profile.density(rnb.set, sample, region.type = "",
-  region.profile = NULL, extend.by = 0.33)
+rnb.plot.region.profile.density(
+  rnb.set,
+  sample,
+  region.type = "",
+  region.profile = NULL,
+  extend.by = 0.33
+)
 }
 \arguments{
 \item{rnb.set}{RnBSet object}

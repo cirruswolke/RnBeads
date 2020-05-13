@@ -4,8 +4,10 @@
 \alias{rnb.execute.na.removal}
 \title{rnb.execute.na.removal}
 \usage{
-rnb.execute.na.removal(rnb.set,
-  threshold = rnb.getOption("filtering.missing.value.quantile"))
+rnb.execute.na.removal(
+  rnb.set,
+  threshold = rnb.getOption("filtering.missing.value.quantile")
+)
 }
 \arguments{
 \item{rnb.set}{Methylation dataset as an object of type inheriting \code{\linkS4class{RnBSet}}.}

@@ -17,7 +17,7 @@ Gets the files currently used by the logger.
 \examples{
 \donttest{
 if (NA \%in\% logger.getfiles())
-  cat("Console logger is enabled\\n")
+  cat("Console logger is enabled\n")
 }
 }
 \seealso{

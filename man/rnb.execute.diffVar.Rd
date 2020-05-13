@@ -4,13 +4,15 @@
 \alias{rnb.execute.diffVar}
 \title{rnb.execute.diffVar}
 \usage{
-rnb.execute.diffVar(rnb.set,
+rnb.execute.diffVar(
+  rnb.set,
   pheno.cols = rnb.getOption("differential.comparison.columns"),
   region.types = rnb.region.types.for.analysis(rnb.set),
   columns.adj = rnb.getOption("covariate.adjustment.columns"),
   adjust.celltype = rnb.getOption("differential.adjustment.celltype"),
   disk.dump = rnb.getOption("disk.dump.big.matrices"),
-  disk.dump.dir = tempfile(pattern = "diffMethTables_"))
+  disk.dump.dir = tempfile(pattern = "diffMethTables_")
+)
 }
 \arguments{
 \item{rnb.set}{Object of type \code{\linkS4class{RnBSet}} on which differential variability analysis should be conducted}

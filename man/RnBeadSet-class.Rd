@@ -7,10 +7,18 @@
 \alias{initialize,RnBeadSet-method}
 \title{RnBeadSet Class}
 \usage{
-RnBeadSet(pheno, probes, betas, p.values = NULL, bead.counts = NULL,
-  qc = NULL, platform = "450k", summarize.regions = TRUE,
+RnBeadSet(
+  pheno,
+  probes,
+  betas,
+  p.values = NULL,
+  bead.counts = NULL,
+  qc = NULL,
+  platform = "450k",
+  summarize.regions = TRUE,
   region.types = rnb.region.types.for.analysis("hg19"),
-  useff = rnb.getOption("disk.dump.big.matrices"))
+  useff = rnb.getOption("disk.dump.big.matrices")
+)
 }
 \arguments{
 \item{pheno}{Phenotypic data.}

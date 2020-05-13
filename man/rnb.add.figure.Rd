@@ -4,8 +4,13 @@
 \alias{rnb.add.figure}
 \title{rnb.add.figure}
 \usage{
-rnb.add.figure(report, description, report.plots, setting.names = list(),
-  selected.image = as.integer(1))
+rnb.add.figure(
+  report,
+  description,
+  report.plots,
+  setting.names = list(),
+  selected.image = as.integer(1)
+)
 }
 \arguments{
 \item{report}{Report to write the text to.}

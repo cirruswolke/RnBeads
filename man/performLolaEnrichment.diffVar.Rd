@@ -4,9 +4,16 @@
 \alias{performLolaEnrichment.diffVar}
 \title{performLolaEnrichment.diffVar}
 \usage{
-performLolaEnrichment.diffVar(rnbSet, diffmeth, enrich.diffMeth = NULL,
-  lolaDbPaths, rank.cuts.region = c(100, 500, 1000),
-  add.auto.rank.cut = TRUE, rerank = TRUE, verbose = TRUE)
+performLolaEnrichment.diffVar(
+  rnbSet,
+  diffmeth,
+  enrich.diffMeth = NULL,
+  lolaDbPaths,
+  rank.cuts.region = c(100, 500, 1000),
+  add.auto.rank.cut = TRUE,
+  rerank = TRUE,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{rnbSet}{RnBSet object for which differential variability was computed}

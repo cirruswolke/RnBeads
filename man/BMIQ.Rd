@@ -4,8 +4,16 @@
 \alias{BMIQ}
 \title{BMIQ}
 \usage{
-BMIQ(beta.v, design.v, doH = TRUE, nfit = 50000, th1.v = c(0.2,
-  0.75), th2.v = NULL, niter = 5, tol = 0.001)
+BMIQ(
+  beta.v,
+  design.v,
+  doH = TRUE,
+  nfit = 50000,
+  th1.v = c(0.2, 0.75),
+  th2.v = NULL,
+  niter = 5,
+  tol = 0.001
+)
 }
 \arguments{
 \item{beta.v}{\code{double} vector consisting of beta values. Missing values (\code{NA}s) cannot be handled, so

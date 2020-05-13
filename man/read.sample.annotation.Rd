@@ -4,8 +4,7 @@
 \alias{read.sample.annotation}
 \title{read.sample.annotation}
 \usage{
-read.sample.annotation(fname,
-  sep = rnb.getOption("import.table.separator"))
+read.sample.annotation(fname, sep = rnb.getOption("import.table.separator"))
 }
 \arguments{
 \item{fname}{Name of text file that contains a sample annotation table with a header. This method handles a variety
