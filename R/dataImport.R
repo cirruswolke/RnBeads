@@ -1031,8 +1031,8 @@ read.bed.files<-function(base.dir=NULL,
 		}
 
 		if(!is.null(rnb.getOption("identifiers.column")))
-			sample.names<-sample.sheet[,rnb.getOption("identifiers.column")] else
-			sample.names<-sample.sheet[,1]
+			sample.names<-as.character(sample.sheet[,rnb.getOption("identifiers.column")]) else
+			sample.names<-as.character(sample.sheet[,1])
 	}else{
 		sample.names<-sub("\\.bed", "", file.names)
 	}
