@@ -352,6 +352,9 @@ rnb.section.clustering.add.heatmap <- function(report, X, fname, cluster.rows, c
 		heatmap.parameters$labRow <- rownames(X)
 		heatmap.parameters$margins <- c(4, 3)
 	}
+	if(any(nchar(sample.ids)>10)){
+		heatmap.parameters$margins[1] <- 10 
+	}
 	heatmap.parameters$labCol <- sample.ids
 	heatmap.parameters$RowSideColors <- locus.colors
 	heatmap.parameters$ColSideColors <- sample.colors
