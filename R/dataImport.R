@@ -251,14 +251,21 @@ read.data.dir<-function(dir,
 					stop("The columns of bead counts table do not match the columns of the beta value table ", "")
 				}
 			}
-
+			
+			platform <- rnb.getOption("import.idat.platform")
+			if(platform=="auto"){
+				platform <- ifelse(nrow(beta.table)>500000L,"EPIC",ifelse(nrow(beta.table)<30000L,"27k","450k"))
+			}else{
+				platform <- ifelse(platform=="probesEPIC","EPIC",ifelse(platform=="probes27","27k","450k"))
+			}				
+			
 			data.set<-RnBeadSet(
 					pheno=pheno.table,
 					probes=rownames(beta.table),
 					betas=as.matrix(beta.table),
 					p.values=if(is.null(p.value.table)) p.value.table else as.matrix(p.value.table),
 					bead.counts=if(is.null(bead.count.table)) bead.count.table else as.matrix(bead.count.table),
-					platform=if(nrow(beta.table)>30000L) "450k" else "27k")
+					platform=platform)
 
 			if(verbose) {
 				rnb.logger.completed()
