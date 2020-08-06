@@ -1471,7 +1471,12 @@ robustHyperGResultSummary <- function(hgr,maxPval=0.01,htmlLinks=FALSE){
 	ec <- expectedCounts(hgr)[goIds]
 	cc <- geneCounts(hgr)[goIds]
 	ss <- universeCounts(hgr)[goIds]
-	goTerms <- sapply(BiocGenerics::mget(goIds, GOenv("TERM"), ifnotfound=NA), Term)
+	go.info <- BiocGenerics::mget(goIds, GOenv("TERM"), ifnotfound=NA)
+	if(any(is.na(go.info))){
+	  logger.info(paste("Invalid GOID found, removing",names(go.info[is.na(go.info)]),collapse = " "))
+	}    
+	goTerms <- rep(NA,length(cc))
+	goTerms[!is.na(go.info)] <- sapply(go.info[!is.na(go.info)],Term)
 	if (htmlLinks) {
 		goTerms <- paste0('<a href="', sprintf(AMIGO_URL, goIds), '">', goTerms, '</a>')
 	}
