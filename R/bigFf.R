@@ -94,7 +94,7 @@ BigFfMat <- function(df, row.n, col.n, row.names=NULL, col.names=NULL, na.protot
 		# df <- matrix(na.prototype, nrow=row.n, ncol=col.n)
 		ffList <- lapply(1:col.n, FUN=function(j){
 			res <- ff(rep(na.prototype, row.n), ...)
-			if (active.closing) close.ff(res)
+			if (active.closing) close(res)
 			res
 		})
 		row.n <- as.integer(row.n)
@@ -120,7 +120,7 @@ BigFfMat <- function(df, row.n, col.n, row.names=NULL, col.names=NULL, na.protot
 		col.n <- ncol(df)
 		ffList <- lapply(1:col.n, FUN=function(j){
 			res <- ff(df[,j], ...)
-			if (active.closing) close.ff(res)
+			if (active.closing) close(res)
 			res
 		})
 		row.names <- rownames(df)
@@ -233,9 +233,9 @@ setMethod("[", "BigFfMat",
 		}
 		# print(paste("get: i:",paste(i,collapse=","),"j:",paste(j,collapse=",")))
 		res <- do.call("cbind", lapply(x@cols[j],FUN=function(cc){
-			if (x@activeClosing) open.ff(cc)
+			if (x@activeClosing) open(cc)
 			res <- suppressMessages(cc[i])
-			if (x@activeClosing) close.ff(cc)
+			if (x@activeClosing) close(cc)
 			res
 		}))
 		colnames(res) <- x@colNames[j]
@@ -282,7 +282,7 @@ setReplaceMethod("[", "BigFfMat",
 		if (is.vector(value)){
 			if (length(value)==1){
 				if (x@activeClosing) {
-					for (jjj in j) open.ff(x@cols[[jjj]])
+					for (jjj in j) open(x@cols[[jjj]])
 				}
 				x@cols[j] <- lapply(1:length(j), FUN=function(jj){
 					ccMod <- x@cols[j][[jj]]
@@ -290,15 +290,15 @@ setReplaceMethod("[", "BigFfMat",
 					return(ccMod)
 				})
 				if (x@activeClosing) {
-					for (jjj in j) close.ff(x@cols[[jjj]])
+					for (jjj in j) close(x@cols[[jjj]])
 				}
 			} else if (length(i)==length(value) && length(j)==1){
-				if (x@activeClosing) open.ff(x@cols[[j]])
+				if (x@activeClosing) open(x@cols[[j]])
 				x@cols[[j]][i] <- value 
-				if (x@activeClosing) close.ff(x@cols[[j]])
+				if (x@activeClosing) close(x@cols[[j]])
 			} else if (length(j)==length(value) && length(i)==1){
 				if (x@activeClosing) {
-					for (jjj in j) open.ff(x@cols[[jjj]])
+					for (jjj in j) open(x@cols[[jjj]])
 				}
 				x@cols[j] <- lapply(1:length(value), FUN=function(jj){
 					ccMod <- x@cols[j][[jj]]
@@ -306,7 +306,7 @@ setReplaceMethod("[", "BigFfMat",
 					return(ccMod)
 				})
 				if (x@activeClosing) {
-					for (jjj in j) close.ff(x@cols[[jjj]])
+					for (jjj in j) close(x@cols[[jjj]])
 				}
 			} else {
 				stop("Invalid specification for replacement object of type vector.")
@@ -321,9 +321,9 @@ setReplaceMethod("[", "BigFfMat",
 			# 	return(ccMod)
 			# })
 			dummy <- lapply(1:ncol(value), FUN=function(jj){
-				if (x@activeClosing) open.ff(x@cols[j][[jj]])
+				if (x@activeClosing) open(x@cols[j][[jj]])
 				x@cols[j][[jj]][i] <<- value[,jj]
-				if (x@activeClosing) close.ff(x@cols[j][[jj]])
+				if (x@activeClosing) close(x@cols[j][[jj]])
 				return(NULL)
 			})
 		}
