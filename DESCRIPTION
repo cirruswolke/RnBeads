@@ -132,9 +132,10 @@ Collate:
     'regionDescription.R'
     'regionProfiles.R'
     'segmentation.R'
+    'sesame.R'
     'sex.R'
     'subSegments.R'
     'sva.R'
     'utilities.R'
     'wbcInference.R'
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1

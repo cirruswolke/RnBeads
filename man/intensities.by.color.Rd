@@ -9,26 +9,33 @@ intensities.by.color(
   address.rownames = TRUE,
   add.oob = all(!is.null(M0(raw.set)), !is.null(U0(raw.set))),
   add.controls = !is.null(qc(raw.set)),
-  add.missing = TRUE
+  add.missing = TRUE,
+  re.separate = FALSE
 )
 }
 \arguments{
 \item{raw.set}{Methylation dataset as an instance of \code{RnBeadRawSet} object.}
 
-\item{address.rownames}{if \code{TRUE} the rows of the returned matrices are named with the with the correspoding Illumina probe addresses}
+\item{address.rownames}{if \code{TRUE} the rows of the returned matrices are named with the with the corresponding Illumina probe addresses}
 
 \item{add.oob}{if \code{TRUE} the "out-of-band" intensities are included}
 
 \item{add.controls}{if \code{TRUE} the control probe intensities are included}
 
 \item{add.missing}{if \code{TRUE} the rows for the probes missing in \code{raw.set} is imputed with \code{NA} values}
+
+\item{re.separate}{if \code{TRUE} the type I and type II intensities, as well as the out-of-band and control probe intensities
+(if set to \code{TRUE}), will be returned as separate elements per channel and not as concatenated rows.}
 }
 \value{
-a \code{list} with elements \code{Cy3} and \code{Cy5} containing average bead intensities measured for each
-        each probe in the green and red channels, respectively.
+A \code{list} with elements \code{Cy3} and \code{Cy5} containing average bead intensities measured for each
+        each probe in the green and red channels, respectively. Exception, if \code{re.separate} is \code{TRUE} a \code{list}
+        with elements \code{Cy3.I}, \code{Cy5.I}, and \code{II} will be returned. The elements \code{Cy3.I.oob}, 
+        \code{Cy5.I.oob} and also \code{Cy3.ctl}, \code{Cy5.ctl} will be returned 
+        if the respective parameters (\code{add.oob} and \code{add.ctl}) are set to true.
 }
 \description{
-Rearranges information from "M" and "U" slots of a RnBeadsRawSet object by color channer.
+Rearranges information from "M" and "U" slots of a RnBeadsRawSet object by color channel.
 }
 \author{
 Pavlo Lutsik

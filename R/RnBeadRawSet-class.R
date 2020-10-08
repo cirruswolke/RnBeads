@@ -1131,17 +1131,19 @@ m.value<-function(M,U,offset=100){
 #'
 #' @param raw.set          Methylation dataset as an instance of \code{RnBeadRawSet} object.
 #' @param address.rownames  if \code{TRUE} the rows of the returned matrices are named with the with the corresponding Illumina probe addresses 
-#' @param add.oob			if \code{TRUE} the "out-of-band" intensities are included
-#' @param add.controls		if \code{TRUE} the control probe intensities are included
-#' @param add.missing		if \code{TRUE} the rows for the probes missing in \code{raw.set} is imputed with \code{NA} values
+#' @param add.oob			 if \code{TRUE} the "out-of-band" intensities are included
+#' @param add.controls if \code{TRUE} the control probe intensities are included
+#' @param add.missing  if \code{TRUE} the rows for the probes missing in \code{raw.set} is imputed with \code{NA} values
 #' @param re.separate  if \code{TRUE} the type I and type II intensities, as well as the out-of-band and control probe intensities
 #'                     (if set to \code{TRUE}), will be returned as separate elements per channel and not as concatenated rows.  
-#' @return a \code{list} with elements \code{Cy3} and \code{Cy5} containing average bead intensities measured for each
-#'         each probe in the green and red channels, respectively. Exception, if re.separate \code{TRUE} a \code{list}
+#' @return A \code{list} with elements \code{Cy3} and \code{Cy5} containing average bead intensities measured for each
+#'         each probe in the green and red channels, respectively. Exception, if \code{re.separate} is \code{TRUE} a \code{list}
 #'         with elements \code{Cy3.I}, \code{Cy5.I}, and \code{II} will be returned. The elements \code{Cy3.I.oob}, 
-#'         \code{Cy5.I.oob} and \code{Cy3.ctl} and \code{Cy5.ctl} will be returned if the respective parameters are set to true. 
+#'         \code{Cy5.I.oob} and also \code{Cy3.ctl}, \code{Cy5.ctl} will be returned 
+#'         if the respective parameters (\code{add.oob} and \code{add.ctl}) are set to true. 
 #' 
 #' @author Pavlo Lutsik
+
 intensities.by.color<-function(raw.set,
                                    address.rownames = TRUE, 
                                    add.oob = all(!is.null(M0(raw.set)), !is.null(U0(raw.set))), 
@@ -1249,9 +1251,7 @@ intensities.by.color<-function(raw.set,
       intensities.by.channel[["Cy3.I.oob"]] = list("M" = dI.red.meth.oob, "U" = dI.red.umeth.oob)
       intensities.by.channel[["Cy5.I.oob"]] = list("M" = dI.grn.meth.oob, "U" = dI.grn.umeth.oob)
     } 
-  }
-  
-  else{
+  }else{
     intensities.by.channel <- list(
       Cy3=rbind(dII.grn, dI.grn.meth, dI.grn.umeth, 
                 if(add.oob) dI.red.meth.oob else NULL, if(add.oob) dI.red.umeth.oob else NULL),
