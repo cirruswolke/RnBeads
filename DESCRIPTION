@@ -54,7 +54,8 @@ Suggests:
     plotrix,
     hexbin,
     RUnit,
-    MethylSeekR
+    MethylSeekR,
+    sesame
 Depends:
     R (>= 3.0.0),
     BiocGenerics,

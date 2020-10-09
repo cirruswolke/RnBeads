@@ -32,10 +32,10 @@ rnb.execute.sesame <- function(raw.set, anno.table = NULL, pval.thresh = 0.05){
   rnb.require("sesame")
   
   if(!(is.numeric(pval.thresh) && pval.thresh <= 1 && pval.thresh >= 0)){
-    stop("Invalid value for pval.thresh. Please specify a double in the range of [0, 1].")
+    stop("Invalid value for pval.thresh. Please specify a numeric in the range of [0, 1].")
   }
   if(is.numeric(anno.table)){
-    stop("Invalid value for anno.table. Wanted to specify the p-value threshhold?")
+    stop("Invalid value for anno.table. Wanted to specify the p-value threshold?")
   }
   if(!inherits(raw.set, "RnBeadRawSet")){
     stop("Please provide input inhereting from RnBeadRawSet.")
@@ -43,7 +43,7 @@ rnb.execute.sesame <- function(raw.set, anno.table = NULL, pval.thresh = 0.05){
   else{
     if(raw.set@target == "probes450"){
       platform = "HM450"
-    }else if(raw.set@target == "EPIC"){
+    }else if(raw.set@target == "probesEPIC"){
       platform = "EPIC"
     }else{
       stop("Invalid value for platform")
@@ -59,26 +59,20 @@ rnb.execute.sesame <- function(raw.set, anno.table = NULL, pval.thresh = 0.05){
     intensities.by.channel <- intensities.by.color(raw.set, address.rownames = FALSE, add.oob = TRUE, 
                                                   add.controls =  FALSE, add.missing = FALSE, re.separate = TRUE)
     
-    if(is.null(intensities.by.channel$Cy3.I) || is.null(intensities.by.channel$Cy5.I) || 
-       is.null(intensities.by.channel$Cy3.I.oob) || is.null(intensities.by.channel$Cy5.I.oob) ||
-       is.null(intensities.by.channel$II)){
-         stop("Type I, II and oob signal intensities are required for pOOBAH.")
-    }
-    
     grn <- intensities.by.channel$Cy3.I
     red <- intensities.by.channel$Cy5.I
     grn.oob <- intensities.by.channel$Cy3.I.oob
     red.oob <- intensities.by.channel$Cy5.I.oob
     tII <- intensities.by.channel$II
-    rm(intensities.by.channel)
+    rm(intensities.by.channel, anno.table)
     
-    if(sum(isFALSE(rownames(grn$M) %in% rownames(grn$U))) != 0 ||
-       sum(isFALSE(rownames(red$M) %in% rownames(red$U))) != 0 ||
-       sum(isFALSE(rownames(grn.oob$M) %in% rownames(grn.oob$U))) != 0 ||
-       sum(isFALSE(rownames(red.oob$M) %in% rownames(red.oob$U))) != 0 ||
-       sum(isFALSE(rownames(tII$M) %in% rownames(tII$U))) != 0 ||
-       dim(grn$M) != dim(red.oob$M) ||
-       dim(red$M) != dim(grn.oob$M)){
+    if(sum(rownames(grn$M) %in% rownames(grn$U) == FALSE) > 0 ||
+       sum(rownames(red$M) %in% rownames(red$U) == FALSE) > 0 ||
+       sum(rownames(grn.oob$M) %in% rownames(grn.oob$U) == FALSE) > 0 ||
+       sum(rownames(red.oob$M) %in% rownames(red.oob$U) == FALSE) > 0 ||
+       sum(rownames(tII$M) %in% rownames(tII$U) == FALSE) > 0 ||
+       length(grn$M) != length(red.oob$M) ||
+       length(red$M) != length(grn.oob$M)){
       stop("Equal dimensions and IDs are expected.")
     }
     
@@ -87,26 +81,27 @@ rnb.execute.sesame <- function(raw.set, anno.table = NULL, pval.thresh = 0.05){
       stop("Dataset contains no samples.")
     }
     
-    if(is.null(raw.set@pval.sites)){
-      raw.set@pval.sites <- matrix(data = NA, nrow = length(probeIDs), ncol = length(samples(raw.set)))
+    if(is.null(raw.set@pval.sites) || nrow(rnb.set.example@pval.sites) != length(probeIDs) 
+       || ncol(rnb.set.example@pval.sites) != nsamples){
+      raw.set@pval.sites <- matrix(data = NA, nrow = length(probeIDs), ncol = nsamples)
     }
-    sigset.l = vector("list", length = nsamples)
+    
+    sigset.l <- rep(list(sesame::SigSet(platform)), nsamples)
     nmasked = 0
     
     for (i in 1:nsamples){
-      sigset.l[[i]] <- SigSet("HM450")
-      IG(sigset.l[[i]]) <- cbind("M" = grn$M[, i], 
+      sesame::IG(sigset.l[[i]]) <- cbind("M" = grn$M[, i], 
                                  "U" = grn$U[, i])
-      IR(sigset.l[[i]]) <- cbind("M" = red$M[, i], 
+      sesame::IR(sigset.l[[i]]) <- cbind("M" = red$M[, i], 
                                  "U" = red$U[, i])
-      II(sigset.l[[i]]) <- cbind("M" = tII$M[, i], 
+      sesame::II(sigset.l[[i]]) <- cbind("M" = tII$M[, i], 
                                  "U" = tII$U[, i])
-      oobG(sigset.l[[i]]) <- cbind("M" = grn.oob$M[, i], 
+      sesame::oobG(sigset.l[[i]]) <- cbind("M" = grn.oob$M[, i], 
                                    "U" = grn.oob$U[, i])
-      oobR(sigset.l[[i]]) <- cbind("M" = red.oob$M[, i], 
+      sesame::oobR(sigset.l[[i]]) <- cbind("M" = red.oob$M[, i], 
                                    "U" = red.oob$U[, i])
       
-      sigset.l[[i]] <- detectionPoobEcdf(sigset.l[[i]], force = TRUE)    #this is the pOOBAH method. No masking yet, just p-value comput.
+      sigset.l[[i]] <- sesame::detectionPoobEcdf(sigset.l[[i]], force = TRUE)    #this is the pOOBAH method. No masking yet, just p-value comput.
       pvalues <- sigset.l[[i]]@pval$pOOBAH
       mask <- names(pvalues)[pvalues > pval.thresh]
       raw.set@pval.sites[, i] <- pvalues[match(probeIDs, names(pvalues))] 
@@ -121,11 +116,10 @@ rnb.execute.sesame <- function(raw.set, anno.table = NULL, pval.thresh = 0.05){
         raw.set@U0[maskedIDs, i]<- NA
       }
     }
-    
+    rm(sigset.l, maskedIDs, mask, pvalues)
     nprobes = length(probeIDs)    
     ntotal = nsamples*nprobes
 
-    print('')
     print('=======================')
     print('=    pOOBAH           =')
     print('=======================')
@@ -134,11 +128,11 @@ rnb.execute.sesame <- function(raw.set, anno.table = NULL, pval.thresh = 0.05){
     print(paste0('No. probes times samples:         ', ntotal))
     print(paste0('No. of masked probes:             ', nmasked))
     print(paste0('Fraction of masked probes:        ', round(nmasked/ntotal, digits = 3)))
-    # maybe for later: In the method they compare the fraction of masked probes PER sample -> indicates bad samples. 
-    # could add this to report, if necessary. 
-    # Also: rank (among samples) of non-detection -> equivalent to rank of no. of masked sample
+    # maybe for later: In the method they compare the fraction of masked probes PER sample, which indicates bad samples. 
+    # could add this to report and or QC if necessary. 
+    # Also: rank (among samples) of non-detection, which is equivalent to rank of no. of masked samples.
     
-    invisible(return(raw.set))
+    return(raw.set)
   }
 }
 
