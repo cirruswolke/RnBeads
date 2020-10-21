@@ -1683,6 +1683,12 @@ rnb.run.example <- function(index = 4L, dir.output = "example") {
 	if (!create.path(dir.output, accept.existing = FALSE, showWarnings = FALSE)) {
 		stop(paste("could not create", dir.output))
 	}
+	if(index==2){
+		if(!requireNamespace("RnBeads.mm9")){
+			logger.warning("Missing required package RnBeads.mm9, downloading...")
+			BiocManager::install("RnBeads.mm9")
+		}
+	}
 
 	## Initialize the preprocessing log
 	if (logger.isinitialized()) {
@@ -1694,9 +1700,9 @@ rnb.run.example <- function(index = 4L, dir.output = "example") {
 	## Download and extract the example's files
 	logger.start("Downloading and Unpacking Data Files", fname = logfile)
 	logger.info(c("Processing example", index))
-	url.file <- paste0("http://rnbeads.mpi-inf.mpg.de/publication/data/example_", index, ".tar.gz")
+	url.file <- paste0("https://rnbeads.org/materials/data/example_", index, ".tar.gz")
 	local.file <- file.path(dir.output, paste0("example_", index, ".tar.gz"))
-	result <- download.file(url.file, destfile = local.file, method = "internal", mode = "wb")
+	result <- download.file(url.file, destfile = local.file, mode = "wb")
 	if (result != 0) {
 		unlink(dir.output, recursive = TRUE)
 		if (!is.null(logfile)) {
