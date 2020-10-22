@@ -81,8 +81,8 @@ rnb.execute.sesame <- function(raw.set, anno.table = NULL, pval.thresh = 0.05){
       stop("Dataset contains no samples.")
     }
     
-    if(is.null(raw.set@pval.sites) || nrow(rnb.set.example@pval.sites) != length(probeIDs) 
-       || ncol(rnb.set.example@pval.sites) != nsamples){
+    if(is.null(raw.set@pval.sites) || nrow(raw.set@pval.sites) != length(probeIDs) 
+       || ncol(raw.set@pval.sites) != nsamples){
       raw.set@pval.sites <- matrix(data = NA, nrow = length(probeIDs), ncol = nsamples)
     }
     
