@@ -21,6 +21,7 @@ Suggests:
     RPMM,
     RefFreeEWAS,
     RnBeads.hg19,
+    RnBeads.mm9,
     XML,
     annotate,
     biomaRt,

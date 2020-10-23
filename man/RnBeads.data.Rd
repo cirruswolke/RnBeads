@@ -4,8 +4,7 @@
 \name{RnBeads.data}
 \alias{RnBeads.data}
 \title{RnBeads Annotation Tables}
-\format{
-\code{list} of four elements - \code{"regions"}, \code{"sites"}, \code{"controls"} and \code{"mappings"}.
+\format{\code{list} of four elements - \code{"regions"}, \code{"sites"}, \code{"controls"} and \code{"mappings"}.
         These elements are described below.
         \describe{
           \item{\code{"regions"}}{\code{list} of \code{NULL}s; the names of the elements correspond to the built-in
@@ -19,8 +18,7 @@
                site annotation that encompasses the respective control probes.}
           \item{\code{"mappings"}}{\code{list} of \code{NULL}s; the names of the elements correspond to the built-in
                region annotation tables.}
-        }
-}
+        }}
 \description{
 RnBeads uses sets of annotation tables and mappings (from regions to sites) for each of the supported genomes. The
 structures for one assembly are stored in a separate dedicated annotation package. The following annotation packages
