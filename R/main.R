@@ -1686,7 +1686,7 @@ rnb.run.example <- function(index = 4L, dir.output = "example") {
 	if(index==2){
 		if(!requireNamespace("RnBeads.mm9")){
 			logger.warning("Missing required package RnBeads.mm9, downloading...")
-			BiocManager::install("RnBeads.mm9")
+			install("RnBeads.mm9")
 		}
 	}
 
