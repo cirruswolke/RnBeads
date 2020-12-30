@@ -93,21 +93,41 @@ rnb.execute.pOOBAH <- function(raw.set, anno.table = NULL, pval.thresh = 0.05, v
     nmasked = 0
     
     for (i in 1:nsamples){
-      sesame::IG(sigset.l[[i]]) <- cbind("M" = grn$M[, i], 
+      sset <- sigset.l[[i]]
+      sesame::IG(sset) <- cbind("M" = grn$M[, i], 
                                  "U" = grn$U[, i])
-      sesame::IR(sigset.l[[i]]) <- cbind("M" = red$M[, i], 
+      sesame::IR(sset) <- cbind("M" = red$M[, i], 
                                  "U" = red$U[, i])
-      sesame::II(sigset.l[[i]]) <- cbind("M" = tII$M[, i], 
+      sesame::II(sset) <- cbind("M" = tII$M[, i], 
                                  "U" = tII$U[, i])
-      sesame::oobG(sigset.l[[i]]) <- cbind("M" = grn.oob$M[, i], 
+      sesame::oobG(sset) <- cbind("M" = grn.oob$M[, i], 
                                    "U" = grn.oob$U[, i])
-      sesame::oobR(sigset.l[[i]]) <- cbind("M" = red.oob$M[, i], 
+      sesame::oobR(sset) <- cbind("M" = red.oob$M[, i], 
                                    "U" = red.oob$U[, i])
       
       #this is the pOOBAH method. No masking yet, just p-value comput.
-      sigset.l[[i]] <- sesame::detectionPoobEcdf(sigset.l[[i]])    
+      # sigset.l[[i]] <- sesame::detectionPoobEcdf(sigset.l[[i]])
       
-      pvalues <- sigset.l[[i]]@pval$pOOBAH
+      funcG <- ecdf(sesame::oobG(sset))
+      funcR <- ecdf(sesame::oobR(sset))
+      
+      ## p-value is the minimium detection p-value of the 2 alleles
+      pIR <- 1-apply(cbind(funcR(sesame::IR(sset)[,'M']), funcR(sesame::IR(sset)[,'U'])),1,max)
+      pIG <- 1-apply(cbind(funcG(sesame::IG(sset)[,'M']), funcG(sesame::IG(sset)[,'U'])),1,max)
+      pII <- 1-apply(cbind(funcG(sesame::II(sset)[,'M']), funcR(sesame::II(sset)[,'U'])),1,max)
+      
+      names(pIR) <- rownames(sesame::IR(sset))
+      names(pIG) <- rownames(sesame::IG(sset))
+      names(pII) <- rownames(sesame::II(sset))
+      
+      if(is.list(sset@pval)){
+        sset@pval$pOOBAH <- c(pIR,pIG,pII)
+        pvalues <- sset@pval$pOOBAH  
+      } else {
+        sset@pval <- c(pIR,pIG,pII)
+        pvalues <- sset@pval
+      }
+      
       mask <- names(pvalues)[pvalues > pval.thresh]
       raw.set@pval.sites[, i] <- pvalues[match(probeIDs, names(pvalues))] 
       
@@ -121,8 +141,8 @@ rnb.execute.pOOBAH <- function(raw.set, anno.table = NULL, pval.thresh = 0.05, v
         raw.set@U0[maskedIDs, i]<- NA
       }
     }
+    rm(sigset.l, maskedIDs, mask, pvalues, grn, grn.oob, red, red.oob, tII, sset, pIG, pII, pIR, platform, i)
     if (verbose){
-      rm(sigset.l, maskedIDs, mask, pvalues)
       nprobes = length(probeIDs)    
       ntotal = nsamples*nprobes
       
