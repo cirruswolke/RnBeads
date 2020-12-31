@@ -129,6 +129,7 @@ rnb.execute.pOOBAH <- function(raw.set, anno.table = NULL, pval.thresh = 0.05, v
       }
       
       mask <- names(pvalues)[pvalues > pval.thresh]
+      mask <- mask[!is.na(mask)]
       raw.set@pval.sites[, i] <- pvalues[match(probeIDs, names(pvalues))] 
       
       if(!(length(mask) == 0)){
