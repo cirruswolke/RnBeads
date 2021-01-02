@@ -3,16 +3,18 @@ Title: RnBeads
 Description: RnBeads facilitates comprehensive analysis of various types of DNA
     methylation data at the genome scale.
 Authors@R: c(
-    person("Yassen", "Assenov", email = "yassen@mpi-inf.mpg.de",
+    person("Yassen", "Assenov", email = "assenov@gmail.com",
     role = c("aut")),
-    person("Pavlo", "Lutsik", email = "p.lutsik@mx.uni-saarland.de",
+    person("Christoph", "Bock", email = "cbock@cemm.at",
+    role = c("aut")),
+    person("Pavlo", "Lutsik", email = "p.lutsik@dkfz.de",
     role = c("aut")),
     person("Michael", "Scherer", email = "mscherer@mpi-inf.mpg.de",
     role = c("aut")),
-    person("Fabian", "Mueller", email = "rnbeads@mpi-inf.mpg.de",
+    person("Fabian", "Mueller", email = "team@rnbeads.org",
     role = c("aut", "cre")))
-Date: 2020-12-18
-Version: 2.9.1
+Date: 2021-01-02
+Version: 2.9.2
 Suggests:
     Category,
     GOstats,
