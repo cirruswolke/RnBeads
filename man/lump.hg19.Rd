@@ -4,10 +4,12 @@
 \name{lump.hg19}
 \alias{lump.hg19}
 \title{LUMP Support}
-\format{\code{lump.*} is a \code{list} of non-empty \code{integer} matrices, one per supported platform. Every
+\format{
+\code{lump.*} is a \code{list} of non-empty \code{integer} matrices, one per supported platform. Every
         \code{matrix} contains exactly two columns, denoting chromosome index and chromosome-based index,
         respectively. These indices refer to positions within the probe/site annotation table employed by
-        \pkg{RnBeads} for the corresponding platform.}
+        \pkg{RnBeads} for the corresponding platform.
+}
 \description{
 The sites used by the LUMP algorithm for estimating immune cell content are stored in an object named
 \code{lump.hg19}. This object should not be loaded or otherwise operated on by users. Please refer to the
