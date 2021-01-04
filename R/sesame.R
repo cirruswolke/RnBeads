@@ -26,9 +26,9 @@
 #' @author \emph{pOOBAH} method: Wanding Zhou. Adapted by Nathan Steenbuck. 
 #' @examples 
 #' DATASET <- data(small.example.object)
-#' ANNOTATION <- annotation(DATASET)
-#' filtered <- rnb.execute.pOOBAH(DATASET, ANNOTATION)
-#' 
+#' filtered <- rnb.execute.pOOBAH(DATASET)
+#'
+#' @import sesame 
 #' @export 
 
 rnb.execute.pOOBAH <- function(raw.set, anno.table = NULL, pval.thresh = 0.05, verbose = FALSE){
@@ -89,36 +89,36 @@ rnb.execute.pOOBAH <- function(raw.set, anno.table = NULL, pval.thresh = 0.05, v
       raw.set@pval.sites <- matrix(data = NA, nrow = length(probeIDs), ncol = nsamples)
     }
     
-    sigset.l <- rep(list(sesame::SigSet(platform)), nsamples)
+    sigset.l <- rep(list(SigSet(platform)), nsamples)
     nmasked = 0
     
     for (i in 1:nsamples){
       sset <- sigset.l[[i]]
-      sesame::IG(sset) <- cbind("M" = grn$M[, i], 
+      IG(sset) <- cbind("M" = grn$M[, i], 
                                  "U" = grn$U[, i])
-      sesame::IR(sset) <- cbind("M" = red$M[, i], 
+      IR(sset) <- cbind("M" = red$M[, i], 
                                  "U" = red$U[, i])
-      sesame::II(sset) <- cbind("M" = tII$M[, i], 
+      II(sset) <- cbind("M" = tII$M[, i], 
                                  "U" = tII$U[, i])
-      sesame::oobG(sset) <- cbind("M" = grn.oob$M[, i], 
+      oobG(sset) <- cbind("M" = grn.oob$M[, i], 
                                    "U" = grn.oob$U[, i])
-      sesame::oobR(sset) <- cbind("M" = red.oob$M[, i], 
+      oobR(sset) <- cbind("M" = red.oob$M[, i], 
                                    "U" = red.oob$U[, i])
       
       #this is the pOOBAH method. No masking yet, just p-value comput.
       # sigset.l[[i]] <- sesame::detectionPoobEcdf(sigset.l[[i]])
       
-      funcG <- ecdf(sesame::oobG(sset))
-      funcR <- ecdf(sesame::oobR(sset))
+      funcG <- ecdf(oobG(sset))
+      funcR <- ecdf(oobR(sset))
       
       ## p-value is the minimium detection p-value of the 2 alleles
-      pIR <- 1-apply(cbind(funcR(sesame::IR(sset)[,'M']), funcR(sesame::IR(sset)[,'U'])),1,max)
-      pIG <- 1-apply(cbind(funcG(sesame::IG(sset)[,'M']), funcG(sesame::IG(sset)[,'U'])),1,max)
-      pII <- 1-apply(cbind(funcG(sesame::II(sset)[,'M']), funcR(sesame::II(sset)[,'U'])),1,max)
+      pIR <- 1-apply(cbind(funcR(IR(sset)[,'M']), funcR(IR(sset)[,'U'])),1,max)
+      pIG <- 1-apply(cbind(funcG(IG(sset)[,'M']), funcG(IG(sset)[,'U'])),1,max)
+      pII <- 1-apply(cbind(funcG(II(sset)[,'M']), funcR(II(sset)[,'U'])),1,max)
       
-      names(pIR) <- rownames(sesame::IR(sset))
-      names(pIG) <- rownames(sesame::IG(sset))
-      names(pII) <- rownames(sesame::II(sset))
+      names(pIR) <- rownames(IR(sset))
+      names(pIG) <- rownames(IG(sset))
+      names(pII) <- rownames(II(sset))
       
       if(is.list(sset@pval)){
         sset@pval$pOOBAH <- c(pIR,pIG,pII)
@@ -147,14 +147,14 @@ rnb.execute.pOOBAH <- function(raw.set, anno.table = NULL, pval.thresh = 0.05, v
       nprobes = length(probeIDs)    
       ntotal = nsamples*nprobes
       
-      print('=======================')
-      print('=    pOOBAH           =')
-      print('=======================')
-      print(paste0('No. probes:                       ', nprobes))
-      print(paste0('No. samples:                      ', nsamples))
-      print(paste0('No. probes times samples:         ', ntotal))
-      print(paste0('No. of masked probes:             ', nmasked))
-      print(paste0('Fraction of masked probes:        ', round(nmasked/ntotal, digits = 3)))
+      logger.info(paste('=======================',
+        '=    pOOBAH           =',
+        '=======================',
+        paste0('No. probes: ', nprobes),
+        paste0('No. samples: ', nsamples),
+        paste0('No. probes times samples: ', ntotal),
+        paste0('No. of masked probes: ', nmasked),
+        paste0('Fraction of masked probes: ', round(nmasked/ntotal, digits = 3)),sep='\n'))
     }
     
     return(raw.set)

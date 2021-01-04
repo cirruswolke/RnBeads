@@ -1143,7 +1143,6 @@ m.value<-function(M,U,offset=100){
 #'         if the respective parameters (\code{add.oob} and \code{add.ctl}) are set to true. 
 #' 
 #' @author Pavlo Lutsik, Nathan Steenbuck
->>>>>>> 06d52e9081aa4274d2d765749b07dd67b9a82a62
 
 intensities.by.color<-function(raw.set,
                                    address.rownames = TRUE, 

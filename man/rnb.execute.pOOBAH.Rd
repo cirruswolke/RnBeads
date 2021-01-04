@@ -43,8 +43,7 @@ In addition, unreliable low-intensity probes might also be masked.
 }
 \examples{
 DATASET <- data(small.example.object)
-ANNOTATION <- annotation(DATASET)
-filtered <- rnb.execute.pOOBAH(DATASET, ANNOTATION)
+filtered <- rnb.execute.pOOBAH(DATASET)
 
 }
 \author{
