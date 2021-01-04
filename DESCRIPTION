@@ -57,7 +57,8 @@ Suggests:
     plotrix,
     hexbin,
     RUnit,
-    MethylSeekR
+    MethylSeekR,
+    sesame
 Depends:
     R (>= 3.0.0),
     BiocGenerics,
@@ -135,6 +136,7 @@ Collate:
     'regionDescription.R'
     'regionProfiles.R'
     'segmentation.R'
+    'sesame.R'
     'sex.R'
     'subSegments.R'
     'sva.R'
