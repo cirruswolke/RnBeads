@@ -24,11 +24,11 @@
 #'         might be masked in sample A, but not in sample B, as \emph{pOOBAH} is applied separately to each sample.
 #'         For example: the signal intensities of probe cg24488772 might be masked in sample 1, but not in sample 12. 
 #' @author \emph{pOOBAH} method: Wanding Zhou. Adapted by Nathan Steenbuck. 
-#' @examples 
-#' DATASET <- data(small.example.object)
-#' filtered <- rnb.execute.pOOBAH(DATASET)
+#' @examples
+#' library(RnBeads.hg19) 
+#' data(small.example.object)
+#' filtered <- rnb.execute.pOOBAH(rnb.set.example)
 #'
-#' @import sesame 
 #' @export 
 
 rnb.execute.pOOBAH <- function(raw.set, anno.table = NULL, pval.thresh = 0.05, verbose = FALSE){

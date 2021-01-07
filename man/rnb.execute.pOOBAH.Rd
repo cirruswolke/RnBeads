@@ -42,8 +42,9 @@ Hybridization failures might occur due to somatic or germline deletions.
 In addition, unreliable low-intensity probes might also be masked.
 }
 \examples{
-DATASET <- data(small.example.object)
-filtered <- rnb.execute.pOOBAH(DATASET)
+library(RnBeads.hg19) 
+data(small.example.object)
+filtered <- rnb.execute.pOOBAH(rnb.set.example)
 
 }
 \author{
