@@ -661,7 +661,7 @@ read.idat.files <- function(base.dir,
 		txt <- c("probes27"="HumanMethylation27",
 			"probes450"="HumanMethylation450",
 			"probesEPIC"="MethylationEPIC",
-            "probesMOUSE"="MouseMethylationBeadChip")
+            "probesMMBC"="MouseMethylationBeadChip")
 		rnb.info(paste("Detected platform:", txt[platform]))
 		rm(txt)
 	}
@@ -670,13 +670,13 @@ read.idat.files <- function(base.dir,
             "probes27"="hg19",
             "probes450"="hg19",
             "probesEPIC"="hg19",
-            "probesMOUSE"="mm10")
+            "probesMMBC"="mm10")
     
     annot_gr<-rnb.get.annotation(platform, genome[platform])
     ### TODO: remove after fixing the annotation
-    if(platform=="probesMOUSE"){
-        annot_gr<-endoapply(annot_gr, function(ag) {names(ag)<-mcols(ag)[["ID"]]; return(ag)})
-    }
+#    if(platform=="probesMMBC"){
+#        annot_gr<-endoapply(annot_gr, function(ag) {names(ag)<-mcols(ag)[["ID"]]; return(ag)})
+#    }
 	annot<-rnb.annotation2data.frame(annot_gr)
     annot.ctrls<-rnb.get.annotation(gsub("probes","controls",platform), genome[platform])
 	nprobes<-sum(rnb.annotation.size(platform, genome[platform]))
@@ -697,7 +697,7 @@ read.idat.files <- function(base.dir,
 		ctrls.address.col<-"Address"
 		ctrls.target.col<-"Type"
 		neg.ctrl.indexes<-which(annot.ctrls[["Type"]]=="Negative")
-	}else if(platform=="probesMOUSE"){
+	}else if(platform=="probesMMBC"){
         id.col<-"ID"
         ctrls.address.col<-"ID"
         ctrls.target.col<-"Target"
@@ -744,7 +744,7 @@ read.idat.files <- function(base.dir,
 			probes27=list(
 				"typeIred"=list(Design="I", Color="red", Msource="Red", Usource="Red", Maddress="AddressB", Uaddress="AddressA"),
 				"typeIgrn"=list(Design="I", Color="green", Msource="Grn", Usource="Grn", Maddress="AddressB", Uaddress="AddressA")),
-            probesMOUSE=list(
+            probesMMBC=list(
                 "typeIred"=list(Design="I", Color="Red", Msource="Red", Usource="Red", Maddress="AddressB", Uaddress="AddressA"),
                 "typeIgrn"=list(Design="I", Color="Grn", Msource="Grn", Usource="Grn", Maddress="AddressB", Uaddress="AddressA"),
                 "typeII"=list(Design="II", Color="Both", Msource="Grn", Usource="Red", Maddress="AddressA", Uaddress="AddressA"))
@@ -1725,7 +1725,7 @@ rnb.detect.infinium.platform <- function(idat.fnames){
   			return("probesEPIC")
   		}
         if (all(file.sizes<5000000)) {
-            return("probesMOUSE")
+            return("probesMMBC")
         }
   		if (all(file.sizes<10000000)) {
   			return("probes450")

@@ -141,7 +141,7 @@ setMethod("initialize", "RnBeadSet",
 					meth.sites=meth.sites,
 					covg.sites=covg.sites,
 					status=status,
-					assembly=ifelse(target=="probesMOUSE", "mm10", "hg19"),
+					assembly=ifelse(target=="probesMMBC", "mm10", "hg19"),
 					target=target
 			)
 			
@@ -754,7 +754,7 @@ match.probes2annotation<-function(probes, target="probes450", assembly="hg19"){
 	## Load probe annotation table
 	probe.annotation <- rnb.get.annotation(target, assembly)
     ### TODO: remove after fixing the annotation
-    if(target=="probesMOUSE"){
+    if(target=="probesMMBC"){
         probe.annotation<-endoapply(probe.annotation, function(ag) {
                     names(ag)<-mcols(ag)[["ID"]]
                     mcols(ag)[["Context"]]<-factor(c("cg"="CG", "ch"="CH", "rs"="Other")[substr(names(ag), 1,2)], levels=c("CG", "CH", "Other"))

@@ -255,7 +255,7 @@ RnBeadRawSet<-function(
 			target <- "probes27"
 			assembly <- "hg19"
         }else if(platform == "MMBC"){
-            target <- "probesMOUSE"
+            target <- "probesMMBC"
             assembly <- "mm10"
 		}else{
 			rnb.error("Invalid value for platform")
