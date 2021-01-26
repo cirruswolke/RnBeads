@@ -141,7 +141,7 @@ setMethod("initialize", "RnBeadSet",
 					meth.sites=meth.sites,
 					covg.sites=covg.sites,
 					status=status,
-					assembly="hg19",
+					assembly=ifelse(target=="probesMOUSE", "mm10", "hg19"),
 					target=target
 			)
 			
@@ -178,7 +178,7 @@ RnBeadSet<-function(
 		qc = NULL,
 		platform = "450k",
 		summarize.regions = TRUE,
-		region.types = rnb.region.types.for.analysis("hg19"),
+		region.types = rnb.region.types.for.analysis(ifelse(platform=="MMBC", "mm10", "hg19")),
 		useff=rnb.getOption("disk.dump.big.matrices")
 		){
 		
@@ -753,7 +753,13 @@ match.probes2annotation<-function(probes, target="probes450", assembly="hg19"){
 		
 	## Load probe annotation table
 	probe.annotation <- rnb.get.annotation(target, assembly)
-	
+    ### TODO: remove after fixing the annotation
+    if(target=="probesMOUSE"){
+        probe.annotation<-endoapply(probe.annotation, function(ag) {
+                    names(ag)<-mcols(ag)[["ID"]]
+                    mcols(ag)[["Context"]]<-factor(c("cg"="CG", "ch"="CH", "rs"="Other")[substr(names(ag), 1,2)], levels=c("CG", "CH", "Other"))
+                    return(ag)})
+    }
 	## Construct the matrix of site indices
 	#x.data<-GenomicRanges::as.data.frame(probe.annotation)
 	
@@ -779,7 +785,7 @@ match.probes2annotation<-function(probes, target="probes450", assembly="hg19"){
 	p.infos <- lapply(unique(x.data[["Chromosome"]]), 
 			function(chr) {
 				chr.map<-which(x.data[["Chromosome"]]==chr)
-				chr.ids<-x.data[chr.map,"ID"]
+				chr.ids<-x.data[chr.map, "ID"]
 				table<-match(probes, chr.ids)
 				present<-!is.na(table)
 				po<-order(table[present])

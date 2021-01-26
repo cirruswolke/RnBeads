@@ -660,29 +660,49 @@ read.idat.files <- function(base.dir,
 	if(verbose) {
 		txt <- c("probes27"="HumanMethylation27",
 			"probes450"="HumanMethylation450",
-			"probesEPIC"="MethylationEPIC")
+			"probesEPIC"="MethylationEPIC",
+            "probesMOUSE"="MouseMethylationBeadChip")
 		rnb.info(paste("Detected platform:", txt[platform]))
 		rm(txt)
 	}
 	
-	annot<-rnb.annotation2data.frame(rnb.get.annotation(platform))
-	annot.ctrls<-rnb.get.annotation(gsub("probes","controls",platform))
-	nprobes<-sum(rnb.annotation.size(platform))
+    genome<-c(
+            "probes27"="hg19",
+            "probes450"="hg19",
+            "probesEPIC"="hg19",
+            "probesMOUSE"="mm10")
+    
+    annot_gr<-rnb.get.annotation(platform, genome[platform])
+    ### TODO: remove after fixing the annotation
+    if(platform=="probesMOUSE"){
+        annot_gr<-endoapply(annot_gr, function(ag) {names(ag)<-mcols(ag)[["ID"]]; return(ag)})
+    }
+	annot<-rnb.annotation2data.frame(annot_gr)
+    annot.ctrls<-rnb.get.annotation(gsub("probes","controls",platform), genome[platform])
+	nprobes<-sum(rnb.annotation.size(platform, genome[platform]))
 	ncprobes<-nrow(annot.ctrls)
 	
 	if(platform=="probesEPIC"){
+        id.col<-"ID"
 		ctrls.address.col<-"ID"
 		ctrls.target.col<-"Target"
 		neg.ctrl.indexes<-which(annot.ctrls[["Target"]]=="NEGATIVE")
 	}else if(platform=="probes450"){
+        id.col<-"ID"
 		ctrls.address.col<-"ID"
 		ctrls.target.col<-"Target"
 		neg.ctrl.indexes<-which(annot.ctrls[["Target"]]=="NEGATIVE")
 	}else if(platform=="probes27"){
+        id.col<-"ID"
 		ctrls.address.col<-"Address"
 		ctrls.target.col<-"Type"
 		neg.ctrl.indexes<-which(annot.ctrls[["Type"]]=="Negative")
-	}
+	}else if(platform=="probesMOUSE"){
+        id.col<-"ID"
+        ctrls.address.col<-"ID"
+        ctrls.target.col<-"Target"
+        neg.ctrl.indexes<-which(annot.ctrls[["Target"]]=="NEGATIVE")
+    }
 
 	tIred<-which(annot$Color=="Red")
 	tIgrn<-which(annot$Color=="Grn")
@@ -723,7 +743,11 @@ read.idat.files <- function(base.dir,
 				"typeII"=list(Design="II", Color="Both", Msource="Grn", Usource="Red", Maddress="AddressB", Uaddress="AddressA")),
 			probes27=list(
 				"typeIred"=list(Design="I", Color="red", Msource="Red", Usource="Red", Maddress="AddressB", Uaddress="AddressA"),
-				"typeIgrn"=list(Design="I", Color="green", Msource="Grn", Usource="Grn", Maddress="AddressB", Uaddress="AddressA"))
+				"typeIgrn"=list(Design="I", Color="green", Msource="Grn", Usource="Grn", Maddress="AddressB", Uaddress="AddressA")),
+            probesMOUSE=list(
+                "typeIred"=list(Design="I", Color="Red", Msource="Red", Usource="Red", Maddress="AddressB", Uaddress="AddressA"),
+                "typeIgrn"=list(Design="I", Color="Grn", Msource="Grn", Usource="Grn", Maddress="AddressB", Uaddress="AddressA"),
+                "typeII"=list(Design="II", Color="Both", Msource="Grn", Usource="Red", Maddress="AddressA", Uaddress="AddressA"))
 	)
 
 	probe.categories<-INTENSITY.SUMMARIZATION.INFO[[platform]]
@@ -753,7 +777,7 @@ read.idat.files <- function(base.dir,
 		}
 	}
 
-	probes<-annot[["ID"]]
+	probes<-annot[[id.col]]
 	for(pcind in 1:length(probe.categories)){
 		probe.categories[[pcind]]$Indices<-which(annot$Design==probe.categories[[pcind]]$Design &
 						annot$Color==probe.categories[[pcind]]$Color)
@@ -819,13 +843,41 @@ read.idat.files <- function(base.dir,
 
 	if(platform %in% c("probes27", "probes450")){
 		rnb.platform<-paste0(gsub("probes", "", platform), "k")
-	}else{
+        assembly<-"hg19"
+	}else if(platform %in% "probesEPIC"){
 		rnb.platform<-"EPIC"
-	}
+        assembly<-"hg19"
+	}else{
+        rnb.platform<-"MMBC"
+        assembly<-"mm10"
+    }
 
 	if(is.null(sample.sheet)){
 		sample.sheet<-data.frame(barcodes=barcode)
 	}
+    
+    ### solve the problem of duplicated probes
+    ### in each pair select those that have a lower detection p-value
+    if(rnb.platform=="MMBC"){
+       
+       probe_names<-annot[["Name"]]
+       dup_probe_names<-unique(probe_names[duplicated(probe_names)])
+       dup_ind<-which(probe_names %in% dup_probe_names)
+       dup_ind<-dup_ind[order(probe_names[dup_ind])]
+       dup_probe_names<-probe_names[dup_ind]
+       keep<-unlist(tapply(dup_ind, dup_probe_names, function(ind) ind[which.max(rowSums(dpvals[ind,]==colMins(dpvals[ind,])))]))
+       remove<-setdiff(dup_ind,keep)
+       
+       probes<-probes[-remove]
+       M<-M[-remove,]
+       U<-U[-remove,]
+       M0<-M0[-remove,]
+       U0<-U0[-remove,]
+       beadsM<-beadsM[-remove,]
+       beadsU<-beadsU[-remove,]
+       dpvals<-dpvals[-remove,]
+    }
+
 
 	object<-RnBeadRawSet(
 			pheno = sample.sheet,
@@ -839,7 +891,7 @@ read.idat.files <- function(base.dir,
 			bead.counts.U = beadsU,
 			p.values=dpvals,
 			qc=qc.int,
-			region.types = rnb.region.types.for.analysis("hg19"),
+			region.types = rnb.region.types.for.analysis(assembly),
 			useff=useff,
 			summarize.bead.counts=TRUE,
 			ffcleanup = rnb.getOption("enforce.destroy.disk.dumps")
@@ -1668,13 +1720,18 @@ rnb.detect.infinium.platform <- function(idat.fnames){
   		if (length(file.sizes) == 0) {
   			rnb.error("Undefined platform; cannot read the specified IDAT files")
   		}
+        
   		if (all(file.sizes>10000000)) {
   			return("probesEPIC")
   		}
+        if (all(file.sizes<5000000)) {
+            return("probesMOUSE")
+        }
   		if (all(file.sizes<10000000)) {
   			return("probes450")
   		}
-  		rnb.error("Undefined platform; detected HumanMethylation450 and MethylationEPIC")
+        
+  		rnb.error("Undefined platform; detected several different platforms")
   	}
   	rnb.error("Undefined platform; unexpected or missing IDAT files")
   }else{
