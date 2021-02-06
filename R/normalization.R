@@ -157,6 +157,8 @@ rnb.execute.normalization<-function(
 				disable.method(FALSE, 'not supported for Infinium 27k')
 			} else if (bgcorr.method == "methylumi.noob" && object@target == "probesEPIC") {
 				disable.method(FALSE, 'methylumi.noob is not supported for MethylationEPIC')
+            } else if (bgcorr.method == "methylumi.noob" && object@target == "probesMMBC") {
+                disable.method(FALSE, 'methylumi.noob is not supported for MethylationMMBC')
 			} else if (grepl("oob$", bgcorr.method) && (is.null(M0(object)) || is.null(U0(object)))) {
 				disable.method(FALSE, 'missing out-of-band intensities')
 			} else if (object@status$normalized == "swan") {

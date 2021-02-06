@@ -20,7 +20,7 @@
 #' @author Yassen Assenov
 #' @noRd
 rnb.probe.types <- function(dataset, include.snp = TRUE) {
-	ptypes <- rnb.get.annotation(dataset@target)
+	ptypes <- rnb.get.annotation(dataset@target, dataset@assembly)
 	pindices <- tapply(dataset@sites[, 3], dataset@sites[, 2], unname, simplify = FALSE)
 	i.chrom <- as.integer(names(pindices))
 	probe.types <- list()
