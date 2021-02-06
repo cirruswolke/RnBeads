@@ -214,7 +214,7 @@ rnb.execute.normalization<-function(
 	if (inherits(object, "RnBeadSet") && object@target == "probesEPIC" && !(method %in% accepted)) {
 		disable.method(TRUE, 'not supported for HumanMethylationEPIC')
 	}
-    accepted<-c("none", "scaling", "bmiq")
+    accepted<-setdiff(.rnb.options[["accepted"]][["normalization.method"]], c("illumina", "minfi.funnorm", "swan", "wm.tost","wm.fuks", "wm.swan"))
     if (inherits(object, "RnBeadSet") && object@target == "probesMMBC" && !(method %in% accepted)) {
         disable.method(TRUE, 'not supported for Mouse Methylation Bead Chip')
     }
@@ -338,7 +338,7 @@ rnb.execute.normalization<-function(
 				Mmatrix<-M(object, row.names=TRUE)
 				Umatrix<-U(object, row.names=TRUE)
 
-				ann.full<-rnb.annotation2data.frame(rnb.get.annotation(object@target))
+				ann.full<-rnb.annotation2data.frame(rnb.get.annotation(object@target, object@assembly))
 				ann<-annotation(object, add.names=TRUE)
 				probe.names<-ann[["ID"]]
 
