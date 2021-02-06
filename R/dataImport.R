@@ -14,6 +14,27 @@ NA.STRINGS <- c("NA","N/A","N.A.","n/a","n.a.","")
 ## Regular expression for a section header in a CSV file exported from Genome Studio
 REGEX.CSV.HEADER <- "^\\[(.+)\\],*$"
 
+## probe category definitions for Infinium arrays
+INTENSITY.SUMMARIZATION.INFO<-list(
+        probesEPIC=list(
+                "typeIred"=list(Design="I", Color="Red", Msource="Red", Usource="Red", Maddress="AddressB", Uaddress="AddressA"),
+                "typeIgrn"=list(Design="I", Color="Grn", Msource="Grn", Usource="Grn", Maddress="AddressB", Uaddress="AddressA"),
+                "typeII"=list(Design="II", Color="Both", Msource="Grn", Usource="Red", Maddress="AddressA", Uaddress="AddressA")),
+        probes450=list(
+                "typeIred"=list(Design="I", Color="Red", Msource="Red", Usource="Red", Maddress="AddressB", Uaddress="AddressA"),
+                "typeIgrn"=list(Design="I", Color="Grn", Msource="Grn", Usource="Grn", Maddress="AddressB", Uaddress="AddressA"),
+                "typeII"=list(Design="II", Color="Both", Msource="Grn", Usource="Red", Maddress="AddressB", Uaddress="AddressA")),
+        probes27=list(
+                "typeIred"=list(Design="I", Color="red", Msource="Red", Usource="Red", Maddress="AddressB", Uaddress="AddressA"),
+                "typeIgrn"=list(Design="I", Color="green", Msource="Grn", Usource="Grn", Maddress="AddressB", Uaddress="AddressA")),
+        probesMMBC=list(
+                "typeIred"=list(Design="I", Color="Red", Msource="Red", Usource="Red", Maddress="AddressB", Uaddress="AddressA"),
+                "typeIgrn"=list(Design="I", Color="Grn", Msource="Grn", Usource="Grn", Maddress="AddressB", Uaddress="AddressA"),
+                "typeII"=list(Design="II", Color="Both", Msource="Grn", Usource="Red", Maddress="AddressA", Uaddress="AddressA"))
+)
+
+
+
 ## F U N C T I O N S ###################################################################################################
 
 #' check.barcode
@@ -731,24 +752,6 @@ read.idat.files <- function(base.dir,
 	qc.int<-list()
 	qc.int$Cy3<-matrix(NA_real_, nrow=ncprobes, ncol=nsamp, dimnames = list(annot.ctrls[[ctrls.address.col]], NULL))
 	qc.int$Cy5<-matrix(NA_real_, nrow=ncprobes, ncol=nsamp, dimnames = list(annot.ctrls[[ctrls.address.col]], NULL))
-
-	INTENSITY.SUMMARIZATION.INFO<-list(
-			probesEPIC=list(
-				"typeIred"=list(Design="I", Color="Red", Msource="Red", Usource="Red", Maddress="AddressB", Uaddress="AddressA"),
-				"typeIgrn"=list(Design="I", Color="Grn", Msource="Grn", Usource="Grn", Maddress="AddressB", Uaddress="AddressA"),
-				"typeII"=list(Design="II", Color="Both", Msource="Grn", Usource="Red", Maddress="AddressA", Uaddress="AddressA")),
-			probes450=list(
-				"typeIred"=list(Design="I", Color="Red", Msource="Red", Usource="Red", Maddress="AddressB", Uaddress="AddressA"),
-				"typeIgrn"=list(Design="I", Color="Grn", Msource="Grn", Usource="Grn", Maddress="AddressB", Uaddress="AddressA"),
-				"typeII"=list(Design="II", Color="Both", Msource="Grn", Usource="Red", Maddress="AddressB", Uaddress="AddressA")),
-			probes27=list(
-				"typeIred"=list(Design="I", Color="red", Msource="Red", Usource="Red", Maddress="AddressB", Uaddress="AddressA"),
-				"typeIgrn"=list(Design="I", Color="green", Msource="Grn", Usource="Grn", Maddress="AddressB", Uaddress="AddressA")),
-            probesMMBC=list(
-                "typeIred"=list(Design="I", Color="Red", Msource="Red", Usource="Red", Maddress="AddressB", Uaddress="AddressA"),
-                "typeIgrn"=list(Design="I", Color="Grn", Msource="Grn", Usource="Grn", Maddress="AddressB", Uaddress="AddressA"),
-                "typeII"=list(Design="II", Color="Both", Msource="Grn", Usource="Red", Maddress="AddressA", Uaddress="AddressA"))
-	)
 
 	probe.categories<-INTENSITY.SUMMARIZATION.INFO[[platform]]
 

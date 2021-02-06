@@ -163,7 +163,9 @@ rnb.execute.normalization<-function(
 				disable.method(FALSE, 'dataset already normalized using SWAN')
 			}
 
-			if (grepl("methylumi", bgcorr.method)) {
+			if (bgcorr.method=="subtraction"){
+                object<-rnb.bgcorr.subtr(object)
+            }else if (any(grepl("methylumi", bgcorr.method))) {
 				bgcorr.methylumi<-gsub("methylumi\\.", "", bgcorr.method)
 				pheno.columns<-colnames(pheno(object))
 				inferred.covariates <- object@inferred.covariates
@@ -186,7 +188,7 @@ rnb.execute.normalization<-function(
 				if(object@status$disk.dump && rnb.getOption("enforce.destroy.disk.dumps")){
 					object@status$discard.ff.matrices<-TRUE
 				}
-			} else if (grepl("enmix", bgcorr.method)) {
+			} else if (any(grepl("enmix", bgcorr.method))) {
 				bgcorr.enmix<-gsub("enmix\\.", "", bgcorr.method)
 				object<-rnb.enmix.oob(object)
 			}
@@ -200,7 +202,7 @@ rnb.execute.normalization<-function(
 	}
 
 	## Validate the normalization method is supported for the given data type
-	accepted <- c("none", "illumina")
+	accepted <- c("none", "illumina", "methylumi.illumina")
 	if (inherits(object, "MethyLumiSet") && annotation(object) == "IlluminaHumanMethylation27" &&
 		!(method %in% accepted)) {
 		disable.method(TRUE, 'not supported for Infinium 27k MethyLumiSet')
@@ -208,14 +210,25 @@ rnb.execute.normalization<-function(
 	if (inherits(object, "RnBeadSet") && object@target == "probes27" && !(method %in% accepted)) {
 		disable.method(TRUE, 'not supported for Infinium 27k')
 	}
-	accepted <- c("none", "bmiq", "swan", "minfi.funnorm", "wm.dasen")
+	accepted <- c("none", "scaling", "bmiq", "swan", "minfi.funnorm", "wm.dasen")
 	if (inherits(object, "RnBeadSet") && object@target == "probesEPIC" && !(method %in% accepted)) {
-		disable.method(TRUE, 'not supported for MethylationEPIC')
+		disable.method(TRUE, 'not supported for HumanMethylationEPIC')
 	}
-
+    accepted<-c("none", "scaling", "bmiq")
+    if (inherits(object, "RnBeadSet") && object@target == "probesMMBC" && !(method %in% accepted)) {
+        disable.method(TRUE, 'not supported for Mouse Methylation Bead Chip')
+    }
+    
 	## Perform normalization
-	if (method=="illumina") {
-
+	if (method=="scaling") {
+        
+        object<-rnb.norm.scaling(object)
+        
+        object@status$normalized<-"scaling"
+        object@status$background<-bgcorr.method
+        rnb.cleanMem()
+        
+    } else if (method=="illumina" || method == "methylumi.illumina") {
 		if (inherits(object, "RnBeadRawSet")) {
 			inferred.covariates <- object@inferred.covariates
 			object <- as(object, "MethyLumiSet")
@@ -532,7 +545,7 @@ rnb.execute.normalization<-function(
 	## Update the dataset instance
 	object@status$normalized <- method.to.set
 	object@status$background <- bgcorr.method.to.set
-	if (method != "none") {
+	if (method != "none" || bgcorr.method !="none") {
 		object <- updateRegionSummaries(object)
 	}
 	if (base::exists("inferred.covariates", inherits = FALSE)) {
