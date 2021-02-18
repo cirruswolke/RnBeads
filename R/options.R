@@ -514,7 +514,7 @@ rnb.is.option <- function(txt) {
 #' 		  See \code{\link{rnb.execute.import}} for further details.}
 #'   \item{\bold{\code{import.table.separator}}\code{ = ","}}{
 #'        Separator used in the plain text data tables. See \code{\link{rnb.execute.import}} for details.}
-#'   \item{\bold{\code{import.bed.style}}\code{ = "BisSNP"}}{
+#'   \item{\bold{\code{import.bed.style}}\code{ = "bismarkCov"}}{
 #' 		  Preset for bed-like formats. \code{"BisSNP", "Encode","EPP", "bismarkCytosine", "bismarkCov"} are currently
 #' 		  supported. See the \pkg{RnBeads} vignette and the FAQ section on the website for more details.}
 #'   \item{\bold{\code{import.bed.columns}}}{Column indices in the supplied BED file with DNA methylation information.
@@ -584,21 +584,21 @@ rnb.is.option <- function(txt) {
 #'        \code{NULL} (default) enables this step for analysis on Infinium datasets, but disables it in case of
 #'        sequencing-based datasets. Note that normalization is never applied in sequencing datasets; if this flag is
 #'        enabled, it will lead to a warning message.}
-#'   \item{\bold{\code{normalization.method}}\code{ = "swan"}}{
+#'   \item{\bold{\code{normalization.method}}\code{ = "wm.dasen"}}{
 #'        Normalization method to be applied, or \code{"none"}. Multiple normalization methods are supported:
 #'        \code{"illumina"} -
 #'        \href{http://www.bioconductor.org/packages/devel/bioc/html/methylumi.html}{methylumi}-implemented
-#'        Illumina scaling normalization; \code{"swan"} (default) - SWAN-normalization by Gordon et al., as implemented
+#'        Illumina scaling normalization; \code{"swan"} - SWAN-normalization by Gordon et al., as implemented
 #'        in \href{http://www.bioconductor.org/packages/release/bioc/html/minfi.html}{minfi}; \code{"bmiq"} -
-#'        beta-mixture quantile normalization method by Teschendorff et al; as well as \code{"wm.dasen"},
+#'        beta-mixture quantile normalization method by Teschendorff et al; as well as \code{"wm.dasen"} (default),
 #'        \code{"wm.nasen"}, \code{"wm.betaqn"}, \code{"wm.naten"}, \code{"wm.nanet"}, \code{"wm.nanes"},
 #'        \code{"wm.danes"}, \code{"wm.danet"}, \code{"wm.danen"}, \code{"wm.daten1"}, \code{"wm.daten2"},
 #'        \code{"wm.tost"}, \code{"wm.fuks"} and \code{"wm.swan"} - all normalization methods implemented in the
 #'        \href{http://www.bioconductor.org/packages/release/bioc/html/wateRmelon.html}{wateRmelon} package. When
 #'        setting this option to a specific algorithm, make sure its dedicated package is installed.}
-#'   \item{\bold{\code{normalization.background.method}}\code{ = "methylumi.noob"}}{
+#'   \item{\bold{\code{normalization.background.method}}\code{ = "none"}}{
 #'        A character singleton specifying which background subtraction is to be performed during normalization.
-#'        The following values are accepted: \code{"none"}, \code{"methylumi.noob"}, \code{"methylumi.goob"},
+#'        The following values are accepted: \code{"none"} (default), \code{"methylumi.noob"}, \code{"methylumi.goob"},
 #'        \code{"methylumi.lumi"} and \code{"enmix.oob"}.}
 #'   \item{\bold{\code{normalization.plot.shifts}}\code{ = TRUE}}{
 #'        Flag indicating if the report on normalization should include plots of shifts (degrees of beta value
@@ -621,7 +621,7 @@ rnb.is.option <- function(txt) {
 #'        \code{"Other"}. Probes in the second context measure CpG methylation; the last context denotes probes
 #'        dedicated to SNP detection. Setting this option to \code{NULL} or an empty vector effectively disables the
 #'        step of context-specific probe removal.}
-#'   \item{\bold{\code{filtering.snp}}\code{ = "3"}}{
+#'   \item{\bold{\code{filtering.snp}}\code{ = "any"}}{
 #'        Removal of sites or probes based on overlap with SNPs. The accepted values for this option are:
 #'        \describe{
 #'           \item{\code{"no"}}{no SNP-based filtering;}
@@ -631,7 +631,7 @@ rnb.is.option <- function(txt) {
 #'                overlaps with SNP.}}
 #'        Bisulfite sequencing datasets operate on sites instead of probes, therefore, the values \code{"3"} and
 #'        \code{"5"} are treated as \code{"yes"}.}
-#'   \item{\bold{\code{filtering.cross.reactive}}\code{ = FALSE}}{
+#'   \item{\bold{\code{filtering.cross.reactive}}\code{ = TRUE}}{
 #'        Flag indicating if the removal of potentially cross-reactive probes should be performed as a filtering step
 #'        in the preprocessing module. A probes whose sequence maps to multiple genomic locations (allowing up to 3
 #'        mismatches) is cross-reactive.}
@@ -647,9 +647,9 @@ rnb.is.option <- function(txt) {
 #'        columns (samples). The value of this option must be one of \code{"row"}, \code{"column"} or \code{"any"}; the
 #'        last one indicating random choice. This option has effect only when \code{filtering.greedycut} is
 #'        \code{TRUE}.}
-#'   \item{\bold{\code{filtering.sex.chromosomes.removal}}\code{ = FALSE}}{
+#'   \item{\bold{\code{filtering.sex.chromosomes.removal}}\code{ = TRUE}}{
 #'        Flag indicating if the removal of probes located on sex chromosomes should be performed as a filtering step.}
-#'   \item{\bold{\code{filtering.missing.value.quantile}}\code{ = 1}}{
+#'   \item{\bold{\code{filtering.missing.value.quantile}}\code{ = 0.5}}{
 #'        Number between 0 and 1, indicating the fraction of allowed missing values per site. A site is filtered out
 #'        when its methylation beta values are \code{NA}s in a larger fraction of samples than this threshold. Setting
 #'        this option to 1 (default) retains all sites, and thus effectively disables the missing value filtering step
@@ -741,11 +741,11 @@ rnb.is.option <- function(txt) {
 #'   \item{\bold{\code{exploratory.beta.distribution}}\code{ = TRUE}}{
 #'        Flag indicating whether beta value distributions for sample groups and probe or site categories should be
 #'        computed.}
-#'   \item{\bold{\code{exploratory.intersample}}\code{ = NULL}}{
+#'   \item{\bold{\code{exploratory.intersample}}\code{ = FALSE}}{
 #'        Flag indicating if methylation variability in sample groups should be computed as part of the exploratory
 #'        analysis module. If NULL (default), the plots are created for Bead Array data sets and deactivated for sequencing
 #'        data sets.}
-#'   \item{\bold{\code{exploratory.deviation.plots}}\code{ = NULL}}{
+#'   \item{\bold{\code{exploratory.deviation.plots}}\code{ = FALSE}}{
 #'        Flag indicating if the inter-sample methylation variability step in the exploratory analysis module should
 #'        include deviation plots. Deviation plots show intra-group methylation variability at the covered sites and
 #'        regions. Setting this option to \code{NULL} (default) enables deviation plots on Infinium datasets, but
@@ -764,7 +764,7 @@ rnb.is.option <- function(txt) {
 #'        Flag indicating if the generated methylation value heatmaps in the clustering section of the exploratory
 #'        analysis module should be saved as PDF files. Enabling this option is not recommended for large values of
 #'        \code{exploratory.clustering.top.sites} (more than 200), because heatmaps might generate very large PDF files.}
-#'   \item{\bold{\code{exploratory.region.profiles}}\code{ = NULL}}{
+#'   \item{\bold{\code{exploratory.region.profiles}}\code{ = ""}}{
 #'        Region types for generating regional methylation profiles. If \code{NULL} (default), regional methylation
 #'        profiles are created only for the region types that are available for the targeted assembly and summarized in
 #'        the dataset of interest. Setting this option to an empty vector disables the region profiles step in the
@@ -817,14 +817,14 @@ rnb.is.option <- function(txt) {
 #' 		  should be performed (say columnA) the name or index of another column (say columnB) in which same values indicate
 #' 		  the same pairing. columnA should be the name of the value columnB in this vector.
 #' 		  For more details see \code{\link{rnb.sample.groups}}}
-#'   \item{\bold{\code{differential.adjustment.sva}}\code{ = TRUE}}{
+#'   \item{\bold{\code{differential.adjustment.sva}}\code{ = FALSE}}{
 #'        Flag indicating if the differential methylation analysis should account for Surrogate Variables. If
 #'        \code{TRUE}, \pkg{RnBeads} looks for overlaps between the \code{differential.comparison.columns} and
 #'        \code{inference.targets.sva} options and include the surrogate variables as confounding factors only for these
 #'        columns. In other words, it will only have an effect if the corresponding inference option
 #'		  (see \code{inference.targets.sva} option for details) is enabled.
 #'		  Currently this is only supported for \code{differential.site.test.method=="limma"}.}
-#'   \item{\bold{\code{differential.adjustment.celltype}}\code{ = TRUE}}{
+#'   \item{\bold{\code{differential.adjustment.celltype}}\code{ = FALSE}}{
 #'        Should the differential methylation analysis account for celltype using the reference based Houseman method.
 #'        It will only have an effect if the corresponding inference option is enabled (see \code{inference.reference.methylome.column}
 #'		  option for details). Currently this is only supported for \code{differential.site.test.method=="limma"}.
@@ -843,9 +843,9 @@ rnb.is.option <- function(txt) {
 #'        Flag indicating whether a section corresponding to differential site methylation should be added to the report.
 #'        Has no effect on the actual analysis, just the report. To disable differential site methylation analysis entirely
 #'        use the \code{analyze.sites} option.}
-#'   \item{\bold{\code{export.to.bed}}\code{ = TRUE}}{
+#'   \item{\bold{\code{export.to.bed}}\code{ = FALSE}}{
 #'        Flag indicating whether the data should be exported to bed files.}
-#'   \item{\bold{\code{export.to.trackhub}}\code{ = c("bigBed","bigWig")}}{
+#'   \item{\bold{\code{export.to.trackhub}}\code{ = NULL}}{
 #'        \code{character} vector specifying which data types should be exported to
 #'        \href{http://genome.ucsc.edu/goldenPath/help/hgTrackHubHelp.html}{Track hub directories}. Possible values
 #'        in the vector are \code{"bigBed"} and \code{"bigWig"}. When this options is set to \code{NULL}, track hub
