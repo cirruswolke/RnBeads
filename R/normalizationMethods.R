@@ -23,7 +23,7 @@ rnb.norm.scaling<-function(rnb.set, method=c("internal", "reference")[1L], ref.s
     qc_int<-qc(rnb.set)
     ctrl_target<-gsub("probes", "controls", rnb.set@target)
     qc_annot<-rnb.get.annotation(ctrl_target, rnb.set@assembly)
-    annot<-annotation(rnb.set)
+    annot<-annotation(rnb.set)  
     
     channels<-c("Cy5", "Cy3")
     tokens<-get.platform.tokens(rnb.set@target)
@@ -183,25 +183,25 @@ get.platform.tokens<-function(platform){
     
     dict<-list()
     
-    if(rnb.set@target=="probes27"){
+    if(platform=="probes27"){
         dict$norm_token["Cy5"] <- 'Norm.G'
         dict$norm_token["Cy3"] <- 'Norm.R'
         dict$bg_token<-"Negative"
         dict$id_col<-"ID"
         dict$trg_col<-"Target"
-    } else if(rnb.set@target=="probes450"){
-        dict$norm_token["Cy5"] <- 'Norm_(C|G)'
-        dict$norm_token["Cy3"] <- 'Norm_(A|T)'
-        dict$bg_token<-"Negative"
-        dict$id_col<-"ID"
-        dict$trg_col<-"Target"
-    } else if(rnb.set@target=="probesEPIC"){
+    } else if(platform=="probes450"){
         dict$norm_token["Cy5"] <- 'NORM_(C|G)'
         dict$norm_token["Cy3"] <- 'NORM_(A|T)'
         dict$bg_token<-"NEGATIVE"
         dict$id_col<-"ID"
         dict$trg_col<-"Target"
-    }else if(rnb.set@target=="probesMMBC"){
+    } else if(platform=="probesEPIC"){
+        dict$norm_token["Cy5"] <- 'NORM_(C|G)'
+        dict$norm_token["Cy3"] <- 'NORM_(A|T)'
+        dict$bg_token<-"NEGATIVE"
+        dict$id_col<-"ID"
+        dict$trg_col<-"Target"
+    }else if(platform=="probesMMBC"){
         dict$norm_token["Cy5"] <- 'NORM_(C|G)'
         dict$norm_token["Cy3"] <- 'NORM_(A|T)'
         dict$bg_token<-"NEGATIVE"
