@@ -23,36 +23,50 @@
 #'         in the returned list is the possibly modified report.
 #' @author Yassen Assenov
 #' @noRd
-rnb.greedycut.table <- function(rnb.set, report = NULL) {
-	if (inherits(rnb.set, "RnBeadSet")) {
-		result <- dpval(rnb.set)
-		if (is.null(result)) {
+rnb.greedycut.table <- function(rnb.set, pval.threshold=rnb.getOption("filtering.greedycut.pvalue.threshold"), min.coverage=rnb.getOption("filtering.coverage.threshold"), report = NULL) {
+	if (pval.threshold<1 && inherits(rnb.set, "RnBeadSet")) {
+		result.pval <- dpval(rnb.set)
+		if (is.null(result.pval)) {
 			rnb.info("Omitting Greedycut because detection p-values are missing")
 			if (!is.null(report)) {
 				txt <- "Greedycut was not executed because detection p-values are missing."
 				report <- rnb.add.section(report, "Greedycut", txt)
 			}
 		} else {
-			pval.threshold <- rnb.getOption("filtering.greedycut.pvalue.threshold")
-			logger.info(c("Working with a p-value threshold of", pval.threshold))
-			result[is.na(result)] <- 1
-			result <- (result >= pval.threshold)
+			rnb.info(c("Working with a p-value threshold of", pval.threshold))
+			result.pval[is.na(result.pval)] <- 1
+			result.pval <- (result.pval >= pval.threshold)
 		}
-	} else { # inherits(rnb.set, "RnBiSeq")
-		result <- covg(rnb.set)
-		if (is.null(result))	{
+	}else{
+        result.pval<-NULL
+    }
+    if(min.coverage>0){ # inherits(rnb.set, "RnBiSeq")
+		result.covg <- covg(rnb.set)
+		if (is.null(result.covg))	{
 			rnb.info("Omitting Greedycut because read coverage data are missing")
 			if (!is.null(report)) {
 				txt <- "Greedycut was not executed because read coverage data are missing."
 				report <- rnb.add.section(report, "Greedycut", txt)
 			}
 		} else {
-			min.coverage <- rnb.getOption("filtering.coverage.threshold")
 			rnb.info(c("Working with a minimal acceptable coverage of", min.coverage))
-			result[is.na(result)] <- 0L
-			result <- (result < min.coverage)
+			result.covg[is.na(result.covg)] <- 0L
+			result.covg <- (result.covg < min.coverage)
 		}
-	}
+	}else{
+        result.covg<-NULL
+    }
+    
+    if(is.null(result.pval) && is.null(result.covg)){
+        result<-NULL
+    }else if(is.null(result.pval)){
+        result<-result.covg
+    }else if(is.null(result.covg)){
+        result<-result.pval
+    }else{
+        result<-result.pval | result.covg
+    }
+    
 	return(list(matrix = result, report = report))
 }
 
@@ -90,7 +104,7 @@ rnb.greedycut.table <- function(rnb.set, report = NULL) {
 #' }
 #' @author Yassen Assenov
 #' @export
-rnb.execute.greedycut <- function(rnb.set, rc.ties = rnb.getOption("filtering.greedycut.rc.ties")) {
+rnb.execute.greedycut <- function(rnb.set, pval.threshold=rnb.getOption("filtering.greedycut.pvalue.threshold"), min.coverage=rnb.getOption("filtering.min.coverage"), rc.ties = rnb.getOption("filtering.greedycut.rc.ties")) {
 	if (!inherits(rnb.set, "RnBSet")) {
 		stop("invalid value for rnb.set")
 	}
@@ -98,10 +112,15 @@ rnb.execute.greedycut <- function(rnb.set, rc.ties = rnb.getOption("filtering.gr
 		stop("invalid value for rc.ties; expected one of: row, column, any")
 	}
 	rc.ties <- rc.ties[1]
-	if (is.null(dpval(rnb.set))) {
+	if (pval.threshold<1 && is.null(dpval(rnb.set))) {
 		return(NULL)
 	}
-	beta.state <- rnb.greedycut.table(rnb.set)$matrix
+    
+    if (min.coverage>0 && is.null(covg(rnb.set))) {
+        return(NULL)
+    }
+    
+	beta.state <- rnb.greedycut.table(rnb.set, pval.threshold, min.coverage)$matrix
 	if (is.null(beta.state)) {
 		return(NULL)
 	}
