@@ -40,7 +40,7 @@ rnb.greedycut.table <- function(rnb.set, pval.threshold=rnb.getOption("filtering
 	}else{
         result.pval<-NULL
     }
-    if(min.coverage>0){ # inherits(rnb.set, "RnBiSeq")
+    if(min.coverage>0 && inherits(rnb.set, "RnBiSeq")){
 		result.covg <- covg(rnb.set)
 		if (is.null(result.covg))	{
 			rnb.info("Omitting Greedycut because read coverage data are missing")
@@ -112,7 +112,7 @@ rnb.execute.greedycut <- function(rnb.set, pval.threshold=rnb.getOption("filteri
 		stop("invalid value for rc.ties; expected one of: row, column, any")
 	}
 	rc.ties <- rc.ties[1]
-	if (pval.threshold<1 && is.null(dpval(rnb.set))) {
+	if (pval.threshold < 1.0 && is.null(dpval(rnb.set))) {
 		return(NULL)
 	}
     
@@ -202,7 +202,7 @@ rnb.step.greedycut <- function(rnb.set, report, rc.ties = rnb.getOption("filteri
 rnb.step.greedycut.internal <- function(rnb.set, sites2ignore, report, anno.table,
 	rc.ties = rnb.getOption("filtering.greedycut.rc.ties")) {
 
-	result <- rnb.greedycut.table(rnb.set, report)
+	result <- rnb.greedycut.table(rnb.set, report=report)
 	beta.state <- result$matrix
 	report <- result$report
 	rm(result)
