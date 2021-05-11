@@ -841,6 +841,7 @@ rnb.execute.low.coverage.masking.internal <- function(rnb.set, sites2ignore, cov
 	return(mask)
 }
 
+
 ########################################################################################################################
 
 #' rnb.section.low.coverage.masking
@@ -1445,6 +1446,68 @@ rnb.step.variability.removal.internal <- function(dataset.class, mm, sites2ignor
 		threshold, anno.table)
 	logger.status("Added a corresponding section to the report")
 	list(report = report, filtered = result$filtered)
+}
+
+########################################################################################################################
+
+#' rnb.execute.high.dpval.masking
+#'
+#' Replaces all low coverage sites by \code{NA}.
+#'
+#' @param rnb.set        Methylation dataset as an object of type inheriting \code{\linkS4class{RnBeadSet}}.
+#' @param dpval.threshold Threshold for maximal acceptable detection p-value, given as a non-negative \code{numeric} value between 0 and 1. All
+#'                       methylation measurements with detection p-value than this threshold are set to \code{NA}. If this
+#'                       parameter is \code{0}, calling this method has no effect.
+#' @return List of three elements:
+#'         \describe{
+#'           \item{\code{"dataset.before"}}{Copy of \code{rnb.set}.}
+#'           \item{\code{"dataset"}}{The (possibly) modified dataset after retaining sites on autosomes only.}
+#'           \item{\code{"mask"}}{A logical matrix of dimension \code{meth(rnb.set,type="sites")} indicating which
+#' 				   methylation values have been masked}
+#'         }
+#'
+#' @author Fabian Mueller
+#' @export
+rnb.execute.high.dpval.masking <- function(rnb.set, dpval.threshold = 0.05) {
+    if (!inherits(rnb.set, "RnBSet")) {
+        stop("invalid value for rnb.set")
+    }
+    if (!(is.numeric(dpval.threshold) && length(dpval.threshold) == 1 && isTRUE(0 <= dpval.threshold | dpval.threshold > 1.0))) {
+        stop("invalid value for dpval.threshold")
+    }
+    mask <- rnb.execute.high.dpval.masking.internal(rnb.set, integer(), dpval.threshold)
+    dataset <- rnb.set
+    if (any(mask)) {
+        dataset@meth.sites[,][mask] <- NA
+        if (inherits(dataset, "RnBeadRawSet")) {
+            dataset@M[,][mask] <- NA
+            dataset@U[,][mask] <- NA
+            dataset@M0[,][mask] <- NA
+            dataset@U0[,][mask] <- NA
+        }
+        dataset <- updateRegionSummaries(dataset)
+    }
+    list(dataset.before = rnb.set, dataset = dataset, mask = mask)
+}
+
+rnb.execute.high.dpval.masking.internal <- function(rnb.set, sites2ignore, dpval.threshold) {
+    # coverage.matrix <- covg(rnb.set)
+    if (!is.null(rnb.set@pval.sites)) {
+        return(NULL)
+    }
+    # mask <- (coverage.matrix < covg.threshold) & (!is.na(coverage.matrix)) & (!is.na(meth(rnb.set)))
+    N <- nsites(rnb.set)
+    M <- length(samples(rnb.set))
+    mask <- matrix(NA, nrow=N, ncol=M)
+    colnames(mask) <- samples(rnb.set)
+    for (j in 1:M){
+        dpm <- dpval(rnb.set, j=j)[,1]
+        mask[,j] <- (dpm > dpval.threshold) & !is.na(dpm) & !is.na(meth(rnb.set, j=j)[,1])
+        if (length(sites2ignore) != 0) {
+            mask[sites2ignore, j] <- FALSE
+        }
+    }
+    return(mask)
 }
 
 ## E N D ###############################################################################################################

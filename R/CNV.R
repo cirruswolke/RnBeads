@@ -27,7 +27,7 @@
 #' @author Pavlo Lutsik, with modifications by Michael Scherer         
 rnb.get.cnv.annotations<-function(platform="probes450"){
   if(!platform %in% c("probes450")){
-    logger.warning("Reference dataset only available for Infinium chips.")
+    logger.warning("Reference dataset is only available for HumanMethylation450 chips.")
     return(NULL)
   }
   rnb.require("RnBeads.hg19")
@@ -173,8 +173,9 @@ rnb.plot.GLAD.profile<-function(glad.profile, label, sample.names = NA, numeric.
 #' @noRd
 getCGCounts<-function(cnv.profiles, rnb.set){
 	target <- rnb.set@target
+    assembly<-rnb.set@assembly
 	cnv.reference.data<-rnb.get.cnv.annotations(target)
-	chrom.data <- seqlengths(rnb.get.annotation(target))
+	chrom.data <- seqlengths(rnb.get.annotation(target, assembly))
 	
 	si<-cnv.reference.data$seq.info.hg19
 	annot<-annotation(rnb.set)

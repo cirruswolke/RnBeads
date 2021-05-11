@@ -1205,9 +1205,9 @@ setMethod("mergeSamples", signature(object = "RnBSet"),
 )
 ########################################################################################################################
 
-#setGeneric("combine", function(x,y, ...) standardGeneric("combine"))
+setGeneric("combine.rnb.sets", function(x,y, ...) standardGeneric("combine.rnb.sets"))
 
-#' combine-methods
+#' combine.rnb.sets-methods
 #'
 #' Combine two objects inheriting from \code{\linkS4class{RnBSet}} class
 #'
@@ -1228,11 +1228,11 @@ setMethod("mergeSamples", signature(object = "RnBSet"),
 #' @return combined \code{\linkS4class{RnBeadSet}}, \code{\linkS4class{RnBeadRawSet}} or
 #' \code{\linkS4class{RnBiseqSet}} object
 #'
-#' @rdname combine-methods
+#' @rdname combine.rnb.sets-methods
 #' @docType methods
 #' @export
-#' @aliases combine
-#' @aliases combine,RnBSet-method
+#' @aliases combine.rnb.sets
+#' @aliases combine.rnb.sets,RnBSet-method
 #' @examples
 #' \donttest{
 #' library(RnBeads.hg19)
@@ -1246,12 +1246,12 @@ setMethod("mergeSamples", signature(object = "RnBSet"),
 #' r2 <- remove.samples(r2,samples(rnb.set.example)[6:12])
 #' sites.rem.r2 <- sample(1:nrow(meth(rnb.set.example)),800)
 #' r2 <- remove.sites(r2,sites.rem.r2)
-#' rc <- combine(r1,r2)
+#' rc <- combine.rnb.sets(r1,r2)
 #' #assertion: check the number of sites
 #' sites.rem.c <- intersect(sites.rem.r1,sites.rem.r2)
 #' (nrow(meth(rnb.set.example))-length(sites.rem.c)) == nrow(meth(rc))
 #' }
-setMethod("combine", signature(x="RnBSet", y="RnBSet"),
+setMethod("combine.rnb.sets", signature(x="RnBSet", y="RnBSet"),
         function(x, y, type="all"){
             if(class(x)==class(y)){
                 if(inherits(x, "RnBeadSet")){

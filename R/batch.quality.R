@@ -64,8 +64,13 @@ rnb.execute.batch.qc <- function(rnb.set, pcoordinates, permutations = NULL) {
 		id.col<-"Address"
 		type.col<-"Type"
 		ctrls<-"controls27"
-	}
-	control.probe.infos <- rnb.get.annotation(ctrls)[, c(id.col, type.col)]
+	}else if(rnb.set@target=="probesMMBC"){
+        CONTROL.TYPES <- rnb.infinium.control.targets("probesMMBC")[c(1:4, 6, 11:14)]
+        id.col<-"ID"
+        type.col<-"Target"
+        ctrls<-"controlsMMBC"
+    }
+	control.probe.infos <- rnb.get.annotation(ctrls, rnb.set@assembly)[, c(id.col, type.col)]
 	channels <- list("green" = qc(rnb.set)$Cy3, "red" = qc(rnb.set)$Cy5)
 
 	targets <- names(pcoordinates)

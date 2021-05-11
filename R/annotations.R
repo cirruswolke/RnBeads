@@ -129,6 +129,23 @@ HM27.CONTROL.TARGETS<-c(
 	"pUC19" = "pUC19",
 	"phiX174" = "phiX174")
 
+MMBC.CONTROL.TARGETS <- c(
+        "bisulfite conversion I" = "BISULFITE CONVERSION I",
+        "bisulfite conversion II" = "BISULFITE CONVERSION II",
+        "extension" = "EXTENSION",
+        "hybridization" = "HYBRIDIZATION",
+        "negative control" = "NEGATIVE",
+        "non-polymorphic" = "NON-POLYMORPHIC",
+        "norm A" = "NORM_A",
+        "norm C" = "NORM_C",
+        "norm G" = "NORM_G",
+        "norm T" = "NORM_T",
+        "restoration" = "RESTORATION",
+        "specificity I" = "SPECIFICITY I",
+        "specificity II" = "SPECIFICITY II",
+        "staining" = "STAINING",
+        "target removal" = "TARGET REMOVAL")
+
 ## Sample-independent control probe types (subset of CONTROL.TARGETS)
 CONTROL.TARGETS.SAMPLE.INDEPENDENT <- c("STAINING", "HYBRIDIZATION", "TARGET REMOVAL", "EXTENSION")
 
@@ -1342,6 +1359,8 @@ rnb.infinium.control.targets <- function(target="probes450") {
 		return(HM450.CONTROL.TARGETS)
 	}else if(target=="probes27"){
 		return(HM27.CONTROL.TARGETS)
+    }else if(target=="probesMMBC"){
+        return(MMBC.CONTROL.TARGETS)
 	}else{
 		stop("Unsupported platform")
 	}

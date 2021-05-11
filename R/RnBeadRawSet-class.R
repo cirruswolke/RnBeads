@@ -173,7 +173,7 @@ RnBeadRawSet<-function(
 		beta.offset=100,
 		summarize.bead.counts=TRUE,
 		summarize.regions=TRUE,
-		region.types = rnb.region.types.for.analysis("hg19"),
+		region.types = rnb.region.types.for.analysis(ifelse(platform=="MMBC", "mm10", "hg19")),
 		useff=rnb.getOption("disk.dump.big.matrices"),
 		ffcleanup=FALSE){
 		
@@ -254,6 +254,9 @@ RnBeadRawSet<-function(
 		} else if(platform == "27k"){
 			target <- "probes27"
 			assembly <- "hg19"
+        }else if(platform == "MMBC"){
+            target <- "probesMMBC"
+            assembly <- "mm10"
 		}else{
 			rnb.error("Invalid value for platform")
 		}
@@ -349,7 +352,7 @@ RnBeadRawSet<-function(
 		
 		if(summarize.regions){
 			for (region.type in region.types) {
-				if (region.type %in% rnb.region.types("hg19")) {
+				if (region.type %in% rnb.region.types(assembly)) {
 					object <- summarize.regions(object, region.type)
 				}
 			}

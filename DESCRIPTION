@@ -127,6 +127,7 @@ Collate:
     'lolaUtils.R'
     'main.R'
     'normalization.R'
+    'normalizationMethods.R'
     'options.R'
     'parallelProcessing.R'
     'plottingUtils.R'

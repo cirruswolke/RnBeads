@@ -63,7 +63,9 @@ rnb.plot.control.boxplot <- function(
 		meta <- rnb.get.annotation("controls450")
 	}else if(rnb.set@target=="probes27"){
 		meta <- rnb.get.annotation("controls27")
-	}
+	}else if(rnb.set@target=="probesMMBC"){
+        meta <- rnb.get.annotation("controlsMMBC", assembly="mm10")
+    }
 
 	if(rnb.set@target=="probesEPIC"){
 		types<-rnb.infinium.control.targets(rnb.set@target)[c(14,4,3,15,1:2,12:13,6,11)]
@@ -71,13 +73,15 @@ rnb.plot.control.boxplot <- function(
 		types<-rnb.infinium.control.targets(rnb.set@target)[c(13,4,3,14,1:2,11:12,6)]
 	}else if(rnb.set@target=="probes27"){
 		types<-rnb.infinium.control.targets(rnb.set@target)[c(10,3,2,11,1,9,6)]
-	}
+	}else if(rnb.set@target=="probesMMBC"){
+        types<-rnb.infinium.control.targets(rnb.set@target)[c(14,4,3,15,1:2,12:13,6,11)]
+    }
 
 	if(!type %in% types){
 		warning("Unoptimized probe type, plotting performance may be decreased")
 	}
 
-	if(rnb.set@target=="probes450" || rnb.set@target=="probesEPIC"){
+	if(rnb.set@target=="probes450" || rnb.set@target=="probesEPIC" || rnb.set@target=="probesMMBC"){
 		rownames(meta)<-meta[["ID"]]
 		### TODO: Remove the following passage
 		### for testing purposes only!
@@ -117,7 +121,7 @@ rnb.plot.control.boxplot <- function(
 
 	scales<-lapply(qc(rnb.set), get.unified.scale)
 
-	if(rnb.set@target=="probes450" || rnb.set@target=="probesEPIC"){
+	if(rnb.set@target=="probes450" || rnb.set@target=="probesEPIC" || rnb.set@target=="probesMMBC"){
 		## Shorten the words describing probe's expected intensity
 		INTENSITIES <- c("Background" = "Bgnd", "High" = "High", "Low" = "Low", "Medium" = "Med")
 		levels(meta[, "Expected Intensity"]) <- INTENSITIES[levels(meta[, "Expected Intensity"])]
@@ -212,8 +216,8 @@ rnb.plot.negative.boxplot<- function(
 		...) {
 
 	
-	if(rnb.set@target=="probesEPIC"){
-		meta <- rnb.get.annotation("controlsEPIC")
+	if(rnb.set@target=="probesEPIC" || rnb.set@target=="probesMMBC" ){
+		meta <- rnb.get.annotation(gsub("probes", "controls", rnb.set@target), assembly=c("probesEPIC"="hg19", "probesMMBC"="mm10")[rnb.set@target])
 		## Extract intensities of the control probes
 		### TODO: Remove the following passage
 		### for testing purposes only!
@@ -358,8 +362,8 @@ rnb.plot.control.barplot<-function(
 {
 	
 	
-	if(rnb.set@target=="probesEPIC"){
-		control.meta.data <- rnb.get.annotation("controlsEPIC")
+	if(rnb.set@target=="probesEPIC" || rnb.set@target=="probesMMBC"){
+		control.meta.data <- rnb.get.annotation(gsub("probes", "controls", rnb.set@target), assembly=c("probesEPIC"="hg19", "probesMMBC"="mm10")[rnb.set@target])
 		### TODO: Remove the following passage
 		### for testing purposes only!
 		#if(rnb.set@target=="probesEPIC"){
@@ -428,7 +432,7 @@ rnb.plot.control.barplot<-function(
 
 	## get meta information
 
-	if(rnb.set@target=="probes450" || rnb.set@target=="probesEPIC"){
+	if(rnb.set@target=="probes450" || rnb.set@target=="probesEPIC" || rnb.set@target=="probesMMBC"){
 		meta<-subset(control.meta.data, ID==id)
 	}else if(rnb.set@target=="probes27"){
 		meta<-subset(control.meta.data, Address==id)
@@ -455,7 +459,7 @@ rnb.plot.control.barplot<-function(
 
 	### plot green channel
 
-	if(rnb.set@target=="probes450" || rnb.set@target=="probesEPIC"){
+	if(rnb.set@target=="probes450" || rnb.set@target=="probesEPIC" || rnb.set@target=="probesMMBC"){
 		main_txt_grn<-paste(probe, meta[,"Description"], "green channel", if(meta[, "Evaluate Green"]=="+") meta[, "Expected Intensity"] else "Background", sep=": ")
 		main_txt_red<-paste(probe, meta[,"Description"], "red channel",if(meta[, "Evaluate Red"]=="+") meta[, "Expected Intensity"] else "Background", sep=": ")
 	}else{
@@ -521,7 +525,7 @@ rnb.plot.control.barplot<-function(
 #' @author Yassen Assenov
 #' @noRd
 rnb.get.snp.matrix <- function(dataset, threshold.nas = 1) {
-	if (dataset@target %in% c("probes450", "probesEPIC")) {
+	if (dataset@target %in% c("probes450", "probesEPIC", "probedsMMBC")) {
 		result <- meth(dataset, row.names=TRUE)
 		result <- result[grep("^rs", rownames(result)), , drop = FALSE]
 	} else if (dataset@target == "probes27") {
