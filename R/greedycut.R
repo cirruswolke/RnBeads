@@ -78,6 +78,10 @@ rnb.greedycut.table <- function(rnb.set, pval.threshold=rnb.getOption("filtering
 #' statistics on its iterations.
 #'
 #' @param rnb.set HumanMethylation450K dataset as an object of type \code{\linkS4class{RnBeadSet}}.
+#' @param pval.threshold The P-value threshold. For further information, see the option \code{"filtering.greedycut.pvalue.threshold"}
+#'                    in \code{\link{rnb.options}}.
+#' @param min.coverage The coverage threshold. For further information, see the option \code{"filtering.min.coverage"}
+#'                    in \code{\link{rnb.options}}.
 #' @param rc.ties Flag indicating what the behaviour of the algorithm should be in case of ties between values of rows
 #'                (probes) and columns (samples). See the corresponding parameter in
 #'                \code{\link{greedycut.filter.matrix}} for more details.

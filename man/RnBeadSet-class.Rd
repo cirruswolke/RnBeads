@@ -16,7 +16,8 @@ RnBeadSet(
   qc = NULL,
   platform = "450k",
   summarize.regions = TRUE,
-  region.types = rnb.region.types.for.analysis("hg19"),
+  region.types = rnb.region.types.for.analysis(ifelse(platform == "MMBC", "mm10",
+    "hg19")),
   useff = rnb.getOption("disk.dump.big.matrices")
 )
 }

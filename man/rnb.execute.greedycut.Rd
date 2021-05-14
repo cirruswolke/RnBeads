@@ -6,11 +6,19 @@
 \usage{
 rnb.execute.greedycut(
   rnb.set,
+  pval.threshold = rnb.getOption("filtering.greedycut.pvalue.threshold"),
+  min.coverage = rnb.getOption("filtering.min.coverage"),
   rc.ties = rnb.getOption("filtering.greedycut.rc.ties")
 )
 }
 \arguments{
 \item{rnb.set}{HumanMethylation450K dataset as an object of type \code{\linkS4class{RnBeadSet}}.}
+
+\item{pval.threshold}{The P-value threshold. For further information, see the option \code{"filtering.greedycut.pvalue.threshold"}
+in \code{\link{rnb.options}}.}
+
+\item{min.coverage}{The coverage threshold. For further information, see the option \code{"filtering.min.coverage"}
+in \code{\link{rnb.options}}.}
 
 \item{rc.ties}{Flag indicating what the behaviour of the algorithm should be in case of ties between values of rows
 (probes) and columns (samples). See the corresponding parameter in
