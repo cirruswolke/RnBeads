@@ -124,6 +124,11 @@ rnb.execute.greedycut <- function(rnb.set, pval.threshold=rnb.getOption("filteri
         return(NULL)
     }
     
+    ### temporary: disable bead count-based filtering for array data
+    if(inherts(rnb.set, "RnBeadSet")){
+        min.coverage<-0
+    }
+    
 	beta.state <- rnb.greedycut.table(rnb.set, pval.threshold, min.coverage)$matrix
 	if (is.null(beta.state)) {
 		return(NULL)
