@@ -80,7 +80,7 @@ rnb.greedycut.table <- function(rnb.set, pval.threshold=rnb.getOption("filtering
 #' @param rnb.set HumanMethylation450K dataset as an object of type \code{\linkS4class{RnBeadSet}}.
 #' @param pval.threshold The P-value threshold. For further information, see the option \code{"filtering.greedycut.pvalue.threshold"}
 #'                    in \code{\link{rnb.options}}.
-#' @param min.coverage The coverage threshold. For further information, see the option \code{"filtering.min.coverage"}
+#' @param min.coverage The coverage threshold. For further information, see the option \code{"filtering.coverage.threshold"}
 #'                    in \code{\link{rnb.options}}.
 #' @param rc.ties Flag indicating what the behaviour of the algorithm should be in case of ties between values of rows
 #'                (probes) and columns (samples). See the corresponding parameter in
@@ -108,7 +108,7 @@ rnb.greedycut.table <- function(rnb.set, pval.threshold=rnb.getOption("filtering
 #' }
 #' @author Yassen Assenov
 #' @export
-rnb.execute.greedycut <- function(rnb.set, pval.threshold=rnb.getOption("filtering.greedycut.pvalue.threshold"), min.coverage=rnb.getOption("filtering.min.coverage"), rc.ties = rnb.getOption("filtering.greedycut.rc.ties")) {
+rnb.execute.greedycut <- function(rnb.set, pval.threshold=rnb.getOption("filtering.greedycut.pvalue.threshold"), min.coverage=rnb.getOption("filtering.coverage.threshold"), rc.ties = rnb.getOption("filtering.greedycut.rc.ties")) {
 	if (!inherits(rnb.set, "RnBSet")) {
 		stop("invalid value for rnb.set")
 	}
