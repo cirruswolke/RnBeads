@@ -7,7 +7,7 @@
 rnb.execute.greedycut(
   rnb.set,
   pval.threshold = rnb.getOption("filtering.greedycut.pvalue.threshold"),
-  min.coverage = rnb.getOption("filtering.min.coverage"),
+  min.coverage = rnb.getOption("filtering.coverage.threshold"),
   rc.ties = rnb.getOption("filtering.greedycut.rc.ties")
 )
 }
@@ -17,7 +17,7 @@ rnb.execute.greedycut(
 \item{pval.threshold}{The P-value threshold. For further information, see the option \code{"filtering.greedycut.pvalue.threshold"}
 in \code{\link{rnb.options}}.}
 
-\item{min.coverage}{The coverage threshold. For further information, see the option \code{"filtering.min.coverage"}
+\item{min.coverage}{The coverage threshold. For further information, see the option \code{"filtering.coverage.threshold"}
 in \code{\link{rnb.options}}.}
 
 \item{rc.ties}{Flag indicating what the behaviour of the algorithm should be in case of ties between values of rows
