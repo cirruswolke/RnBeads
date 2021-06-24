@@ -89,45 +89,25 @@ rnb.execute.pOOBAH <- function(raw.set, anno.table = NULL, pval.thresh = 0.05, v
       raw.set@pval.sites <- matrix(data = NA, nrow = length(probeIDs), ncol = nsamples)
     }
     
-    sigset.l <- rep(list(SigSet(platform)), nsamples)
     nmasked = 0
     
     for (i in 1:nsamples){
-      sset <- sigset.l[[i]]
-      IG(sset) <- cbind("M" = grn$M[, i], 
-                                 "U" = grn$U[, i])
-      IR(sset) <- cbind("M" = red$M[, i], 
-                                 "U" = red$U[, i])
-      II(sset) <- cbind("M" = tII$M[, i], 
-                                 "U" = tII$U[, i])
-      oobG(sset) <- cbind("M" = grn.oob$M[, i], 
-                                   "U" = grn.oob$U[, i])
-      oobR(sset) <- cbind("M" = red.oob$M[, i], 
-                                   "U" = red.oob$U[, i])
+      sdf = SigDF(rbind(
+          data.frame(
+              Probe_ID = rownames(grn$M),
+              MG = grn$M[,i], MR = red.oob$M[,i],
+              UG = grn$U[,i], UR = red.oob$U[,i], col="G", mask=FALSE),
+          data.frame(
+              Probe_ID = rownames(red$M),
+              MG = grn.oob$M[,i], MR = red$M[,i],
+              UG = grn.oob$U[,i], UR = red$U[,i], col="R", mask=FALSE),
+          data.frame(
+              Probe_ID = rownames(tII$M),
+              MG = NA, MR = NA,
+              UG = tII$M[,i], UR = tII$U[,i], col="2", mask=FALSE)), platform)
       
-      #this is the pOOBAH method. No masking yet, just p-value comput.
-      # sigset.l[[i]] <- sesame::detectionPoobEcdf(sigset.l[[i]])
-      
-      funcG <- ecdf(oobG(sset))
-      funcR <- ecdf(oobR(sset))
-      
-      ## p-value is the minimium detection p-value of the 2 alleles
-      pIR <- 1-apply(cbind(funcR(IR(sset)[,'M']), funcR(IR(sset)[,'U'])),1,max)
-      pIG <- 1-apply(cbind(funcG(IG(sset)[,'M']), funcG(IG(sset)[,'U'])),1,max)
-      pII <- 1-apply(cbind(funcG(II(sset)[,'M']), funcR(II(sset)[,'U'])),1,max)
-      
-      names(pIR) <- rownames(IR(sset))
-      names(pIG) <- rownames(IG(sset))
-      names(pII) <- rownames(II(sset))
-      
-      if(is.list(sset@pval)){
-        sset@pval$pOOBAH <- c(pIR,pIG,pII)
-        pvalues <- sset@pval$pOOBAH  
-      } else {
-        sset@pval <- c(pIR,pIG,pII)
-        pvalues <- sset@pval
-      }
-      
+      pvalues = pOOBAH(sdf, return.pval = TRUE)
+
       mask <- names(pvalues)[pvalues > pval.thresh]
       mask <- mask[!is.na(mask)]
       raw.set@pval.sites[, i] <- pvalues[match(probeIDs, names(pvalues))] 
@@ -142,7 +122,7 @@ rnb.execute.pOOBAH <- function(raw.set, anno.table = NULL, pval.thresh = 0.05, v
         raw.set@U0[maskedIDs, i]<- NA
       }
     }
-    rm(sigset.l, maskedIDs, mask, pvalues, grn, grn.oob, red, red.oob, tII, sset, pIG, pII, pIR, platform, i)
+    rm(sigset.l, maskedIDs, mask, pvalues, grn, grn.oob, red, red.oob, tII, pIG, pII, pIR, platform, i)
     if (verbose){
       nprobes = length(probeIDs)    
       ntotal = nsamples*nprobes
