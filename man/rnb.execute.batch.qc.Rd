@@ -30,4 +30,3 @@ Computation of correlations and permutation-based p-values for detecting quality
 \author{
 Pavlo Lutsik
 }
-

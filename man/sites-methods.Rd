@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBSet-class.R
 \docType{methods}
 \name{sites,RnBSet-method}
-\alias{sites}
 \alias{sites,RnBSet-method}
+\alias{sites}
 \title{sites-methods}
 \usage{
 \S4method{sites}{RnBSet}(object)
@@ -25,4 +25,3 @@ data(small.example.object)
 sites(rnb.set.example)
 }
 }
-

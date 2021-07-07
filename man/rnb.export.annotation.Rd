@@ -30,4 +30,3 @@ rnb.export.annotation(tempfile(pattern="promoters",fileext=".bed"),"promoters")
 \author{
 Fabian Mueller
 }
-

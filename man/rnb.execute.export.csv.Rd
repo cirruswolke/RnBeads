@@ -4,8 +4,11 @@
 \alias{rnb.execute.export.csv}
 \title{rnb.execute.export.csv}
 \usage{
-rnb.execute.export.csv(rnb.set, output.location,
-  region.types = rnb.getOption("export.types"))
+rnb.execute.export.csv(
+  rnb.set,
+  output.location,
+  region.types = rnb.getOption("export.types")
+)
 }
 \arguments{
 \item{rnb.set}{Methylation dataset as an object of type inheriting \code{\linkS4class{RnBSet}}.}
@@ -53,4 +56,3 @@ rnb.execute.export.csv(rnb.set.example, "", summarized.regions(rnb.set.example))
 \author{
 Yassen Assenov
 }
-

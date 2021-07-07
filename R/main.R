@@ -8,17 +8,17 @@
 
 ## F U N C T I O N S ###################################################################################################
 
-## rnb.export.enabled
-##
-## Checks if the data export module is enabled for the given dataset.
-##
-## @param rnb.set Methylation dataset currently being analyzed.
-## @return \code{TRUE} if the data export module can and should be executed on this dataset, \code{FALSE} otherwise.
-##
-## @author Yassen Assenov
-rnb.export.enabled <- function(rnb.set) {
-	## FIXME: The second part of this condition (and therefore this function's parameter) must be dropped;
-	## rnb.run.export now crashes with certain parameter values, but it should create a report describing the problem
+#' rnb.tracks.to.export
+#'
+#' Checks if BED files or other tracks should be exported from the given dataset.
+#'
+#' @param rnb.set Methylation dataset currently being analyzed.
+#' @return \code{TRUE} if the data export module can and should be executed on the dataset and should include track
+#'         files; \code{FALSE} otherwise.
+#'
+#' @author Yassen Assenov
+#' @noRd
+rnb.tracks.to.export <- function(rnb.set) {
 	any(rnb.getOption("export.to.bed"), length(rnb.getOption("export.to.trackhub")) > 0) &&
 		(length(intersect(rnb.getOption("export.types"), c(rnb.region.types(assembly(rnb.set)), "sites"))) > 0)
 }
@@ -102,7 +102,7 @@ rnb.build.index.internal <- function(dir.reports, fname = "index.html", dir.conf
 		names(reports.skipped) <- rownames(tbl)[c(1:3, 5:7)]
 		reports.skipped <- sapply(reports.skipped, function(x) { rnb.getOption(x) == FALSE })
 		reports.skipped <- names(reports.skipped)[reports.skipped]
-		if (!export.enabled) { # !rnb.export.enabled() {
+		if (!export.enabled) {
 			reports.skipped <- c(reports.skipped, "tracks_and_tables")
 		}
 		tbl <- tbl[setdiff(rownames(tbl), reports.skipped), ]
@@ -321,6 +321,7 @@ rnb.xml2options <- function(fname,return.full.structure=FALSE) {
 	if (analysis.params.required && length(i.dir.reports) == 0) {
 		stop("invalid XML format; missing dir.reports")
 	}
+	i.save.rdata <- which(names(xml.options) == "save.rdata")
 	i <- anyDuplicated(names(xml.options))
 	if (i != 0) {
 		stop(paste("invalid XML format; duplicated", names(xml.options)[i]))
@@ -335,32 +336,35 @@ rnb.xml2options <- function(fname,return.full.structure=FALSE) {
 		option.values[i] <- list(NULL)
 	}
 
-	inds.rm.from.opts <- integer()
 	## Extract parameters for the analysis function
+	i <- integer() # indices of elements in option.values to be removed
 	if (length(i.data.source) != 0) {
 		val <- option.values[[i.data.source]]
 		val <- strsplit(val, ",", fixed = TRUE)[[1]]
 		result[["analysis.params"]][["data.source"]] <- val
-		inds.rm.from.opts <- c(inds.rm.from.opts,i.data.source)
+		i <- c(i, i.data.source)
 	}
 	if (length(i.dir.reports) != 0) {
 		result[["analysis.params"]][["dir.reports"]] <- option.values[[i.dir.reports]]
-		inds.rm.from.opts <- c(inds.rm.from.opts,i.dir.reports)
+		i <- c(i, i.dir.reports)
 	}
 	if (length(i.data.type) != 0) {
 		result[["analysis.params"]][["data.type"]] <- option.values[[i.data.type]]
-		inds.rm.from.opts <- c(inds.rm.from.opts,i.data.type)
+		i <- c(i, i.data.type)
+	}
+	if (length(i.save.rdata) != 0) {
+		result[["analysis.params"]][["data.type"]] <- tolower(option.values[[i.save.rdata]]) == "true"
+		i <- c(i, i.save.rdata)
 	}
 
 	## Extract specified file with R preanalysis script, e.g. setting plotting themes, user defined regions, etc.
 	i.preanalysis.script <- which(names(xml.options) == "preanalysis.script")
 	if (length(i.preanalysis.script) != 0) {
 		result[["preanalysis.script"]] <- option.values[[i.preanalysis.script]]
-		inds.rm.from.opts <- c(inds.rm.from.opts,i.preanalysis.script)
+		i <- c(i, i.preanalysis.script)
 	}
-
-	if (length(inds.rm.from.opts) > 0){
-		option.values <- option.values[-inds.rm.from.opts]
+	if (length(i) != 0){
+		option.values <- option.values[-i]
 	}
 
 	## Set RnBeads options
@@ -510,6 +514,26 @@ rnb.run.xml <- function(fname, create.r.command = FALSE) {
 
 ########################################################################################################################
 
+#' rnb.run.dj
+#'
+#' Starts the RnBeads Data Juggler (RnBeadsDJ) for configuring and running RnBeads analyses from the web browser
+#'
+#' @return Nothing of particular interest
+#'
+#' @details
+#' A Shiny app is launched in the web browser
+#'
+#' @seealso \code{\link{rnb.run.analysis}} for starting an analysis pipeline
+#' @author Fabian Mueller
+#' @export
+rnb.run.dj <- function(){
+	shiny::runApp(system.file("extdata/RnBeadsDJ", package = "RnBeads"))
+	invisible(NULL)
+}
+
+
+########################################################################################################################
+
 #' RnBeads Analysis Pipeline
 #'
 #' Starts the \pkg{RnBeads} analysis pipeline on the given dataset. It loads the dataset if it is specified as a
@@ -622,7 +646,7 @@ rnb.run.analysis <- function(dir.reports, data.source=NULL, sample.sheet=NULL, d
 			if (is.null(dset)) {
 				export.enabled <- TRUE
 			} else {
-				export.enabled <- rnb.export.enabled(dset)
+				export.enabled <- rnb.getOption("export.to.csv") || rnb.tracks.to.export(dset)
 			}
 			rnb.build.index.internal(dir.reports, log.file = log.file, export.enabled = export.enabled,
 				current.report = rname, open.index = (rname == ""))
@@ -698,7 +722,7 @@ rnb.run.analysis <- function(dir.reports, data.source=NULL, sample.sheet=NULL, d
 
 	if (nsites(rnb.set) * sample.count != 0) {
 		## Data export
-		if (rnb.export.enabled(rnb.set)) {
+		if (rnb.getOption("export.to.csv") || rnb.tracks.to.export(rnb.set)) {
 			update.index(rnb.set, "tracks_and_tables")
 			rnb.cleanMem()
 			rnb.run.tnt(rnb.set, dir.reports)
@@ -739,9 +763,13 @@ rnb.run.analysis <- function(dir.reports, data.source=NULL, sample.sheet=NULL, d
 			if (!is.null(result.diffmeth) && !is.null(result.diffmeth$diffmeth)){
 				diffmeth.path <- file.path(dir.reports, "differential_rnbDiffMeth")
 				save.rnb.diffmeth(result.diffmeth$diffmeth, diffmeth.path)
-				diffmeth.enrichment <- result.diffmeth$dm.enrich
-				if (!is.null(diffmeth.enrichment)){
-					save(diffmeth.enrichment, file=file.path(diffmeth.path, "enrichment.RData"))
+				diffmeth.go.enrichment <- result.diffmeth$dm.go.enrich
+				if (!is.null(diffmeth.go.enrichment)){
+					save(diffmeth.go.enrichment, file=file.path(diffmeth.path, "enrichment_go.RData"))
+				}
+				diffmeth.lola.enrichment <- result.diffmeth$dm.lola.enrich
+				if (!is.null(diffmeth.lola.enrichment)){
+					save(diffmeth.lola.enrichment, file=file.path(diffmeth.path, "enrichment_lola.RData"))
 				}
 			} else {
 				logger.warning("Differential methylation object not saved")
@@ -895,7 +923,7 @@ module.complete <- function(report, close.report, show.report) {
 #'
 #' ## Data import
 #' data.source <- c(idat.dir, sample.annotation)
-#' result <- rnb.run.import(data.source = data.source, data.type = "idat.dir", dir.reports = report.dir)
+#' result <- rnb.run.import(data.source=data.source, data.type="idat.dir", dir.reports=report.dir)
 #' rnb.set <- result$rnb.set
 #'
 #' ## Quality Control
@@ -952,22 +980,37 @@ rnb.run.qc <- function(rnb.set, dir.reports, init.configuration = !file.exists(f
 	module.start.log("Quality Control")
 
 	report <- init.pipeline.report("quality_control", dir.reports, init.configuration)
-	optionlist <- rnb.options("qc.boxplots", "qc.barplots", "qc.negative.boxplot", "qc.snp.heatmap", "qc.snp.distances",
-		"qc.snp.boxplot", "qc.snp.barplot")
+	optionlist <- rnb.options("qc.boxplots", "qc.barplots", "qc.negative.boxplot")
+	if (inherits(rnb.set, "RnBeadSet")) {
+		snp.options <- list("qc.snp.heatmap", "qc.snp.barplot", "qc.snp.boxplot", "qc.snp.distances", "qc.snp.purity","qc.cnv","qc.cnv.refbased")
+		snp.options <- do.call(rnb.options, snp.options)
+		optionlist <- c(optionlist, snp.options)
+		snp.options <- any(unlist(snp.options, use.names = FALSE))
+	} else {
+		snp.options <- FALSE
+	}
 	report <- rnb.add.optionlist(report, optionlist)
 
 	report <- rnb.step.quality(rnb.set, report)
-	include.mixups <- any(unlist(rnb.options("qc.snp.heatmap", "qc.snp.boxplot", "qc.snp.barplot")))
-	if (inherits(rnb.set, "RnBeadSet") && include.mixups) {
-		report <- rnb.step.mixups(rnb.set, report)
+	if (snp.options) {
+		report <- rnb.step.snp.probes(rnb.set, report)
 	}
-	if (.hasSlot(rnb.set, "inferred.covariates") && isTRUE(rnb.set@inferred.covariates$gender)) {
+	if (.hasSlot(rnb.set, "inferred.covariates") && isTRUE(rnb.set@inferred.covariates$sex)) {
 		if (inherits(rnb.set, "RnBeadRawSet")) {
 			signal.increases <- rnb.get.XY.shifts(rnb.set)
-		} else {
-			signal.increases <- NULL
+		} else if (inherits(rnb.set, "RnBiseqSet")) {
+			signal.increases <- rnb.get.XY.shifts.biseq(rnb.set)
 		}
-		report <- rnb.section.gender.prediction(rnb.set, signal.increases, report)
+		report <- rnb.section.sex.prediction(rnb.set, signal.increases, report)
+	}
+	if(rnb.getOption("qc.cnv")){
+	  if(inherits(rnb.set,"RnBeadRawSet")){
+	   report <- rnb.step.cnv(rnb.set,report)
+	  }else{
+	    logger.info("CNV estimation only applicable for RnBeadRawSet objects")
+	    txt <- "CNV estimation can only be performed for Illumina BeadChip data sets with signal intensity values available (RnBeadRawSet)"
+	    report <- rnb.add.section(report,"Copy number variation analysis",description = txt)
+	  }
 	}
 	module.complete(report, close.report, show.report)
 	invisible(report)
@@ -984,8 +1027,8 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 	validate.module.parameters(rnb.set, dir.reports, close.report, show.report)
 	module.start.log("Preprocessing")
 
+	## Decide if a normalization procedure is to be executed
 	do.normalization <- rnb.getOption("normalization")
-
 	if (is.null(do.normalization)) {
 		do.normalization <- inherits(rnb.set, "RnBeadSet")
 	} else if (do.normalization && inherits(rnb.set, "RnBiseqSet")) {
@@ -993,14 +1036,24 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 		do.normalization <- FALSE
 	}
 
+	## Decide if Greedycut is to be executed
+	do.greedycut <- rnb.getOption("filtering.greedycut")
+	if (is.null(do.greedycut)) {
+		do.greedycut <- inherits(rnb.set, "RnBeadSet")
+	} else {
+		if (!inherits(rnb.set, "RnBeadSet")){
+			logger.warning("filtering.greedycut disabled for non-array datasets.")
+			do.greedycut <- FALSE
+		}
+	}
+
 	## Option list
 	report <- init.pipeline.report("preprocessing", dir.reports, init.configuration)
-	o.greedycut.threshold <- ifelse(inherits(rnb.set, "RnBeadSet"), "filtering.greedycut.pvalue.threshold",
+	x.greedycut <- ifelse(inherits(rnb.set, "RnBeadSet"), "filtering.greedycut.pvalue.threshold",
 		"filtering.coverage.threshold")
-	optionlist <- rnb.options("filtering.whitelist", "filtering.blacklist", "filtering.snp",
-		"filtering.cross.reactive", "filtering.greedycut", o.greedycut.threshold, "filtering.greedycut.rc.ties")
-	attr.vec <- c(TRUE, TRUE, TRUE, TRUE, TRUE,
-		optionlist[["filtering.greedycut"]] || inherits(rnb.set, "RnBiseqSet"), optionlist[["filtering.greedycut"]])
+	optionlist <- rnb.options("filtering.whitelist", "filtering.blacklist", "filtering.snp", "filtering.cross.reactive",
+		"filtering.greedycut", x.greedycut, "filtering.greedycut.rc.ties","imputation.method")
+	attr.vec <- c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, do.greedycut, TRUE)
 	if (!inherits(rnb.set, "RnBeadSet")) {
 		optionlist <- optionlist[-4]
 		attr.vec <- attr.vec[-4]
@@ -1015,28 +1068,63 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 		optionlist <- c(optionlist, rnb.options("filtering.high.coverage.outliers", "filtering.low.coverage.masking"))
 		attr.vec <- c(attr.vec, TRUE, TRUE)
 	}
-	optionlist <- c(optionlist,
-			rnb.options("normalization.method", "normalization.background.method", "normalization.plot.shifts"))
-	attr.vec <- c(attr.vec, TRUE, TRUE, TRUE)
-	optionlist <- c(optionlist, rnb.options("filtering.context.removal", "filtering.missing.value.quantile",
+	optionlist <- c(optionlist, rnb.options("normalization.method", "normalization.background.method",
+			"normalization.plot.shifts", "filtering.context.removal", "filtering.missing.value.quantile",
 			"filtering.sex.chromosomes.removal", "filtering.deviation.threshold", "distribution.subsample"))
-	attr.vec <- c(attr.vec, TRUE, TRUE, TRUE, TRUE, TRUE)
+	attr.vec <- c(attr.vec, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE)
 	attr(optionlist, "enabled") <- attr.vec
 	report <- rnb.add.optionlist(report, optionlist)
+	rm(optionlist, x.greedycut, attr.vec)
 
 	## Prefiltering
 	logger.start(paste0("Filtering Procedures", ifelse(do.normalization, " I", "")))
 
+	## Load whitelist and blacklist
 	anno.table <- annotation(rnb.set, add.names = inherits(rnb.set, "RnBeadSet"))
 	whitelist <- rnb.process.sitelist(rnb.getOption("filtering.whitelist"), anno.table)
 	blacklist <- rnb.process.sitelist(rnb.getOption("filtering.blacklist"), anno.table)
+	if (is.null(whitelist) && is.null(blacklist)) {
+		whitelist <- integer()
+		blacklist <- integer()
+	} else {
+		## Add a section on whitelisted and/or blacklisted sites
+		txt <- character()
+		if (is.null(whitelist)) {
+			txt <- "A blacklist was"
+			tbl <- rnb.sitelist.info(blacklist, "black")
+			whitelist <- integer()
+		} else if (is.null(blacklist)) {
+			txt <- "A whitelist was"
+			tbl <- rnb.sitelist.info(whitelist, "white")
+			blacklist <- integer()
+		} else {
+			txt <- blacklist
+			blacklist <- setdiff(blacklist, whitelist)
+			attr(blacklist, "ignored") <- attr(txt, "ignored") + length(txt) - length(blacklist)
+			attr(blacklist, "note") <- attr(txt, "note")
+			tbl <- rbind(rnb.sitelist.info(whitelist, "white"), rnb.sitelist.info(blacklist, "black"))
+			txt <- "A whitelist and a blacklist were"
+		}
+		txt <- c(txt, " constructed based on the specified file", ifelse(grepl("were$", txt), "s", ""), ". The table ",
+			"below summarizes the number of identified records.")
+		report <- rnb.add.section(report, "Whitelist and Blacklist", txt)
+		rnb.add.table(report, tbl, FALSE)
+		txt <- "A record in a site list file is ignored when one of the following conditions are met:"
+		rnb.add.paragraph(report, txt)
+		tbl <- inherits(rnb.set, "RnBeadSet")
+		txt <- list(
+			paste0("it does not define a valid genomic position", ifelse(tbl, " or probe identifier", ""), ";"),
+			paste0("the position ", ifelse(tbl, "or probe ", ""), "it defines is not covered by the analyzed dataset;"),
+			"it is a duplicate of another record within the same list;",
+			"it is a record in the blacklist which is also present in the whitelist.")
+		rnb.add.list(report, txt)
+		txt <- "As described in the last condition above, the whitelist has a precedence over the blacklist."
+		rnb.add.paragraph(report, txt)
+		rm(txt, tbl)
+	}
 	removed.sites <- sort(union(blacklist, whitelist))
 	removed.samples <- integer()
 
-	if (length(whitelist) != 0 || length(blacklist) != 0) {
-		## TODO: Add a section on whitelisted and/or blacklisted sites
-		# setdiff(blacklist, whitelist)
-	}
 	if (rnb.getOption("filtering.snp") != "no") {
 		result <- rnb.step.snp.removal.internal(class(rnb.set), removed.sites, report, anno.table)
 		report <- result$report
@@ -1047,7 +1135,7 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 		report <- result$report
 		removed.sites <- sort(c(removed.sites, result$filtered))
 	}
-	if (rnb.getOption("filtering.greedycut")) {
+	if (do.greedycut) {
 		result <- rnb.step.greedycut.internal(rnb.set, removed.sites, report, anno.table)
 		report <- result$report
 		removed.sites <- sort(c(removed.sites, result$sites))
@@ -1068,6 +1156,7 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 		report <- result$report
 	}
 	suppressWarnings(rm(result))
+	rnb.cleanMem()
 
 	logger.completed.filtering <- function(rnb.set, r.samples, r.sites) {
 		retained.p <- nsites(rnb.set) - length(r.sites)
@@ -1083,7 +1172,7 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 
 		logger.start("Summary of Filtering Procedures I")
 		report <- rnb.step.filter.summary.internal(rnb.set, removed.samples, removed.sites,
-				report, section.name="Filtering Summary I", section.order=1)
+				report, section.name="Filtering Summary I")
 		logger.completed()
 
 		rnb.set <- rnb.filter.dataset(rnb.set, removed.samples, removed.sites, mask)
@@ -1097,10 +1186,13 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 		rnb.cleanMem()
 
 		logger.start("Filtering Procedures II")
+		sn <- " II"
 		anno.table <- annotation(rnb.set, add.names = inherits(rnb.set, "RnBeadSet"))
 		whitelist <- rnb.process.sitelist(rnb.getOption("filtering.whitelist"), anno.table)
 		removed.samples <- integer()
 		removed.sites <- whitelist
+	} else {
+		sn <- ""
 	}
 
 	## Postfiltering
@@ -1117,8 +1209,8 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 	}
 	ttt <- rnb.getOption("filtering.missing.value.quantile")
 	if (ttt != 1) {
-		if (is.null(mm)) mm <- meth(rnb.set)
-		result <- rnb.step.na.removal.internal(class(rnb.set), mm, removed.sites, report, anno.table, ttt, mask)
+		# if (is.null(mm)) mm <- meth(rnb.set)
+		result <- rnb.step.na.removal.internal(rnb.set, removed.sites, report, anno.table, ttt, mask)
 		report <- result$report
 		removed.sites <- sort(c(removed.sites, result$filtered))
 	}
@@ -1134,24 +1226,23 @@ rnb.run.preprocessing <- function(rnb.set, dir.reports,
 	## Summary (II)
 	removed.sites <- setdiff(removed.sites, whitelist)
 	logger.completed.filtering(rnb.set, removed.samples, removed.sites)
-	
+	logger.start(paste0("Summary of Filtering Procedures", sn))
 	rnb.cleanMem()
-
-	logger.start(paste0("Summary of Filtering Procedures", ifelse(do.normalization, " II", "")))
-	
-	if(do.normalization){
-		sn<-"Filtering Summary II"
-		so<-2L
-	}else{
-		sn<-"Filtering Summary"
-		so<-0L
-	}
-	report <- rnb.step.filter.summary.internal(rnb.set, removed.samples, removed.sites,
-			report, section.name=sn, section.order=so)
+	sn <- paste0("Filtering Summary", sn)
+	report <- rnb.step.filter.summary.internal(rnb.set, removed.samples, removed.sites, report, section.name = sn)
 	logger.completed()
 
 	rnb.set <- rnb.filter.dataset(rnb.set, removed.samples, removed.sites, mask)
 
+	## Imputation
+	if((rnb.getOption("imputation.method")%in%c("none"))){
+	  logger.info("Imputation was skipped, data set may still contain missing methylation values")
+	}else{
+	  imputation.result <- rnb.step.imputation(rnb.set,report)
+	  rnb.set <- imputation.result$dataset
+	  report <- imputation.result$report
+	}
+	
 	if (rnb.getOption("region.subsegments") > 1L) {
 		res <- rnb.step.region.subsegmentation(rnb.set, report, region.types=rnb.getOption("region.subsegments.types"))
 		rnb.set <- res$rnb.set
@@ -1175,8 +1266,68 @@ rnb.run.inference <- function(rnb.set, dir.reports,
 	module.start.log("Covariate Inference")
 
 	report <- init.pipeline.report("covariate_inference", dir.reports, init.configuration)
-	optionlist <- rnb.options("inference.targets.sva","inference.sva.num.method","covariate.adjustment.columns", "export.to.ewasher")
+	optionlist <- rnb.options("inference.genome.methylation", "inference.targets.sva", "inference.sva.num.method",
+		"covariate.adjustment.columns", "export.to.ewasher", "inference.age.prediction",
+		"inference.age.prediction.training", "inference.age.prediction.predictor", "inference.age.column",
+		"inference.age.prediction.cv", "inference.immune.cells")
+	if (is.null(optionlist[[1]])) {
+		optionlist[[1]] <- ""
+	}
 	report <- rnb.add.optionlist(report, optionlist)
+
+	## Genome-wide methylation levels
+	cname <- rnb.getOption("inference.genome.methylation")
+	if (nchar(cname) != 0) {
+		meth.levels <- rnb.execute.genomewide(rnb.set)
+		report <- rnb.section.genomewide(report, meth.levels)
+		if (!all(is.na(meth.levels))) {
+			rnb.set@pheno[[cname]] <- meth.levels
+		}
+		rm(meth.levels)
+	}
+
+	if (inherits(rnb.set,"RnBSet") && rnb.getOption("inference.age.prediction")){
+		ph <- pheno(rnb.set)
+		ages <- ph$predicted_ages
+		if(is.null(ages)){
+			if(rnb.getOption("inference.age.prediction.training")){
+				logger.start("Training new age predictor")
+				report.data.dir <- file.path(dir.reports,rnb.get.directory(report,"data"))
+				prediction_path <- trainPredictor(rnb.set,report.data.dir)
+				logger.completed()
+			}
+			prediction_path <- rnb.getOption("inference.age.prediction.predictor")
+			if(inherits(rnb.set,"RnBSet")){
+				if(!is.null(prediction_path)&&prediction_path!=""){
+					logger.start("Age Prediction using specified predictor")
+					rnb.set <- agePredictor(rnb.set,prediction_path)
+					logger.completed()
+				}else{
+				  logger.start("Age Prediction using predefined predictor")
+				  rnb.set <- agePredictor(rnb.set)
+				  logger.completed()
+				}
+			}
+		}else{
+			logger.info("We already have a predicted age in the phenotypic table of the dataset.")
+		}
+		report <- rnb.step.ageprediction(rnb.set,report)
+	}
+
+	## LUMP estimates
+	if (rnb.getOption("inference.immune.cells")) {
+		immune.content <- tryCatch(rnb.execute.lump(rnb.set), error = function(err) { err$message })
+		report <- rnb.section.lump(report, immune.content,s.groups=rnb.sample.groups(rnb.set))
+		if (is.double(immune.content)) {
+			rnb.set@pheno$`Immune Cell Content (LUMP)` <- as.double(immune.content)
+			rnb.set@inferred.covariates$`LUMP` <- TRUE
+			rnb.status("Calculated LUMP estimates")
+		} else if (is.null(immune.content)) {
+			rnb.set@inferred.covariates$`LUMP` <- FALSE
+			rnb.status("Could not calculate LUMP estimates")
+		}
+		rm(immune.content)
+	}
 
 	if (length(rnb.getOption("inference.targets.sva"))>0) {
 		logger.start("Surrogate Variable Analysis (SVA)")
@@ -1203,6 +1354,16 @@ rnb.run.inference <- function(rnb.set, dir.reports,
 		report <- rnb.section.export.ct.adj(res.exp,rnb.set,report)
 	}
 
+	# Write new phenotypic table and add link in the report
+	pheno.table <- pheno(rnb.set)
+	fname.rel <- rnb.write.table(
+	  pheno.table, fname="extended_pheno_table.csv", fpath=rnb.get.directory(report, "data", absolute = TRUE),
+	  format="csv", gz=FALSE, row.names = FALSE, quote=FALSE
+	)
+	txt <- paste("The updated sample annotation sheet, with the inferred covariates added as additional columns, is available as a ",
+	         "<a href=",paste0(rnb.get.directory(report, "data"), "/",fname.rel),">comma-separated file</a>.")
+	report <- rnb.add.section(report,title="Updated Sample Sheet",description = txt)
+	
 	module.complete(report, close.report, show.report)
 	return(list(rnb.set = rnb.set, report = report))
 }
@@ -1229,14 +1390,14 @@ rnb.run.tnt <- function(rnb.set, dir.reports,
 		report <- rnb.section.export.csv(report, result)
 		logger.status("Added \"CSV Export\" section to the report")
 	}
-	provided.email <- rnb.getOption("email")
-	if (is.null(provided.email)) provided.email <- "-@-.com"
-	res <- rnb.execute.tnt(rnb.set,rnb.get.directory(report, "data", absolute = TRUE),
-		exp.bed=rnb.getOption("export.to.bed"),exp.trackhub=rnb.getOption("export.to.trackhub"),
-		email=provided.email)
-	logger.start("Writing export report")
-	report <- rnb.section.tnt(res,rnb.set,report)
-	logger.completed()
+	if (rnb.tracks.to.export(rnb.set)) {
+		provided.email <- rnb.getOption("email")
+		if (is.null(provided.email)) provided.email <- "-@-.com"
+		res <- rnb.execute.tnt(rnb.set, rnb.get.directory(report, "data", absolute = TRUE), email = provided.email)
+		logger.start("Writing export report")
+		report <- rnb.section.tnt(res,rnb.set,report)
+		logger.completed()
+	}
 
 	module.complete(report, close.report, show.report)
 	invisible(report)
@@ -1290,7 +1451,10 @@ rnb.run.exploratory <- function(rnb.set, dir.reports,
 	if (!is.null(rnb.getOption("replicate.id.column"))) {
 		replicateList <- rnb.sample.replicates(rnb.set, replicate.id.col = rnb.getOption("replicate.id.column"))
 		if (length(replicateList) > 0) {
-			region.types <- c("sites", rnb.region.types.for.analysis(rnb.set))
+			region.types <- rnb.region.types.for.analysis(rnb.set)
+			if (rnb.getOption("analyze.sites")){
+				region.types <- c("sites", region.types)
+			}
 			report <- rnb.section.replicate.concordance(rnb.set, replicateList, types = region.types, report)
 		}
 	}
@@ -1309,7 +1473,8 @@ rnb.run.exploratory <- function(rnb.set, dir.reports,
 		report <- result$report
 
 		## Quality-associated batch effects
-		if (rnb.getOption("exploratory.correlation.qc") && inherits(rnb.set, "RnBeadSet")) {
+		if (rnb.getOption("exploratory.principal.components") != 0 && rnb.getOption("exploratory.correlation.qc") &&
+				inherits(rnb.set, "RnBeadSet")) {
 			report <- rnb.step.batch.qc(rnb.set, report, pcoordinates, permutations = result$permutations)
 		}
 	}
@@ -1321,7 +1486,11 @@ rnb.run.exploratory <- function(rnb.set, dir.reports,
 	}
 
 	## Inter-sample variability
-	if (rnb.getOption("exploratory.intersample")) {
+	do.intersample <- rnb.getOption("exploratory.intersample")
+	if(is.null(do.intersample)){
+	  do.intersample <- inherits(rnb.set,"RnBeadSet")
+	}
+	if (do.intersample) {
 		report <- rnb.step.intersample.internal(rnb.set, report, sample.inds, rinfos)
 	}
 
@@ -1335,8 +1504,13 @@ rnb.run.exploratory <- function(rnb.set, dir.reports,
 	if (is.null(profile.types)) {
 		profile.types <- intersect(summarized.regions(rnb.set), rnb.region.types(rnb.set@assembly))
 	}
-	if (length(profile.types) != 0) {
-		report <- rnb.step.region.profiles(rnb.set, report, profile.types, subsample=rnb.getOption("distribution.subsample"))
+	profile.types.in.set <- intersect(profile.types, summarized.regions(rnb.set))
+	profile.types.not.in.set <- setdiff(profile.types, summarized.regions(rnb.set))
+	if (length(profile.types.not.in.set) > 0){
+		logger.warning(c("The following region types are not contained in the RnBSet. They will be discarded for regional methylation profiling:", paste(profile.types.not.in.set, collapse=", ")))
+	}
+	if (length(profile.types.in.set) != 0) {
+		report <- rnb.step.region.profiles(rnb.set, report, profile.types.in.set, subsample=rnb.getOption("distribution.subsample"))
 	}
 	custom.genes <- rnb.getOption("exploratory.gene.symbols")
 	custom.loci.bed <- rnb.getOption("exploratory.custom.loci.bed")
@@ -1360,9 +1534,10 @@ rnb.run.differential <- function(rnb.set, dir.reports,
 	module.start.log("Differential Methylation")
 
 	report <- init.pipeline.report("differential_methylation", dir.reports, init.configuration)
-	optionlist <- rnb.options("analyze.sites","region.types", "differential.permutations", "differential.comparison.columns",
-		"differential.comparison.columns.all.pairwise","columns.pairing","differential.site.test.method","covariate.adjustment.columns",
-		"differential.adjustment.sva","differential.adjustment.celltype","differential.enrichment")
+	optionlist <- rnb.options("analyze.sites", "differential.report.sites", "region.types", "differential.permutations", "differential.comparison.columns",
+		"differential.comparison.columns.all.pairwise","columns.pairing","differential.site.test.method",
+	  "differential.variability","differential.variability.method","covariate.adjustment.columns",
+		"differential.adjustment.sva","differential.adjustment.celltype","differential.enrichment.go","differential.enrichment.lola","differential.enrichment.lola.dbs")
 	report <- rnb.add.optionlist(report, optionlist)
 	permutations <- rnb.getOption("differential.permutations")
 
@@ -1401,14 +1576,49 @@ rnb.run.differential <- function(rnb.set, dir.reports,
 			disk.dump=disk.dump,disk.dump.dir=disk.dump.dir
 		)
 		rnb.cleanMem()
-		if (!is.null(diffmeth) && rnb.getOption("differential.enrichment") && (length(reg.types)>0)){
-			dm.enrich <- performEnrichment.diffMeth(rnb.set,diffmeth,verbose=TRUE)
-			rnb.cleanMem()
+
+		dm.go.enrich <- NULL
+		dm.lola.enrich <- NULL
+		if (!is.null(diffmeth) && (length(reg.types)>0) && (rnb.getOption("differential.enrichment.go") || rnb.getOption("differential.enrichment.lola"))){
+			if (rnb.getOption("differential.enrichment.go")){
+				dm.go.enrich <- performGoEnrichment.diffMeth(rnb.set,diffmeth,verbose=TRUE)
+				if(rnb.getOption("differential.variability")){
+				  dm.go.enrich <- performGOEnrichment.diffVar(rnb.set,diffmeth,enrich.diffMeth = dm.go.enrich)
+				}
+				rnb.cleanMem()
+			}
+			if (rnb.getOption("differential.enrichment.lola")){
+				lolaDbPaths <- prepLolaDbPaths(assembly(rnb.set), downloadDir=rnb.get.directory(report, "data", absolute=TRUE))
+				if (length(lolaDbPaths) > 0){
+					dm.lola.enrich <- performLolaEnrichment.diffMeth(rnb.set, diffmeth, lolaDbPaths, verbose=TRUE)
+					if(rnb.getOption("differential.variability")){
+					  dm.lola.enrich <- performLolaEnrichment.diffVar(rnb.set,diffmeth,enrich.diffMeth=dm.lola.enrich,lolaDbPaths,verbose=TRUE)
+					}
+					rnb.cleanMem()
+				} else {
+					logger.warning(c("No LOLA DB found for assembly", assembly(rnb.set), "--> continuing without LOLA enrichment"))
+				}
+			}
 		} else {
-			dm.enrich <- NULL
 			logger.info(c("Skipping enrichment analysis of differentially methylated regions"))
 		}
 	logger.completed()
+
+	if (TRUE){
+		logger.start("Saving temp objects for debugging")
+			dataDir <- rnb.get.directory(report, "data", absolute=TRUE)
+			diffmeth.path <- file.path(dataDir, "differential_rnbDiffMeth")
+			save.rnb.diffmeth(diffmeth, diffmeth.path)
+			diffmeth.go.enrichment <- dm.go.enrich
+			if (!is.null(diffmeth.go.enrichment)){
+				save(diffmeth.go.enrichment, file=file.path(diffmeth.path, "enrichment_go.RData"))
+			}
+			diffmeth.lola.enrichment <- dm.lola.enrich
+			if (!is.null(diffmeth.lola.enrichment)){
+				save(diffmeth.lola.enrichment, file=file.path(diffmeth.path, "enrichment_lola.RData"))
+			}
+		logger.completed()
+	}
 
 	logger.start("Report Generation")
 	if (is.null(diffmeth)){
@@ -1416,19 +1626,19 @@ rnb.run.differential <- function(rnb.set, dir.reports,
 		report <- rnb.add.section(report, "Differential Methylation Analysis", txt)
 	} else {
 		gz <- rnb.getOption("gz.large.files")
-		includeSites <- rnb.getOption("analyze.sites")
+		includeSites <- rnb.getOption("analyze.sites") && rnb.getOption("differential.report.sites")
 		report <- rnb.section.diffMeth.introduction(diffmeth,report)
 		if (includeSites){
 			report <- rnb.section.diffMeth.site(rnb.set,diffmeth,report,gzTable=gz)
 		}
 		if (length(get.region.types(diffmeth))>0){
-			report <- rnb.section.diffMeth.region(rnb.set,diffmeth,report,dm.enrich=dm.enrich,gzTable=gz)
+			report <- rnb.section.diffMeth.region(rnb.set,diffmeth,report,dm.go.enrich=dm.go.enrich,dm.lola.enrich=dm.lola.enrich,gzTable=gz)
 		}
 	}
 	logger.completed()
 
 	module.complete(report, close.report, show.report)
-	invisible(list(report=report,diffmeth=diffmeth,dm.enrich=dm.enrich))
+	invisible(list(report=report,diffmeth=diffmeth,dm.go.enrich=dm.go.enrich,dm.lola.enrich=dm.lola.enrich))
 }
 
 ########################################################################################################################
@@ -1445,7 +1655,7 @@ rnb.run.differential <- function(rnb.set, dir.reports,
 #'
 #' @details
 #' For more information about the examples, please visit the dedicated
-#' \href{http://rnbeads.mpi-inf.mpg.de/examples.php}{page on the RnBeads web site}.
+#' \href{https://rnbeads.org/examples.html}{page on the RnBeads web site}.
 #'
 #' @examples
 #' \donttest{
@@ -1473,6 +1683,12 @@ rnb.run.example <- function(index = 4L, dir.output = "example") {
 	if (!create.path(dir.output, accept.existing = FALSE, showWarnings = FALSE)) {
 		stop(paste("could not create", dir.output))
 	}
+	if(index==2){
+		if(!requireNamespace("RnBeads.mm9")){
+			logger.warning("Missing required package RnBeads.mm9, downloading...")
+			install("RnBeads.mm9")
+		}
+	}
 
 	## Initialize the preprocessing log
 	if (logger.isinitialized()) {
@@ -1484,9 +1700,9 @@ rnb.run.example <- function(index = 4L, dir.output = "example") {
 	## Download and extract the example's files
 	logger.start("Downloading and Unpacking Data Files", fname = logfile)
 	logger.info(c("Processing example", index))
-	url.file <- paste0("http://rnbeads.mpi-inf.mpg.de/publication/data/example_", index, ".tar.gz")
+	url.file <- paste0("https://rnbeads.org/materials/data/example_", index, ".tar.gz")
 	local.file <- file.path(dir.output, paste0("example_", index, ".tar.gz"))
-	result <- download.file(url.file, destfile = local.file, method = "internal", mode = "wb")
+	result <- download.file(url.file, destfile = local.file, mode = "wb")
 	if (result != 0) {
 		unlink(dir.output, recursive = TRUE)
 		if (!is.null(logfile)) {

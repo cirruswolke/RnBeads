@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBDiffMeth-class.R
 \docType{methods}
 \name{get.comparison.groupsizes,RnBDiffMeth-method}
-\alias{get.comparison.groupsizes}
 \alias{get.comparison.groupsizes,RnBDiffMeth-method}
+\alias{get.comparison.groupsizes}
 \title{get.comparison.groupsizes-methods}
 \usage{
 \S4method{get.comparison.groupsizes}{RnBDiffMeth}(object)
@@ -30,4 +30,3 @@ get.comparison.groupsizes(dm)
 \author{
 Fabian Mueller
 }
-

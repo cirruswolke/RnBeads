@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBSet-class.R
 \docType{methods}
 \name{regions,RnBSet-method}
-\alias{regions}
 \alias{regions,RnBSet-method}
+\alias{regions}
 \title{regions-methods}
 \usage{
 \S4method{regions}{RnBSet}(object, type = NULL)
@@ -35,11 +35,10 @@ data(small.example.object)
 head(regions(rnb.set.example))
 }
 }
-\author{
-Pavlo Lutsik
-}
 \seealso{
 \code{\link[=summarized.regions,RnBSet-method]{summarized.regions}} for all summarized region types in a dataset;
   \code{\link{rnb.get.chromosomes}} listing all supported chromosomes for a given genome assembly
 }
-
+\author{
+Pavlo Lutsik
+}

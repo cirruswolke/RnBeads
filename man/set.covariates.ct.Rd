@@ -17,4 +17,3 @@ The modified \code{RnBSet}.
 \description{
 Adds the results of cell type estimation to an RnBSet
 }
-

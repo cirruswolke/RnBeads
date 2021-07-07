@@ -263,19 +263,18 @@ rnb.section.quality<-function(report, rnb.set, qc.boxplots=rnb.getOption("qc.box
 
 #######################################################################################################################
 
-#' rnb.step.mixups
+#' rnb.step.snp.probes
 #'
-#' Cteates sample mixups section in the quality control report
+#' Computes statistics on the SNP-based probes in the given dataset and creates a corresponding section in the report.
 #'
 #' @param object a \code{\linkS4class{RnBeadSet}} object
 #' @param report Report on methylation profiles to contain the dimension reduction section. This must be an object of
 #'               type \code{\linkS4class{Report}}.
-#'
 #' @return the modified report object
 #'
 #' @author Pavlo Lutsik
 #' @noRd
-rnb.step.mixups<-function(object, report){
+rnb.step.snp.probes<-function(object, report){
 
 	if(!inherits(object,"RnBSet")){
 		stop("Supplied object is not of the class inheriting from RnBSet")
@@ -284,10 +283,10 @@ rnb.step.mixups<-function(object, report){
 		stop("invalid value for report")
 	}
 
-	logger.start("Visualizing Sample Mixups")
-	if (any(unlist(rnb.options("qc.snp.heatmap", "qc.snp.boxplot", "qc.snp.barplot")))) {
+	logger.start("Visualizing SNP Probe Data")
+	if (any(unlist(rnb.options("qc.snp.heatmap", "qc.snp.boxplot", "qc.snp.barplot", "qc.snp.purity")))) {
 		logger.start("Mixups Visualization Section")
-		report<-rnb.section.mixups(report,object)
+		report <- rnb.section.snp.probes(report,object)
 		logger.completed()
 	}
 	logger.completed()
@@ -297,86 +296,56 @@ rnb.step.mixups<-function(object, report){
 
 #######################################################################################################################
 
-#' rnb.section.mixups
+#' rnb.section.snp.probes
 #'
-#' Adds sample mixups section to quality control report
+#' Adds a section on the SNP-based probes to the given report.
 #'
-#' @param report           Report to contain the new section. This must be an object of type \code{\linkS4class{Report}}.
-#' @param object           Methylation dataset as an object of type \code{\linkS4class{RnBeadSet}}.
-#' @param qc.snp.heatmap   ...
-#' @param qc.snp.distances Flag indicating if intersample distances based on the beta values of SNP probes are to be
-#'                         displayed.
-#' @param qc.snpboxplot    Flag indicating if box plots of beta values for each of SNP probes is to be displayed.
-#' @param qc.snpbarplot    Flag indicating if bar plots of beta values at SNP probes, one bar plot par sample.
+#' @param report Report to contain the new section. This must be an object of type \code{\linkS4class{Report}}.
+#' @param object Methylation dataset as an object of type \code{\linkS4class{RnBeadSet}}.
 #' @return The (possibly modified) report.
 #'
 #' @author Pavlo Lutsik
 #' @noRd
-rnb.section.mixups<-function(report, object,
-	qc.snp.heatmap=rnb.getOption("qc.snp.heatmap"),
-	qc.snp.distances=rnb.getOption("qc.snp.distances"),
-	qc.snp.boxplot=rnb.getOption("qc.snp.boxplot"),
-	qc.snp.barplot=rnb.getOption("qc.snp.barplot")) {
+rnb.section.snp.probes <- function(report, object) {
 
-	if (!inherits(report, "Report")) {
-		stop("invalid value for report")
-	}
-	if (!inherits(object, "RnBeadSet")) {
-		stop("invalid value for rnb.set")
-	}
-	if (!parameter.is.flag(qc.snp.heatmap)) {
-		stop("invalid value for qc.snp.heatmap")
-	}
-	if (!parameter.is.flag(qc.snp.distances)) {
-		stop("invalid value for qc.snp.distances")
-	}
-	if (!parameter.is.flag(qc.snp.boxplot)) {
-		stop("invalid value for qc.snp.boxplot")
-	}
-	if (!parameter.is.flag(qc.snp.barplot)) {
-		stop("invalid value for qc.snp.barplot")
-	}
-
-	section.title <- "Visualization of Sample Mixups"
-	if(object@target=="probes450" || object@target=="probesEPIC"){
-		snp.probes.present <- any(grepl("^rs", annotation(object, add.names = TRUE)[, "ID"]))
-	}else if(object@target=="probes27"){
-		snp.probes.present <- !is.null(qc(object))
-	}
-	if (!snp.probes.present) {
+	mm.snps <- tryCatch(rnb.get.snp.matrix(object), error = function(err) { NULL })
+	section.title <- "Visualization of SNP Probe Data"
+	if (is.null(mm.snps)) {
 		txt <- c("Overview of SNP-based probes and sample comparison based on them cannot be performed ",
 			"because the dataset does not contain such probes.")
 		report <- rnb.add.section(report, section.title, txt)
 		return(report)
 	}
-	txt <- c("SNP-based box and bar plots that facilitate identification of the sample mixups.")
+	txt <- c("Analysis of the values of the SNP-based probes can help identify sample mixups.")
 	report <- rnb.add.section(report, section.title, txt)
 
 	add.info <- function(stitle, ffunction, txt) {
 		result <- rnb.add.section(report, stitle, txt, level = 2)
-		result <- ffunction(result, object)
+		result <- ffunction(result, mm.snps)
 		rnb.status(c("Added", stitle))
 		result
 	}
 
-	if (qc.snp.heatmap) {
-		txt <- "SNP Heatmap allows for identification of sample mixups in particular for genetically matched designs."
-		report <- add.info("SNP Heatmap", add.snp.heatmap, txt)
+	if (rnb.getOption("qc.snp.heatmap")) {
+		txt <- "SNP heatmap enables the identification of sample mixups in particular for genetically matched designs."
+		report <- add.info("SNP Heatmap", rnb.add.snp.heatmap, txt)
 	}
-	if (qc.snp.distances) {
-		txt <- c("If we inspect the samples in the space defined by the SNP probes only, samples appear close to ",
-			"each other are genetically similar. We calculated the Manhattan distance between all vectors of SNP ",
-			"probes. The figure below shows the relative distances.")
-		report <- add.info("SNP-based Distances", add.snp.distances, txt)
+	if (rnb.getOption("qc.snp.barplot")) {
+		txt <- "SNP bar plots enable the identification of sample mixups in particular for genetically matched designs."
+		report <- add.info("SNP Bar Plots", rnb.add.snp.barplot, txt)
 	}
-	if (qc.snp.boxplot) {
-		txt <- c("SNP box plot allows the identification of sample mixups in case a genetically homogeneous set ",
-			"of samples is analyzed.")
-		report <- add.info("SNP Box Plot", add.snp.boxplot, txt)
+	if (rnb.getOption("qc.snp.boxplot")) {
+		txt <- c("The SNP box plot is a visualization tool that can show sample mixups, especially in the case the ",
+			"set of samples is genetically homogeneous.")
+		report <- add.info("SNP Box Plot", rnb.add.snp.boxplot, txt)
 	}
-	if (qc.snp.barplot) {
-		txt <- "SNP bar plots allow identification of sample mixups, in particular for genetically matched designs."
-		report <- add.info("SNP Bar Plots", add.snp.barplot, txt)
+	if (rnb.getOption("qc.snp.distances")) {
+		txt <- c("If we inspect the dataset in the space defined by the SNP probes only, samples appearing close to ",
+			"each other are genetically similar.")
+		report <- add.info("SNP-based Distances", rnb.add.snp.distances, txt)
+	}
+	if (rnb.getOption("qc.snp.purity")) {
+		report <- rnb.add.snp.purity(report, mm.snps, object@pheno)
 	}
 
 	return(report)
@@ -396,6 +365,8 @@ add.qc.boxplots<-function(report, object){
   	ctypes<-rnb.infinium.control.targets(object@target)[c(13,4,3,14,1:2,11:12,6)]
   }else if(object@target=="probes27"){
 	ctypes<-rnb.infinium.control.targets(object@target)[c(10,3,2,11,1,9,6)]
+  }else if(object@target=="probesMMBC"){
+      ctypes<-rnb.infinium.control.targets(object@target)[c(14,4,3,15,1:2,12:13,6,11)]
   }
 
   cplots<-lapply(ctypes, rnb.plot.control.boxplot, rnb.set=object, report=report, writeToFile=TRUE, numeric.names=TRUE, width=8, height=6, low.png=100, high.png=300)
@@ -424,6 +395,9 @@ add.qc.barplots<-function(report, object, sample.batch.size=50){
   }else if(object@target=="probes27"){
 	cmd <- rnb.get.annotation("controls27")
 	ctypes<-unique(cmd$Type)[unique(cmd$Type) %in% rnb.infinium.control.targets("probes27")[c(10,3,2,11,1,9,6)]]
+  }else if(object@target=="probesMMBC"){
+    cmd <- rnb.get.annotation("controlsMMBC", assembly="mm10")
+    ctypes<-unique(cmd$Target)[unique(cmd$Target) %in% rnb.infinium.control.targets("probesEPIC")[c(14,4,3,15,1:2,12:13,6,11)]]
   }
   nsamp<-length(samples(object))
 
@@ -441,7 +415,7 @@ add.qc.barplots<-function(report, object, sample.batch.size=50){
 
 	  cplots<-lapply(ctypes, function(type){
 
-		if(object@target=="probes450" || object@target=="probesEPIC"){
+		if(object@target=="probes450" || object@target=="probesEPIC" || object@target=="probesMMBC"){
 			cmdt <- cmd[cmd[["Target"]] == type, ]
 			pn<-paste(type, 1:(dim(cmdt)[1]),  sep=".")
 		}else if(object@target=="probes27"){
@@ -455,7 +429,7 @@ add.qc.barplots<-function(report, object, sample.batch.size=50){
 				report=report, writeToFile=TRUE, numeric.names=TRUE, width=8, height=6, low.png=100, high.png=300, verbose=TRUE,
 				name.prefix=portions[portion.id])
 
-		if(object@target=="probes450" || object@target=="probesEPIC"){
+		if(object@target=="probes450" || object@target=="probesEPIC" || object@target=="probesMMBC"){
 			names(plots)<-paste(type, 1:(dim(cmdt)[1]))
 		}else if(object@target=="probes27"){
 			names(plots)<-as.character(cmdt$Name)
@@ -477,10 +451,10 @@ add.qc.barplots<-function(report, object, sample.batch.size=50){
 
 
   names(sn[[1]])<-portions
-  if(object@target=="probes450" || object@target=="probesEPIC"){
+  if(object@target=="probes450" || object@target=="probesEPIC" || object@target == "probesMMBC"){
   	names(sn[[2]])<-1:length(plot.names)
   }else if(object@target=="probes27"){
-	names(sn[[2]])<-match(plot.names,cmd$Name)
+	names(sn[[2]])<-match(plot.names,cmd$Name[cmd$Type %in% rnb.infinium.control.targets("probes27")[c(10,3,2,11,1,9,6)]])
   }
 
   report<-rnb.add.figure(report, description=descr, report.plots=plots, setting.names=sn)
@@ -523,95 +497,81 @@ add.negative.control.boxplot<-function(report, object, sample.batch.size=50){
 
 #######################################################################################################################
 
-add.snp.boxplot<-function(report, object){
+rnb.add.snp.boxplot<-function(report, object){
 
-  descr<-"Box plots of the SNP probes."
-
-#   cplots<-lapply(ctypes, control.boxplot, rnb.set=object, report=report, writeToFile=TRUE)
-#   names(cplots)<-gsub(" ", ".", ctypes)
-#
-#   sn<-list(tolower(ctypes))
-#   names(sn[[1]])<-gsub(" ", ".", ctypes)
-  cplots<-list(SNPBoxplot=rnb.plot.snp.boxplot(object, writeToFile=TRUE, report=report, width=9, height=6, low.png=100, high.png=300))
-  report<-rnb.add.figure(report, description=descr, report.plots=cplots)
-  report
-
+  txt <- "Box plot of the SNP probes."
+  rplot <- rnb.plot.snp.boxplot(object, writeToFile=TRUE, report=report, width=9, height=6, low.png=100, high.png=300)
+  rnb.add.figure(report, txt, rplot)
 }
 
 #######################################################################################################################
 
-add.snp.barplot<-function(report, object){
+rnb.add.snp.barplot<-function(report, object){
 
-	descr<-"Bar plots of the SNP probes beta values. Genetically matched samples should show very similar profiles."
-
-	ids <- samples(object)
-
-	cplots<-lapply(ids, rnb.plot.snp.barplot, rnb.set=object, report=report, writeToFile=TRUE, numeric.names=TRUE, width=9, height=6, low.png=100, high.png=300)
-	names(cplots)<-1:length(ids)
-
-	sn<-list("Sample labels"=tolower(ids))
-	names(sn[[1]])<-1:length(ids)
-
-
-	report<-rnb.add.figure(report, description=descr, report.plots=cplots, setting.names=sn)
-
-	report
-
+	txt <- "Bar plot of all observed beta values for a SNP probe."
+	rplots <- list()
+	for (probe.id in rownames(object)) {
+		rplot <- rnb.plot.snp.barplot(object, probe.id, TRUE, TRUE, report = report, width=9, height=6, high.png=300)
+		rplots <- c(rplots, list(rplot))
+	}
+	setting.names <- list("Probe" = rownames(object))
+	names(setting.names[[1]]) <- 1:length(setting.names[[1]])
+	rnb.add.figure(report, txt, rplots, setting.names)
 }
 
 #######################################################################################################################
 
-add.snp.heatmap<-function(report, object){
-
-	descr<-"Heat map of the SNP probes. The samples with the same genetic background should cluster together."
-
-#   cplots<-lapply(ctypes, control.boxplot, rnb.set=object, report=report, writeToFile=TRUE)
-#   names(cplots)<-gsub(" ", ".", ctypes)
-#
-#   sn<-list(tolower(ctypes))
-#   names(sn[[1]])<-gsub(" ", ".", ctypes)
-	cplots<-list(SNPHeatmap=rnb.plot.snp.heatmap(object, writeToFile=TRUE, report=report, width=8, height=9, low.png=100, high.png=300))
-	report<-rnb.add.figure(report, description=descr, report.plots=cplots)
-	report
-
+rnb.add.snp.heatmap<-function(report, object){
+	txt <- paste0("Heatmap of the SNP probes. Euclidean distance and complete linkage are used for constructing the ",
+		"dendrograms. Samples with the same genetic background are expected to cluster together.")
+	rplot <- rnb.plot.snp.heatmap(object, writeToFile=TRUE, report=report, width=8, height=9, low.png=100, high.png=300)
+	rnb.add.figure(report, txt, rplot)
 }
 
 #######################################################################################################################
 
-## add.snp.distances
-##
-## Adds a section about sample distances based on beta values of SNP probes.
-##
-## @param report Report to contain the section on SNP probe distances.
-## @param object Methylation dataset as an object of type \code{\linkS4class{RnBeadSet}}.
-## @return The (possibly modified) report.
-## @author Yassen Assenov
-add.snp.distances <- function(report, object) {
+#' rnb.add.snp.distances
+#'
+#' Adds a section about sample distances based on beta values of SNP probes.
+#'
+#' @param report Report to contain the section on SNP probe distances.
+#' @param object Non-empty \code{matrix} containing the computed beta values on the SNP probes.
+#' @return The (possibly modified) report.
+#' @author Yassen Assenov
+#' @noRd
+rnb.add.snp.distances <- function(report, object) {
 
 	## Extract the matrix of beta values on the SNP probes
-	if(object@target=="probes450" || object@target=="probesEPIC"){
-		snp.betas <- meth(object, row.names = TRUE)
-		snp.betas <- snp.betas[grep("^rs", rownames(snp.betas)), ]
-	}else if(object@target=="probes27"){
-		snp.betas <- HM27.snp.betas(qc(object))
+	snp.betas <- t(object[!apply(is.na(object), 1, any), , drop = FALSE])
+	if (ncol(snp.betas) <= 1) {
+		snp.betas <- NULL
 	}
-	if (!(is.matrix(snp.betas) && nrow(snp.betas) > 1)) {
+	if (is.null(snp.betas)) {
+		txt <- c("Distances based on SNP probes could not be calculated either because no such probes are found ",
+			"in the dataset, or because almost all of them contain missing values.")
+		rnb.add.paragraph(report, txt)
 		return(report)
 	}
 
 	## Calculate Manhattan distances between samples based on the SNP probe intensities
-	snp.distances <- as.matrix(stats::dist(t(snp.betas), method = "manhattan"))
+	snp.distances <- as.matrix(stats::dist(snp.betas, method = "manhattan") / ncol(snp.betas))
 	rnb.status("Calculated Manhattan distances between samples based on SNP probes")
 
 	report.plots <- list()
 	setting.names <- list()
-	if (nrow(snp.distances) <= 24) {
+	if (nrow(snp.betas) <= 24) {
 
 		## Create a diagonal heatmap of distances
-		tbl.melt <- symmetric.melt(snp.distances)
-		colnames(tbl.melt)[3] <- "distance"
+		i.width <- 4 + nrow(snp.betas) * 0.3
+		i.height <- 2.2 + nrow(snp.betas) * 0.3
+		txt <- paste("The figure below shows the relative distances between all pairs of samples based on the",
+			"&beta; values of the considered SNP probes. The distance metric used is average absolute difference,",
+			"which can be considered a scaled version of Manhattan distance.")
+
+		tbl <- symmetric.melt(snp.distances)
+		colnames(tbl)[3] <- "distance"
 		colors.g <- rnb.getOption("colors.gradient")
-		pp <- ggplot(tbl.melt, aes_string(x = "x", y = "y", fill = "distance")) + labs(x = NULL, y = NULL) +
+		pp <- ggplot(tbl, aes_string(x = "x", y = "y", fill = "distance")) + labs(x = NULL, y = NULL) +
 			coord_fixed(ratio = 1) + geom_tile(color = "white") +
 			scale_x_discrete(expand = c(0, 0)) + scale_y_discrete(expand = c(0, 0)) +
 			scale_fill_gradient(na.value = "white", low = colors.g[1], high = colors.g[2]) +
@@ -620,46 +580,59 @@ add.snp.distances <- function(report, object) {
 			theme(panel.grid.major = element_blank(), panel.background = element_blank()) +
 			theme(panel.border = element_blank(), plot.margin = unit(c(0.1, 1.1, 0.1, 0.1), "in"))
 		## Fix the areas for x and y axis labels
-		i.height <- 2.2 + nrow(snp.distances) * 0.3
-		i.width <- 4 + nrow(snp.distances) * 0.3
-		report.plots <- createReportPlot("snp_low_dimensional", report, width = i.width, height = i.height)
-		pp <- suppressWarnings(ggplot_gtable(ggplot_build(pp)))
-		pp$widths[[3]] <- unit(2, "in")
-		pp$heights[[length(pp$heights) - 2L]] <- unit(2, "in")
-		grid.draw(pp)
-		report.plots <- off(report.plots)
-		txt <- c("Distances between pairs of samples based on the SNP probes only.")
-		rm(tbl.melt, colors.g, i.height, i.width)
+#		pp <- suppressWarnings(ggplot_gtable(ggplot_build(pp)))
+#		pp$widths[[3]] <- unit(2, "in")
+#		pp$heights[[length(pp$heights) - 2L]] <- unit(2, "in")
+		rplot <- createReportPlot("snp_low_dimensional", report, width = i.width, height = i.height)
+#		grid.newpage()
+#		grid.draw(pp)
+		print(pp)
+		report.plots <- c(report.plots, off(rplot))
+		txt <- c(txt, paste("Distances between pairs of samples based on", ncol(snp.betas), "SNP probes."))
+		rm(colors.g)
 
 	} else {
 
-		## Create PCA plots
-		pr.coords <- prcomp(t(snp.betas), center = TRUE, scale. = FALSE)$x[, 1:2]
-		labels.pc <- paste("Principal component", 1:ncol(pr.coords))
-		dframe <- data.frame(x = pr.coords[, 1], y = pr.coords[, 2], label = rownames(pr.coords))
+		## Create scatter plots
+		i.width <- 6.2 + (nrow(snp.betas) >= 60)
+		i.height <- i.width
+		if (ncol(snp.betas) == 2) {
+			tbl <- snp.betas
+			alabels <- colnames(snp.betas)
+			txt <- "The figure below shows the samples in the space defined by the two SNP probes."
+		} else {
+			tbl <- prcomp(snp.betas, center = TRUE, scale. = FALSE)$x[, 1:2, drop = FALSE]
+			alabels <- paste("Principal component", 1:ncol(tbl))
+			txt <- paste("The figure below shows the samples in the first two principal components of the space",
+				"defined by the", ncol(snp.betas), "SNP probes.")
+		}
+
+		tbl <- data.frame(x = tbl[, 1], y = tbl[, 2], label = rownames(tbl))
 		plot.types <- c("point" = "points", "label" = "identifiers")
 		for (ptype in names(plot.types)) {
-			pp <- ggplot(dframe, aes_string(x = "x", y = "y", label = "label"))
+			pp <- ggplot(tbl, aes_string(x = "x", y = "y", label = "label")) + coord_fixed(ratio = 1)
+			if (ncol(snp.betas) == 2) {
+				pp <- pp + scale_x_continuous(limits = c(0, 1), breaks = seq(0, 1, length.out = 11), expand = c(0, 0)) +
+					scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, length.out = 11), expand = c(0, 0))
+			}
 			if (ptype == "point") {
 				pp <- pp + geom_point(size = 3)
 			} else {
-				pp <- pp + geom_text(angle = 45)
+				pp <- pp + geom_text(size = 2, angle = 45)
 			}
-			pp <- pp + labs(x = labels.pc[1], y = labels.pc[2]) +
-				theme(plot.margin = unit(0.1 + c(0, 0, 0, 0), "in"))
+			pp <- pp + labs(x = alabels[1], y = alabels[2]) + theme(plot.margin = unit(0.1 + c(0, 0, 0, 0), "in"))
 			fname <- paste0("snp_low_dimensional_", ptype)
-			rplot <- createReportPlot(fname, report, width = 6.2, height = 6.2)
+			rplot <- createReportPlot(fname, report, width = i.width, height = i.height)
 			print(pp)
 			report.plots <- c(report.plots, off(rplot))
 		}
-		txt <- c("Scatter plot showing the samples in the first two principal components of the space of their SNP ",
-			"probes.")
+		txt <- c(txt, "Scatter plot showing the samples in a space defined by the signal of their SNP probes.")
 		setting.names <- list("Display samples as" = plot.types)
-		rm(pr.coords, labels.pc, dframe, plot.types, ptype, fname, rplot)
+		rm(alabels, plot.types, ptype, fname)
 	}
-	report <- rnb.add.figure(report, txt, report.plots, setting.names)
-	rnb.status("Add plot of SNP distances")
-	rm(report.plots, setting.names, pp)
+	rnb.add.paragraph(report, txt[1])
+	report <- rnb.add.figure(report, txt[2], report.plots, setting.names)
+	rm(snp.betas, report.plots, setting.names, txt, i.width, i.height, tbl, pp, rplot)
 
 	## Export the distances to file
 	fname <- "snp_distances.csv"
@@ -667,29 +640,97 @@ add.snp.distances <- function(report, object) {
 	txt <- c('The full table of all pairwise distances is stored in a dedicated <a href="',
 		rnb.get.directory(report, "data"), '/', fname, '">comma-separated file</a> accompanying this report.')
 	rnb.add.paragraph(report, txt)
-	rnb.status(c("Exported SNP-based distances to", fname))
 
 	report
 }
 
 #######################################################################################################################
 
+#' rnb.add.snp.purity
+#'
+#' Adds a section about genetic purity estimated using the beta values of SNP probes.
+#'
+#' @param report       Report to contain the section on genetic purity.
+#' @param mm.snp       Non-empty \code{matrix} containing the computed beta values on the SNP probes.
+#' @param s.annotation Optionally, a sample annotation table to be scanned for information on Sentrix IDs.
+#' @return The (possibly modified) report.
+#' @author Yassen Assenov
+#' @noRd
+rnb.add.snp.purity <- function(report, mm.snp, s.annotation = data.frame()) {
+	tbl <- pmin(mm.snp, abs(mm.snp - 0.5), abs(mm.snp - 1))
+	tbl <- data.frame(
+		"Genetic Noise" = unname(colMeans(tbl, na.rm = TRUE)),
+		"ID" = factor(colnames(mm.snp), levels = colnames(mm.snp)),
+		check.names = FALSE, stringsAsFactors = FALSE)
+	ids <- s.annotation
+	ids <- ids[, intersect(c("Sentrix ID", "Sentrix_ID"), colnames(ids)), drop = FALSE]
+	if (ncol(ids) != 0) {
+		ids <- as.character(ids[, 1])
+		id.levels <- tryCatch(unique(sort(as.double(ids))), warning = function(wr) { unique(ids) })
+		ids <- factor(ids, levels = id.levels)
+		if (length(id.levels) > 1 && anyDuplicated(na.omit(ids)) != 0) {
+			tbl[["Sentrix ID"]] <- ids
+		}
+		rm(ids, id.levels)
+	}
+	tbl <- tbl[, intersect(c("ID", "Sentrix ID", "Genetic Noise"), colnames(tbl)), drop = FALSE]
+	tbl <- tbl[order(tbl[, "Genetic Noise"]), , drop = FALSE]
+
+	## Export the table to a file
+	fname <- "genetic_noise.csv"
+	write.csv(tbl, file.path(rnb.get.directory(report, "data", TRUE), fname), row.names = FALSE)
+
+	## Plot the data
+	tbl[, "Genetic Noise"] <- tbl[, "Genetic Noise"] * 100
+	xstep <- 2
+	xmax <- ceiling(max(tbl[, "Genetic Noise"]) / xstep) * xstep
+	i.width <- 6.2
+	pp <- ggplot2::ggplot(tbl) + ggplot2::aes_string(x = '`ID`', y = '`Genetic Noise`') +
+		ggplot2::labs(x = NULL, y = "Genetic noise (%)")
+	if ("Sentrix ID" %in% colnames(tbl)) {
+		i.width <- i.width + 1.4
+		pp <- pp + ggplot2::aes_string(fill = '`Sentrix ID`') +
+			ggplot2::theme(legend.position = c(1, 0.5), legend.justification = c(0, 0.5)) +
+			ggplot2::theme(plot.margin = grid::unit(c(0, 1.4, 0, 0) + 0.1, "in"))
+	}
+	pp <- pp + ggplot2::geom_bar(stat = "identity") + ggplot2::coord_flip() +
+		ggplot2::scale_y_continuous(breaks = seq(0, xmax, by = xstep), limits = c(0, xmax), expand = c(0, 0)) +
+		ggplot2::theme(axis.ticks.y = ggplot2::element_blank())
+	rplot <- createReportPlot("genetic_noise", report, width = i.width, height = nrow(tbl) * 0.12 + 1.2)
+	print(pp)
+	rplot <- off(rplot)
+	
+	## Add a section to the report
+	txt <- c("The relative purity of a sample can be estimated by calculating the mean absolute distance from the ",
+		"observed &beta; values of its SNP probes to an idealized profile, consisting of the values 0, 0.5 and 1 ",
+		"only. This score is referred to as <em>genetic noise</em> in this report. Samples with large genetic noise ",
+		"might contain subpopulations with genomic aberrations (deletions and amplifications), or be contaminated ",
+		"with DNA from multiple individuals. It is important to note that the genetic noise could be strongly ",
+		"influenced by batch effects and should therefore be considered only in the context of samples with similar ",
+		"profiles of intensity values.")
+	report <- rnb.add.section(report, "Genetic Purity", txt, 2)
+	txt <- c('The figure below lists the genetic noise of all samples in the dataset. The full table with these ',
+		'values is available in a dedicated <a href="', rnb.get.directory(report, 'data'), '/', fname,
+		'">comma-separated value</a> file accompanying this report.')
+	rnb.add.paragraph(report, txt)
+	txt <- c("Bar plot showing the genetic noise of each sample. Color coding, if present, denotes slide number.")
+	report <- rnb.add.figure(report, txt, rplot)
+}
+
+#######################################################################################################################
+
 add.seq.coverage.plot<-function(report, object, covg.lists=NULL){
 
-	descr<-"Sequencing coverage plots visualize effective read coverage over all chromosomes of the genome."
+	txt <- "Effective read coverage of a single sample over all chromosomes of the genome."
 
 	ids <- samples(object)
+	names(ids) <- 1:length(ids)
 
-	cplots<-lapply(ids, function(id) rnb.plot.biseq.coverage(rnbs.set=object, sample=id, report=report, writeToFile=TRUE, numeric.names=TRUE,create.pdf=FALSE, width=8, height=16, low.png=100, high.png=200, covg.lists=covg.lists[[id]]))
+	rplots<-lapply(ids, function(id) rnb.plot.biseq.coverage(rnbs.set=object, sample=id, report=report,
+		writeToFile=TRUE, numeric.names=TRUE, create.pdf=FALSE, width=8, height=16, low.png=100, high.png=200,
+		covg.lists=covg.lists[[id]]))
 
-	names(cplots)<-1:length(ids)
-
-	sn<-list("Sample labels" = ids)
-	names(sn[[1]])<-1:length(ids)
-
-	report<-rnb.add.figure(report, description=descr, report.plots=cplots, setting.names=sn)
-	report
-
+	rnb.add.figure(report, txt, rplots, list("Sample" = ids))
 }
 
 
@@ -744,7 +785,7 @@ add.seq.coverage.num.sites.covg.tabs <- function(report, object){
 	overviewPlot <- createReportGgPlot(pp, fname, report, width=12, height=7, create.pdf=TRUE, high.png=as.integer(300))
 	overviewPlot <- off(overviewPlot,handle.errors=TRUE)
 
-	desc <- "Covered sites and median coverages for each sample. Vertical bars depict 0.05 and 0.95 percentiles."
+	desc <- "Covered sites and median coverages for each sample. Vertical bars depict the inter-quartile range."
 	report <- rnb.add.figure(report, desc, overviewPlot)
 	report
 }
@@ -782,4 +823,3 @@ add.seq.coverage.violins<-function(report, object, sample.chunk.size=20){
 	report<-rnb.add.figure(report, description=descr, report.plots=cplots, setting.names=sn)
 	report
 }
-#######################################################################################################################

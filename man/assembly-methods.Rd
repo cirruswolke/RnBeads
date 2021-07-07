@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBSet-class.R
 \docType{methods}
 \name{assembly,RnBSet-method}
-\alias{assembly}
 \alias{assembly,RnBSet-method}
+\alias{assembly}
 \title{assembly-methods}
 \usage{
 \S4method{assembly}{RnBSet}(object)
@@ -24,4 +24,3 @@ data(small.example.object)
 assembly(rnb.set.example) # "hg19"
 }
 }
-

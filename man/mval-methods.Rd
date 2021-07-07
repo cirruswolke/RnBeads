@@ -2,12 +2,11 @@
 % Please edit documentation in R/RnBSet-class.R
 \docType{methods}
 \name{mval,RnBSet-method}
-\alias{mval}
 \alias{mval,RnBSet-method}
+\alias{mval}
 \title{mval-methods}
 \usage{
-\S4method{mval}{RnBSet}(object, type = "sites", row.names = FALSE,
-  epsilon = 0)
+\S4method{mval}{RnBSet}(object, type = "sites", row.names = FALSE, epsilon = 0)
 }
 \arguments{
 \item{object}{dataset of interest.}
@@ -42,4 +41,3 @@ head(gmm)
 \seealso{
 \code{\link[=meth,RnBSet-method]{meth}} for extracting methylation beta values
 }
-

@@ -4,8 +4,15 @@
 \alias{read.data.dir}
 \title{read.data.dir}
 \usage{
-read.data.dir(dir, pheno, betas, p.values, bead.counts,
-  sep = rnb.getOption("import.table.separator"), verbose = TRUE)
+read.data.dir(
+  dir,
+  pheno,
+  betas,
+  p.values,
+  bead.counts,
+  sep = rnb.getOption("import.table.separator"),
+  verbose = TRUE
+)
 }
 \arguments{
 \item{dir}{directory containing the table files}
@@ -35,4 +42,3 @@ Colnames in all files should match. They will be returned as the samples element
 \author{
 Pavlo Lutsik
 }
-

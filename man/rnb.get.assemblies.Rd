@@ -21,4 +21,3 @@ Gets the supported genome assemblies.
 \author{
 Yassen Assenov
 }
-

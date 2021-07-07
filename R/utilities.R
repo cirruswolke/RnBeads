@@ -131,6 +131,43 @@ rnb.call.destructor <- function(object,...) {
 
 ########################################################################################################################
 
+#' Get the path to an executable
+#' 
+#' Gets the full path to the requested executable file.
+#' 
+#' @param fname Name of the requested executable file. On Windows, this must not include the extension \code{.exe}.
+#' @return Full path the specified executable file; an empty \code{character} vector if it could not be found.
+#' 
+#' @author Yassen Assenov
+#' @noRd
+rnb.get.executable <- function(fname) {
+	dname <- Sys.info()["sysname"]
+	if (dname == "Darwin") {
+		dname <- "macOSX.i386"
+		cmd.search <- "which"
+	} else if (dname == "Linux") {
+		dname <- "linux_x86.64"
+		cmd.search <- "which"
+	} else { # dname == "Windows"
+		fname <- paste0(fname, ".exe")
+		dname <- "windows"
+		cmd.search <- "where"
+	}
+	dname <- system.file(file.path("bin", dname, fname), package = "RnBeads")
+	if (dname != "") {
+		return(dname)
+	}
+	searchResult <- suppressWarnings(system(paste(cmd.search, fname), intern = TRUE))
+	validResult <- length(searchResult) == 1 && file.exists(searchResult)
+	if (validResult){
+		return(searchResult)
+	} else {
+		return(character(0))
+	}
+}
+
+########################################################################################################################
+
 #' rnb.sample.groups
 #'
 #' Identifies sample subgroups defined in the given annotation information.
@@ -360,6 +397,16 @@ rnb.show.report <- function(report) {
 #' @author Yassen Assenov
 #' @export
 rnb.load.sitelist <- function(fname, verbose = FALSE) {
+	if (length(fname) == 0) {
+		return(NULL)
+	}
+	if (!(is.character(fname) && length(fname) == 1 && nchar(fname) != 0)) {
+		stop("invalid value for fname; expected file name")
+	}
+	if (!parameter.is.flag(verbose)) {
+		stop("invalid value for verbose; expected TRUE or FALSE")
+	}
+
 	result <- tryCatch(scan(fname, "", sep = "\n", quiet = TRUE), error = function(er) { NULL })
 	if (verbose) {
 		if (is.null(result)) {
@@ -370,7 +417,7 @@ rnb.load.sitelist <- function(fname, verbose = FALSE) {
 				message(msg)
 			}
 		} else {
-			msg <- paste("Loaded", length(result), "sites from", fname)
+			msg <- paste("Loaded", length(result), "site(s) from", fname)
 			if (logger.isinitialized()) {
 				rnb.status(msg)
 			} else {
@@ -383,24 +430,104 @@ rnb.load.sitelist <- function(fname, verbose = FALSE) {
 
 ########################################################################################################################
 
-## rnb.process.sitelist
-##
-## Loads and processes a list of probe or site identifiers.
-##
-## @param fname      File containing the list of identifiers to be processed.
-## @param anno.table Probe or site annotation table.
-## @return \code{integer} vector containing the indices in the annotation table that are targeted by the loaded list.
-##
-## @author Yassen Assenov
+#' rnb.process.sitelist
+#'
+#' Loads and processes a list of probe or site identifiers.
+#'
+#' @param fname      File containing the list of identifiers to be processed.
+#' @param anno.table Probe or site annotation table.
+#' @return \code{integer} vector containing the indices in the annotation table that are targeted by the loaded list.
+#'
+#' @author Yassen Assenov
+#' @noRd
 rnb.process.sitelist <- function(fname, anno.table) {
-	if (length(fname) == 0) {
-		return(integer())
+	if (length(fname) == 0 || nchar(fname) == 0) {
+		return(NULL)
 	}
 	id.list <- rnb.load.sitelist(fname, TRUE)
 	if (is.null(id.list)) {
-		return(integer())
+		result <- integer()
+		attr(result, "ignored") <- 0L
+		attr(result, "note") <- "Could not open the specified file."
+	} else {
+		id.list <- unique(id.list)
+		result <- integer()
+		## Parse and match IDs given as [chromosome]:[location]
+		for (chrom in levels(anno.table$Chromosome)) {
+			regex <- paste0("^", chrom, ":(\\d+)$")
+			i <- grep(regex, id.list)
+			if (length(i) != 0) {
+				j <- which(anno.table$Chromosome == chrom)
+				if (length(j) != 0) {
+					i <- which(anno.table[j, "Start"] %in% as.integer(gsub(regex, "\\1", id.list[i])))
+					result <- c(result, j[i])
+				}
+			}
+		}
+		## Parse and match IDs given as Illumina probe identifiers
+		regex <- "^(c.\\d+)|(ch\\.(\\d+|X)\\.\\d+([FR]?))|(rs\\d+)$"
+		if (any(grepl(regex, rownames(anno.table)))) {
+			i <- grep(regex, id.list, value = TRUE)
+			if (length(i) != 0) {
+				result <- c(result, which(rownames(anno.table) %in% i))
+			}
+		}
+		result <- unique(sort(result))
+		attr(result, "ignored") <- length(id.list) - length(result)
+		attr(result, "note") <- ""
 	}
-	which(rownames(anno.table) %in% id.list)
+	result
+}
+
+########################################################################################################################
+
+#' trimChar
+#'
+#' trim a character vector to have a desired length by taking the beginning of the string
+#' and the end of the string
+#'
+#' @param ss       character vector
+#' @param len.out  target output length to trim to
+#' @param len.pref length of the prefix to be used from the original string
+#' @param len.suf  length of the suffix to be used from the original string
+#' @param trim.str string to place in between prefix and suffix
+#' @return character vector in which each element has length\code{<=len.out}
+#'
+#' @author Fabian Mueller
+#' @noRd
+trimChar <- function(ss, len.out=50, trim.str="...", len.pref=ceiling((len.out-nchar(trim.str))/2), len.suf=len.out-len.pref-nchar(trim.str)){
+	if (len.pref + len.suf + nchar(trim.str) > len.out){
+		stop("Invalid string lengths specified")
+	}
+	lens <- nchar(ss)
+	res <- ifelse(
+		lens > len.out,
+		paste0(substr(ss, 1, len.pref), trim.str, substr(ss, lens-len.suf+1, lens)),
+		ss
+	)
+	return(res)
+}
+
+########################################################################################################################
+
+#' rnb.sitelist.info
+#' 
+#' Constructs a table summarizing the loaded and identified sites to be included in a white- or blacklist.
+#' 
+#' @param sitelist List of loaded site indices in the form of an \code{integer} vector, as returned by
+#'                 \code{\link{rnb.process.sitelist}}.
+#' @param listtype One of \code{"white"} or \code{"black"}.
+#' @return Table (\code{data.frame}) with four columns and a single row, summarizing the loaded and identified sites to
+#'         be included in a white- or blacklist.
+#' @author Yassen Assenov
+#' @noRd
+rnb.sitelist.info <- function(sitelist, listtype) {
+	data.frame(
+		"List" = ifelse(listtype == "white", "whitelist", "blacklist"),
+		"Records used" = length(sitelist),
+		"Records ignored" = attr(sitelist, "ignored"),
+		"Note" = attr(sitelist, "note"),
+		check.names = FALSE, stringsAsFactors = FALSE)
 }
 
 ########################################################################################################################
@@ -921,30 +1048,37 @@ rnb.has.reliability.info <- function(rnb.set) {
 #' Gets a vector with the counts of reliable measurements per sample
 #' 
 #' @param rnb.set   Methylation dataset as an object of type inheriting \code{\linkS4class{RnBSet}}.
-#' @param siteIndices	vector of indices of sites that should be considered. indices can be numeric or logical.
+#' @param siteIndices	vector of indices of sites that should be considered. indices can be integer or logical.
 #' @return \code{numric} vector in which each entry corresponds to the number of reliable measurements in the corresponding sample
 #'         If the dataset does not contain coverage or detection p-value information, the returned value is \code{NULL}.
 #' 
 #' @author Fabian Mueller
 #' @noRd
 rnb.get.reliability.counts.per.sample <- function(rnb.set, siteIndices=NULL) {
-	if (!inherits(rnb.set, "RnBSet")) {
-		stop("invalid value for rnb.set")
-	}
-	result <- NULL
+
+	## Extract reliability matrix and threshold values
 	if (inherits(rnb.set, "RnBeadSet")) {
-		relmat <- dpval(rnb.set)
-		if (!is.null(relmat)) {
-			result <- colSums(relmat < rnb.getOption("filtering.greedycut.pvalue.threshold"), na.rm=TRUE)
-		}
+		mm <- rnb.set@pval.sites
+		x.cutoff <- rnb.getOption("filtering.greedycut.pvalue.threshold")
 	} else { # inherits(rnb.set, "RnBiseqSet")
-		if (hasCovg(rnb.set)) {
-			result <- sapply(1:length(samples(rnb.set)), FUN=function(j){
-				sum(as.vector(covg(rnb.set, i=siteIndices, j=j)) >= rnb.getOption("filtering.coverage.threshold"), na.rm=TRUE)
-			})
-			names(result) <- samples(rnb.set)
+		mm <- rnb.set@covg.sites
+		x.cutoff <- rnb.getOption("filtering.coverage.threshold")
+	}
+	if (is.null(mm)) {
+		return(NULL)
+	}
+
+	## Count number of reliable values per sample
+	result <- rep(0L, ncol(mm))
+	for (j in 1:ncol(mm)) {
+		x <- as.vector(get.dataset.matrix(rnb.set, "sites", FALSE, mm, list(), i = siteIndices, j = j))
+		if (inherits(rnb.set, "RnBeadSet")) {
+			result[j] <- sum(x < x.cutoff, na.rm = TRUE)
+		} else {
+			result[j] <- sum(x >= x.cutoff, na.rm = TRUE)
 		}
 	}
+	names(result) <- samples(rnb.set)
 	result
 }
 
@@ -960,8 +1094,7 @@ rnb.get.reliability.counts.per.sample <- function(rnb.set, siteIndices=NULL) {
 ## @author Pavlo Lutsik
 methylumi.intensities.by.color<-function(mset,address.rownames=TRUE){
 
-	if(!require("IlluminaHumanMethylation450kmanifest"))
-		stop("IlluminaHumanMethylation450kmanifest should be installed")
+	rnb.require("IlluminaHumanMethylation450kmanifest")
 
 	pinfos <- rnb.annotation2data.frame(rnb.get.annotation("probes450"), add.names=TRUE)[featureNames(mset), ]
 	dII.probes <- featureNames(mset)[pinfos[,"Design"] == "II"]
@@ -1019,7 +1152,7 @@ methylumi.intensities.by.color<-function(mset,address.rownames=TRUE){
 
 	
 	intensities.by.channel <- list(
-			Cy3=rbind(dII.grn, dI.grn.meth,dI.grn.umeth, dI.red.meth.oob, dI.red.umeth.oob),
+			Cy3=rbind(dII.grn, dI.grn.meth, dI.grn.umeth, dI.red.meth.oob, dI.red.umeth.oob),
 			Cy5=rbind(dII.red, dI.red.meth, dI.red.umeth, dI.grn.meth.oob, dI.grn.umeth.oob))
 
 #	intensities.by.channel$Cy3<-rbind(intensities.by.channel$Cy3, 

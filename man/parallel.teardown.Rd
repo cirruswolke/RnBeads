@@ -4,7 +4,7 @@
 \alias{parallel.teardown}
 \title{parallel.teardown}
 \usage{
-\method{parallel}{teardown}()
+parallel.teardown()
 }
 \value{
 \code{TRUE}, invisibly.
@@ -24,4 +24,3 @@ parallel.getNumWorkers()
 \author{
 Fabian Mueller
 }
-

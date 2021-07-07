@@ -21,4 +21,3 @@ conditionally on whether the \code{enforce.destroy.disk.dumps} option is enabled
 \author{
 Fabian Mueller
 }
-

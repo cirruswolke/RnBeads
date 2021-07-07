@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBDiffMeth-class.R
 \docType{methods}
 \name{get.site.test.method,RnBDiffMeth-method}
-\alias{get.site.test.method}
 \alias{get.site.test.method,RnBDiffMeth-method}
+\alias{get.site.test.method}
 \title{get.site.test.method-methods}
 \usage{
 \S4method{get.site.test.method}{RnBDiffMeth}(object)
@@ -29,4 +29,3 @@ get.site.test.method(dm)
 \author{
 Fabian Mueller
 }
-

@@ -18,4 +18,3 @@ Initialize an RnBClusterRun object
 \author{
 Fabian Mueller
 }
-

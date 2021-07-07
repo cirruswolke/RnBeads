@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBSet-class.R
 \docType{methods}
 \name{addPheno,RnBSet-method}
-\alias{addPheno}
 \alias{addPheno,RnBSet-method}
+\alias{addPheno}
 \title{addPheno}
 \usage{
 \S4method{addPheno}{RnBSet}(object, trait, header)
@@ -38,4 +38,3 @@ pheno(rnb.set.mod)
 \author{
 Fabian Mueller
 }
-

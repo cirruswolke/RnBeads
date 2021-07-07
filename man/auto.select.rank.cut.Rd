@@ -25,4 +25,3 @@ the best (i.e. min) p-value of the group of worst-ranking p-values of equal size
 \author{
 Fabian Mueller
 }
-

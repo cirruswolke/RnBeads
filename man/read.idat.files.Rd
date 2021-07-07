@@ -4,9 +4,14 @@
 \alias{read.idat.files}
 \title{read.idat.files}
 \usage{
-read.idat.files(base.dir, barcodes = NULL, sample.sheet = NULL,
-  sep.samples = rnb.getOption("import.table.separator"), useff = FALSE,
-  verbose = TRUE)
+read.idat.files(
+  base.dir,
+  barcodes = NULL,
+  sample.sheet = NULL,
+  sep.samples = rnb.getOption("import.table.separator"),
+  useff = FALSE,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{base.dir}{Directory that contains the \code{.idat} files to be read; or a character vector of such
@@ -44,10 +49,9 @@ If neither \code{barcodes}, nor \code{sample.sheet} are specified, the function 
 identified. If both \code{barcodes} and \code{sample.sheet} are supplied, only \code{sample.sheet} is used in loading
 methylation data. The value of \code{barcodes} is tested for validity but it is not used as a filter.
 }
-\author{
-Pavlo Lutsik
-}
 \seealso{
 \code{\link{methylumIDAT}} in package \pkg{methylumi}
 }
-
+\author{
+Pavlo Lutsik
+}

@@ -22,4 +22,3 @@ Removes methylation sites with a coverage larger than 100 times the 95-percentil
 \author{
 Fabian Mueller
 }
-

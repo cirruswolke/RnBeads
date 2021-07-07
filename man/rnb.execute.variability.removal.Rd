@@ -4,8 +4,10 @@
 \alias{rnb.execute.variability.removal}
 \title{rnb.execute.variability.removal}
 \usage{
-rnb.execute.variability.removal(rnb.set,
-  min.deviation = rnb.getOption("filtering.deviation.threshold"))
+rnb.execute.variability.removal(
+  rnb.set,
+  min.deviation = rnb.getOption("filtering.deviation.threshold")
+)
 }
 \arguments{
 \item{rnb.set}{Methylation dataset as an object of type inheriting \code{\linkS4class{RnBSet}}.}
@@ -37,4 +39,3 @@ rnb.set.filtered <- rnb.execute.variability.removal(rnb.set.example, 0.01)
 \author{
 Yassen Assenov
 }
-

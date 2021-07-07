@@ -35,4 +35,3 @@ has.covariates.sva(rnb.set.mod,"Treatment")
 \author{
 Fabian Mueller
 }
-

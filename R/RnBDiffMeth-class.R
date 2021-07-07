@@ -21,7 +21,7 @@ setClassUnion("characterOrNULL", c("character", "NULL"))
 #'   \item{\code{sites}}{List of differential methylation tables on site level (see \code{computeDiffMeth.bin.site} for details).
 #' 					Indexed by comparison.}
 #'   \item{\code{regions}}{List of lists of differential methylation tables on region levels (see \code{computeDiffMeth.bin.region} for details).
-#' 					Indexed by region type on the top level and comparison on the lower level.} 
+#' 					Indexed by region type on the top level and comparison on the lower level.}
 #'   \item{\code{comparisons}}{character vector of all comparisons stored in the objects. Vector indices correspond to indices in the \code{sites} and
 #' 					\code{regions} list slots.}
 #'   \item{\code{region.types}}{character vector of all region types stored in the objects. Vector indices correspond to indices in
@@ -30,8 +30,8 @@ setClassUnion("characterOrNULL", c("character", "NULL"))
 #'   \item{\code{comparison.info}}{A list containing comparison information for each comparison. See \code{\link{get.comparison.info}} for details.}
 #'   \item{\code{includesSites}}{Logical indicating whether the object contains site-level differential methylation information.}
 #'   \item{\code{site.test.method}}{method which was applied to obtain the site-level p-values.}
-#'   \item{\code{covg.thres}}{coverage threshold. Important for certain columns of the differential methylation tables.
-#' 					See \code{computeDiffMeth.bin.site} and \code{computeDiffMeth.bin.region} for details.}
+#'   \item{\code{variability.method}}{method to be used to detect differentially variable sites.}
+#'   \item{\code{covg.thres}}{coverage threshold. Important for certain columns of the differential methylation tables.}
 #'   \item{\code{disk.dump}}{Flag indicating whether the tables should be stored on disk rather than in the main memory}
 #'   \item{\code{disk.path}}{path on the disk for DMTs.Only meaningful if \code{disk.dump} is \code{TRUE}}
 #' }
@@ -65,6 +65,7 @@ setClass("RnBDiffMeth",
 		comparison.info="list",
 		includesSites="logical",
 		site.test.method="characterOrNULL",
+		variability.method="characterOrNULL",
 		covg.thres="integer",
 		disk.dump="logical",
 		disk.path="characterOrNULL"
@@ -78,6 +79,7 @@ setClass("RnBDiffMeth",
 		comparison.info=list(),
 		includesSites=FALSE,
 		site.test.method=NULL,
+		variability.method=NULL,
 		covg.thres=-1L,
 		disk.dump=FALSE,
 		disk.path=NULL
@@ -92,6 +94,8 @@ setClass("RnBDiffMeth",
 #' @param site.test.method method which was applied to obtain the site-level p-values.
 #' @param covg.thres  coverage threshold. Important for certain columns of the differential methylation tables.
 #' 					  See \code{computeDiffMeth.bin.site} and \code{computeDiffMeth.bin.region} for details.
+#' @param variability.method method to be used to calculate differentially variable sites. Has to be one of: `diffVar' or 
+#'            `iEVORA'.
 #' @param disk.dump   Flag indicating whether the tables should be stored on disk rather than in the main memory
 #' @param disk.path   Path on the disk for DMTs.Only meaningful if \code{disk.dump} is \code{TRUE}
 #'
@@ -101,6 +105,7 @@ setClass("RnBDiffMeth",
 setMethod("initialize", "RnBDiffMeth",
 	function(.Object,
 		site.test.method=rnb.getOption("differential.site.test.method"),
+		variability.method=rnb.getOption("differential.variability.method"),
 		covg.thres=rnb.getOption("filtering.coverage.threshold"),
 		disk.dump=FALSE,disk.path=NULL){
 			#create directory in which to dump the matrices to file. must be a non-existing directory
@@ -119,6 +124,7 @@ setMethod("initialize", "RnBDiffMeth",
 			.Object@comparison.grouplabels <- matrix(ncol=2,nrow=0)
 			.Object@includesSites <- FALSE
 			.Object@site.test.method <- site.test.method
+			.Object@variability.method <- variability.method
 			.Object@covg.thres <- covg.thres
 			.Object@comparison.info <- list()
 			.Object@disk.dump <- disk.dump
@@ -153,10 +159,12 @@ setMethod("destroy", signature(object="RnBDiffMeth"),
 				if (!is.null(object@sites[[cci]])){
 					delete(object@sites[[cci]])
 				}
-				for (rri in 1:n.region.types){
-					rr <- object@region.types[rri]
-					if (!is.null(object@regions[[rri]][[cci]])){
-						delete(object@regions[[rri]][[cci]])
+				if (n.region.types > 0){
+					for (rri in 1:n.region.types){
+						rr <- object@region.types[rri]
+						if (!is.null(object@regions[[rri]][[cci]])){
+							delete(object@regions[[rri]][[cci]])
+						}
 					}
 				}
 			}
@@ -315,6 +323,30 @@ setMethod("get.site.test.method", signature(object="RnBDiffMeth"),
 	}
 )
 
+if (!isGeneric("get.variability.method")) setGeneric("get.variability.method", function(object) standardGeneric("get.variability.method"))
+#' get.variability.method-methods
+#'
+#' Gets the variability testing method used to obtain the p-values in the differential varibiality tables
+#'
+#' @param object RnBDiffMeth object
+#' @return character describing the variability method
+#'
+#' @rdname get.variability.method-RnBDiffMeth-methods
+#' @docType methods
+#' @author Michael Scherer
+#' @aliases get.variability.method
+#' @aliases get.variability.method,RnBDiffMeth-method
+#' @export
+setMethod("get.variability.method", signature(object="RnBDiffMeth"),
+          function(object){
+            if (.hasSlot(object,"variability.method")) { 
+              return(object@variability.method)
+            } else {
+              return(rnb.getOption("differential.variability.method"))
+            }
+          }
+)
+
 if (!isGeneric("get.covg.thres")) setGeneric("get.covg.thres", function(object) standardGeneric("get.covg.thres"))
 #' get.covg.thres-methods
 #'
@@ -450,9 +482,9 @@ if (!isGeneric("addDiffMethTable")) setGeneric("addDiffMethTable", function(obje
 #' library(RnBeads.hg19)
 #' data(small.example.object)
 #' logger.start(fname=NA)
-#' dm <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols="Sample_Group",region.types=c("genes","tiling"))
-#' sample.groups <- rnb.sample.groups(rnb.set.example,"Sample_Group")[[1]]
-#' dmt.sites <- computeDiffTab.extended.site(meth(rnb.set.example),sample.groups[[1]],sample.groups[[2]])
+#' dm <- rnb.execute.computeDiffMeth(rnb.set.example,"Sample_Group",c("genes","tiling"))
+#' s.groups <- rnb.sample.groups(rnb.set.example,"Sample_Group")[[1]]
+#' dmt.sites <- computeDiffTab.extended.site(meth(rnb.set.example),s.groups[[1]],s.groups[[2]])
 #' map.regions.to.sites <- regionMapping(rnb.set.example,"promoters")
 #' dmt.promoters <- computeDiffTab.default.region(dmt.sites,map.regions.to.sites)
 #' cmp.name <- get.comparisons(dm)[1]
@@ -565,7 +597,9 @@ if (!isGeneric("save.tables")) setGeneric("save.tables", function(object,...) st
 #' library(RnBeads.hg19)
 #' data(small.example.object)
 #' logger.start(fname=NA)
-#' dm <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Sample_Group","Treatment"),disk.dump=TRUE,disk.dump.dir=tempfile())
+#' pcols <- c("Sample_Group","Treatment")
+#' tdir <- tempfile()
+#' dm <- rnb.execute.computeDiffMeth(rnb.set.example,pcols,disk.dump=TRUE,disk.dump.dir=tdir)
 #' save.tables(dm,tempfile())
 #' }
 setMethod("save.tables", signature(object="RnBDiffMeth"),
@@ -582,11 +616,13 @@ setMethod("save.tables", signature(object="RnBDiffMeth"),
 						ee[[paste("sites",ccn,sep=".")]] <- object@sites[[cci]]
 					}
 				}
-				for (rri in 1:n.region.types){
-					rr <- object@region.types[rri]
-					rrn <- paste0("reg",rri)
-					if (!is.null(object@regions[[rri]][[cci]])){
-						ee[[paste("regions",rrn,ccn,sep=".")]] <- object@regions[[rri]][[cci]]
+				if (n.region.types > 0){
+					for (rri in 1:n.region.types){
+						rr <- object@region.types[rri]
+						rrn <- paste0("reg",rri)
+						if (!is.null(object@regions[[rri]][[cci]])){
+							ee[[paste("regions",rrn,ccn,sep=".")]] <- object@regions[[rri]][[cci]]
+						}
 					}
 				}
 			}
@@ -617,7 +653,9 @@ if (!isGeneric("reload")) setGeneric("reload", function(object,...) standardGene
 #' data(small.example.object)
 #' logger.start(fname=NA)
 #' #compute differential methylation
-#' dm <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Sample_Group","Treatment"),disk.dump=TRUE,disk.dump.dir=tempfile(pattern="working"))
+#' pcols <- c("Sample_Group","Treatment")
+#' tdir <- tempfile(pattern="working")
+#' dm <- rnb.execute.computeDiffMeth(rnb.set.example,pcols,disk.dump=TRUE,disk.dump.dir=tdir)
 #' #get temporary file names
 #' fn.save.tabs <- tempfile(pattern="saveTables")
 #' fn.save.obj  <- tempfile(pattern="saveObject")
@@ -637,9 +675,7 @@ setMethod("reload", signature(object="RnBDiffMeth"),
 			warning("RnBDiffMeth object is not dumped to disk. Returning unmodified object")
 			return(object)
 		}
-#		if (!file.exists(disk.path)) {
-#			stop(paste("RnBDiffMeth dump directory does not exist:",disk.path))
-#		}
+
 		n.comps <- length(object@comparisons)
 		n.region.types <- length(object@region.types)
 		
@@ -663,15 +699,17 @@ setMethod("reload", signature(object="RnBDiffMeth"),
 			} else {
 				object@sites[cci] <- list(NULL)
 			}
-			for (rri in 1:n.region.types){
-				rr <- object@region.types[rri]
-				rrn <- paste0("reg",rri)
-				reg.obj.name <- paste("regions",rrn,ccn,sep=".")
-				if (exists(reg.obj.name,ee)){
-					object@regions[[rri]][[cci]] <- get(reg.obj.name,ee)
-				} else {
-					logger.warning(c("Could not relink:",rr,"--",cc))
-					object@regions[[rri]][cci] <- list(NULL)
+			if (n.region.types > 0){
+				for (rri in 1:n.region.types){
+					rr <- object@region.types[rri]
+					rrn <- paste0("reg",rri)
+					reg.obj.name <- paste("regions",rrn,ccn,sep=".")
+					if (exists(reg.obj.name,ee)){
+						object@regions[[rri]][[cci]] <- get(reg.obj.name,ee)
+					} else {
+						logger.warning(c("Could not relink:",rr,"--",cc))
+						object@regions[[rri]][cci] <- list(NULL)
+					}
 				}
 			}
 		}
@@ -796,21 +834,22 @@ if (!isGeneric("join.diffMeth")) setGeneric("join.diffMeth", function(obj1,obj2,
 #' library(RnBeads.hg19)
 #' data(small.example.object)
 #' logger.start(fname=NA)
-#' dm1 <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Sample_Group"),region.types=c("genes","tiling"))
-#' dm2 <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Sample_Group","Treatment"),region.types=c("promoters"))
+#' dm1 <- rnb.execute.computeDiffMeth(rnb.set.example,"Sample_Group",c("genes","tiling"))
+#' dm2 <- rnb.execute.computeDiffMeth(rnb.set.example,c("Sample_Group","Treatment"),"promoters")
 #' dm.join1 <- join.diffMeth(dm1,dm2)
-#' #the following joint object is invalid, because some region type - comparison combinations are missing
+#' #The following joint object is invalid due to missing region type - comparison combinations
 #' is.valid(dm.join1)
-#' dm3 <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Treatment"),region.types=c("genes","tiling"))
+#' dm3 <- rnb.execute.computeDiffMeth(rnb.set.example,"Treatment",c("genes","tiling"))
 #' dm.join2 <- join.diffMeth(dm.join1,dm3)
-#' #after joining the missing information, the new object is valid
+#' #After joining the missing information, the new object is valid
 #' is.valid(dm.join2)
 #' }
 setMethod("join.diffMeth", signature(obj1="RnBDiffMeth",obj2="RnBDiffMeth"),
 	function(obj1,obj2){
-		is.compatible <- (includes.sites(obj1) == includes.sites(obj2)) && 
+		is.compatible <- (includes.sites(obj1) == includes.sites(obj2)) &&
 						 (obj1@site.test.method == obj2@site.test.method) &&
 						 (obj1@covg.thres == obj2@covg.thres) && 
+		         (obj1@variability.method == obj2@variability.method) &&
 						 (obj1@disk.dump == obj2@disk.dump)
 		if (!is.compatible){
 			stop("incompatible RnBDiffMeth objects")
@@ -939,14 +978,14 @@ if (!isGeneric("is.valid")) setGeneric("is.valid", function(object,...) standard
 #' library(RnBeads.hg19)
 #' data(small.example.object)
 #' logger.start(fname=NA)
-#' dm1 <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Sample_Group"),region.types=c("genes","tiling"))
-#' dm2 <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Sample_Group","Treatment"),region.types=c("promoters"))
+#' dm1 <- rnb.execute.computeDiffMeth(rnb.set.example,"Sample_Group",c("genes","tiling"))
+#' dm2 <- rnb.execute.computeDiffMeth(rnb.set.example,c("Sample_Group","Treatment"),"promoters")
 #' dm.join1 <- join.diffMeth(dm1,dm2)
-#' #the following joint object is invalid, because some region type - comparison combinations are missing
+#' #The following joint object is invalid due to missing region type - comparison combinations
 #' is.valid(dm.join1)
-#' dm3 <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Treatment"),region.types=c("genes","tiling"))
+#' dm3 <- rnb.execute.computeDiffMeth(rnb.set.example,c("Treatment"),c("genes","tiling"))
 #' dm.join2 <- join.diffMeth(dm.join1,dm3)
-#' #after joining the missing information, the new object is valid
+#' #After joining the missing information, the new object is valid
 #' is.valid(dm.join2)
 #' }
 setMethod("is.valid", signature(object="RnBDiffMeth"),
@@ -970,18 +1009,20 @@ setMethod("is.valid", signature(object="RnBDiffMeth"),
 					}
 				}
 			}
-			for (rri in 1:n.region.types){
-				rr <- object@region.types[rri]
-				rrn <- paste0("reg",rri)
-				if (is.null(object@regions[[rr]][[cc]])){
-					if (verbose) logger.info(paste0("No table found for comparison '",cc,"' (region: '",rr,"')"))
-					return(FALSE)
-				}
-				if (object@disk.dump){
-					fileN <- file.path(object@disk.path,paste0(paste("regions",rrn,ccn,sep="_"),".ff"))
-					if (!file.exists(fileN)){
-						if (verbose) logger.info(paste0("Disk dump file ['",fileN,"'] not found for comparison '",cc,"' (region: '",rr,"')"))
+			if (n.region.types > 0){
+				for (rri in 1:n.region.types){
+					rr <- object@region.types[rri]
+					rrn <- paste0("reg",rri)
+					if (is.null(object@regions[[rr]][[cc]])){
+						if (verbose) logger.info(paste0("No table found for comparison '",cc,"' (region: '",rr,"')"))
 						return(FALSE)
+					}
+					if (object@disk.dump){
+						fileN <- file.path(object@disk.path,paste0(paste("regions",rrn,ccn,sep="_"),".ff"))
+						if (!file.exists(fileN)){
+							if (verbose) logger.info(paste0("Disk dump file ['",fileN,"'] not found for comparison '",cc,"' (region: '",rr,"')"))
+							return(FALSE)
+						}
 					}
 				}
 			}

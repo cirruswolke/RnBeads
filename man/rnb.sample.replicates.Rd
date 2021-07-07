@@ -23,4 +23,3 @@ Identifies sample replicates defined in the given sample annotation table.
 \author{
 Fabian Mueller
 }
-

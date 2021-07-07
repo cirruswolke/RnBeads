@@ -25,4 +25,3 @@ cat(rnb.options2xml(), file = "rnbeads_options.xml")
 \author{
 Yassen Assenov
 }
-

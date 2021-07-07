@@ -26,4 +26,3 @@ Gets the chromosome names supported for the specified assembly.
 \author{
 Pavlo Lutsik
 }
-

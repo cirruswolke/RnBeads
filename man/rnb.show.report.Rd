@@ -18,4 +18,3 @@ Opens the given HMTL report file in the browser.
 \author{
 Pavlo Lutsik
 }
-

@@ -2,12 +2,11 @@
 % Please edit documentation in R/RnBSet-class.R
 \docType{methods}
 \name{covg,RnBSet-method}
-\alias{covg}
 \alias{covg,RnBSet-method}
+\alias{covg}
 \title{covg-methods}
 \usage{
-\S4method{covg}{RnBSet}(object, type = "sites", row.names = FALSE,
-  i = NULL, j = NULL)
+\S4method{covg}{RnBSet}(object, type = "sites", row.names = FALSE, i = NULL, j = NULL)
 }
 \arguments{
 \item{object}{Dataset of interest.}
@@ -37,4 +36,3 @@ cvg<-covg(rnb.set.example, row.names=TRUE)
 head(cvg)
 }
 }
-

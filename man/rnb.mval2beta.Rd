@@ -28,4 +28,3 @@ all((bvals-meth(rnb.set.example))<1e-10)
 \author{
 Pavlo Lutsik
 }
-

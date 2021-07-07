@@ -33,7 +33,7 @@ If you want to implement your own child class be sure to at least implement the 
   \item{\code{\link{getExecutable,ClusterArchitecture,character-method}}}{Gets the location of an executable associated with a name}
 }
 }
+
 \author{
 Fabian Mueller
 }
-

@@ -30,4 +30,3 @@ Reads Illumina Infinium sample annotation.
 \author{
 Pavlo Lutsik
 }
-

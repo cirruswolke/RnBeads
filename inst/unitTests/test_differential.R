@@ -31,7 +31,7 @@ test_limmaP_2 <- function() {
 	X <- meth(rnb.set.example)
 	tbl <- data.frame(
 		stype = c("a", "b", "a", "b", "a", "b", "b", "b", "b", "a", "b", "a"),
-		gender = c("f", "m", "f", "f", "f", "f", "m", "m", "f", "f", "m", "m"),
+		sex = c("f", "m", "f", "f", "f", "f", "m", "m", "f", "f", "m", "m"),
 		group = c("1", "2", "1", "1", "1", "1", "2", "2", "1", "1", "2", "2"))
 
 	p.vals <- limmaP(X, tbl$stype == "a", tbl$stype == "b", tbl[, -1])
@@ -90,6 +90,88 @@ test_rnb.execute.computeDiffMeth <- function(){
 	data(small.example.object)
 	dm <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Sample_Group","Treatment"))
 	checkEquals(as.character(class(dm)),"RnBDiffMeth",checkNames=FALSE)
+}
+
+test_diffVar <- function(){
+  require(RnBeads.hg19)
+  data(small.example.object)
+  methData <- meth(rnb.set.example)
+  groups <- rnb.sample.groups(rnb.set.example)
+  ind1 <- groups$Sample_Group[[1]]
+  ind2 <- groups$Sample_Group[[2]]
+  vals <- diffVar(methData,ind1,ind2)
+  if(all(is.na(vals))){
+    logger.info("diffVar from missMethyl package not properly running")
+    passed <- TRUE
+  }else{
+    passed <- is.numeric(vals) && all(vals>=0) && all(vals<=1)
+  }  
+  checkTrue(passed)
+}
+
+test_diffVar_covariate <- function() {
+  require(RnBeads.hg19)
+  data(small.example.object)
+  X <- meth(rnb.set.example)
+  tbl <- data.frame(
+    stype = c("a", "b", "a", "b", "a", "b", "b", "b", "b", "a", "b", "a"),
+    sex = c("f", "m", "f", "f", "f", "f", "m", "m", "f", "f", "m", "m"),
+    group = c("1", "2", "1", "1", "1", "1", "2", "2", "1", "1", "2", "2"))
+  
+  p.vals <- diffVar(X, tbl$stype == "a", tbl$stype == "b", tbl[, -1])
+  if(all(is.na(p.vals))){
+    logger.info("diffVar from missMethyl package not properly running")
+    passed <- TRUE
+  }else{
+    passed <- is.numeric(p.vals) && all(p.vals>=0) && all(p.vals<=1)
+  }
+  checkTrue(passed)
+}
+
+test_diffVar_paired <- function() {
+  require(RnBeads.hg19)
+  data(small.example.object)
+  X <- meth(rnb.set.example)
+  tbl <- data.frame(
+    stype = c("a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b"),
+    donor = c("1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "6", "6"))
+  
+  p.vals <- diffVar(X, tbl$stype == "a", tbl$stype == "b", paired=T)
+  checkTrue(length(p.vals) == nrow(X))
+}
+
+test_iEVORA <- function(){
+  require(RnBeads.hg19)
+  data(small.example.object)
+  methData <- meth(rnb.set.example)
+  groups <- rnb.sample.groups(rnb.set.example)
+  ind1 <- groups$Sample_Group[[1]]
+  ind2 <- groups$Sample_Group[[2]]
+  vals <- apply.iEVORA(methData,ind1,ind2)
+  passed <- is.numeric(vals) && all(vals>=0) && all(vals<=1)
+  checkTrue(passed)
+}
+
+test_rnb.execute.diffVar <- function(){
+  require(RnBeads.hg19)
+  data(small.example.object)
+  dm <- rnb.execute.diffVar(rnb.set.example,pheno.cols=c("Sample_Group","Treatment"))
+  checkEquals(as.character(class(dm)),"RnBDiffMeth",checkNames=FALSE)
+}
+
+
+
+test_rnb.execute.diffMethANDVar <- function(){
+  require(RnBeads.hg19)
+  data(small.example.object)
+  temp.option <- rnb.getOption("differential.variability")
+  rnb.options(differential.variability=TRUE)
+  dm <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Sample_Group","Treatment"))
+  rnb.options(differential.variability=temp.option)
+  comps <- get.comparisons(dm)
+  reg <- rnb.region.types()[1]
+  passed <- is.element("combinedRank.var",colnames(get.table(dm,comps[1],reg)))
+  checkTrue(passed)
 }
 
 test_class_RnBDiffMeth <- function(){
@@ -184,6 +266,19 @@ test_differential <- function(){
 		logger.completed()
 		logger.start(c("Testing function:","rnb.execute.computeDiffMeth"))
 			test_rnb.execute.computeDiffMeth()
+		logger.completed()
+		logger.start("Testing function: diffVar")
+		  test_diffVar()
+		  test_diffVar_covariate()
+		logger.completed()
+		logger.start("Testing function: apply.iEVORA")
+		  test_iEVORA()
+		logger.completed()
+		logger.start("Testing function: rnb.execute.diffVar")
+		  test_rnb.execute.diffVar()
+		logger.completed()
+		logger.start("Testing function: rnb.execute.computeDiffMeth and Variability")
+		  test_rnb.execute.diffMethANDVar()
 		logger.completed()
 		logger.start(c("Testing class:","RnBDiffMeth"))
 			test_class_RnBDiffMeth()

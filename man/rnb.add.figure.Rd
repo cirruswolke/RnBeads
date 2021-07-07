@@ -4,8 +4,13 @@
 \alias{rnb.add.figure}
 \title{rnb.add.figure}
 \usage{
-rnb.add.figure(report, description, report.plots, setting.names = list(),
-  selected.image = as.integer(1))
+rnb.add.figure(
+  report,
+  description,
+  report.plots,
+  setting.names = list(),
+  selected.image = as.integer(1)
+)
 }
 \arguments{
 \item{report}{Report to write the text to.}
@@ -28,11 +33,10 @@ The modified report.
 Generates HTML code for a figure in the specified report. A figure is a collection of images (plots), of which only
 one is visible at any given moment.
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{rnb.add.tables}} for adding a listing of tables; \code{\linkS4class{Report}} for other functions
   adding contents to an HTML report
 }
-
+\author{
+Yassen Assenov
+}

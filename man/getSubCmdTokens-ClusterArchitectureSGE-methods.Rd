@@ -5,9 +5,16 @@
 \alias{getSubCmdTokens,ClusterArchitectureSGE-method}
 \title{getSubCmdTokens-methods}
 \usage{
-\S4method{getSubCmdTokens}{ClusterArchitectureSGE}(object, cmd.tokens, log,
-  job.name = "", res.req = character(0), depend.jobs = character(0),
-  sub.binary = TRUE, quote.cmd = TRUE)
+\S4method{getSubCmdTokens}{ClusterArchitectureSGE}(
+  object,
+  cmd.tokens,
+  log,
+  job.name = "",
+  res.req = character(0),
+  depend.jobs = character(0),
+  sub.binary = TRUE,
+  quote.cmd = TRUE
+)
 }
 \arguments{
 \item{object}{\code{\linkS4class{ClusterArchitectureSGE}} object}
@@ -48,4 +55,3 @@ getSubCmdTokens(arch,c("Rscript","my_great_script.R"),"my_logfile.log")
 \author{
 Fabian Mueller
 }
-

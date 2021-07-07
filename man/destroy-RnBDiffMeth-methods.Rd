@@ -20,4 +20,3 @@ CAUTION: currently only works with reloaded objects
 \author{
 Fabian Mueller
 }
-

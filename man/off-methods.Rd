@@ -2,10 +2,10 @@
 % Please edit documentation in R/Report-methods.R, R/ReportPlot-methods.R
 \docType{methods}
 \name{off,Report-method}
-\alias{off}
 \alias{off,Report-method}
-\alias{off,ReportGgPlot-method}
+\alias{off}
 \alias{off,ReportPlot-method}
+\alias{off,ReportGgPlot-method}
 \title{off-methods}
 \usage{
 \S4method{off}{Report}(.Object)
@@ -27,4 +27,3 @@ The closed object, invisibly.
 \description{
 Performs cleanup and/or other finishing activities and closes the specified device, connection, or document.
 }
-

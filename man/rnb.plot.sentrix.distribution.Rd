@@ -31,4 +31,3 @@ rnb.plot.sentrix.distribution(rnb.set.example,sid)
 \author{
 Yassen Assenov
 }
-

@@ -28,4 +28,3 @@ rnb.xml2options(system.file(fname,package="RnBeads"))
 \author{
 Yassen Assenov
 }
-

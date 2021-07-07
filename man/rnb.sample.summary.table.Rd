@@ -38,4 +38,3 @@ rnb.sample.summary.table(rnb.set.example)
 \author{
 Fabian Mueller
 }
-

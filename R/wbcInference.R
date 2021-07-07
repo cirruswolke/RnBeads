@@ -32,7 +32,7 @@ projectWBC = function(Y, coefWBC, contrastWBC=NULL, nonnegative=TRUE){
   colnames(mixCoef) = colnames(Xmat)
 
   if(nonnegative){
-    library(quadprog)
+    rnb.require('quadprog')
 
     Amat = diag(nCol)
     b0vec = rep(0,nCol)

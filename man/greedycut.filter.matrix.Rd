@@ -22,10 +22,9 @@ Table summarizing the iterations of the algorithm in the form of a \code{data.fr
 \description{
 Performs all iterations of the Greedycut algorithm for removing rows and columns from the given matrix.
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{greedycut.get.submatrix}} for extracting the resulting matrix after filtering
 }
-
+\author{
+Yassen Assenov
+}

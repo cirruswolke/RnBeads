@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBSet-class.R
 \docType{methods}
 \name{pheno,RnBSet-method}
-\alias{pheno}
 \alias{pheno,RnBSet-method}
+\alias{pheno}
 \title{pheno-methods}
 \usage{
 \S4method{pheno}{RnBSet}(object)
@@ -24,4 +24,3 @@ data(small.example.object)
 pheno(rnb.set.example)
 }
 }
-

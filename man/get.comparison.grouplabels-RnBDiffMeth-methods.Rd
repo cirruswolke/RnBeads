@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBDiffMeth-class.R
 \docType{methods}
 \name{get.comparison.grouplabels,RnBDiffMeth-method}
-\alias{get.comparison.grouplabels}
 \alias{get.comparison.grouplabels,RnBDiffMeth-method}
+\alias{get.comparison.grouplabels}
 \title{get.comparison.grouplabels-methods}
 \usage{
 \S4method{get.comparison.grouplabels}{RnBDiffMeth}(object)
@@ -30,4 +30,3 @@ get.comparison.grouplabels(dm)
 \author{
 Fabian Mueller
 }
-

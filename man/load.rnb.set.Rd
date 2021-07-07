@@ -21,4 +21,3 @@ Loading of the \code{RnBSet} objects with large matrices of type \pkg{ff}.
 \author{
 Pavlo Lutsik
 }
-

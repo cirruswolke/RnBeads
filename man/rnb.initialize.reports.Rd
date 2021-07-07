@@ -28,15 +28,14 @@ Creates a new directory to host HTML reports and copies the shared configuration
 \donttest{
 dir.reports <- "~/infinium_studies/cancer_study/reports"
 if (!rnb.initialize.reports(dir.reports)) {
-    cat("ERROR: Could not initialize configuration in ", dir.reports, "\\n", sep = "")
+    cat("ERROR: Could not initialize configuration in ", dir.reports, "\n", sep = "")
 }
 }
 
-}
-\author{
-Yassen Assenov
 }
 \seealso{
 \code{\link{createReport}} for initializing an HTML report
 }
-
+\author{
+Yassen Assenov
+}

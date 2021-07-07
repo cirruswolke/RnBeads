@@ -584,14 +584,15 @@ rnb.plot.pheno.categories <- function(annotations, columns = NULL, fileprefix = 
 #' @param rnb.set         Methylation dataset as an object of type inheriting \code{\linkS4class{RnBSet}}. This dataset
 #'                        must contain at least four samples.
 #' @param plot.type       Type of plot to be created. This must be one of \code{"pca"} (projection to two principal
-#'                        components) or \code{"mds"} (multidimensional scaling to two dimensions). The section
+#'                        components), \code{"mds"} (multidimensional scaling to two dimensions) or \code{"tsne"}
+#'                        (t-distributed stochastic neighbor embedding to two dimensions). The section
 #'                        \emph{Details} provides more details on how the dimension reduction techniques are applied.
 #' @param dimensions      Vector of two positive \code{integer} values giving the principle components to be shown in
 #'                        the horizontal and vertical axis of the plot. This parameter is considered only when
 #'                        \code{plot.type} is \code{"pca"}.
 #' @param distance.metric Distance metric to be applied when reducing the dimensionality of the methylation data. This
-#'                        must be one of \code{"eucledian"} or \code{"manhattan"}. The second metric is supported only
-#'                        in multidimensional scaling.
+#'                        must be one of \code{"eucledian"} or \code{"manhattan"}. The second metric is not supported by
+#'                        principal component analysis.
 #' @param target          Site or region type to be used in the dimension reduction technique. This must be either
 #'                        \code{"sites"} (individual CpGs) or one of the region types summarized in \code{rnb.set}.
 #' @param point.types     Trait, specified as column name or index in the sample annnotation table of \code{rnb.set}, to
@@ -601,7 +602,8 @@ rnb.plot.pheno.categories <- function(annotations, columns = NULL, fileprefix = 
 #'                        displays the samples as identifiers instead of points.
 #' @param point.colors    Trait, specified as column name or index in the sample annnotation table of \code{rnb.set}, to
 #'                        be used to define sample colors in the plot. Setting this parameter to zero (default) or to a
-#'                        trait that does not define categories results in all samples being displayed in black.
+#'                        trait that does not define numerical values or categories results in all samples being
+#'                        displayed in black.
 #' @param legend.space    Width, in inches, of the space dedicated for legends that will be assigned on the right side
 #'                        of the plot. This parameter is considered only if legends are actually included, that is, if
 #'                        sample traits are mapped to point types and/or colors.
@@ -621,8 +623,10 @@ rnb.plot.pheno.categories <- function(annotations, columns = NULL, fileprefix = 
 #' The analysis option \code{"exploratory.top.dimensions"} controls whether dimension reduction is applied on all
 #' probes, sites or regions available in the given dataset, or only on the most variable ones. In case a trait is mapped
 #' to point types, the shapes to use are taken from the option \code{"points.category"}. Similary, the option
-#' \code{"colors.category"} determines which colors are used when mapping to color is applied. See
-#' \emph{\link[=rnb.options]{RnBeads Options}} for more information on these options.
+#' \code{"colors.category"} determines which colors are used when mapping sample categories to color. In cases when
+#' numerical values are mapped to color, the option \code{"colors.3.gradient"} is used. If the set of value contains
+#' both positive and negative numbers, the middle point in the color legend is set to zero. See
+#' \emph{\link[=rnb.options]{RnBeads Options}} for more information on the options mentioned above.
 #' 
 #' @examples
 #' \donttest{
@@ -644,7 +648,7 @@ rnb.plot.dreduction <- function(rnb.set, plot.type = "pca", dimensions = 1:2, di
 	if (!inherits(rnb.set, "RnBSet")) {
 		stop("invalid value for rnb.set")
 	}
-	if (!(is.character(plot.type) && length(plot.type) == 1 && tolower(plot.type) %in% c("mds", "pca"))) {
+	if (!(is.character(plot.type) && length(plot.type) == 1 && tolower(plot.type) %in% c("mds", "pca", "tsne"))) {
 		stop("invalid value for plot.type")
 	}
 	plot.type <- tolower(plot.type)
@@ -655,12 +659,14 @@ rnb.plot.dreduction <- function(rnb.set, plot.type = "pca", dimensions = 1:2, di
 		if (!(is.integer(dimensions) && length(dimensions) == 2 && isTRUE(all(dimensions > 0)))) {
 			stop("invalid value for dimensions")
 		}
+	} else if (plot.type == "tsne") {
+		rnb.require("tsne")
 	}
 	if (!(is.character(distance.metric) && length(distance.metric) == 1 &&
 		  	distance.metric %in% c("manhattan", "euclidean"))) {
 		stop("invalid value for distance.metric")
 	}
-	if (plot.type != "mds" && distance.metric != "euclidean") {
+	if (plot.type == "pca" && distance.metric != "euclidean") {
 		stop(paste("invalid distance metric for", plot.type))
 	}
 	if (!(is.character(target) && length(target) == 1 && (!is.na(target)))) {
@@ -718,7 +724,7 @@ rnb.plot.dreduction <- function(rnb.set, plot.type = "pca", dimensions = 1:2, di
 	site.nas <- colMeans(is.na(X))
 	if (plot.type == "mds") {
 		i <- which(site.nas == 1)
-	} else { # plot.type == c("pca", "pca")
+	} else { # plot.type %in% c("pca", "tsne")
 		i <- which(site.nas != 0)
 	}
 	info <- list("Target" = target, "Technique" = toupper(substr(plot.type, 1, 3)),
@@ -748,13 +754,16 @@ rnb.plot.dreduction <- function(rnb.set, plot.type = "pca", dimensions = 1:2, di
 	if (plot.type == "mds") {
 		X <- mds(X, distance.metric)
 		colnames(X) <- paste("MDS dimension", 1:2)
-	} else {
+	} else if (plot.type == "pca") {
 		X <- prcomp(X, center = TRUE, scale. = FALSE)$x
 		if (ncol(X) < max(dimensions)) {
 			stop(paste("unsupported value for dimensions;", ncol(X), "principal components available"))
 		}
 		X <- X[, dimensions]
 		colnames(X) <- paste("Principal component", dimensions)
+	} else { # plot.type == "tsne"
+		X <- tsne(dist(X, method = distance.metric), epoch = 2000)
+		colnames(X) <- paste("Dimension", 1:2)
 	}
 
 	## Define the data and mappings to plot
@@ -763,13 +772,20 @@ rnb.plot.dreduction <- function(rnb.set, plot.type = "pca", dimensions = 1:2, di
 	plot.labs <- list("x" = colnames(X)[1], "y" = colnames(X)[2])
 	if (point.colors != 0) {
 		i <- s.annotation[, point.colors]
-		if (is.character(i) || is.factor(i) || is.integer(i)) {
-			dframe$pcolor <- as.factor(i)
-			p.aes[["color"]] <- "pcolor"
-			plot.labs[["color"]] <- colnames(s.annotation)[point.types]
-		} else { # the trait cannot be mapped to point colors
-			rnb.warning("Cannot map point.colors to categories")
+		if (all(is.na(i))) {
+			rnb.warning("No data to visualize in point.colors")
 			point.colors <- 0L
+		} else if (is.logical(i) || is.character(i) || is.factor(i)) {
+			dframe$pcolor <- as.factor(i)
+		} else if (is.integer(i) || is.double(i)) {
+			dframe$pcolor <- as.double(i)
+		} else { # the trait cannot be mapped to point colors
+			rnb.warning("Cannot map point.colors to colors")
+			point.colors <- 0L
+		}
+		if (point.colors != 0) {
+			p.aes[["color"]] <- "pcolor"
+			plot.labs[["color"]] <- colnames(s.annotation)[point.colors]
 		}
 	}
 	if (point.types != 0) {
@@ -777,28 +793,40 @@ rnb.plot.dreduction <- function(rnb.set, plot.type = "pca", dimensions = 1:2, di
 		if ((is.character(i) || is.factor(i) || is.integer(i)) && (!any(is.na(i))) && anyDuplicated(i) == 0) {
 			dframe$id <- as.character(i)
 			p.aes[["label"]] <- "id"
-		} else if (point.types == point.colors) {
+		} else if (point.types == point.colors && (is.factor(dframe[, p.aes$color]))) {
 			p.aes[["shape"]] <- p.aes[["color"]]
 			plot.labs[["shape"]] <- plot.labs[["color"]]
-		}  else if (is.character(i) || is.factor(i) || is.integer(i)) {
+		}  else if (is.logical(i) || is.character(i) || is.factor(i) || is.integer(i)) {
 			dframe$ptype <- as.factor(i)
 			p.aes[["shape"]] <- "ptype"
 			plot.labs[["shape"]] <- colnames(s.annotation)[point.types]
 		} else { # the trait cannot be mapped to point types
-			rnb.warning("Cannot map point.types to categories")
+			rnb.warning("Cannot map point.types to point types")
 		}
 	}
 
 	## Create the ggplot object
-	pp <- ggplot2::ggplot(dframe) + do.call(ggplot2::aes_string, p.aes) + do.call(ggplot2::labs, plot.labs)
+	pp <- ggplot2::ggplot(dframe) + do.call(ggplot2::aes_string, p.aes) + do.call(ggplot2::labs, plot.labs) +
+		ggplot2::coord_fixed()
 	if ("id" %in% colnames(dframe)) {
 		pp <- pp + ggplot2::geom_text()
 	} else {
 		pp <- pp + ggplot2::geom_point()
 	}
 	if ("pcolor" %in% colnames(dframe)) {
-		v2color <- rep_len(rnb.getOption("colors.category"), length.out = nlevels(dframe$pcolor))
-		pp <- pp + ggplot2::scale_color_manual(na.value = "#C0C0C0", values = v2color)
+		if (is.factor(dframe$pcolor)) {
+			v2c <- rep_len(rnb.getOption("colors.category"), length.out = nlevels(dframe$pcolor))
+			pp <- pp + ggplot2::scale_color_manual(na.value = "#C0C0C0", values = v2c)
+		} else { # is.double(dframe$pcolor)
+			v2c <- rnb.getOption("colors.3.gradient")
+			mp <- range(dframe$pcolor, na.rm = TRUE)
+			if (mp[1] < 0 && 0 < mp[2]) {
+				mp <- 0
+			} else {
+				mp <- mean(mp)
+			}
+			pp <- pp + ggplot2::scale_color_gradient2(low = v2c[1], mid = v2c[2], high = v2c[3], midpoint = mp)
+		}
 	}
 	if ("shape" %in% names(p.aes)) {
 		v2shape <- rep(rnb.getOption("points.category"), length.out = nlevels(dframe[, p.aes[["shape"]]]))
@@ -808,7 +836,7 @@ rnb.plot.dreduction <- function(rnb.set, plot.type = "pca", dimensions = 1:2, di
 		pp <- pp + theme(plot.margin = unit(rep(0.1, 4), "in"))
 	} else {
 		pp <- pp + theme(plot.margin = unit(0.1 + c(0, legend.space, 0, 0), "in"),
-			legend.justification = c(0, 0.5), legend.position = c(1, 0.5))
+			legend.justification = c(0, 0.5), legend.position = c(1.04, 0.5))
 	}
 
 	attr(pp, "info") <- info
@@ -842,214 +870,6 @@ plotcdf <- function(fname, report, values, width = 6.2, height = 6.2, main = NA,
 		coord_cartesian(xlim = range(values), ylim = c(0, 1)) + theme(plot.margin = unit(0.1 + c(0, 0, 0, 0), "in"))
 	print(pp)
 	return(off(rplot))
-}
-
-########################################################################################################################
-
-corrHeatmap<-function(cor.mat, ncols, min.corr,
-                      leg=TRUE, sp=c(.87,0.9,0.25,0.75), rv=NA, cv=NA, xa=1, ...){
-
-
-  rgb.palette <- colorRampPalette(c("blue", "yellow"), space = "rgb")
-  color.function<-function(ncols){
-
-    #cm.colors(ncols)
-    #rainbow(ncols)
-    #rgb.palette(ncols)
-    if(ncols<=11) brewer.pal(ncols,"RdGy")
-    else rainbow(ncols, start=1/12, end=7/12)
-    #topo.colors(ncols)
-  }
-
-  color.space.merge.up<-ceiling(ncols*(range(na.omit(as.numeric(cor.mat)))[2]-min.corr)/(1-min.corr))
-  color.space.merge.bot<-floor(ncols*(1-(1-range(na.omit(as.numeric(cor.mat)))[1])/(1-min.corr)))
-
-
-  heatmap.mod(cor.mat,
-              Rowv=rv,Colv=cv,
-              col=color.function(ncols)[color.space.merge.bot:color.space.merge.up],
-              scale="none",
-              xaxis=xa, ylab.side=2,...)
-
-  if(leg) image.plot(legend.only=TRUE,
-                     graphics.reset=TRUE, smallplot= sp,
-                     horizontal=FALSE,
-                     zlim=c(min.corr,1), col=color.function(ncols),
-                     legend.shrink = 0.5,
-                     axis.args=list(cex.axis=0.67), ...)
-
-}
-
-
-# Heatmap with optional axis' positions
-#
-###############################################################################
-
-heatmap.mod<-function (x, Rowv = NULL, Colv = if (symm) "Rowv" else NULL,
-                       distfun = dist, hclustfun = hclust, reorderfun = function(d,
-                                                                                 w) reorder(d, w), add.expr, symm = FALSE, revC = identical(Colv,
-                                                                                                                                            "Rowv"), scale = c("row", "column", "none"), na.rm = TRUE,
-                       margins = c(5, 5), ColSideColors, RowSideColors, cexRow = 0.2 +
-                         1/log10(nr), cexCol = 0.2 + 1/log10(nc), labRow = NULL,
-                       labCol = NULL, main = NULL, xlab = NULL, ylab = NULL, keep.dendro = FALSE,
-                       verbose = getOption("verbose"),
-                       xaxis=1, xaxt="nn", ylab.side=4,...)
-{
-  scale <- if (symm && missing(scale))
-    "none"
-  else match.arg(scale)
-  if (length(di <- dim(x)) != 2 || !is.numeric(x))
-    stop("'x' must be a numeric matrix")
-  nr <- di[1L]
-  nc <- di[2L]
-  if (nr <= 1 || nc <= 1)
-    stop("'x' must have at least 2 rows and 2 columns")
-  if (!is.numeric(margins) || length(margins) != 2L)
-    stop("'margins' must be a numeric vector of length 2")
-  doRdend <- !identical(Rowv, NA)
-  doCdend <- !identical(Colv, NA)
-  if (!doRdend && identical(Colv, "Rowv"))
-    doCdend <- FALSE
-  if (is.null(Rowv))
-    Rowv <- rowMeans(x, na.rm = na.rm)
-  if (is.null(Colv))
-    Colv <- colMeans(x, na.rm = na.rm)
-  if (doRdend) {
-    if (inherits(Rowv, "dendrogram"))
-      ddr <- Rowv
-    else {
-      hcr <- hclustfun(distfun(x))
-      ddr <- as.dendrogram(hcr)
-      if (!is.logical(Rowv) || Rowv)
-        ddr <- reorderfun(ddr, Rowv)
-    }
-    if (nr != length(rowInd <- order.dendrogram(ddr)))
-      stop("row dendrogram ordering gave index of wrong length")
-  }
-  else rowInd <- 1L:nr
-  if (doCdend) {
-    if (inherits(Colv, "dendrogram"))
-      ddc <- Colv
-    else if (identical(Colv, "Rowv")) {
-      if (nr != nc)
-        stop("Colv = \"Rowv\" but nrow(x) != ncol(x)")
-      ddc <- ddr
-    }
-    else {
-      hcc <- hclustfun(distfun(if (symm)
-        x
-                               else t(x)))
-      ddc <- as.dendrogram(hcc)
-      if (!is.logical(Colv) || Colv)
-        ddc <- reorderfun(ddc, Colv)
-    }
-    if (nc != length(colInd <- order.dendrogram(ddc)))
-      stop("column dendrogram ordering gave index of wrong length")
-  }
-  else colInd <- 1L:nc
-  x <- x[rowInd, colInd]
-  labRow <- if (is.null(labRow))
-    if (is.null(rownames(x)))
-      (1L:nr)[rowInd]
-  else rownames(x)
-  else labRow[rowInd]
-  labCol <- if (is.null(labCol))
-    if (is.null(colnames(x)))
-      (1L:nc)[colInd]
-  else colnames(x)
-  else labCol[colInd]
-  if (scale == "row") {
-    x <- sweep(x, 1L, rowMeans(x, na.rm = na.rm), check.margin = FALSE)
-    sx <- apply(x, 1L, sd, na.rm = na.rm)
-    x <- sweep(x, 1L, sx, "/", check.margin = FALSE)
-  }
-  else if (scale == "column") {
-    x <- sweep(x, 2L, colMeans(x, na.rm = na.rm), check.margin = FALSE)
-    sx <- apply(x, 2L, sd, na.rm = na.rm)
-    x <- sweep(x, 2L, sx, "/", check.margin = FALSE)
-  }
-  lmat <- rbind(c(NA, 3), 2:1)
-  lwid <- c(if (doRdend) 1 else 0.05, 4)
-  lhei <- c((if (doCdend) 1 else 0.05) + if (!is.null(main)) 0.2 else 0,
-            4)
-  if (!missing(ColSideColors)) {
-    if (!is.character(ColSideColors) || length(ColSideColors) !=
-      nc)
-      stop("'ColSideColors' must be a character vector of length ncol(x)")
-    lmat <- rbind(lmat[1, ] + 1, c(NA, 1), lmat[2, ] + 1)
-    lhei <- c(lhei[1L], 0.2, lhei[2L])
-  }
-  if (!missing(RowSideColors)) {
-    if (!is.character(RowSideColors) || length(RowSideColors) !=
-      nr)
-      stop("'RowSideColors' must be a character vector of length nrow(x)")
-    lmat <- cbind(lmat[, 1] + 1, c(rep(NA, nrow(lmat) - 1),
-                                   1), lmat[, 2] + 1)
-    lwid <- c(lwid[1L], 0.2, lwid[2L])
-  }
-  lmat[is.na(lmat)] <- 0
-  if (verbose) {
-    cat("layout: widths = ", lwid, ", heights = ", lhei,
-        "; lmat=\n")
-    print(lmat)
-  }
-  on.exit(dev.flush())
-  op <- par(no.readonly = TRUE)
-  on.exit(par(op), add = TRUE)
-  layout(lmat, widths = lwid, heights = lhei, respect = TRUE)
-  if (!missing(RowSideColors)) {
-    par(mar = c(margins[1L], 0, 0, 0.5))
-    image(rbind(1L:nr), col = RowSideColors[rowInd], axes = FALSE)
-  }
-  if (!missing(ColSideColors)) {
-    par(mar = c(0.5, 0, 0, margins[2L]))
-    image(cbind(1L:nc), col = ColSideColors[colInd], axes = FALSE)
-  }
-  if (xaxis==3){
-    par(mar = c(margins[1L],margins[2L], margins[1L], 0))
-  }else{
-    par(mar = c(margins[1L], 0, 0, margins[2L]))
-  }
-
-
-  if (!symm || scale != "none")
-    x <- t(x)
-  if (revC) {
-    iy <- nr:1
-    if (doRdend)
-      ddr <- rev(ddr)
-    x <- x[, iy]
-  }
-  else iy <- 1L:nr
-  image(1L:nc, 1L:nr, x, xlim = 0.5 + c(0, nc), ylim = 0.5 +
-    c(0, nr), axes = FALSE, xlab = "", ylab = "", ...)
-  if(xaxt!="n") axis(xaxis, 1L:nc, labels = labCol, las = 2, line = -0.5, tick = 0,
-                     cex.axis = cexCol)
-  if (!is.null(xlab))
-    mtext(xlab, side = 1, line = margins[1L] - 1.25)
-  axis(2, iy, labels = labRow, las = 2, line = -0.5, tick = 0,
-       cex.axis = cexRow)
-
-  if (!is.null(ylab))
-    mtext(ylab, side = ylab.side, line = margins[2L] - 1.25)
-  if (!missing(add.expr))
-    eval(substitute(add.expr))
-  par(mar = c(margins[1L], 0, 0, 0))
-  if (doRdend)
-    plot(ddr, horiz = TRUE, axes = FALSE, yaxs = "i", leaflab = "none")
-  else frame()
-  if(xaxis==3) par(mar = c(0, margins[2L], if (!is.null(main)) 1 else 0, 0))
-  else par(mar = c(0, 0, if (!is.null(main)) 1 else 0, margins[2L]))
-  if (doCdend)
-    plot(ddc, axes = FALSE, xaxs = "i", leaflab = "none")
-  else if (!is.null(main))
-    frame()
-  if (!is.null(main)) {
-    par(xpd = NA)
-    title(main, cex.main = 1.5 * op[["cex.main"]])
-  }
-  invisible(list(rowInd = rowInd, colInd = colInd, Rowv = if (keep.dendro &&
-    doRdend) ddr, Colv = if (keep.dendro && doCdend) ddc))
 }
 
 ########################################################################################################################
@@ -1660,7 +1480,7 @@ create.densityScatter <- function(df2p,is.special=NULL,dens.subsample=FALSE,dens
 		if (!is.null(is.special)){
 			df2p.special <- df2p[df2p$is.special,]
 			colors.dmp <- DENS.COLORS.LOW[2]
-			if (dens.special){
+			if (dens.special && nrow(df2p.special) > 1){
 				tryCatch(
 					colors.dmp   <- densCols(x=df2p.special[,1],y=df2p.special[,2],colramp = colorRampPalette(c(DENS.COLORS.LOW[2],DENS.COLORS.HIGH[2]))),
 					error=function(ee){
@@ -1721,6 +1541,7 @@ create.scatter.dens.points <- function(df2p,is.special=NULL,dens.special=TRUE,mo
 	num.not.special <- sum(!df2p$is.special)
 	df2p$plotOrder[!df2p$is.special] <- seq_len(num.not.special)
 	df2p$plotOrder[df2p$is.special] <- seq((num.not.special+1),n.points)
+	df2p <- df2p[order(df2p$plotOrder, decreasing=FALSE, na.last=FALSE),]
 	
 	df2p$color <- NA
 	if (sum(!df2p$is.special)>1){
@@ -1754,7 +1575,7 @@ create.scatter.dens.points <- function(df2p,is.special=NULL,dens.special=TRUE,mo
 	if (mock){
 		pp <- pp + geom_blank()
 	} else {
-		pp <- pp + geom_point(aes_string(color="color",order="plotOrder")) + scale_color_identity()
+		pp <- pp + geom_point(aes_string(color="color")) + scale_color_identity()
 	}
 	
 	return(pp)

@@ -14,7 +14,7 @@ annotation tables of CpG dinucleotides, and Infinium methylation and control pro
 
 \item{regions}{BED file defining regions (see \emph{Details}). Alternatively, the value of this parameter can be
 a table of genomic regions in the form of a \code{\link{data.frame}}, containing at least the
-following three columns - \code{"chromosome"}, \code{"start"} and \code{"end"} (notice the lower
+following three columns - \code{"Chromosome"}, \code{"Start"} and \code{"End"} (notice the upper
 case). The \code{"chromosome"} column must be a \code{character} or \code{factor} vector that
 lists chromosome names. The \code{"start"} and \code{"end"} columns are expected to contain
 genomic positions as \code{integer}s. The row names of this \code{data.frame} are used as region
@@ -55,11 +55,10 @@ txt <- "First exon of the BEND5 gene and an overlapping CpG island."
 rnb.set.annotation("my regions", my.regions, txt)
 }
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{rnb.get.annotation}} for extracting annotation;
   \code{\link{rnb.region.types}} for all loaded region types in a genome assembly
 }
-
+\author{
+Yassen Assenov
+}

@@ -36,4 +36,3 @@ str(lapply(results, slot, "algorithm"))
 \author{
 Yassen Assenov
 }
-

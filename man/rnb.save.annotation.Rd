@@ -25,10 +25,9 @@ This function is used in combination with \code{\link{rnb.load.annotation}} to e
 annotations. If can also be used to save a build-in region annotation (e.g. before overwriting it) but not site or
 control probe annotations.
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{rnb.load.annotation}} for loading a saved annotation
 }
-
+\author{
+Yassen Assenov
+}

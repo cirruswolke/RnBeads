@@ -2,8 +2,8 @@
 % Please edit documentation in R/computeCluster.R
 \docType{methods}
 \name{getModuleNumCores,RnBClusterRun-method}
-\alias{getModuleNumCores}
 \alias{getModuleNumCores,RnBClusterRun-method}
+\alias{getModuleNumCores}
 \title{getModuleNumCores-methods}
 \usage{
 \S4method{getModuleNumCores}{RnBClusterRun}(object)
@@ -20,4 +20,3 @@ Retrieves the number of cores used by each module
 \author{
 Fabian Mueller
 }
-

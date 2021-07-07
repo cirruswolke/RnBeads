@@ -22,7 +22,7 @@ see \code{\linkS4class{ClusterArchitecture}}
   a job with the given command to the cluster}
 }
 }
+
 \author{
 Fabian Mueller
 }
-

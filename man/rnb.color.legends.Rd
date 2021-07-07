@@ -4,9 +4,14 @@
 \alias{rnb.color.legends}
 \title{rnb.color.legends}
 \usage{
-rnb.color.legends(report, legends, fprefix = ifelse(is.character(legends),
-  "legend", "legend_"), description = "Color legend.", setting.names = NULL,
-  size.factor = 3)
+rnb.color.legends(
+  report,
+  legends,
+  fprefix = ifelse(is.character(legends), "legend", "legend_"),
+  description = "Color legend.",
+  setting.names = NULL,
+  size.factor = 3
+)
 }
 \arguments{
 \item{report}{Report to contain the legend figure. This must be an object of type \code{\linkS4class{Report}}.}
@@ -43,4 +48,3 @@ In case \code{legends} specifies multiple legends in the form of a list, \code{n
 \author{
 Yassen Assenov
 }
-

@@ -4,8 +4,16 @@
 \alias{BMIQ}
 \title{BMIQ}
 \usage{
-BMIQ(beta.v, design.v, doH = TRUE, nfit = 50000, th1.v = c(0.2, 0.75),
-  th2.v = NULL, niter = 5, tol = 0.001)
+BMIQ(
+  beta.v,
+  design.v,
+  doH = TRUE,
+  nfit = 50000,
+  th1.v = c(0.2, 0.75),
+  th2.v = NULL,
+  niter = 5,
+  tol = 0.001
+)
 }
 \arguments{
 \item{beta.v}{\code{double} vector consisting of beta values. Missing values (\code{NA}s) cannot be handled, so
@@ -47,9 +55,13 @@ List with the following elements:
         }
 }
 \description{
+This function makes 3 indipendent attempts to fit a 3-state beta mixture model on the provided type I
+             probes. An attempt is successful if at least 4 probes are assigned to each level. In case all attempts
+             fail, the return value is \code{NULL}.
+}
+\details{
 Performs Beta-mixture quantile normalization, adjusting for type II bias in Infinium 450K data.
 }
 \author{
 Andrew Teschendorff and Steve Horvath; with minor modifications by Yassen Assenov
 }
-

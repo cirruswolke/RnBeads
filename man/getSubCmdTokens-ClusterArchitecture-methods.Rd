@@ -2,12 +2,18 @@
 % Please edit documentation in R/clusterArchitecture.R
 \docType{methods}
 \name{getSubCmdTokens,ClusterArchitecture-method}
-\alias{getSubCmdTokens}
 \alias{getSubCmdTokens,ClusterArchitecture-method}
+\alias{getSubCmdTokens}
 \title{getSubCmdTokens-methods}
 \usage{
-\S4method{getSubCmdTokens}{ClusterArchitecture}(object, cmd.tokens, log,
-  job.name = "", res.req = character(0), depend.jobs = character(0))
+\S4method{getSubCmdTokens}{ClusterArchitecture}(
+  object,
+  cmd.tokens,
+  log,
+  job.name = "",
+  res.req = character(0),
+  depend.jobs = character(0)
+)
 }
 \arguments{
 \item{object}{\code{\linkS4class{ClusterArchitecture}} object}
@@ -36,4 +42,3 @@ For a concrete child class implementation for a sun grid architecture specificat
 \author{
 Fabian Mueller
 }
-

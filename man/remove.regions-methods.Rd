@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBSet-class.R
 \docType{methods}
 \name{remove.regions,RnBSet-method}
-\alias{remove.regions}
 \alias{remove.regions,RnBSet-method}
+\alias{remove.regions}
 \title{remove.regions-methods}
 \usage{
 \S4method{remove.regions}{RnBSet}(object, region.type)
@@ -28,4 +28,3 @@ rnb.set.reduced<-remove.regions(rnb.set.example, "genes")
 summarized.regions(rnb.set.reduced)
 }
 }
-

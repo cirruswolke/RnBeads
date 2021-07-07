@@ -33,7 +33,7 @@ function \code{\link{createReportPlot}}.
        associated with the report plot.}
 }
 }
+
 \author{
 Yassen Assenov
 }
-

@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBeadSet-class.R
 \docType{methods}
 \name{qc,RnBeadSet-method}
-\alias{qc}
 \alias{qc,RnBeadSet-method}
+\alias{qc}
 \title{qc-methods}
 \usage{
 \S4method{qc}{RnBeadSet}(object)
@@ -27,4 +27,3 @@ head(qcinf$Cy3)
 head(qcinf$Cy5)
 }
 }
-

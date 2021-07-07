@@ -35,4 +35,3 @@ rnb.export.to.ewasher(rnb.set.example,tempfile(pattern="forEwasher"))
 \author{
 Fabian Mueller
 }
-

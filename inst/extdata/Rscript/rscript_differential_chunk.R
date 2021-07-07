@@ -63,6 +63,18 @@ logger.start("Configuring Analysis")
 	}
 	logger.info(c("Number of cores:", ncores))
 	rm(aname, ncores)
+
+	lolaDbPaths <- NULL
+	savedLolaDbPath <- file.path(cmdArgs$output, "lolaDbPaths.rds")
+	if(rnb.getOption("differential.enrichment.lola")){
+		if (file.exists(savedLolaDbPath)){
+			lolaDbPaths <- readRDS(savedLolaDbPath)
+			logger.info(c("Successfully loaded LOLA DB paths"))
+		} else{
+			logger.info(c("No LOLA DB file found"))
+		}
+		
+	}
 logger.completed()
 
 logger.start("Loading RnBSet")
@@ -96,19 +108,36 @@ logger.start("Differential Methylation")
 			skip.sites=!rnb.getOption("analyze.sites"),
 			# disk.dump=disk.dump,disk.dump.dir=paste0(cmdArgs$output,"_diffMethTableDir"))
 			disk.dump=disk.dump,disk.dump.dir=paste0(tempfile(pattern=""),"_diffMethTableDir"))
-	if (rnb.getOption("differential.enrichment")){
-		dm.enrich <- performEnrichment.diffMeth(rnb.set,diffmeth,verbose=FALSE)
+	if (rnb.getOption("differential.enrichment.go")){
+		dm.go.enrich <- performGoEnrichment.diffMeth(rnb.set,diffmeth,verbose=FALSE)
+		if(rnb.getOption("differential.variability")){
+		  dm.go.enrich <- performGOEnrichment.diffVar(rnb.set,diffmeth,dm.go.enrich,verbose=FALSE)
+		}
 	} else {
-		dm.enrich <- NULL
-		logger.info(c("Skipping enrichment analysis of differentially methylated regions"))
+		dm.go.enrich <- NULL
+		logger.info(c("Skipping GO enrichment analysis of differentially methylated regions"))
 	}
+	if (rnb.getOption("differential.enrichment.lola") && !is.null(lolaDbPaths)){
+		dm.lola.enrich <- performLolaEnrichment.diffMeth(rnb.set,diffmeth,lolaDbPaths,verbose=FALSE)
+		if(rnb.getOption("differential.variability")){
+		  dm.lola.enrich <- performLolaEnrichment.diffVar(rnb.set,diffmeth,enrich.diffMeth = dm.lola.enrich, lolaDbPaths,verbose=FALSE)
+		}
+	} else {
+		dm.lola.enrich <- NULL
+		logger.info(c("Skipping LOLA enrichment analysis of differentially methylated regions"))
+	}
+
 
 	logger.start("Saving")
 		diffmeth.path <- file.path(cmdArgs$output,paste0(module.name,"_",chunk.id,"_rnbDiffMeth"))
 		save.rnb.diffmeth(diffmeth, diffmeth.path)
-		diffmeth.enrichment <- dm.enrich
-		if (!is.null(diffmeth.enrichment)){
-			save(diffmeth.enrichment, file=file.path(diffmeth.path, "enrichment.RData"))
+		diffmeth.go.enrichment <- dm.go.enrich
+		if (!is.null(diffmeth.go.enrichment)){
+			save(diffmeth.go.enrichment, file=file.path(diffmeth.path, "enrichment_go.RData"))
+		}
+		diffmeth.lola.enrichment <- dm.lola.enrich
+		if (!is.null(diffmeth.lola.enrichment)){
+			save(diffmeth.lola.enrichment, file=file.path(diffmeth.path, "enrichment_lola.RData"))
 		}
 	logger.completed()
 logger.completed()

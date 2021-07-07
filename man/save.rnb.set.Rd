@@ -28,4 +28,3 @@ The saved object can be reloaded with the \link{load.rnb.set} function.
 \author{
 Pavlo Lutsik
 }
-

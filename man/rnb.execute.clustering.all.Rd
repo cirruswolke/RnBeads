@@ -17,10 +17,9 @@ List of list of clustering results; each element corresponds to one region type 
 Performs hierarchical clustering on the samples of the given dataset using multiple distance metrics and
 agglomeration methods for all suggested site and region types.
 }
-\author{
-Fabian Mueller
-}
 \seealso{
 \code{\link{rnb.execute.clustering}} for performing clustering using a single site or region type.
 }
-
+\author{
+Fabian Mueller
+}

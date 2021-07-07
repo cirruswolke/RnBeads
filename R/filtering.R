@@ -346,9 +346,16 @@ rnb.section.cross.reactive.removal.internal <- function(report, filtered, anno.t
 		return(report)
 	}
 
-	refText <- paste0("Chen, Y., Lemire, M., Choufani, S., Butcher, D.T.,  Grafodatskaya, D., Zanke, B.W., ",
-		"Gallinger, S., Hudson, T.J., Weksberg, R. (2013) Discovery of cross-reactive probes and polymorphic CpGs in ",
-		"the Illumina Infinium HumanMethylation450 microarray. <i>Epigenetics</i>, <b>8</b>(2), 203-209")
+	if (nrow(anno.table) < 500000L) {
+		refText <- paste0("Chen, Y., Lemire, M., Choufani, S., Butcher, D.T.,  Grafodatskaya, D., Zanke, B.W., ",
+			"Gallinger, S., Hudson, T.J., Weksberg, R. (2013) Discovery of cross-reactive probes and polymorphic ",
+			"CpGs in the Illumina Infinium HumanMethylation450 microarray. <i>Epigenetics</i>, <b>8</b>(2), 203-209")
+	} else {
+		refText <- paste0("Pidsley, R., Zotenko, E., Peters, T.J., Lawrence, M.G., Risbridger, G.P., Molloy, P., ",
+			"Djik, S.V., Muhlhausler, B., Strizaker, C., Clark, S.J. (2016) Critical evaluation of the Illumina ",
+			"MethylationEPIC BeadChip microarray for whole-genome DNA methylation profiling. <i>Genome Biology</i>, ",
+			"<b>17</b>:208")
+	}
 	report <- rnb.add.reference(report, refText)
 	txt <- " non-specific and "
 	N <- length(filtered)
@@ -803,22 +810,37 @@ rnb.execute.low.coverage.masking <- function(rnb.set, covg.threshold = rnb.getOp
 	dataset <- rnb.set
 	if (any(mask)) {
 		dataset@meth.sites[,][mask] <- NA
+		if (inherits(dataset, "RnBeadRawSet")) {
+			dataset@M[,][mask] <- NA
+			dataset@U[,][mask] <- NA
+			dataset@M0[,][mask] <- NA
+			dataset@U0[,][mask] <- NA
+		}
 		dataset <- updateRegionSummaries(dataset)
 	}
 	list(dataset.before = rnb.set, dataset = dataset, mask = mask)
 }
 
 rnb.execute.low.coverage.masking.internal <- function(rnb.set, sites2ignore, covg.threshold) {
-	coverage.matrix <- covg(rnb.set)
-	if (!(is.matrix(coverage.matrix) && all(dim(coverage.matrix) != 0))) {
+	# coverage.matrix <- covg(rnb.set)
+	if (!hasCovg(rnb.set)) {
 		return(NULL)
 	}
-	mask <- (coverage.matrix < covg.threshold) & (!is.na(coverage.matrix)) & (!is.na(meth(rnb.set)))
-	if (length(sites2ignore) != 0) {
-		mask[sites2ignore, ] <- FALSE
+	# mask <- (coverage.matrix < covg.threshold) & (!is.na(coverage.matrix)) & (!is.na(meth(rnb.set)))
+	N <- nsites(rnb.set)
+	M <- length(samples(rnb.set))
+	mask <- matrix(NA, nrow=N, ncol=M)
+	colnames(mask) <- samples(rnb.set)
+	for (j in 1:M){
+		cm <- covg(rnb.set, j=j)[,1]
+		mask[,j] <- (cm < covg.threshold) & !is.na(cm) & !is.na(meth(rnb.set, j=j)[,1])
+		if (length(sites2ignore) != 0) {
+			mask[sites2ignore, j] <- FALSE
+		}
 	}
 	return(mask)
 }
+
 
 ########################################################################################################################
 
@@ -956,23 +978,23 @@ rnb.execute.high.coverage.removal <- function(rnb.set) {
 }
 
 rnb.execute.high.coverage.removal.internal <- function(rnb.set, sites2ignore) {
-	cover <- covg(rnb.set)
-	if (is.null(cover)) {
+	if (!hasCovg(rnb.set)) {
 		return(NULL)
 	}
-	cover[cover<1] <- NA
-	filtered <- matrix(FALSE, nrow = nrow(cover), ncol = ncol(cover)) # allocate indication matrix
-	for (i in 1:ncol(cover)) {
-		cv <- cover[, i]
+	filtered <- rep(FALSE, nsites(rnb.set))
+	for (j in 1:length(samples(rnb.set))) {
+		cv <- covg(rnb.set, j=j)[,1] # get coverage VECTOR for current sample
+		cv[cv<1] <- NA
+		cvq <- cv
 		if (length(sites2ignore) != 0) {
-			cv <- cv[-sites2ignore]
+			cvq <- cv[-sites2ignore]
 		}
 		if (sum(!is.na(cv)) != 0) {
-			qqs <- ceiling(quantile(cv, probs = HIGH.COVER.OUTLIER.QUANTILE, na.rm = TRUE)) * HIGH.COVER.OUTLIER.FACTOR
-			filtered[, i] <- (cover[, i] > qqs)
+			qqs <- ceiling(quantile(cvq, probs = HIGH.COVER.OUTLIER.QUANTILE, na.rm = TRUE)) * HIGH.COVER.OUTLIER.FACTOR
+			filtered <- filtered | cv > qqs
 		}
 	}
-	filtered <- which(apply(filtered, 1, any, na.rm = TRUE))
+	filtered <- which(filtered)
 	setdiff(filtered, sites2ignore)
 }
 
@@ -1008,7 +1030,7 @@ rnb.section.high.coverage.removal.internal <- function(report, dataset.class, fi
 		fname <- rnb.save.removed.sites(anno.table[filtered, ], report, fname)
 
 		txt <- length(filtered)
-		txt <- c(ifelse(txt == 1, paste("One", txt.site), paste(txt, txt.sites)), " was detected as a high coverage ",
+		txt <- c(ifelse(txt == 1, paste("One", txt.site, "was"), paste(txt, txt.sites, "were")), " detected as high coverage ",
 			"outlier in at least one sample and removed at this step. An outlier site is defined as one whose ",
 			"coverage exceeds ", HIGH.COVER.OUTLIER.FACTOR, " times the ", HIGH.COVER.OUTLIER.QUANTILE, "-quantile ",
 			"of coverage values in its sample. The list of removed ", txt.sites, " is available in a <a href=\"", fname,
@@ -1083,6 +1105,7 @@ rnb.step.high.coverage.removal.internal <- function(rnb.set, sites2ignore, repor
 #'           \item{\code{"filtered"}}{\code{integer} vector storing the indices (in beta matrix of the unfiltered
 #'                dataset) of all removed sites.}
 #' 			 \item{\code{"threshold"}}{Copy of \code{threshold}.}
+#' 			 \item{\code{"naCounts"}}{Vector storing the number of NAs per site}
 #'         }
 #'
 #' @examples
@@ -1104,15 +1127,19 @@ rnb.execute.na.removal <- function(rnb.set, threshold = rnb.getOption("filtering
 	if (!(0 <= threshold && threshold <= 1)) {
 		stop("invalid value for threshold; expected a value between 0 and 1")
 	}
-	filtered <- which(rowMeans(is.na(meth(rnb.set))) > threshold)
-	list(dataset.before = rnb.set, dataset = remove.sites(rnb.set, filtered), filtered = filtered,
-		threshold = threshold)
+	filterRes <- rnb.execute.na.removal.internal(rnb.set, NULL, threshold)
+	list(dataset.before = rnb.set, dataset = remove.sites(rnb.set, filterRes$filtered), filtered = filterRes$filtered,
+		threshold = threshold, naCounts=filterRes$naCounts)
 }
 
-rnb.execute.na.removal.internal <- function(mm, sites2ignore, threshold, mask=NULL) {
-	isNaMat <- is.na(mm)
-	if (!is.null(mask)) isNaMat <- isNaMat | mask
-	setdiff(which(rowMeans(isNaMat) > threshold), sites2ignore)
+rnb.execute.na.removal.internal <- function(rnb.set, sites2ignore, threshold, mask=NULL) {
+	naCounts <- getNumNaMeth(rnb.set, mask=mask)
+	filtered <- which((naCounts/length(samples(rnb.set))) > threshold)
+	if (length(sites2ignore) > 0){
+		filtered <- setdiff(filtered, sites2ignore)
+	}
+	res <- list(naCounts=naCounts, filtered=filtered)
+	return(res)
 }
 
 ########################################################################################################################
@@ -1140,16 +1167,16 @@ rnb.section.na.removal <- function(report, stats) {
 	if (!(0 <= stats$threshold && stats$threshold <= 1)) {
 		stop("invalid value for stats$threshold; expected a value between 0 and 1")
 	}
-	rnb.section.na.removal.internal(report, class(stats$dataset), meth(stats$dataset.before),
+	rnb.section.na.removal.internal(report, class(stats$dataset), length(samples(stats$dataset)), stats$naCounts,
 		stats$filtered, stats$threshold, annotation(stats$dataset.before, add.names = TRUE))
 }
 
-rnb.section.na.removal.internal <- function(report, dataset.class, mm, filtered, threshold, anno.table) {
+rnb.section.na.removal.internal <- function(report, dataset.class, numSamples, naCounts, filtered, threshold, anno.table) {
 	txt.site <- rnb.get.row.token(dataset.class)
 	txt.sites <- rnb.get.row.token(dataset.class, plural = TRUE)
-	threshold.abs <- as.integer(floor(threshold * ncol(mm)))
+	threshold.abs <- as.integer(floor(threshold * numSamples))
 	txt.title <- paste("Removal of", capitalize(txt.sites), "with (Many) Missing Values")
-	na.counts <- as.integer(rowSums(is.na(mm)))
+	na.counts <- as.integer(naCounts)
 	removed.count <- length(filtered)
 	if (removed.count == 0) {
 		txt <- "No sites with too many missing values were found in the methylation table."
@@ -1187,7 +1214,7 @@ rnb.section.na.removal.internal <- function(report, dataset.class, mm, filtered,
 				pp <- ggplot(dframe, aes_string(x = "x")) + labs(x = "Number of missing values", y = "Frequency") +
 					geom_histogram(aes_string(y = "..count.."), binwidth = binwidth)
 				if (0 < threshold && threshold < 1) {
-					pp <- pp + geom_vline(xintercept = threshold * ncol(mm), linetype = "dotted")
+					pp <- pp + geom_vline(xintercept = threshold * numSamples, linetype = "dotted")
 				}
 				print(pp)
 				return(off(rplot))
@@ -1247,20 +1274,21 @@ rnb.step.na.removal <- function(rnb.set, report, threshold = 0) {
 	if (!(0 <= threshold && threshold <= 1)) {
 		stop("invalid value for threshold; expected a value between 0 and 1")
 	}
-	result <- rnb.step.na.removal.internal(class(rnb.set), meth(rnb.set), report, annotation(rnb.set, add.names = TRUE),
+	result <- rnb.step.na.removal.internal(rnb.set, sites2ignore, report, annotation(rnb.set, add.names = TRUE),
 		threshold)
 	return(list(dataset = remove.sites(rnb.set, result$filtered), report = result$report))
 }
 
-rnb.step.na.removal.internal <- function(dataset.class, mm, sites2ignore, report, anno.table, threshold, mask=NULL) {
+rnb.step.na.removal.internal <- function(rnb.set, sites2ignore, report, anno.table, threshold, mask=NULL) {
+	dataset.class <- class(rnb.set)
 	logger.start("Missing Value Removal")
 	logger.status(c("Using a sample quantile threshold of", threshold))
-	filtered <- rnb.execute.na.removal.internal(mm, sites2ignore, threshold, mask)
-	logger.status(c("Removed", length(filtered), "site(s) with too many missing values"))
-	report <- rnb.section.na.removal.internal(report, dataset.class, mm, filtered, threshold, anno.table)
+	filterRes <- rnb.execute.na.removal.internal(rnb.set, sites2ignore, threshold, mask)
+	logger.status(c("Removed", length(filterRes$filtered), "site(s) with too many missing values"))
+	report <- rnb.section.na.removal.internal(report, dataset.class, length(samples(rnb.set)), filterRes$naCounts, filterRes$filtered, threshold, anno.table)
 	logger.status("Added a corresponding section to the report")
 	logger.completed()
-	list(report = report, filtered = filtered)
+	list(report = report, filtered = filterRes$filtered)
 }
 
 ########################################################################################################################
@@ -1418,6 +1446,68 @@ rnb.step.variability.removal.internal <- function(dataset.class, mm, sites2ignor
 		threshold, anno.table)
 	logger.status("Added a corresponding section to the report")
 	list(report = report, filtered = result$filtered)
+}
+
+########################################################################################################################
+
+#' rnb.execute.high.dpval.masking
+#'
+#' Replaces all low coverage sites by \code{NA}.
+#'
+#' @param rnb.set        Methylation dataset as an object of type inheriting \code{\linkS4class{RnBeadSet}}.
+#' @param dpval.threshold Threshold for maximal acceptable detection p-value, given as a non-negative \code{numeric} value between 0 and 1. All
+#'                       methylation measurements with detection p-value than this threshold are set to \code{NA}. If this
+#'                       parameter is \code{0}, calling this method has no effect.
+#' @return List of three elements:
+#'         \describe{
+#'           \item{\code{"dataset.before"}}{Copy of \code{rnb.set}.}
+#'           \item{\code{"dataset"}}{The (possibly) modified dataset after retaining sites on autosomes only.}
+#'           \item{\code{"mask"}}{A logical matrix of dimension \code{meth(rnb.set,type="sites")} indicating which
+#' 				   methylation values have been masked}
+#'         }
+#'
+#' @author Fabian Mueller
+#' @export
+rnb.execute.high.dpval.masking <- function(rnb.set, dpval.threshold = 0.05) {
+    if (!inherits(rnb.set, "RnBSet")) {
+        stop("invalid value for rnb.set")
+    }
+    if (!(is.numeric(dpval.threshold) && length(dpval.threshold) == 1 && isTRUE(0 <= dpval.threshold | dpval.threshold > 1.0))) {
+        stop("invalid value for dpval.threshold")
+    }
+    mask <- rnb.execute.high.dpval.masking.internal(rnb.set, integer(), dpval.threshold)
+    dataset <- rnb.set
+    if (any(mask)) {
+        dataset@meth.sites[,][mask] <- NA
+        if (inherits(dataset, "RnBeadRawSet")) {
+            dataset@M[,][mask] <- NA
+            dataset@U[,][mask] <- NA
+            dataset@M0[,][mask] <- NA
+            dataset@U0[,][mask] <- NA
+        }
+        dataset <- updateRegionSummaries(dataset)
+    }
+    list(dataset.before = rnb.set, dataset = dataset, mask = mask)
+}
+
+rnb.execute.high.dpval.masking.internal <- function(rnb.set, sites2ignore, dpval.threshold) {
+    # coverage.matrix <- covg(rnb.set)
+    if (!is.null(rnb.set@pval.sites)) {
+        return(NULL)
+    }
+    # mask <- (coverage.matrix < covg.threshold) & (!is.na(coverage.matrix)) & (!is.na(meth(rnb.set)))
+    N <- nsites(rnb.set)
+    M <- length(samples(rnb.set))
+    mask <- matrix(NA, nrow=N, ncol=M)
+    colnames(mask) <- samples(rnb.set)
+    for (j in 1:M){
+        dpm <- dpval(rnb.set, j=j)[,1]
+        mask[,j] <- (dpm > dpval.threshold) & !is.na(dpm) & !is.na(meth(rnb.set, j=j)[,1])
+        if (length(sites2ignore) != 0) {
+            mask[sites2ignore, j] <- FALSE
+        }
+    }
+    return(mask)
 }
 
 ## E N D ###############################################################################################################

@@ -27,7 +27,7 @@ Storage class for the results of a clustering algorithm applied on an \code{\lin
   \item{\code{samples}}{Gets the identifiers of all samples used in the clustering.}
 }
 }
+
 \author{
 Yassen Assenov
 }
-

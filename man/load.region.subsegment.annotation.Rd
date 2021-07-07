@@ -23,4 +23,3 @@ is given by the \code{ns} parameter.
 \author{
 Fabian Mueller
 }
-

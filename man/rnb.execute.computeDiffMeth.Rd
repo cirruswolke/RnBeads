@@ -4,10 +4,13 @@
 \alias{rnb.execute.computeDiffMeth}
 \title{rnb.execute.computeDiffMeth}
 \usage{
-rnb.execute.computeDiffMeth(x, pheno.cols,
+rnb.execute.computeDiffMeth(
+  x,
+  pheno.cols,
   region.types = rnb.region.types.for.analysis(x),
   covg.thres = rnb.getOption("filtering.coverage.threshold"),
-  pheno.cols.all.pairwise = rnb.getOption("differential.comparison.columns.all.pairwise"),
+ 
+    pheno.cols.all.pairwise = rnb.getOption("differential.comparison.columns.all.pairwise"),
   columns.pairs = rnb.getOption("columns.pairing"),
   columns.adj = rnb.getOption("covariate.adjustment.columns"),
   adjust.sva = rnb.getOption("differential.adjustment.sva"),
@@ -15,7 +18,9 @@ rnb.execute.computeDiffMeth(x, pheno.cols,
   adjust.celltype = rnb.getOption("differential.adjustment.celltype"),
   skip.sites = !rnb.getOption("analyze.sites"),
   disk.dump = rnb.getOption("disk.dump.big.matrices"),
-  disk.dump.dir = tempfile(pattern = "diffMethTables_"), ...)
+  disk.dump.dir = tempfile(pattern = "diffMethTables_"),
+  ...
+)
 }
 \arguments{
 \item{x}{RnBSet object}
@@ -70,4 +75,3 @@ get.comparisons(dm)
 \author{
 Fabian Mueller
 }
-

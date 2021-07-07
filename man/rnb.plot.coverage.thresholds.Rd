@@ -36,4 +36,3 @@ image height is fixed to 7.2.
 \author{
 Yassen Assenov
 }
-

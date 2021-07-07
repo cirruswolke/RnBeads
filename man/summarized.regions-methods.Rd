@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBSet-class.R
 \docType{methods}
 \name{summarized.regions,RnBSet-method}
-\alias{summarized.regions}
 \alias{summarized.regions,RnBSet-method}
+\alias{summarized.regions}
 \title{summarized.regions-methods}
 \usage{
 \S4method{summarized.regions}{RnBSet}(object)
@@ -25,11 +25,10 @@ data(small.example.object)
 summarized.regions(rnb.set.example)
 }
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link[=summarize.regions,RnBSet-method]{summarize.regions}} for calculating region-wise methylation in a dataset;
          \code{\link{rnb.set.annotation}} for adding or replacing a region annotation table
 }
-
+\author{
+Yassen Assenov
+}

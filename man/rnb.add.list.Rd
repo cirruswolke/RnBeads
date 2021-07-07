@@ -42,10 +42,9 @@ recipe <- list("Sift flour in a bowl", "Add sugar and mix", "Add milk and mix")
 rnb.add.list(report, recipe, type="o")
 }
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\linkS4class{Report}} for other functions adding contents to an HTML report
 }
-
+\author{
+Yassen Assenov
+}

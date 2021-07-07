@@ -2,10 +2,12 @@
 % Please edit documentation in R/RnBeadRawSet-class.R
 \name{as.RnBeadRawSet}
 \alias{as.RnBeadRawSet}
-\title{as("MethyLumiSet", "RnBeadRawSet")}
+\title{Conversion to/from RnBeadRawSet}
 \description{
-Convert a \code{\linkS4class{MethyLumiSet}} object to \code{\linkS4class{RnBeadRawSet}}
-
-Convert a \code{\linkS4class{RnBeadRawSet}} object to \code{\linkS4class{MethyLumiSet}}
+The \code{"as"} method can be used for the following conversions:
+\itemize{
+  \item{}{\code{MethyLumiSet} (in package \pkg{methylumi}) to \code{\linkS4class{RnBeadRawSet}}}
+  \item{}{\code{RnBeadRawSet} to \code{MethyLumiSet}}
+  \item{}{\code{RGChannelSet} (in package \pkg{minfi}) to \code{\linkS4class{RnBeadRawSet}}}
 }
-
+}

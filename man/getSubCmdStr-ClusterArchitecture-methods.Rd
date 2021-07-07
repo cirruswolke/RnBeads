@@ -2,8 +2,8 @@
 % Please edit documentation in R/clusterArchitecture.R
 \docType{methods}
 \name{getSubCmdStr,ClusterArchitecture-method}
-\alias{getSubCmdStr}
 \alias{getSubCmdStr,ClusterArchitecture-method}
+\alias{getSubCmdStr}
 \title{getSubCmdStr-methods}
 \usage{
 \S4method{getSubCmdStr}{ClusterArchitecture}(object, ...)
@@ -23,4 +23,3 @@ a job with the given command to the cluster.
 \author{
 Fabian Mueller
 }
-

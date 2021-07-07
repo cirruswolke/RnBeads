@@ -3,14 +3,18 @@
 \docType{methods}
 \name{combine,RnBSet,RnBSet-method}
 \alias{combine,RnBSet,RnBSet-method}
+\alias{combine}
 \alias{combine,RnBSet-method}
 \title{combine-methods}
 \usage{
-\S4method{combine}{RnBSet,RnBSet}(x, y)
+\S4method{combine}{RnBSet,RnBSet}(x, y, type = "all")
 }
 \arguments{
 \item{x, y}{\code{\linkS4class{RnBeadSet}}, \code{\linkS4class{RnBeadRawSet}}
 or \code{\linkS4class{RnBiseqSet}} object}
+
+\item{type}{\code{character} singleton defining the set operation applied to the two site sets, 
+one of "all", "all.x", "all.y" or "common"}
 }
 \value{
 combined \code{\linkS4class{RnBeadSet}}, \code{\linkS4class{RnBeadRawSet}} or
@@ -20,9 +24,14 @@ combined \code{\linkS4class{RnBeadSet}}, \code{\linkS4class{RnBeadRawSet}} or
 Combine two objects inheriting from \code{\linkS4class{RnBSet}} class
 }
 \details{
-The sample sets of \code{x} and \code{y} should be unique.
-Sample annotation information is merged only for columns which have identical names in both objects.
-CpG sites of the new object are a union of those present in both objects.
+Combine method supports a merge of any two RnBSet objects that contain data of the same specie.
+In case a non-synonymous merge is performed, the class conversion will follow the following hierarchy: 
+\code{\linkS4class{RnBeadSet}} < \code{\linkS4class{RnBeadRawSet}} < \code{\linkS4class{RnBiseqSet}}.
+In case \code{x} and \code{y} are both array data containers (\code{RnBeadSet} or \code{RnBeadRawSet}), 
+the resulting object will have an annotation that corresponds to the newer array version 
+(\code{27k} < \code{450k} < \code{EPIC}).
+The sample sets of \code{x} and \code{y} should be unique. Sample annotation information is merged only for columns 
+which have identical names in both objects. CpG sites of the new object are a union of those present in both objects.
 }
 \examples{
 \donttest{
@@ -43,4 +52,3 @@ sites.rem.c <- intersect(sites.rem.r1,sites.rem.r2)
 (nrow(meth(rnb.set.example))-length(sites.rem.c)) == nrow(meth(rc))
 }
 }
-

@@ -36,4 +36,3 @@ logger.validate.file(getwd(), FALSE)
 \author{
 Yassen Assenov
 }
-

@@ -25,10 +25,9 @@ rnb.remove.annotation("tiling")
 }
 
 }
-\author{
-Fabian Mueller
-}
 \seealso{
 \code{\link{rnb.get.annotation}}, \code{\link{rnb.region.types}}
 }
-
+\author{
+Fabian Mueller
+}

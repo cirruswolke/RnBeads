@@ -29,4 +29,3 @@ Requires \code{matrixStats} package
 \author{
 Fabian Mueller
 }
-

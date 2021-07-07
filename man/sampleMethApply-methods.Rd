@@ -2,14 +2,20 @@
 % Please edit documentation in R/RnBSet-class.R
 \docType{methods}
 \name{sampleMethApply,RnBSet-method}
-\alias{sampleMethApply}
 \alias{sampleMethApply,RnBSet-method}
+\alias{sampleMethApply}
 \title{sampleMethApply-methods}
 \usage{
 \S4method{sampleMethApply}{RnBSet}(object, fn, type = "sites", ...)
 }
 \arguments{
+\item{object}{object inheriting from \code{\linkS4class{RnBSet}}}
+
 \item{fn}{function to be applied}
+
+\item{type}{\code{character} singleton. Specify "sites" (default) or a region type over which the function is applied}
+
+\item{...}{arguments passed on to the function}
 }
 \value{
 Result analogous to \code{apply(meth(rnbSet, type), 2, FUN=FUN)}
@@ -20,4 +26,3 @@ Applies a function over the methylation values for all samples in an \code{RnBSe
 \seealso{
 \code{\link[=meth,RnBSet-method]{meth}} Retrieving the matrix of methylation values
 }
-

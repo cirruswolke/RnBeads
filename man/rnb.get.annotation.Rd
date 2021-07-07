@@ -29,11 +29,10 @@ included when applicable. Any additional annotation is stored as metadata in the
 rnb.get.annotation("promoters")
 }
 }
-\author{
-Fabian Mueller
-}
 \seealso{
 \code{\link{rnb.set.annotation}} for adding annotation;
   \code{\link{rnb.region.types}} for all loaded region types in a genome assembly
 }
-
+\author{
+Fabian Mueller
+}

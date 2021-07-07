@@ -3,7 +3,6 @@
 \docType{package}
 \name{RnBeads}
 \alias{RnBeads}
-\alias{RnBeads-package}
 \title{Analysis of genome-scale DNA methylation data with RnBeads}
 \description{
 RnBeads facilitates comprehensive analysis of various types of DNA methylation data at the genome scale. It extends
@@ -16,4 +15,3 @@ The complete analysis can be performed by calling the function \code{\link{rnb.r
 \references{
 Yassen Assenov*, Fabian Mueller*, Pavlo Lutsik*, Joern Walter, Thomas Lengauer and Christoph Bock (2014) Compehensive Analysis of DNA Methylation Data with RnBeads, Nature Methods, 11(11):1138-1140.
 }
-

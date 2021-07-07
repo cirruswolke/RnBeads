@@ -2,12 +2,17 @@
 % Please edit documentation in R/RnBDiffMeth-class.R
 \docType{methods}
 \name{addDiffMethTable,RnBDiffMeth-method}
-\alias{addDiffMethTable}
 \alias{addDiffMethTable,RnBDiffMeth-method}
+\alias{addDiffMethTable}
 \title{addDiffMethTable-methods}
 \usage{
-\S4method{addDiffMethTable}{RnBDiffMeth}(object, dmt, comparison, region.type,
-  grp.labs = c("group1", "group2"))
+\S4method{addDiffMethTable}{RnBDiffMeth}(
+  object,
+  dmt,
+  comparison,
+  region.type,
+  grp.labs = c("group1", "group2")
+)
 }
 \arguments{
 \item{object}{\code{\linkS4class{RnBDiffMeth}} object}
@@ -34,9 +39,9 @@ Caveat: if disk dumping is enabled the resulting object tables will be stored in
 library(RnBeads.hg19)
 data(small.example.object)
 logger.start(fname=NA)
-dm <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols="Sample_Group",region.types=c("genes","tiling"))
-sample.groups <- rnb.sample.groups(rnb.set.example,"Sample_Group")[[1]]
-dmt.sites <- computeDiffTab.extended.site(meth(rnb.set.example),sample.groups[[1]],sample.groups[[2]])
+dm <- rnb.execute.computeDiffMeth(rnb.set.example,"Sample_Group",c("genes","tiling"))
+s.groups <- rnb.sample.groups(rnb.set.example,"Sample_Group")[[1]]
+dmt.sites <- computeDiffTab.extended.site(meth(rnb.set.example),s.groups[[1]],s.groups[[2]])
 map.regions.to.sites <- regionMapping(rnb.set.example,"promoters")
 dmt.promoters <- computeDiffTab.default.region(dmt.sites,map.regions.to.sites)
 cmp.name <- get.comparisons(dm)[1]
@@ -49,4 +54,3 @@ get.region.types(dm.add)
 \author{
 Fabian Mueller
 }
-

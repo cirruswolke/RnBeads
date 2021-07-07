@@ -4,8 +4,11 @@
 \alias{rnb.plot.num.sites.covg}
 \title{rnb.plot.num.sites.covg}
 \usage{
-rnb.plot.num.sites.covg(rnbs, addSampleNames = (length(samples(rnbs)) < 100),
-  bar.percentiles = c(0.25, 0.75))
+rnb.plot.num.sites.covg(
+  rnbs,
+  addSampleNames = (length(samples(rnbs)) < 100),
+  bar.percentiles = c(0.25, 0.75)
+)
 }
 \arguments{
 \item{rnbs}{RnBiseqSet object}
@@ -19,9 +22,8 @@ first two elements will be used}
 plot as an object of type \code{\link{ggplot}}
 }
 \description{
-plot the number of sites vs the 0.05, 0.5 (median) and 0.95 percentiles of coverage
+plot the number of sites vs median and other percentiles of coverage
 }
 \author{
 Fabian Mueller
 }
-

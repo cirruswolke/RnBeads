@@ -2,13 +2,12 @@
 % Please edit documentation in R/computeCluster.R
 \docType{methods}
 \name{setModuleResourceRequirements,RnBClusterRun,character,character-method}
-\alias{setModuleResourceRequirements}
 \alias{setModuleResourceRequirements,RnBClusterRun,character,character-method}
+\alias{setModuleResourceRequirements}
+\alias{setModuleResourceRequirements,RnBClusterRun-method}
 \title{setModuleResourceRequirements-methods}
 \usage{
-
-  \S4method{setModuleResourceRequirements}{RnBClusterRun,character,character}(object,
-  resources, modules = "all")
+\S4method{setModuleResourceRequirements}{RnBClusterRun,character,character}(object, resources, modules = "all")
 }
 \arguments{
 \item{object}{\code{\linkS4class{RnBClusterRun}} object}
@@ -26,4 +25,3 @@ Specifies resource requirements for the different pipeline modules
 \author{
 Fabian Mueller
 }
-

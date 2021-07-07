@@ -21,7 +21,7 @@ analogous, except that it contains an additional slot to store a \code{ggplot} o
 
 No device is being opened until \code{off(reportGgPlot)} is called.
 }
+
 \author{
 Fabian Mueller
 }
-

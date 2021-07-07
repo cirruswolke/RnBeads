@@ -25,10 +25,9 @@ library(RnBeads.hg19)
 rnb.annotation.size("probes450")
 }
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{rnb.region.types}} for a list of supported region annotations
 }
-
+\author{
+Yassen Assenov
+}

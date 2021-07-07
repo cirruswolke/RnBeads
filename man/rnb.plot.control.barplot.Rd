@@ -4,9 +4,16 @@
 \alias{rnb.plot.control.barplot}
 \title{rnb.plot.control.barplot}
 \usage{
-rnb.plot.control.barplot(rnb.set, probe,
-  sample.subset = 1:length(samples(rnb.set)), writeToFile = FALSE,
-  numeric.names = FALSE, name.prefix = NULL, verbose = FALSE, ...)
+rnb.plot.control.barplot(
+  rnb.set,
+  probe,
+  sample.subset = 1:length(samples(rnb.set)),
+  writeToFile = FALSE,
+  numeric.names = FALSE,
+  name.prefix = NULL,
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{rnb.set}{\code{\linkS4class{RnBeadRawSet}} or \code{\linkS4class{RnBeadSet}} object with valid
@@ -38,13 +45,12 @@ Per-sample bar plots of Illumina HumanMethylation control probes
 library(RnBeads.hg19)
 data(small.example.object)
 control.meta.data <- rnb.get.annotation("controls450")
-ctrl.probe<-paste0(unique(control.meta.data[["Target"]])[4], ".5")
-print(ctrl.probe) # EXTENSION.5
-rnb.control.barplot(rnb.set.example, ctrl.probe)
+ctrl.probe<-paste0(unique(control.meta.data[["Target"]])[4], ".3")
+print(ctrl.probe) # EXTENSION.3
+rnb.plot.control.barplot(rnb.set.example, ctrl.probe)
 }
 
 }
 \author{
 Pavlo Lutsik
 }
-

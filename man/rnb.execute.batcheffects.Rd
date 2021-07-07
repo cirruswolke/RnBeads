@@ -43,10 +43,9 @@ names(pcoordinates) <- regs
 result <- rnb.execute.batcheffects(rnb.set.example, pcoordinates)
 }
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{rnb.run.exploratory}} for running the whole exploratory analysis module
 }
-
+\author{
+Yassen Assenov
+}

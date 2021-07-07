@@ -4,8 +4,12 @@
 \alias{rnb.export.all.annotation}
 \title{rnb.export.all.annotation}
 \usage{
-rnb.export.all.annotation(out.dir, types = c("CpG",
-  rnb.region.types(assembly)), assembly = "hg19", format = "bed")
+rnb.export.all.annotation(
+  out.dir,
+  types = c("CpG", rnb.region.types(assembly)),
+  assembly = "hg19",
+  format = "bed"
+)
 }
 \arguments{
 \item{out.dir}{The directory to write the files to}
@@ -31,4 +35,3 @@ rnb.export.all.annotation(tempdir(),c("genes","promoters"))
 \author{
 Fabian Mueller
 }
-

@@ -234,13 +234,13 @@ createReportPlot <- function(fname, report = NULL, width = 7, height = 7, create
 		width <- as.numeric(width)
 	}
 	if (is.integer(height)) {
-		width <- as.numeric(height)
+		height <- as.numeric(height)
 	}
 	if (!validate.vector(width, "numeric")) {
 		stop("invalid value for width")
 	}
 	if (!validate.vector(height, "numeric")) {
-		stop("invalid value for width")
+		stop("invalid value for height")
 	}
 	if (!validate.vector(create.pdf, "logical")) {
 		stop("invalid value for create.pdf")

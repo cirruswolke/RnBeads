@@ -24,4 +24,3 @@ get.files(plot.image)
 \author{
 Yassen Assenov
 }
-

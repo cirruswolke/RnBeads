@@ -385,7 +385,7 @@ rnb.plot.coverage.thresholds <- function(rnb.set, min.coverages, fname = NA, ...
 
 #' rnb.plot.num.sites.covg
 #'
-#' plot the number of sites vs the 0.05, 0.5 (median) and 0.95 percentiles of coverage
+#' plot the number of sites vs median and other percentiles of coverage
 #'   
 #' @param rnbs			RnBiseqSet object
 #' @param addSampleNames	should the sample names be added to the plot
@@ -397,7 +397,7 @@ rnb.plot.coverage.thresholds <- function(rnb.set, min.coverages, fname = NA, ...
 #' @author Fabian Mueller
 #' @export
 rnb.plot.num.sites.covg <- function(rnbs, addSampleNames=(length(samples(rnbs))<100), bar.percentiles=c(0.25,0.75)){
-	require(scales)
+	rnb.require("scales")
 	perc.vec <- c(bar.percentiles[1],0.5,bar.percentiles[2])
 	df2p <- do.call("rbind",lapply(1:length(samples(rnbs)),FUN=function(j){
 		sn <- samples(rnbs)[j]
