@@ -100,7 +100,7 @@
 
 \cs{RnBeads} is accompanied by four annotation packages: \cs{RnBeads.hg19}, \cs{RnBeads.mm10}, \cs{RnBeads.mm9}, \cs{RnBeads.rn5}. They contain genomic locus and Infinium probe annotation tables, as well as definition tables for tiling regions, genes, promoters and CpG islands. The \cs{RnBeads} package contains routines for handling and updating these annotations. The vignette named \textbf{RnBeads -- Comprehensive DNA Methylation Analysis} also contains examples that use functions presented here.\\
 
-The data packages described above are hosted on the \cs{RnBeads} website\footnote{\href{http://rnbeads.mpi-inf.mpg.de/}{rnbeads.mpi-inf.mpg.de}}. Note that at least one of the data packages should be installed prior to installing \cs{RnBeads}.
+The data packages described above are hosted on the \cs{RnBeads} website\footnote{\href{https://rnbeads.org/}{rnbeads.org}}. Note that at least one of the data packages should be installed prior to installing \cs{RnBeads}.
 
 \section{Data Extraction and Processing}
 
