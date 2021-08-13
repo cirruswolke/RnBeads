@@ -131,6 +131,7 @@ setMethod("getSubCmdTokens",
 			"qsub",
 			"-V",
 			res.req.tokens,
+            ifelse(is.null(queue),"",paste0("-q ",queue)),
 			log.token,
 			"-j","y",
 			job.name.token,
@@ -138,9 +139,6 @@ setMethod("getSubCmdTokens",
 			"-b",bin.token,
 			cmd.tokens
 		)
-        if(!is.null(queue)){
-            res <- c(res,'-q',queue)
-        }
 		return(res)
 	}
 )
