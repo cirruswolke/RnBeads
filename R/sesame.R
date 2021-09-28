@@ -136,7 +136,7 @@ rnb.execute.pOOBAH <- function(raw.set, anno.table = NULL, pval.thresh = 0.05, v
         paste0('No. of masked probes: ', nmasked),
         paste0('Fraction of masked probes: ', round(nmasked/ntotal, digits = 3)),sep='\n'))
     }
-    
+    raw.set<-update.meth(raw.set)
     return(raw.set)
   }
 }
