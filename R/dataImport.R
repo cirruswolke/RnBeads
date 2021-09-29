@@ -701,15 +701,6 @@ read.idat.files <- function(base.dir,
 	annot<-rnb.annotation2data.frame(annot_gr)
     annot.ctrls<-rnb.get.annotation(gsub("probes","controls",platform), genome[platform])
 	nprobes<-sum(rnb.annotation.size(platform, genome[platform]))
-#    ### temporary workaround for genotyping probes
-#    if(platform=="probesMMBC"){
-#        annot_gr_flagged<-rnb.get.annotation(gsub("probes","flagged",platform), genome[platform])
-#        annot.flagged<-rnb.annotation2data.frame(annot_gr_flagged)
-#        annot.rs<-annot.flagged[grep("rs", rownames(annot.flagged)),]
-#        annot.rs[["SNPs 3"]]<-annot.rs[["SNPs 5"]]<-annot.rs[["SNPs Full"]]<-NA
-#        annot<-rbind(annot, annot.rs)
-#        nprobes<-nrow(annot)
-#    }
 	ncprobes<-nrow(annot.ctrls)
 	
 	if(platform=="probesEPIC"){
