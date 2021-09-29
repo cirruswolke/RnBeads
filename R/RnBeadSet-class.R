@@ -755,11 +755,6 @@ match.probes2annotation<-function(probes, target="probes450", assembly="hg19"){
 	probe.annotation <- rnb.get.annotation(target, assembly)
     ### TODO: remove after fixing the annotation
     if(target=="probesMMBC"){
-#        probe.annotation.flagged<-rnb.get.annotation("flaggedMMBC", assembly)
-#        probe.annotation.flagged<-probe.annotation.flagged[names(probe.annotation)]
-#        probe.annotation.flagged.rs<-endoapply(probe.annotation.flagged, function(ag) ag[grep("rs", names(ag))])
-#        probe.annotation<-pc(probe.annotation, probe.annotation.flagged.rs)
-#        probe.annotation<-endoapply(probe.annotation, function(ag) sort(ag, ignore.strand=TRUE))
         probe.annotation<-endoapply(probe.annotation, function(ag) {
                     names(ag)<-mcols(ag)[["ID"]]
                     mcols(ag)[["Context"]]<-factor(c("cg"="CG", "ch"="CH", "rs"="Other")[substr(names(ag), 1,2)], levels=c("CG", "CH", "Other"))
