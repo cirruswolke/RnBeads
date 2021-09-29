@@ -634,7 +634,14 @@ rnb.annotation.size <- function(type = "CpG", assembly = "hg19") {
 	if (!(type %in% colnames(.rnb.annotations[[assembly]][["lengths"]]))) {
 		stop("unsupported annotation type")
 	}
-	.rnb.annotations[[assembly]][["lengths"]][, type]
+	res<-.rnb.annotations[[assembly]][["lengths"]][, type]
+    if(type=="probesMMBC"){
+        annot.flagged<-rnb.get.annotation("flaggedMMBC", assembly)
+        annot.rs.size<-sapply(annot.flagged, function (fa) length(grep("rs", names(fa))))
+        annot.rs.size<-annot.rs.size[names(res)]
+        res<-res + annot.rs.size
+    }
+    return(res)
 }
 
 ########################################################################################################################
@@ -768,6 +775,16 @@ rnb.get.annotation <- function(type = "CpG", assembly = "hg19") {
 	} else {
 		stop("unsupported annotation type")
 	}
+    # temporary workaround for rs probes on mouse array
+    if(assembly=="mm10" && type=="probesMMBC"){
+        load.annotations(assembly, "flaggedMMBC")
+        probe.annotation.flagged<-rnb.get.annotation("flaggedMMBC", assembly)
+        probe.annotation.flagged<-probe.annotation.flagged[names(result)]
+        probe.annotation.flagged.rs<-endoapply(probe.annotation.flagged, function(ag) ag[grep("rs", names(ag))])
+        result<-pc(result, probe.annotation.flagged.rs)
+        result<-endoapply(result, function(ag) sort(ag, ignore.strand=TRUE))
+    }
+    
 	return(result)
 }
 
