@@ -184,7 +184,7 @@ test.traits <- function(x, y, perm.matrix = NULL) {
 			"test" = as.character(NA),
 			"correlation" = as.double(NA),
 			"pvalue" = as.double(NA))
-	
+
 	## Focus on common values
 	if (class(x) == "Date") { x <- as.integer(x) }
 	if (class(y) == "Date") { y <- as.integer(y) }
@@ -211,7 +211,7 @@ test.traits <- function(x, y, perm.matrix = NULL) {
 			return(result)
 		}
 	}
-	
+
 	## Perform a test or compute correlation
 	get.p <- function(expr) { tryCatch(suppressWarnings(expr$p.value), error = function(er) { as.double(NA) }) }
 	if (is.factor(x)) {
@@ -248,7 +248,7 @@ test.traits <- function(x, y, perm.matrix = NULL) {
 			result[["pvalue"]] <- mean(values[1] <= values)
 		}
 	}
-	
+
 	if (is.na(result[["pvalue"]])) {
 		result[["error"]] <- "test failed"
 	}
@@ -295,11 +295,11 @@ plot.heatmap.pc.correlations <- function(report, tbl, fname, width = NULL, heigh
 		scale_x_discrete(expand = c(0, 0)) + scale_y_discrete(expand = c(0, 0)) +
 		theme(axis.ticks = element_blank(), legend.justification = c(0, 0.5), legend.position = c(1, 0.5)) +
 		theme(panel.border = element_blank(), plot.margin = unit(c(0.1, 1.5, 0.1, 0.1), "in"))
-
-	rplot <- createReportPlot(fname, report, width = width, height = height)
 	pp <- suppressWarnings(ggplot_gtable(ggplot_build(pp)))
 	pp$widths[[3]] <- unit(ysize, "in")
 	pp$heights[[length(pp$heights) - 2L]] <- unit(xsize, "in")
+	rplot <- createReportPlot(fname, report, width = width, height = height)
+	grid.newpage()
 	grid.draw(pp)
 	rplot <- off(rplot)
 	txt <- "Heatmap presenting a table of correlations. Grey cells, if present, denote missing values."
@@ -328,14 +328,13 @@ plot.heatmap.pc.pvalues <- function(report, tbl, fname, width = NULL, height = N
 	if (is.null(height)) {
 		height <- ifelse(is.null(xlab), 2, 1) + nrow(tbl) * 0.25
 	}
-	rplot <- createReportPlot(fname, report, width = width, height = height)
 	pp <- ggplot(tbl.melt, aes_string("y", "x", label = "pvaltext")) + labs(x = xlab, y = ylab) +
 		coord_fixed(ratio = 0.25 / 0.62) + geom_tile(aes_string(fill = "significant"), color = "white") +
 		scale_fill_manual(values = c("NA" = "#D0D0D0", "FALSE" = "#9C9CCC", "TRUE" = "#F1B1B1")) +
 		geom_text(size = 3) + scale_x_discrete(expand = c(0, 0)) + scale_y_discrete(expand = c(0, 0)) +
 		theme(panel.border = element_blank(), panel.grid = element_blank()) +
 		theme(plot.margin = unit(0.1 + c(0, 0, 0, 0), "in")) +
-		theme(axis.ticks = element_blank(), legend.position = "none") 
+		theme(axis.ticks = element_blank(), legend.position = "none")
 	## Fix the areas for x and y axis labels
 	pp <- suppressWarnings(ggplot_gtable(ggplot_build(pp)))
 	if (is.null(ylab)) {
@@ -344,6 +343,8 @@ plot.heatmap.pc.pvalues <- function(report, tbl, fname, width = NULL, height = N
 	if (is.null(xlab)) {
 		pp$heights[[length(pp$heights) - 2L]] <- unit(2, "in")
 	}
+	rplot <- createReportPlot(fname, report, width = width, height = height)
+	grid.newpage()
 	grid.draw(pp)
 	txt <- paste0("Heatmap presenting a table of p-values. Significant p-values (less than ",
 		rnb.getOption("exploratory.correlation.pvalue.threshold"), ") are printed in pink boxes. Non-significant ",
@@ -381,10 +382,7 @@ plot.heatmap.symm <- function(report, tbl.symm, tbl.failures = NULL, fname) {
 	## Create a data frame with tests/p-values
 	tbl <- tbl.symm
 	tbl[upper.tri(tbl)] <- NA
-	tbl <- tbl[-1, -ncol(tbl)]
-	if (nrow(tbl.symm) == 2) {
-		tbl <- matrix(tbl, nrow = 1, ncol = 1, dimnames = list(rownames(tbl.symm)[2], colnames(tbl.symm)[1]))
-	}
+	tbl <- tbl[-1, -ncol(tbl), drop = FALSE]
 	tbl.melt <- melt(tbl, varnames = c("x", "y"))
 	colnames(tbl.melt)[3] <- "test"
 	if (do.tests) {
@@ -406,7 +404,7 @@ plot.heatmap.symm <- function(report, tbl.symm, tbl.failures = NULL, fname) {
 		## Create a data frame with test failures
 		tbl <- tbl.failures
 		tbl[upper.tri(tbl)] <- NA
-		tbl <- tbl[-1, -ncol(tbl)]
+		tbl <- tbl[-1, -ncol(tbl), drop = FALSE]
 		tbl.f.melt <- melt(tbl, varnames = c("x", "y"))
 		colnames(tbl.f.melt)[3] <- "failure"
 		tbl.f.melt[[1]] <- factor(as.character(tbl.f.melt[[1]]), levels = levels(tbl.melt[[1]]))
@@ -434,13 +432,17 @@ plot.heatmap.symm <- function(report, tbl.symm, tbl.failures = NULL, fname) {
 	pp <- pp + theme(axis.ticks = element_blank(), axis.text.x = element_text(angle = 90, hjust = 1)) +
 		theme(panel.grid.major = element_blank(), panel.background = element_blank()) +
 		theme(panel.border = element_blank(), plot.margin = unit(c(0.1, 1.9, 0.1, 0.1), "in"))
-	rplot <- createReportPlot(fname, report, width = width, height = height)
 	## Fix the areas for x and y axis labels
 	pp <- suppressWarnings(ggplot_gtable(ggplot_build(pp)))
-	pp$widths[[3]] <- unit(2, "in")
-	pp$heights[[length(pp$heights) - 2L]] <- unit(2, "in")
+	i <- which(pp$layout$name == "axis-b")
+	pp$layout[i, "clip"] <- "on"
+	pp$heights[pp$layout[i, "t"]] <- unit(2, "in")
+	i <- which(pp$layout$name == "axis-l")
+	pp$layout[i, "clip"] <- "on"
+	pp$width[pp$layout[i, "l"]] <- unit(2, "in")
+	rplot <- createReportPlot(fname, report, width = width, height = height)
+	grid.newpage()
 	grid.draw(pp)
-
 	return(off(rplot))
 }
 
@@ -457,7 +459,7 @@ plot.heatmap.symm <- function(report, tbl.symm, tbl.failures = NULL, fname) {
 #' @param target  \code{character} singleton specifying the level of DNA methylation infromation. If this is
 #' 				  \code{"sites"}, the DNA methylation information for the individual sites or probes is analyzed.
 #' 				  Otherwise, this should be one of the supported region types, as returned by
-#'                \code{\link{rnb.region.types}}. 
+#'                \code{\link{rnb.region.types}}.
 #' @return Results of the dimension reduction in the form of a list with the following elements:
 #'         \describe{
 #'           \item{\code{pca}}{Results of the PCA as returned by the function \code{\link{prcomp}}.}
@@ -596,7 +598,7 @@ rnb.section.dreduction <- function(report, pcoordinates, sample.phenotypes = NUL
 		stop("invalid value for report")
 	}
 	nsamples <- validate.pcoordinates.all(pcoordinates)
-	
+
 	if (is.character(nsamples)) {
 		stop(nsamples)
 	}
@@ -626,7 +628,7 @@ rnb.section.dreduction.internal <- function(report, pcoordinates, sample.phenoty
 	col.visual <- names(rnb.sample.groups(sample.phenotypes, rnb.getOption("exploratory.columns")))
 	use.colors <- (length(col.visual) != 0)
 	logger.info(c("Mapping", length(col.visual), "traits to point colors and types"))
-	
+
 	setting.names <- list("Location type" = targets,
 		"Principal components" = c("1" = "first and second", "2" = "second and third"),
 		"Distance" = c("manhattan" = "Manhattan", "euclidean" = "Euclidean"))
@@ -642,7 +644,7 @@ rnb.section.dreduction.internal <- function(report, pcoordinates, sample.phenoty
 		setting.names[["Sample color"]] <- snames
 	}
 	rm(snames)
-	
+
 	create.scatters <- function(dpoints, fprefix) {
 		report.plots <- list()
 		dframe <- data.frame(x = dpoints[, 1], y = dpoints[, 2], id = rownames(dpoints))
@@ -881,7 +883,7 @@ rnb.section.dreduction.internal <- function(report, pcoordinates, sample.phenoty
 			"components ", txt[2], " available in ", txt[3], "comma-separated values ", txt[4], " accompanying this ",
 			"report.")
 		rnb.add.paragraph(report, txt)
-		
+
 		colnames(var.tbl) <- c("Location Type", "Number of Components", "Full Table File")
 		rnb.add.table(report, var.tbl, row.names = FALSE)
 	}
@@ -1001,7 +1003,7 @@ rnb.step.dreduction <- function(rnb.set, report, return.coordinates = FALSE) {
 		return(list(report = report, pcoordinates = pcoordinates))
 	}
 	return(report)
-	
+
 }
 
 ########################################################################################################################
@@ -1060,7 +1062,7 @@ rnb.execute.batcheffects <- function(rnb.set, pcoordinates = NULL) {
 		logger.start(fname = NA) # initialize console logger
 	}
 	logger.start("Tests for Associations")
-	
+
 	## Get a list of comparable traits
 	predefined.columns <- rnb.getOption("exploratory.columns")
 	if (!is.null(predefined.columns)) {
@@ -1098,13 +1100,13 @@ rnb.execute.batcheffects <- function(rnb.set, pcoordinates = NULL) {
 		return(NULL)
 	}
 	logger.info(c("Testing the following traits for associations:", paste(names(traits), collapse = "; ")))
-	
+
 	result <- list()
-	
+
 	## Create sample permutations if necessary
 	perm.matrix <- NULL
 	perm.count <- rnb.getOption("exploratory.correlation.permutations")
-	if ((!is.null(pcoordinates)) && perm.count != 0 && sum(!sapply(traits, is.factor)) >= 2) {
+	if (perm.count != 0 && ((!is.null(pcoordinates)) || sum(!sapply(traits, is.factor)) >= 2)) {
 		perm.matrix <- mapply(sample, rep(nrow(pheno.table), times = perm.count))
 		perm.matrix[, 1] <- 1:nrow(perm.matrix)
 		result[["permutations"]] <- perm.matrix
@@ -1121,7 +1123,7 @@ rnb.execute.batcheffects <- function(rnb.set, pcoordinates = NULL) {
 				if (ncol(dpoints) > pc.association.count) {
 					dpoints <- dpoints[, 1:pc.association.count]
 				}
-	
+
 				init.matrix <- function(x) {
 					matrix(x, nrow = NT, ncol = ncol(dpoints),
 							dimnames = list(names(traits), "Principal component" = 1:ncol(dpoints)))
@@ -1130,7 +1132,7 @@ rnb.execute.batcheffects <- function(rnb.set, pcoordinates = NULL) {
 				table.test.names <- init.matrix(as.character(NA))
 				table.correlations <- init.matrix(as.double(NA))
 				table.pvalues <- init.matrix(as.double(NA))
-	
+
 				for (i in 1:NT) {
 					for (j in 1:ncol(dpoints)) {
 						t.result <- test.traits(traits[[i]], dpoints[, j], perm.matrix)
@@ -1151,7 +1153,7 @@ rnb.execute.batcheffects <- function(rnb.set, pcoordinates = NULL) {
 		rm(i, j, t.result)
 		logger.status("Computed correlations between principal components and traits.")
 	}
-	
+
 	## Compute correlations and perform tests
 	if (NT > 1) {
 		init.matrix <- function(x) {
@@ -1233,7 +1235,7 @@ rnb.section.batcheffects <- function(report, batcheffects) {
 	if (rnb.getOption("logging") && logger.isinitialized() == FALSE) {
 		logger.start(fname = NA) # initialize console logger
 	}
-	
+
 	txt <- c("In this section, different properties of the dataset are tested for significant associations. The ",
 			"properties can include sample coordinates in the principal component space, phenotype traits and ",
 			"intensities of control probes. The tests used to calculate a p-value given two properties depend on the ",
@@ -1262,7 +1264,7 @@ rnb.section.batcheffects <- function(report, batcheffects) {
 	## Summarize the results of association between principal components and traits
 
 	if ("pc" %in% names(batcheffects) && length(batcheffects[["pc"]])>0) {
-		
+
 		targets <- names(batcheffects[["pc"]])
 		names(targets) <- 1:length(targets)
 		setting.names <- list("Region type" = targets)
@@ -1374,7 +1376,7 @@ rnb.section.batcheffects <- function(report, batcheffects) {
 		## Create a triangular heatmap of the calculated p-values for associations
 		tbl <- trait.tables$pvalues
 		plots.associations[[2]] <- plot.heatmap.symm(report, tbl, NULL, "heatmap_traits_pvalues")
-		
+
 		## Attach the table of the calculated p-values for associations
 		tbl <- cbind("Traits" = rownames(tbl), as.data.frame(tbl, check.names = FALSE))
 		fname <- "pvalues_traits.csv"
@@ -1392,10 +1394,10 @@ rnb.section.batcheffects <- function(report, batcheffects) {
 		txt <- c(txt, "(2) Table of resulting p-values from the performed tests on pairs of traits. Significant ",
 			"p-values (less than ", rnb.getOption("exploratory.correlation.pvalue.threshold"), ") are printed in pink boxes ",
 			"Non-significant values are represented by blue boxes. White cells, if present, denote missing values.")
-		setting.names <- list("Heatmap of" = c("tests" = "tests performed", "pvalues" = "p-values")) 
+		setting.names <- list("Heatmap of" = c("tests" = "tests performed", "pvalues" = "p-values"))
 		report <- rnb.add.figure(report, txt, plots.associations, setting.names,  selected.image = 2)
 		rm(plots.associations, txt, tbl, tbl.failures, fname, setting.names)
-		
+
 		if (!all(is.na(trait.tables$correlations))) {
 			## Attach the table of correlations to the report
 			txt <- "In some cases, a correlation was computed between a pair of traits."
@@ -1412,7 +1414,7 @@ rnb.section.batcheffects <- function(report, batcheffects) {
 			rnb.add.paragraph(report, txt)
 		}
 	}
-	
+
 	return(report)
 }
 
@@ -1458,7 +1460,7 @@ rnb.step.batcheffects <- function(rnb.set, report, pcoordinates, return.permutat
 	if (rnb.getOption("logging") && logger.isinitialized() == FALSE) {
 		logger.start(fname = NA) # initialize console logger
 	}
-	
+
 	if (is.null(pheno(rnb.set))) {
 		txt <- "Batch effects were not studied because the dataset contains no phenotype data."
 		report <- rnb.add.section(report, "Batch Effects", txt)

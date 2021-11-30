@@ -14,6 +14,27 @@ NA.STRINGS <- c("NA","N/A","N.A.","n/a","n.a.","")
 ## Regular expression for a section header in a CSV file exported from Genome Studio
 REGEX.CSV.HEADER <- "^\\[(.+)\\],*$"
 
+## probe category definitions for Infinium arrays
+INTENSITY.SUMMARIZATION.INFO<-list(
+        probesEPIC=list(
+                "typeIred"=list(Design="I", Color="Red", Msource="Red", Usource="Red", Maddress="AddressB", Uaddress="AddressA"),
+                "typeIgrn"=list(Design="I", Color="Grn", Msource="Grn", Usource="Grn", Maddress="AddressB", Uaddress="AddressA"),
+                "typeII"=list(Design="II", Color="Both", Msource="Grn", Usource="Red", Maddress="AddressA", Uaddress="AddressA")),
+        probes450=list(
+                "typeIred"=list(Design="I", Color="Red", Msource="Red", Usource="Red", Maddress="AddressB", Uaddress="AddressA"),
+                "typeIgrn"=list(Design="I", Color="Grn", Msource="Grn", Usource="Grn", Maddress="AddressB", Uaddress="AddressA"),
+                "typeII"=list(Design="II", Color="Both", Msource="Grn", Usource="Red", Maddress="AddressB", Uaddress="AddressA")),
+        probes27=list(
+                "typeIred"=list(Design="I", Color="red", Msource="Red", Usource="Red", Maddress="AddressB", Uaddress="AddressA"),
+                "typeIgrn"=list(Design="I", Color="green", Msource="Grn", Usource="Grn", Maddress="AddressB", Uaddress="AddressA")),
+        probesMMBC=list(
+                "typeIred"=list(Design="I", Color="Red", Msource="Red", Usource="Red", Maddress="AddressB", Uaddress="AddressA"),
+                "typeIgrn"=list(Design="I", Color="Grn", Msource="Grn", Usource="Grn", Maddress="AddressB", Uaddress="AddressA"),
+                "typeII"=list(Design="II", Color="Both", Msource="Grn", Usource="Red", Maddress="AddressA", Uaddress="AddressA"))
+)
+
+
+
 ## F U N C T I O N S ###################################################################################################
 
 #' check.barcode
@@ -251,14 +272,21 @@ read.data.dir<-function(dir,
 					stop("The columns of bead counts table do not match the columns of the beta value table ", "")
 				}
 			}
-
+			
+			platform <- rnb.getOption("import.idat.platform")
+			if(platform=="auto"){
+				platform <- ifelse(nrow(beta.table)>500000L,"EPIC",ifelse(nrow(beta.table)<30000L,"27k","450k"))
+			}else{
+				platform <- ifelse(platform=="probesEPIC","EPIC",ifelse(platform=="probes27","27k","450k"))
+			}				
+			
 			data.set<-RnBeadSet(
 					pheno=pheno.table,
 					probes=rownames(beta.table),
 					betas=as.matrix(beta.table),
 					p.values=if(is.null(p.value.table)) p.value.table else as.matrix(p.value.table),
 					bead.counts=if(is.null(bead.count.table)) bead.count.table else as.matrix(bead.count.table),
-					platform=if(nrow(beta.table)>30000L) "450k" else "27k")
+					platform=platform)
 
 			if(verbose) {
 				rnb.logger.completed()
@@ -648,26 +676,54 @@ read.idat.files <- function(base.dir,
 	idat.red.fnames<-idat.fnames[2*(1:nsamp)-1]
 	idat.grn.fnames<-idat.fnames[2*(1:nsamp)]
 
-	platform<-detect.infinium.platform(fn.base)
-
-	annot<-rnb.annotation2data.frame(rnb.get.annotation(platform))
-	annot.ctrls<-rnb.get.annotation(gsub("probes","controls",platform))
-	nprobes<-sum(rnb.annotation.size(platform))
+	## Detect Infinium platform
+	platform<-rnb.detect.infinium.platform(idat.fnames)
+	if(verbose) {
+		txt <- c("probes27"="HumanMethylation27",
+			"probes450"="HumanMethylation450",
+			"probesEPIC"="MethylationEPIC",
+            "probesMMBC"="MouseMethylationBeadChip")
+		rnb.info(paste("Detected platform:", txt[platform]))
+		rm(txt)
+	}
+	
+    genome<-c(
+            "probes27"="hg19",
+            "probes450"="hg19",
+            "probesEPIC"="hg19",
+            "probesMMBC"="mm10")
+    
+    annot_gr<-rnb.get.annotation(platform, genome[platform])
+    ### TODO: remove after fixing the annotation
+#    if(platform=="probesMMBC"){
+#        annot_gr<-endoapply(annot_gr, function(ag) {names(ag)<-mcols(ag)[["ID"]]; return(ag)})
+#    }
+	annot<-rnb.annotation2data.frame(annot_gr)
+    annot.ctrls<-rnb.get.annotation(gsub("probes","controls",platform), genome[platform])
+	nprobes<-sum(rnb.annotation.size(platform, genome[platform]))
 	ncprobes<-nrow(annot.ctrls)
 	
 	if(platform=="probesEPIC"){
+        id.col<-"ID"
 		ctrls.address.col<-"ID"
 		ctrls.target.col<-"Target"
 		neg.ctrl.indexes<-which(annot.ctrls[["Target"]]=="NEGATIVE")
 	}else if(platform=="probes450"){
+        id.col<-"ID"
 		ctrls.address.col<-"ID"
 		ctrls.target.col<-"Target"
 		neg.ctrl.indexes<-which(annot.ctrls[["Target"]]=="NEGATIVE")
 	}else if(platform=="probes27"){
+        id.col<-"ID"
 		ctrls.address.col<-"Address"
 		ctrls.target.col<-"Type"
 		neg.ctrl.indexes<-which(annot.ctrls[["Type"]]=="Negative")
-	}
+	}else if(platform=="probesMMBC"){
+        id.col<-"ID"
+        ctrls.address.col<-"ID"
+        ctrls.target.col<-"Target"
+        neg.ctrl.indexes<-which(annot.ctrls[["Target"]]=="NEGATIVE")
+    }
 
 	tIred<-which(annot$Color=="Red")
 	tIgrn<-which(annot$Color=="Grn")
@@ -697,20 +753,6 @@ read.idat.files <- function(base.dir,
 	qc.int$Cy3<-matrix(NA_real_, nrow=ncprobes, ncol=nsamp, dimnames = list(annot.ctrls[[ctrls.address.col]], NULL))
 	qc.int$Cy5<-matrix(NA_real_, nrow=ncprobes, ncol=nsamp, dimnames = list(annot.ctrls[[ctrls.address.col]], NULL))
 
-	INTENSITY.SUMMARIZATION.INFO<-list(
-			probesEPIC=list(
-				"typeIred"=list(Design="I", Color="Red", Msource="Red", Usource="Red", Maddress="AddressB", Uaddress="AddressA"),
-				"typeIgrn"=list(Design="I", Color="Grn", Msource="Grn", Usource="Grn", Maddress="AddressB", Uaddress="AddressA"),
-				"typeII"=list(Design="II", Color="Both", Msource="Grn", Usource="Red", Maddress="AddressA", Uaddress="AddressA")),
-			probes450=list(
-				"typeIred"=list(Design="I", Color="Red", Msource="Red", Usource="Red", Maddress="AddressB", Uaddress="AddressA"),
-				"typeIgrn"=list(Design="I", Color="Grn", Msource="Grn", Usource="Grn", Maddress="AddressB", Uaddress="AddressA"),
-				"typeII"=list(Design="II", Color="Both", Msource="Grn", Usource="Red", Maddress="AddressB", Uaddress="AddressA")),
-			probes27=list(
-				"typeIred"=list(Design="I", Color="red", Msource="Red", Usource="Red", Maddress="AddressB", Uaddress="AddressA"),
-				"typeIgrn"=list(Design="I", Color="green", Msource="Grn", Usource="Grn", Maddress="AddressB", Uaddress="AddressA"))
-	)
-
 	probe.categories<-INTENSITY.SUMMARIZATION.INFO[[platform]]
 
 	get.OOB.channel<-function(channel){
@@ -738,7 +780,7 @@ read.idat.files <- function(base.dir,
 		}
 	}
 
-	probes<-annot[["ID"]]
+	probes<-annot[[id.col]]
 	for(pcind in 1:length(probe.categories)){
 		probe.categories[[pcind]]$Indices<-which(annot$Design==probe.categories[[pcind]]$Design &
 						annot$Color==probe.categories[[pcind]]$Color)
@@ -804,13 +846,41 @@ read.idat.files <- function(base.dir,
 
 	if(platform %in% c("probes27", "probes450")){
 		rnb.platform<-paste0(gsub("probes", "", platform), "k")
-	}else{
+        assembly<-"hg19"
+	}else if(platform %in% "probesEPIC"){
 		rnb.platform<-"EPIC"
-	}
+        assembly<-"hg19"
+	}else{
+        rnb.platform<-"MMBC"
+        assembly<-"mm10"
+    }
 
 	if(is.null(sample.sheet)){
 		sample.sheet<-data.frame(barcodes=barcode)
 	}
+    
+    ### solve the problem of duplicated probes
+    ### in each pair select those that have a lower detection p-value
+    if(rnb.platform=="MMBC"){
+       
+       probe_names<-annot[["Name"]]
+       dup_probe_names<-unique(probe_names[duplicated(probe_names)])
+       dup_ind<-which(probe_names %in% dup_probe_names)
+       dup_ind<-dup_ind[order(probe_names[dup_ind])]
+       dup_probe_names<-probe_names[dup_ind]
+       keep<-unlist(tapply(dup_ind, dup_probe_names, function(ind) ind[which.max(rowSums(dpvals[ind,]==colMins(dpvals[ind,])))]))
+       remove<-setdiff(dup_ind,keep)
+       
+       probes<-probes[-remove]
+       M<-M[-remove,]
+       U<-U[-remove,]
+       M0<-M0[-remove,]
+       U0<-U0[-remove,]
+       beadsM<-beadsM[-remove,]
+       beadsU<-beadsU[-remove,]
+       dpvals<-dpvals[-remove,]
+    }
+
 
 	object<-RnBeadRawSet(
 			pheno = sample.sheet,
@@ -824,7 +894,7 @@ read.idat.files <- function(base.dir,
 			bead.counts.U = beadsU,
 			p.values=dpvals,
 			qc=qc.int,
-			region.types = rnb.region.types.for.analysis("hg19"),
+			region.types = rnb.region.types.for.analysis(assembly),
 			useff=useff,
 			summarize.bead.counts=TRUE,
 			ffcleanup = rnb.getOption("enforce.destroy.disk.dumps")
@@ -1023,8 +1093,8 @@ read.bed.files<-function(base.dir=NULL,
 		}
 
 		if(!is.null(rnb.getOption("identifiers.column")))
-			sample.names<-sample.sheet[,rnb.getOption("identifiers.column")] else
-			sample.names<-sample.sheet[,1]
+			sample.names<-as.character(sample.sheet[,rnb.getOption("identifiers.column")]) else
+			sample.names<-as.character(sample.sheet[,1])
 	}else{
 		sample.names<-sub("\\.bed", "", file.names)
 	}
@@ -1133,6 +1203,7 @@ read.bed.files<-function(base.dir=NULL,
 			close(data.matrices[[dmi]])
 		}
 	}
+	if (verbose) rnb.status(c("Matched chromosomes and strands to annotation"))
 
 	dm.subsample<-list()
 	if(useff && (prod(length(site.ints), length(data.matrices))>.Machine$integer.max) && !usebigff){
@@ -1175,6 +1246,7 @@ read.bed.files<-function(base.dir=NULL,
 		rnb.warning(c("Coverage information is not present for the following BED files: ", paste(file.names[which(!covg.present)], sep=", ")))
 		rnb.warning(c("Discarded coverage information"))
 	}
+	if (verbose) rnb.status(c("Checked for the presence of sites and coverage"))
 
 	sites <- matrix(nrow=length(all.sites), ncol=3, dimnames=list(NULL, c("chr", "coord", "strand")))
 	if(!useff){
@@ -1201,6 +1273,7 @@ read.bed.files<-function(base.dir=NULL,
 			covg <- NULL
 		}
 	}
+	if (verbose) rnb.status(c("Initialized meth/covg matrices"))
 
 	## Detect the scale of the mean methylation data
 	## A very naive method to guess whether the methylation is  
@@ -1223,6 +1296,7 @@ read.bed.files<-function(base.dir=NULL,
 				if(useff){
 					open(data.matrices[[indx]])
 				}
+				# if (verbose) rnb.status(c("Reading data matrix", indx))
 				dm<-data.matrices[[indx]]
 				#dm.rows2<-intersect(all.sites, rownames(dm))
 				#dm.rows<-match(all.sites, rownames(dm))
@@ -1297,36 +1371,36 @@ read.bed.files<-function(base.dir=NULL,
 }
 
 ########################################################################################################################
-#'	read.single.bed
+#' read.single.bed
 #'
-#'	reads a BED file with methylation information
+#' reads a BED file with methylation information
 #'
-#'	@param file				the input BED file
-#'  @param chr.col			chromosome column index
-#'  @param start.col		start column index
-#'  @param end.col			end column index
-#'  @param strand.col		strand column index
-#'	@param mean.meth.col	mean methylation column index
-#'  @param c.col			converted C counts column index
-#'  @param t.col			unconverted C counts column index
-#'	@param coverage.col		column with coverage information
-#'  @param is.epp.style		Flag for custom Broad Epigenome Pipeline (EPP) bed style (columns \code{"chrom"}, \code{"start"},
+#' @param file				the input BED file
+#' @param chr.col			chromosome column index
+#' @param start.col		start column index
+#' @param end.col			end column index
+#' @param strand.col		strand column index
+#' @param mean.meth.col	mean methylation column index
+#' @param c.col			converted C counts column index
+#' @param t.col			unconverted C counts column index
+#' @param coverage.col		column with coverage information
+#' @param is.epp.style		Flag for custom Broad Epigenome Pipeline (EPP) bed style (columns \code{"chrom"}, \code{"start"},
 #'                          \code{"end"}, \code{"methylated_count/total_count"}, \code{"meth_score_scaled_0_1000"} and
 #'                          \code{"strand"} in this order). Setting this to \code{TRUE} overwrites all other parameters except
 #'                          \code{file}, and also neglects \code{...}.
-#'  @param coord.shift 		An integer specifying the coordinate adjustment applied to the start and end coordinates.
-#'  @param ffread			Use \code{ff} package functionality
-#'  @param context			prefix for the output rownames
-#'  @param ...				further arguments to \code{read.table} or \code{read.table.ffdf}
+#' @param coord.shift 		An integer specifying the coordinate adjustment applied to the start and end coordinates.
+#' @param ffread			Use \code{ff} package functionality
+#' @param context			prefix for the output rownames
+#' @param ...				further arguments to \code{read.table} or \code{read.table.ffdf}
 #'
-#'  @details Missing columns should be assigned with \code{NA}. In case \code{mean.meth.col} is absent at least \code{coverage.col}
+#' @details Missing columns should be assigned with \code{NA}. In case \code{mean.meth.col} is absent at least \code{coverage.col}
 #' 			and one of \code{c.col} or \code{t.col} should be specified.
 #'
-#'  @return a \code{data.frame} or \code{ff.data.frame} object with DNA methylation and coverage information. The row names are formed by the following convension:
+#' @return a \code{data.frame} or \code{ff.data.frame} object with DNA methylation and coverage information. The row names are formed by the following convension:
 #'  		\code{context\\.read.delim(file,...)[,chr.col]\\.read.delim(file,...)[,start.col]\\.read.delim(file,...)[,strand.col]}.
 #'
-#'  @author Pavlo Lutsik
-#'  @export
+#' @author Pavlo Lutsik
+#' @export
 read.single.bed<-function(file,
 		chr.col=1L,
 		start.col=2L,
@@ -1361,6 +1435,8 @@ read.single.bed<-function(file,
 
 	if(!is.character(file) || length(file)!=1)
 		stop("Invalid file name")
+
+	rnb.info(c("Reading BED file:", file))
 
 	## read top of the file to determine the column classes
 	if(ffread){
@@ -1526,11 +1602,7 @@ find.bed.column<-function(annotation,
 	potential.fnames<-which(classes%in%c("character","factor"))
 
 	candidate.fname<-sapply(potential.fnames, function(cix){
-
-				extensions<-sapply(strsplit(as.character(annotation[,cix]),"\\."),
-						function(spl) spl[length(spl)] %in% c("bed", "BED", "cov", "COV")
-				)
-
+				extensions<-grepl("\\.bed|\\.BED|\\.cov|\\.COV",annotation[,cix])
 				all(extensions)
 			})
 
@@ -1598,9 +1670,13 @@ get.bed.column.classes<-function(bed.top,
 		classes[strand.col]<-"character"
 	}
 	classes[start.col]<-"integer"
-	classes[end.col]<-"integer"
+	if(!is.na(end.col)){
+		classes[end.col]<-"integer"
+	}
 	classes[coverage.col]<-"integer"
-	classes[mean.meth.col]<-"numeric"
+	if(!is.na(mean.meth.col)){
+		classes[mean.meth.col]<-"numeric"
+	}
 	if(useff){
 		classes[chr.col]<-"factor"
 	}else{
@@ -1615,33 +1691,55 @@ get.bed.column.classes<-function(bed.top,
 	names(classes)<-NULL
 	return(classes)
 }
-########################################################################################################################
-##
-##	detect.infinium.platform
-##
-##	Tries to infer the version of the Infinium platform based on the names of IDAT files
-##
-##	@author Pavlo Lutsik
-##
-detect.infinium.platform<-function(barcodes){
 
-	plate_id<-as.numeric(strsplit(barcodes[1], split="_")[[1]][1])
-	if(plate_id>200000000000){# EPIC platform
-		return("probesEPIC")
-	}else{
-			
-		inf27k.idats.present<-any(grepl("_[ABCDEFGHIJKL]$", barcodes))
-		inf450k.idats.present<-any(grepl("_R0[1-6]C0[1-2]$", barcodes))
-	
-		if(inf27k.idats.present) {
-			if (inf450k.idats.present) {
-				rnb.error("Undefined platform; both 450k and 27k IDATs are present")
-			}
-			return("probes27")
-		} else if (inf450k.idats.present) {
-			return("probes450")
-		}
-	}
-	rnb.error("Undefined platform; please check Sentrix ID and Sentrix Position columns in the sample sheet")
+########################################################################################################################
+
+#' rnb.detect.infinium.platform
+#'
+#' Attempts to infer the version of the Infinium platform based on the names and/or sizes of the IDAT files.
+#'
+#' @param idat.fnames Full names of the IDAT files comprising the dataset of interest.
+#' @return One of \code{"probes27"}, \code{"probes450"} or \code{"probes450"}.
+#
+#' @author Pavlo Lutsik
+#' @noRd
+rnb.detect.infinium.platform <- function(idat.fnames){
+  
+  platform <- rnb.getOption("import.idat.platform")
+  if(platform=="auto"){
+    
+  	inf27k.idats.present <- any(grepl("_[ABCDEFGHIJKL]_", idat.fnames))
+  	inf450kEPIC.idats.present <- any(grepl("_R0[1-6]C0[1-2]_", idat.fnames))
+  
+  	if (inf27k.idats.present) {
+  		if (inf450kEPIC.idats.present) {
+  			rnb.error("Undefined platform; detected HumanMethylation27 and HumanMethylation450")
+  		}
+  		return("probes27")
+  	}
+  	if (inf450kEPIC.idats.present) {
+  		
+  		file.sizes <- as.numeric(na.omit(file.info(idat.fnames)[, "size"]))
+  		if (length(file.sizes) == 0) {
+  			rnb.error("Undefined platform; cannot read the specified IDAT files")
+  		}
+        
+  		if (all(file.sizes>10000000)) {
+  			return("probesEPIC")
+  		}
+        if (all(file.sizes<5000000)) {
+            return("probesMMBC")
+        }
+  		if (all(file.sizes<10000000)) {
+  			return("probes450")
+  		}
+        
+  		rnb.error("Undefined platform; detected several different platforms")
+  	}
+  	rnb.error("Undefined platform; unexpected or missing IDAT files")
+  }else{
+    return(platform)
+  }
 }
+
 ########################################################################################################################

@@ -11,11 +11,10 @@ combine.diffMeth.objs(obj.list)
 }
 \description{
 combine differential methylation objects (output from \code{rnb.run.differential}).
-To be more precise, the \code{diffmeth} and \code{dm.enrich} are merged.
+To be more precise, the \code{diffmeth} and \code{dm.go.enrich} are merged.
 individual objects that are merged are assumed to belong to the same analysis
 and vary only in their indexing of region types and comparisons
 }
 \author{
 Fabian Mueller
 }
-

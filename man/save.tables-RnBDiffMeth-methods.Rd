@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBDiffMeth-class.R
 \docType{methods}
 \name{save.tables,RnBDiffMeth-method}
-\alias{save.tables}
 \alias{save.tables,RnBDiffMeth-method}
+\alias{save.tables}
 \title{save.tables-methods}
 \usage{
 \S4method{save.tables}{RnBDiffMeth}(object, file)
@@ -24,11 +24,12 @@ save the disk dumped tables to an ff archive for later reloading
 library(RnBeads.hg19)
 data(small.example.object)
 logger.start(fname=NA)
-dm <- rnb.execute.computeDiffMeth(rnb.set.example,pheno.cols=c("Sample_Group","Treatment"),disk.dump=TRUE,disk.dump.dir=tempfile())
+pcols <- c("Sample_Group","Treatment")
+tdir <- tempfile()
+dm <- rnb.execute.computeDiffMeth(rnb.set.example,pcols,disk.dump=TRUE,disk.dump.dir=tdir)
 save.tables(dm,tempfile())
 }
 }
 \author{
 Fabian Mueller
 }
-

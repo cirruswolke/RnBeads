@@ -15,4 +15,3 @@ Log the machine name the analysis is run on
 \author{
 Fabian Mueller
 }
-

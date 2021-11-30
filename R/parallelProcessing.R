@@ -31,10 +31,13 @@
 #' }
 parallel.setup <- function(...){
 	logger.start("Setting up Multicore")
-	require(foreach)
-	require(doParallel)
+	rnb.require("foreach")
+	rnb.require("doParallel")
 	# .parallel[["cl"]] <- makeCluster(...)
 	# registerDoParallel(.parallel[["cl"]])
+	if(!any(sapply(list(...),is.numeric))&&!any(sapply(list(...),function(x)grepl("cluster",class(x))))){
+	  stop("Invalid input to 'parallel.setup', needs to be numberic value or a cluster object (see registerDoParallel)")  
+	}
 	registerDoParallel(...)
 	.parallel[["num.cores"]] <- getDoParWorkers()
 	.parallel[["do.par"]] <- TRUE

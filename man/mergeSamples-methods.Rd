@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBSet-class.R
 \docType{methods}
 \name{mergeSamples,RnBSet-method}
-\alias{mergeSamples}
 \alias{mergeSamples,RnBSet-method}
+\alias{mergeSamples}
 \title{mergeSamples}
 \usage{
 \S4method{mergeSamples}{RnBSet}(object, grp.col)
@@ -44,4 +44,3 @@ pheno(rnb.set.merged)
 \author{
 Fabian Mueller
 }
-

@@ -99,8 +99,8 @@ complete.report <- function(report, report.type = "report") {
 	write.line("\n<div id=\"copyright\">", report@fname)
 	write.line("\t<div id=\"rnbeads\">", report@fname)
 	write.line(c("\tThis ", report.type, " was generated on ", format(Sys.time(), "%Y-%m-%d"), " by ",
-			"<a href=\"http://rnbeads.mpi-inf.mpg.de/\">RnBeads</a> version ",
-			paste(packageVersion("RnBeads"), collapse = "."), "."), report@fname)
+			"<a href=\"http://rnbeads.org/\">RnBeads</a> version ",
+			paste(as.character(utils::packageVersion("RnBeads")), collapse = "."), "."), report@fname)
 	write.line("\t</div>", report@fname)
 	write.line("\t<div id=\"validlogo\">", report@fname)
 	write.line(c("\t\t<a href=\"http://validator.w3.org/check?uri=referer\">",
@@ -488,7 +488,8 @@ rnb.add.section <- function(report, title, description, level = 1L, collapsed = 
 #' @examples
 #' \donttest{
 #' report <- createReport("example.html", "Example", init.configuration = TRUE)
-#' recipe <- c("A pessimist is a person who has had to listen to too many optimists. ", "<i>Don Marquis</i>")
+#' txt <- "A pessimist is a person who has had to listen to too many optimists."
+#' txt <- c(txt, " <i>Don Marquis</i>")
 #' rnb.add.paragraph(report, txt)
 #' }
 #' @seealso \code{\linkS4class{Report}} for other functions adding contents to an HTML report
@@ -672,7 +673,7 @@ rnb.add.table <- function(report, tdata, row.names = TRUE, first.col.header = FA
 		stop("invalid value for na; expected single character")
 	}
 	if (nrow(tdata) * ncol(tdata) == 0) {
-		return(invisible())
+		return(invisible(report))
 	}
 
 	## Convert factors to characters

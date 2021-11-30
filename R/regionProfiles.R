@@ -326,7 +326,7 @@ rnb.step.region.profiles <- function(rnb.set, report, region.types, columns=rnb.
 ## @param chrom chromosome of window to plot
 ## @param start start coordinate of window to plot
 ## @param end end coordinate of window to plot
-## @param assembly genome assembly. currently only \code{'hg19'} and \code{'mm9'} are supported.
+## @param assembly genome assembly. currently only \code{'hg19'}, \code{'mm10'} and \code{'mm9'} are supported.
 ## @return a list of \code{Gviz} tracks to be plotted
 ##
 locus.profile.get.base.tracks <- function(chrom,start,end,assembly="hg19"){
@@ -337,7 +337,7 @@ locus.profile.get.base.tracks <- function(chrom,start,end,assembly="hg19"){
 		stop("invalid value for chrom")
 	}
 	
-	suppressPackageStartupMessages(require(biomaRt))
+	rnb.require("biomaRt")
 	mart <- NULL
 	featMap <- Gviz:::.getBMFeatureMap()
 	if (assembly == "hg19"){
@@ -356,6 +356,15 @@ locus.profile.get.base.tracks <- function(chrom,start,end,assembly="hg19"){
 			}
 		)
 		featMap["symbol"] <- "external_gene_id"
+	} else if (assembly == "hg38"){
+		mart <- tryCatch(
+			useMart("ENSEMBL_MART_ENSEMBL", dataset = "hsapiens_gene_ensembl",host="may2015.archive.ensembl.org"),
+			error = function(ee) {
+				logger.warning(c("could not retrieve Ensembl genes from biomart: ",ee$message))
+				NULL
+			}
+		)
+		featMap["symbol"] <- "external_gene_name"
 	} else if (assembly == "mm9"){
 		mart <- tryCatch(useMart("ENSEMBL_MART_ENSEMBL", dataset = "mmusculus_gene_ensembl",host="may2012.archive.ensembl.org"),
 			error = function(ee) {
@@ -568,7 +577,7 @@ locus.profile.get.methylation.track.smooth <- function(chrom,start,end,
 		stop("invalid value for smooth.profile")
 	}
 	cvals.grps <- rep(cvals.grps, length.out = length(grps)) #adjust the length of the color vector. Recycle colors if necassary
-	mtrack.smooth <- DataTrack(range=mm.gr,groups=grouping,name=paste("methylation"),type=c("smooth","p"),span=smooth.span,degree=smooth.degree,family=smooth.family,jitter.x=FALSE,col=cvals.grps,
+	mtrack.smooth <- DataTrack(range=mm.gr,groups=grouping,name=paste("methylation"),type=c("smooth","p"),span=smooth.span,degree=smooth.degree,family=smooth.family,jitter.x=FALSE,col=cvals.grps, legend=FALSE,
 			col.title="white",col.axis="white",background.title="lightsteelblue4")
 	
 	return(list(mtrack.smooth))
@@ -623,7 +632,7 @@ rnb.plot.locus.profile <- function(rnbSet,chrom,start,end,grps=NULL,
 	if (!is.element(smooth.profile, c("wide", "narrow"))){
 		stop("invalid value for smooth.profile")
 	}
-	require(Gviz)	
+	rnb.require("Gviz")	
 	
 	#get methylation info
 	mm <- meth(rnbSet,type="sites")
@@ -682,8 +691,8 @@ rnb.section.locus.profiles <- function(rnb.set, locus.tab, report, type="", grp.
 	if (any(duplicated(locus.tab[,"id"]))){
 		stop("Invalid value for locus.tab: non-unique ids")
 	}
-	require(Gviz)
-	require(biomaRt)
+	rnb.require("Gviz")
+	rnb.require("biomaRt")
 	if (rnb.getOption("logging") && logger.isinitialized() == FALSE) {
 		logger.start(fname = NA) # initialize console logger
 	}

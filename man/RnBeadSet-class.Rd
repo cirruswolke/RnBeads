@@ -2,15 +2,24 @@
 % Please edit documentation in R/RnBeadSet-class.R
 \docType{class}
 \name{RnBeadSet-class}
-\alias{RnBeadSet}
 \alias{RnBeadSet-class}
+\alias{RnBeadSet}
 \alias{initialize,RnBeadSet-method}
 \title{RnBeadSet Class}
 \usage{
-RnBeadSet(pheno, probes, betas, p.values = NULL, bead.counts = NULL,
-  qc = NULL, platform = "450k", summarize.regions = TRUE,
-  region.types = rnb.region.types.for.analysis("hg19"),
-  useff = rnb.getOption("disk.dump.big.matrices"))
+RnBeadSet(
+  pheno,
+  probes,
+  betas,
+  p.values = NULL,
+  bead.counts = NULL,
+  qc = NULL,
+  platform = "450k",
+  summarize.regions = TRUE,
+  region.types = rnb.region.types.for.analysis(ifelse(platform == "MMBC", "mm10",
+    "hg19")),
+  useff = rnb.getOption("disk.dump.big.matrices")
+)
 }
 \arguments{
 \item{pheno}{Phenotypic data.}
@@ -38,15 +47,13 @@ an object of class RnBeadSet
 }
 \description{
 Stores the preprocessed information from HumanMethylation experiments
-
-Wrapper function RnBeadSet
 }
 \details{
 There are multiple ways to create an object of type \code{RnBeadSet}:
 \describe{
  \item{Loading from files}{Dataset can be loaded from text or binary files. See the function
       \code{\link{rnb.execute.import}} for more details.}
- \item{Downloading from GEO}{See the function \code{\link{read.geo}} for details.}
+ \item{Downloading from GEO}{See the function \code{\link{rnb.read.geo}} for details.}
  \item{Converting from \code{MethyLumiSet}}{...}
 }
 }
@@ -79,7 +86,7 @@ There are multiple ways to create an object of type \code{RnBeadSet}:
   \item{\code{\link[BiocGenerics]{combine}}}{Combines two datasets.}
 }
 }
+
 \author{
 Pavlo Lutsik
 }
-

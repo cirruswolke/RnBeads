@@ -88,18 +88,18 @@
 \pagestyle{fancy}
 
 \begin{document}
+\SweaveOpts{concordance=TRUE}
 
 \title{\cs{RnBeads} -- Comprehensive Analysis of DNA Methylation Data}
 
-\author{Fabian M\"uller, Yassen Assenov, Pavlo Lutsik \\
-	\small{Contact: \cs{rnbeads@mpi-inf.mpg.de}} \\
-	\small{Package version: \cs{1.1.2}}}
+\author{Fabian M\"uller, Yassen Assenov, Pavlo Lutsik, Michael Scherer \\
+	\small{Contact: \cs{team@rnbeads.org}} \\
+	\small{Package version: \cs{2.10.0}}}
 
 \thispagestyle{empty}
 \maketitle
 
-\cs{RnBeads} is an R package for the comprehensive analysis of genome-wide DNA methylation data with single basepair resolution. Supported assays include the
-Infinium 450k microarray, whole genome bisulfite sequencing (WGBS), reduced representation bisulfite sequencing (RRBS), other forms of enrichment bisulfite sequencing, and any other large-scale method that can provide DNA methylation data at single basepair resolution (e.g. MeDIP-seq after suitable preprocessing). It builds upon a significant and ongoing community effort to devise effective algorithms for dealing with large-scale DNA methylation data and implements these methods in a user-friendly, high-throughput workflow, presenting the analysis results in a highly interpretable fashion.
+\cs{RnBeads} is an R package for the comprehensive analysis of genome-wide DNA methylation data with single basepair resolution. Supported assays include the Infinium 450k microarray, whole genome bisulfite sequencing (WGBS), reduced representation bisulfite sequencing (RRBS), other forms of enrichment bisulfite sequencing, and any other large-scale method that can provide DNA methylation data at single basepair resolution (e.g. MeDIP-seq after suitable preprocessing). It builds upon a significant and ongoing community effort to devise effective algorithms for dealing with large-scale DNA methylation data and implements these methods in a user-friendly, high-throughput workflow, presenting the analysis results in a highly interpretable fashion.
 
 <<echo=FALSE,warning=FALSE>>=
 suppressPackageStartupMessages(library(RnBeads))
@@ -111,14 +111,20 @@ suppressPackageStartupMessages(library(RnBeads))
 
 \section{Getting Started}
 
-\subsection{Automatic Installation}
-	Automatic installation of \cs{RnBeads} and its companion data packages can be
-	performed using an installation script available on the \cs{RnBeads} web site. All you have to do is to execute the following command in your R environment:
+\subsection{Installation}
+	Automatic installation of \cs{RnBeads} and one or more of its companion data packages is performed just like any other Bioconductor package. As an example, the following commands install RnBeads and its annotation package for the human genome annotation hg38:
 <<eval=FALSE>>=
-source("http://rnbeads.mpi-inf.mpg.de/install.R")
+if (!requireNamespace("BiocManager", quietly=TRUE))
+    install.packages("BiocManager")
+BiocManager::install(c("RnBeads", "RnBeads.hg38"))
+@
+	
+	Alternatively, we also provide a an easy-to-use installation script that ensures all dependencies are installed. This way, you can install RnBeads by running a single line of code in your R environment:
+<<eval=FALSE>>=
+source("http://rnbeads.org/data/install.R")
 @
 
-	This will also install and update all package dependencies. Additionally, you might have to install \textit{Ghostscript} which \cs{RnBeads} uses for generating plot files. \textit{Ghostscript} is included in most Unix/Linux distributions by default, but may require installation on other operating systems. You can find more information on how to install it in Appendix~\ref{sec:manualInstall} and the FAQ section on the \href{http://rnbeads.mpi-inf.mpg.de/}{RnBeads website}\footnote{\href{http://rnbeads.mpi-inf.mpg.de/}{http://rnbeads.mpi-inf.mpg.de}}. Alternative ways to install RnBeads and its dependencies can also be found in Appendix~\ref{sec:manualInstall}.
+	Note that you might have to install \textit{Ghostscript} which \cs{RnBeads} uses for generating plot files. \textit{Ghostscript} is included in most Unix/Linux distributions by default, but may require installation on other operating systems. You can obtain the version corresponding to your operating system freely from the program's website\footnote{\href{http://www.ghostscript.com/download/gsdnld.html}{http://www.ghostscript.com/download/gsdnld.html}}. Follow their installation instructions. You might have to set path variables as well. Additional hints on installation of Ghostscript can be found on the FAQ section of the \href{http://rnbeads.mpi-inf.mpg.de/}{RnBeads website}\footnote{\href{https://rnbeads.org/}{https://rnbeads.org/}}. The website also describes the installation process in detail.
 
 \subsection{Overview of \cs{RnBeads} Modules}
 	\cs{RnBeads} implements a comprehensive analysis pipeline from data import via
@@ -151,17 +157,17 @@ source("http://rnbeads.mpi-inf.mpg.de/install.R")
 		\item[Exploratory Analysis] Dimension reduction, statistical association tests and visualization techniques are applied in order to discover associations of the methylation data with various sample characteristics specified in the sample annotation sheet provided by the user. Methylation fingerprints of samples and sample groups are identified and presented. Unsupervised learning techniques (clustering) are applied.
 		\item[Differential Methylation Analysis] Provided with categorical sample, differentially methylated sites and genomic
 		regions are identified, their degree of differential methylation is quantified
-		and visualized. Furthermore, differentially methylated regions (DMRs) can be annotated, e.g. with Gene Ontology (GO) terms.
+		and visualized. Furthermore, differentially methylated regions (DMRs) can be annotated, e.g. with enrichment analysis.
 	\end{description}
 
 \subsection{Datasets}
 	In this vignette, we first describe how to analyze data generated by the Infinium 450k methylation array. Section~\ref{sec:bisulfite} describes how to handle bisulfite sequencing data. The general concepts of \cs{RnBeads} are shared for array and sequencing data. In fact, for the most part, the same methods and functions are used. Therefore, the 450k examples will also be very instructive for the analysis of bisulfite sequencing data.
-	We will introduce basic features of \cs{RnBeads} using a dataset of Infinium 450k methylation data from multiple human embryonic stem cells (hESCs) and induced pluripotent stem cells (hiPSCs) lines. This dataset has been published as a supplement to a study on non-CpG methylation \cite{Ziller2011} and can be downloaded as a zip file from the \cs{RnBeads} examples website\footnote{\href{http://rnbeads.mpi-inf.mpg.de/examples.php}{http://rnbeads.mpi-inf.mpg.de/examples.php}}. Note that while the article~\cite{Ziller2011} focuses on non-CpG methylation, we will only investigate methylation in the CpG context here. Before working with the data, unzip the archive to a directory of your choice.
+	We will introduce basic features of \cs{RnBeads} using a dataset of Infinium 450k methylation data from multiple human embryonic stem cells (hESCs) and induced pluripotent stem cells (hiPSCs) lines. This dataset has been published as a supplement to a study on non-CpG methylation \cite{Ziller2011} and can be downloaded as a zip file from the \cs{RnBeads} examples website\footnote{\href{https://rnbeads.org/examples.html}{https://rnbeads.org/examples.html}}. Note that while the article~\cite{Ziller2011} focuses on non-CpG methylation, we will only investigate methylation in the CpG context here. Before working with the data, unzip the archive to a directory of your choice.
 
 \subsection{Setting Up the Analysis Environment}
 	Before we get started, we need to carry out some preparations, such as loading the package and specifying input and output directories:
 
-<<eval=FALSE>>=
+<<>>=
 library(RnBeads)
 # Directory where your data is located
 data.dir <- "~/RnBeads/data/Ziller2011_PLoSGen_450K"
@@ -172,23 +178,20 @@ analysis.dir <- "~/RnBeads/analysis"
 # Directory where the report files should be written to
 report.dir <- file.path(analysis.dir, "reports")
 @
-		We will use these variables throughout this vignette whenever we mean to specify input and output files. Of course, you have to adapt the directories corresponding to your own file system and operating system. The zip file you downloaded contains a directory that entails a sample annotation sheet (we store its location in the \cs{sample.annotation} variable in the code above) and a directory containing the IDAT files that hold the methylation data (\cs{idat.dir}).
+We will use these variables throughout this vignette whenever we mean to specify input and output files. Of course, you have to adapt the directories corresponding to your own file system and operating system. The zip file you downloaded contains a directory that entails a sample annotation sheet (we store its location in the \cs{sample.annotation} variable in the code above) and a directory containing the IDAT files that hold the methylation data (\cs{idat.dir}).
 
 
 \section{Vanilla Analysis}
 \label{sec:vanilla}
 
-	So, let's get our hands dirty and perform an analysis. First we may want to
-	specify a few analysis parameters:
-<<eval=FALSE>>=
+	So, let's get our hands dirty and perform an analysis. First we may want to specify a few analysis parameters:
+<<>>=
 rnb.options(filtering.sex.chromosomes.removal=TRUE,
     identifiers.column="Sample_ID")
 @
-	This tells \cs{RnBeads} to remove all probes on sex chromosomes for the
-	analysis in the filtering step. Furthermore, \cs{RnBeads} will look for a
-	column called ``Sample\_Name'' in the sample annotation sheet and use its contents as identifiers in the analysis. Feel free to set other options as well (you can inspect available analysis options using \cs{?rnb.options}). More details on analysis options can be found in Section~\ref{sec:anaParams} of this vignette.
+	This tells \cs{RnBeads} to remove all probes on sex chromosomes for the analysis in the filtering step. Furthermore, \cs{RnBeads} will look for a column called ``Sample\_Name'' in the sample annotation sheet and use its contents as identifiers in the analysis. Feel free to set other options as well (you can inspect available analysis options using \cs{?rnb.options}). More details on analysis options can be found in Section~\ref{sec:anaParams} of this vignette.
 
-     The main function in RnBeads is \cs{rnb.run.analysis()}. It executes all
+    The main function in RnBeads is \cs{rnb.run.analysis()}. It executes all
     analysis modules, as specified in the package options and generates a
     dedicated report for each module. The method has multiple
     arguments, the most important of which are those specifying the type of the
@@ -215,15 +218,9 @@ rnb.options(filtering.sex.chromosomes.removal=TRUE,
 rnb.run.analysis(dir.reports=report.dir, sample.sheet=sample.annotation,
     data.dir=idat.dir, data.type="infinium.idat.dir")
 @
-    Note that in the above code we specified the arguments explicitly, i.e. we
-	used the syntax \cs{argument.name=argument.value}. It is good practice to
-	stick to this explicit argument statement.
+	Note that in the above code we specified the arguments explicitly, i.e. we used the syntax \cs{argument.name=argument.value}. It is good practice to stick to this explicit argument statement.
 
-	Now, as running through the entire analysis pipeline takes a while, get a cup
-	of coffee. You might also want to browse through some of the examples on the \cs{RnBeads} website to get an idea of what kind of results you can expect
-	once the analysis is done. Anyhow, it might take a while (on our testing machine,
-	roughly four hours for the complete analysis).
-
+	Now, as running through the entire analysis pipeline takes a while, get a cup of coffee. You might also want to browse through some of the examples on the \cs{RnBeads} website to get an idea of what kind of results you can expect once the analysis is done. Anyhow, it might take a while (on our testing machine, 	roughly four hours for the complete analysis).
 
 	After the analysis has finished, you can find a variety of files in the report
 	directory you specified. Of particular interest are the \cs{html} files containing the
@@ -242,13 +239,13 @@ rnb.run.analysis(dir.reports=report.dir, sample.sheet=sample.annotation,
 	This overview page provides the links to the analysis reports of the
 	individual modules. You can also access the individual reports directly by
 	opening the corresponding \cs{html} files in the reports directory. These
- 	reports contain method descriptions of the conducted analyses as well as the
+	reports contain method descriptions of the conducted analyses as well as the
 	results. The reports are designed to be self-contained and self-explanatory,
 	therefore, we do not discuss them in detail here. Take your time browsing
- 	through the results of the analysis and getting an idea of what \cs{RnBeads}
+	through the results of the analysis and getting an idea of what \cs{RnBeads}
 	can do for you.
 
-    The reports provide a convenient way of sharing results and
+	The reports provide a convenient way of sharing results and
 	re-inspecting them later. It is particularly easy to share results over the
 	Internet if you have webspace available somewhere. Simply upload the entire
 	report directory to a server and send a corresponding link to your
@@ -260,17 +257,159 @@ rnb.run.analysis(dir.reports=report.dir, sample.sheet=sample.annotation,
 	full-scale \cs{RnBeads} pipeline. You can deactivate individual modules by
 	setting the corresponding global \cs{RnBeads} options before running the
 	analysis. For instance, you could deactivate the differential methylation module:
-<<eval=FALSE>>=
+<<>>=
 rnb.options(differential=FALSE)
 @
+
+\section{Working with \cs{RnBSet} Objects}
+
+	Every analysis workflow in \cs{RnBeads} is centered around a dataset object, which is implemented as an R object of type \cs{RnBSet} (an \cs{S4} class). This object contains the sample annotation table, methylation values for individual sites and regions, as well as additional, platform-specific data. The function \cs{rnb.run.analysis}, introduced in the previous section, returns such an object (invisibly) which contains the processed dataset. \cs{RnBeads} provides a multitude of functions operating on a dataset; some of these functions retrieve information from the dataset, others create plots summarizing some of the data contained, or modify the methylation values or sample annotation. In this section, we introduce the \cs{RnBSet} class and show a few examples on how to work with these objects in an interactive R session. The following sections give more details by describing each of the \cs{RnBeads} modules. With the exception of the import module, which prepares such objects from input data files, all of these modules operate directly on \cs{RnBSet} objects.
+
+	\cs{RnBSet} objects come in different flavors (subclasses), depending on the data type that was used to create them: \cs{RnBeadSet} and \cs{RnBeadRawSet} objects are derived from processed and unprocessed array data respectively, while \cs{RnBiseqSet} objects result from processing bisulfite-sequencing data.
+
+	Here, we use a small example dataset which is contained in the \cs{RnBeads.hg19} package and comprises a subset of probes of the Infnium 450K dataset introduced earlier in this vignette.
+	Readers are encouraged to try the functions presented here on the full dataset or on their own datasets. As a first example, by printing a dataset you can see a summary of its type and size.
+
+<<>>=
+library(RnBeads.hg19)
+data(small.example.object)
+rnb.set.example
+@
+
+	As shown in the code snippet above, the example dataset consists of 12 samples $\times$ 1,736 probes. In addition to measurements at individual CpGs, it has summarized the methylation state for 470 genomic tiling regions, 184 gene bodies, 184 gene promoters and 137 CpG islands. Notice the first line of printed for this dataset, it states that it is an object of type \cs{RnBeadRawSet}. These objects denote array-based datasets containing array-specific measurements, such as probe intensity values, detection p-values, and others.
+
+	You can use the following functions in order to obtain the number of CpGs covered and the sample identifiers of the dataset:
+
+<<>>=
+nsites(rnb.set.example)
+samples(rnb.set.example)
+@
+	The following command shows the the first 4 columns of the sample annotation table:
+
+<<>>=
+pheno(rnb.set.example)[, 1:4]
+@
+
+Methylation values for individual CpGs can be obtained using the \cs{meth} command:
+
+<<>>=
+mm <- meth(rnb.set.example)
+@
+
+Let's take look at the distribution of methylation values in sample number 5 of our dataset:
+
+<<fig.height=3>>=
+hist(mm[,5], col="steelblue", breaks=50)
+@
+
+\cs{RnBSet} objects also contain summarized methylation levels for various region types. To inspect which region types are represented in an object use \cs{summarized.regions}:
+
+<<>>=
+summarized.regions(rnb.set.example)
+@
+
+The next commands instruct \cs{RnBeads} that the first column in the annotation table denotes sample identifiers, and extract the methylation beta values at the first five gene promoters for the first three samples:
+
+<<>>=
+rnb.options(identifiers.column="Sample_ID")
+meth(rnb.set.example, type="promoters", row.names=TRUE, i=1:5, j=1:3)
+@
+
+Similarly, the method \cs{mval} is used to extract M values:
+
+<<>>=
+mval(rnb.set.example, type="promoters", row.names=TRUE)[1:5, 1:3]
+@
+
+To get the coordinates and additional annotation for sites or regions contained in the dataset, use the \cs{annotation} function:
+
+<<>>=
+annot.sites <- annotation(rnb.set.example)
+head(annot.sites)
+annot.promoters <- annotation(rnb.set.example, type="promoters")
+head(annot.promoters)
+@
+
+Furthermore, indices of overlapping regions can be added to each annotated
+methylation site.
+
+<<>>=
+annot.sites.with.rgns <- annotation(rnb.set.example, include.regions=TRUE)
+head(annot.sites.with.rgns)
+@
+
+You can manipulate \cs{RnBSet} objects using several methods. Here, we show you
+how to remove samples and sites from the dataset and how to add columns to the sample annotation table:
+
+<<>>=
+# Remove samples
+rnb.set2 <- remove.samples(rnb.set.example, samples(rnb.set.example)[c(2, 6, 10)])
+setdiff(samples(rnb.set.example), samples(rnb.set2))
+
+# Remove probes which are not in CpG context
+notCpG <- annot.sites[,"Context"]!="CG"
+rnb.set.example <- remove.sites(rnb.set.example, notCpG)
+nsites(rnb.set.example)
+
+# Add a sample annotation column indicating whether the given
+# sample represents an iPS cell line
+is.hiPSC <- pheno(rnb.set.example)[, "Sample_Group"]=="hiPSC"
+rnb.set.example <- addPheno(rnb.set.example, is.hiPSC, "is_hiPSC")
+pheno(rnb.set.example)[, c("Sample_ID", "Cell_Line", "is_hiPSC")]
+@
+
+Since the example object was derived from an Infinium 450k experiment it also
+stores low-level information about the corresponding experiment, such as 
+measured intensities in each of the color channels, out-of-band intensities,
+number of beads, detection \textit{p}-values etc:
+
+<<>>=
+# Methylated ...
+Mint <- M(rnb.set.example, row.names=TRUE)
+Mint[1:5,1:3]
+# ...and unmethylated probe intensities
+Uint <- U(rnb.set.example, row.names=TRUE)
+Uint[1:5,1:3]
+# Infinium bead counts
+nbead <- covg(rnb.set.example, row.names=TRUE)
+nbead[1:5,1:3]
+# detection P-values
+pvals <- dpval(rnb.set.example, row.names=TRUE)
+pvals[1:5,1:3]
+@
+
+Moreover, the object also contains quality control information. RnBeads offers a
+number of diagnostic plots visualizing this information:
+
+<<fig.height=5>>=
+# boxplot of control probes
+rnb.plot.control.boxplot(rnb.set.example)
+# barplot of a selected control probe
+control.meta.data <- rnb.get.annotation("controls450")
+ctrl.probe<-paste0(unique(control.meta.data[["Target"]])[4], ".1")
+rnb.plot.control.barplot(rnb.set.example, ctrl.probe)
+@
+
+Finally, the full control probe intensities can be retrieved using method
+\cs{qc}:
+
+<<>>=
+qc_data<-qc(rnb.set.example)
+@
+
+\cs{qc\_data} is a list with elements \cs{Cy3} and \cs{Cy5} containing
+all Infinium control probe intensities for the green and red color channels
+respectively. It can be used for more advanced QC procedures.
+
 
 \section{Tailored Analysis: \cs{RnBeads} Modules}
 
 	In this section, we show how the package's modules can be invoked individually given
- 	suitable options and input data. Some modules depend on data generated by
-	other modules (c.f. Figure~\ref{fig:modules}). We also introduce useful
+ 	suitable options and input data. Most modules operate on the \cs{RnBSet} objects introduced in the previous section. Some modules depend on data generated by other modules (c.f. Figure~\ref{fig:modules}). We also introduce useful
 	parameter settings and report-independent stand-alone methods for methylation
 	analysis.
+
+	Note that the examples in this section operate on the complete dataset and therefore potentially take longer to execute than the operations that were executed on the reduced dataset introduced in the previous section.
 
 	To get started, let us initialize a new report directory prior to our
 	analysis. Keep in mind that \cs{RnBeads} does not overwrite existing reports
@@ -328,11 +467,8 @@ rnb.set <- rnb.execute.import(data.source=data.source,
 	\cs{rnb.set} is an object of class \cs{RnBeadRawSet}. This S4 class inherits
 	from class \cs{RnBSet} which is the main data container class in \cs{RnBeads}
 	and serves as input for many methods of the analysis pipeline.
-	\cs{RnBeadRawSet} contains slots for sample annotation (\cs{pheno}),
-	raw microarray intensities (\cs{M} and \cs{U}), methylation
-	values of sites and predefined genomic regions (accessible by the \cs{meth}
-	function), detection p-values (\cs{dpval}),
-	and quality control information (\cs{qc}):
+	Just like other \cs{RnBSet} objects, the \cs{RnBeadRawSet} class contains slots for sample annotation (\cs{pheno}) and methylation
+	values of sites and predefined genomic regions (accessible by the \cs{meth} function). In addition, it contains raw microarray intensities (\cs{M} and \cs{U} functions), detection p-values (\cs{dpval}) and quality control information (\cs{qc}):
 <<eval=FALSE>>=
 rnb.set
 summary(pheno(rnb.set))
@@ -344,27 +480,6 @@ dim(meth(rnb.set, type="promoters"))
 summary(meth(rnb.set, type="promoters"))
 summary(dpval(rnb.set))
 str(qc(rnb.set))
-samples(rnb.set)
-# Visualize the bimodal distribution of beta values in sample 5
-hist(meth(rnb.set)[, 5])
-@
-
-	You can manipulate \cs{RnBSet} objects using several methods:
-<<eval=FALSE>>=
-# Remove samples
-rnb.set2 <- remove.samples(rnb.set, samples(rnb.set)[c(2, 6, 10)])
-setdiff(samples(rnb.set), samples(rnb.set2))
-
-# Remove probes with a p-value > 0.01 in any sample
-any.bad.p.val <- apply(dpval(rnb.set)>0.01, 1, any)
-rnb.set3 <- remove.sites(rnb.set, any.bad.p.val)
-nrow(meth(rnb.set3))
-
-# Add a sample annotation column indicating whether the given
-# sample represents an iPS cell line
-is.hiPSC <- pheno(rnb.set)[, "Sample_Group"]=="hiPSC"
-rnb.set <- addPheno(rnb.set, is.hiPSC, "is_hiPSC")
-pheno(rnb.set)
 @
 
 
@@ -560,7 +675,7 @@ Finally, an optional \emph{SNP boxplot} gives a global picture of the SNP probes
 rnb.options(qc.snp.boxplot=TRUE)
 @
 
-	\subsubsection{Gender Prediction}
+	\subsubsection{Sex Prediction}
 
 	\begin{figure}
 		\label{fig:increase-gen-infinium}
@@ -570,14 +685,61 @@ rnb.options(qc.snp.boxplot=TRUE)
 		\caption{Mean signal increase in the X and Y chromosomes of 4587 female and 4633 male samples, represented by red and blue points, respectively. The presented dataset includes tumor and normal samples from 30 tumor types, downloaded from The Cancer Genome Atlas (TCGA). The solid black line shows the decision boundary in the classifier applied by RnBeads. Training a logistic regression model on the presented data produces an almost identical decision boundary.}
 	\end{figure}
 
-	\cs{RnBeads} includes a method for inferring the gender of methylation samples. It is accessible using the function \cs{rnb.execute.gender.prediction}. Currently, the classifier is applicable only for Infinium 450k datasets with signal intensity information. Gender prediction is automatically executed when loading Infinium 450k datasets from IDAT files; it can be disabled using the corresponding options, as shown below:
+	\cs{RnBeads} includes a method for inferring the sex of methylation samples. It is accessible using the function \cs{rnb.execute.sex.prediction}. Currently, the classifier is applicable for Infinium 450k, EPIC and bisulfite sequencing datasets with either signal intensity or coverage information. Sex prediction is automatically executed when loading those datasets from IDAT/BED files; it can be disabled using the corresponding options, as shown below:
 
 <<eval=FALSE>>=
-rnb.options(import.gender.prediction = FALSE)
+rnb.options(import.sex.prediction = FALSE)
 @
 
-	The assumption made in RnBeads is that the quantity (number) of X and Y chromosomes in a sample is reflected in the signal intensities on the array. The measurements used in the prediction are $MI_X$: \emph{mean increase in X} and $MI_Y$: \emph{mean increaase in Y}. These metrics are defined as $\overline{I}_{X} - \overline{I}_{a}$ and $\overline{I}_{Y} - \overline{I}_{a}$, where $\overline{I}_X$, $\overline{I}_Y$ and $\overline{I}_a$ denote the average probe signal intensity on the X chromosome, the Y chromosome and all autosomes, respectively. Probes known to be cross-reactive, as well as those overlapping with known SNPs, are ignored in the calculations presented here. \cs{RnBeads} uses these metrics in a logistic regression classifier to predict the gender of a sample, $MI_Y > 3 MI_X + 3$ indicates male gender. Figure~\ref{fig:increase-gen-infinium} shows the \emph{mean increase} values for over 9,200 samples with known gender, as well as the decision boundary of the classifier applied in \cs{RnBeads}.
+	The methods for inferring sexes from Infinium datsets are different from those for bisulfite sequencing data sets. For Infinium datasets, the assumption made in RnBeads is that the quantity (number) of X and Y chromosomes in a sample is reflected in the signal intensities on the array. The measurements used in the prediction are $MI_X$: \emph{mean increase in X} and $MI_Y$: \emph{mean increaase in Y}. These metrics are defined as $\overline{I}_{X} - \overline{I}_{a}$ and $\overline{I}_{Y} - \overline{I}_{a}$, where $\overline{I}_X$, $\overline{I}_Y$ and $\overline{I}_a$ denote the average probe signal intensity on the X chromosome, the Y chromosome and all autosomes, respectively. Probes known to be cross-reactive, as well as those overlapping with known SNPs, are ignored in the calculations presented here. \cs{RnBeads} uses these metrics in a logistic regression classifier to predict sex of a sample, $MI_Y > 3 MI_X + 3$ indicates male sex. Figure~\ref{fig:increase-gen-infinium} shows the \emph{mean increase} values for over 9,200 samples with known sex, as well as the decision boundary of the classifier applied in \cs{RnBeads}.\\
+	For bisulfite sequencing (RRBS or WGBS) datasets, \cs{RnBeads} compares the sequencing coverages for the sex chromosomes to those of the autosomes. From these values, a logistic regression classifier is employed to predict class probabilities of each sample for the male and female category. Both the predicted probability and the predicted class are added to the \cs{RnBSet's} sample annotation. Coefficients for the logistic regression classifier were trained on a large dataset (c.f. Figure ~\ref{tab:gender-prediction-bs}) containing sex annotated samples. 
+	
+	\begin{table}[h!]
+			\caption{Dataset used to train coefficients of the sex prediction logistic regression model for bisulfite sequencing datasets.}
+			\vspace{10px}
+		\begin{tabular}{|p{2.95cm}|p{2.7cm}|c|c|c|c|c|}
+		\hline
+		\textbf{Dataset} & \textbf{Source} & \textbf{Organism} & \textbf{Method} & \textbf{\#total} & \textbf{\#female} & \textbf{\#male}\\
+		\hline
+		\hline
+BLUEPRINT (08/2016 release) & \href{http://www.blueprint-epigenome.eu/}{BLUEPRINT} & human & WGBS & 188 & 99 & 89\\
+DEEP data (version 11/2016) & \href{http://www.deutsches-epigenom-programm.de/}{DEEP} & human & WGBS & 31 & 14 & 17\\
+Kiel Cohort & IKMB Kiel & human & RRBS & 239 & 106 & 133\\
+Ewing sarcoma tumor samples & GEO \href{https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE88826}{GSE88826} & human & RRBS & 96 & 53 & 42\\
+Reizel GEO & GEO \href{https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE60012}{GSE60012} & mouse & RRBS & 152 & 94 & 58\\
+\hline
+ \textbf{Complete} &  &  &  & \textbf{706} & \textbf{366} & \textbf{339}\\
+ \hline
+		\end{tabular}
+		\label{tab:gender-prediction-bs}
+	\end{table}
 
+	\subsubsection{CNV estimation}
+	Copy number variation (CNV) can be estimated from signal intensity values
+	of BeadArray data sets. RnBeads' CNV estimation module comes with two flavors:
+	a reference-based and a reference-free approach. We recommend to use the 
+	reference-free approach, since validation of the reference data set is still to be
+	conducted. CNV estimation is only to be executed within the QC module and not 
+	individually. It is activated by:
+	
+<<eval=FALSE>>=
+rnb.options(qc.cnv=TRUE)
+result <- run.run.qc(rnb.set.unfiltered,dir.reports=report.dir)
+@
+
+	The estimation is based on the \href{http://bioconductor.org/packages/release/bioc/html/GLAD.html}{GLAD} package.
+	We obtained the reference data set from two published twin studies 
+	(\href{https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE85647}{GSE85647} and 
+	\href{https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE100940}{GSE100940}) as the median
+	signal intensity for the probes. To activate the reference-based mode, you need to set:
+
+<<eval=FALSE>>=
+rnb.options(qc.cnv.refbased=TRUE)
+@
+
+	In the default mode, RnBeads computes median signal intensities for all samples in
+	the data set and uses this as the reference to detect potential outliers with respect
+	to signal intensity. 
 
 \subsection{Preprocessing}
 	Several steps might be required to prepare the data for downstream analysis.
@@ -776,6 +938,45 @@ ct.obj$contributions.constr
 to get constrained (non-negative) coefficients which resemble cell
 type counts and sum up to a small value $<1$ .
 
+\subsubsection{Age Prediction}
+
+In addition to the inference possibilities mentioned before, \cs{RnBeads} is capable of predicting human age from DNA methylation data. The prediction was initially performed by building an elastic net regression model on the methylation values of the CpG sites. Performance was evaluated by testing the prediction on several independent test data sets.
+
+	Basically, the age prediction section of \cs{RnBeads} is activated by setting:
+<<eval=FALSE>>=
+rnb.options(inference.age.prediction=TRUE)
+@
+	Or by performing the command
+<<eval=FALSE>>=
+rnb.execute.age.prediction(rnb.set)
+@
+	The difference between the first and the second option is that the first one creates a report, whereas the second modifies the \cs{rnb.set} object by adding additional columns \cs{predicted\_ages} and \cs{age\_increase}. The first one corresponds to the predicted age by the prediction algorithm and the second to the difference between predicted and annotated age.
+
+	Then, the age prediction section is able to run in two different modes. The default mode runs the prediction by loading a predefined predictor in the form of a CSV-file, which then is used to predict human age from DNA methylation data. More specifically, the predefined predictor consists of coefficients of an elastic net regression run for 761 CpG sites used in the final age prediction. As a second possibility, the user can set the option \cs{inference.age.prediction.predictor} to a path to a predictor that was previously trained in a \cs{RnBeads} run. For instance, this predictor could be trained by running the second mode of the age prediction, which is the training mode. Training is performed by either one of these commands:
+<<eval=FALSE>>=
+rnb.execute.training(rnb.set,predictor.path)
+rnb.options(inference.age.prediction.training=TRUE)
+@
+	In the first case, a new predictor is trained based on the methylation information in the \cs{rnb.set} object and written as a CSV-file at the given \cs{predictor.path}, which has to be a full path. The second option requires running \cs{rnb.run.inference} to create a new predictor that then is written into the \cs{RnBeads} data folder and sets the option \cs{inference.age.prediction.predictor} to the corresponding one.
+
+	Additionally, by setting the option \cs{inference.age.prediction.cv}, a 10-fold cross-validation is performed to serve as an accuracy measure for the training functionality. Setting the option \cs{inference.age.column} enables \cs{RnBeads} to read the corresponding age annotation column of the data set, which enables the creation of evaluation plots. These include scatterplots of the deviation between annotated and predicted age as well as density plots for the differences between predicted and annotated ages. On default, \cs{inference.age.column} is set to \cs{age}.
+
+\subsubsection{Immune Cell Content Estimation}
+
+	The LUMP algorithm for estimating immune cell content was developed by Dvir Aran, Marina Sirota and Atul J. Buttea for Infinium 450k data~\cite{Aran2015}. It is implemented in \cs{RnBeads} for all supported platforms in the genome assembly hg19: Infinium 27k, Infinium 450k, MethylationEPIC and sequencing-based data.
+
+	By default, immune cell content estimation is attempted when the Covariate Inference module is run. Upon successful completion of the LUMP algorithm, the sample annotation table receives a column named \cs{Immune Cell Content (LUMP)} that lists the estimated immune cell fractions for the samples. If such a column already exists, its contents will be overwritten. LUMP can be disabled using the following option:
+
+<<eval=FALSE>>=
+rnb.options(inference.immune.cells=FALSE)
+@
+	The dedicated function to obtain LUMP estimates expects a methylation dataset as a parameter:
+<<eval=FALSE>>=
+immune.content <- rnb.execute.lump(rnb.set)
+@
+
+	If none of the CpGs used in LUMP is measured in the dataset of interest, the return value is \cs{NULL}. Otherwise, the function returns a numeric vector with immune cell fractions for every sample, that is, values between 0 and 1. The vector also has an integer attribute named \cs{"sites"} that stores the number of CpGs or probes used in estimating immume cell proportions for the specific dataset.
+
 \subsection{Exploratory Analysis}
 \label{sec:exploratory}
 
@@ -958,7 +1159,47 @@ plot(dmrs[, "mean.mean.diff"], -log10(dmrs[, "comb.p.val"]),
 
         	\caption{\label{fig:volcanoDMRs} Volcano plots for promoter differential methylation comparing hESCs against hiPSCs.}
         \end{figure}
-
+        
+        \subsubsection{Differential Variability Analysis}
+        
+        In addition to comparing mean methylation levels inside groups with each other, the variances inside each group can be used to detect differences among them. For this purpose, \cs{RnBeads} employs a similar approach to the one used for differential methylation. To conduct differential variability (together with differential methylation) analysis, execute the following lines of code:
+<<eval=FALSE>>=
+rnb.options("differential.variability"=TRUE)
+rnb.run.differential(rnb.set,report.dir)
+@
+        
+        To conduct solely differential variability analysis (without report generation), one can call:
+<<eval=FALSE>>=
+cmp.cols <- "Sample_Group"
+reg.types <- c("genes","promoters")
+diff.var <- rnb.execute.diffVar(rnb.set,cmp.cols,region.types=reg.types)
+comparison <- get.comparisons(diff.var)[1]
+tab.sites <- get.table(diff.var,comparison,"sites",return.data.frame=TRUE)
+tab.genes <- get.table(diff.var,comparison,"genes",return.data.frame=TRUE)
+@
+        
+        After this operation, the tables contained in the \cs{diff.var} object (of class \cs{RnBDiffMeth}) possess different columns in comparison to differential methylation. Those columns are (from \cs{tab.sites} above):
+        \begin{description}
+        	\item[\cs{var.g1, var.g2:}] variances in each of the two groups
+        	\item[\cs{var.diff:}] differences between the variances found is the two groups: \cs{var.g1-var.g2}.
+        	\item[\cs{var.log.ratio:}] log2 of the quotient of variances: $\log_2 \frac{\cs{var.g1}+\epsilon}{\cs{var.g2}+\epsilon}$, with $\epsilon=0.01$.
+        	\item[\cs{diffVar.p.val:}] p-value resulting from employing the differential variability test specified in the option differential.variability.method. Those are either `diffVar' from the `missMethyl' package or the iEVORA algorithm.
+        	\item[\cs{diffVar.p.adj.fdr:}] FDR adjustment of the above p-value.
+        	\item[\cs{combinedRank.var:}] \cs{var.diff}, \cs{var.log.ratio} and \cs{diffVar.p.val} for all sites. The rank is computed as the maximum, i.e. worst rank among these values.
+        \end{description}
+        
+        For the table \cs{tab.genes} (i.e. the region level), the columns are:
+        
+        \begin{description}
+        	\item[\cs{mean.var.g1, mean.var.g2:}] mean of variances for both groups across all sites in the region.
+        	\item[\cs{mean.var.diff:}] mean difference between the probe variances in the two groups.
+        	\item[\cs{mean.var.log.ratio:}] mean difference between the probe quotients in the two groups.
+        	\item[\cs{comb.p.val.var:}] combined p-value for the region, combined as for differential methylation.
+        	\item[\cs{comb.p.adj.var.fdr:}] FDR adjustment of the above p-value.
+        	\item[\cs{combinedRank.var:}] \cs{mean.var.diff, mean.var.log.ratio} and \cs{comb.p.val.var} for all regions. The rank is computed as the worst rank among those. 
+        \end{description}
+        
+        Similar to differential methylation, the differential variability module adds diagnostic plots to the \cs{RnBeads} report in \cs{differential.html}. Enrichment analysis is performed analogously to differential methylation (see below).
         \subsubsection{Paired Analysis}
 
         Upon specifying the corresponding options, \cs{RnBeads} can also take into account sample pairing information when computing p-values.
@@ -998,6 +1239,65 @@ rnb.options("covariate.adjustment.columns"=c("Passage_No"))
 diffmeth.adj <- rnb.execute.computeDiffMeth(rnb.set, cmp.cols,
     region.types=reg.types)
 @
+
+		\subsubsection{Enrichment Analysis of Differentially Methylated Regions}
+
+		\cs{RnBeads} allows you to characterize differentially methylated regions by computing enrichments for Gene Ontology (GO)~\cite{Ashburner2000} terms and for custom genomic annotations using the \cs{LOLA} tool~\cite{Sheffield2016}. You can active these analyses for your \cs{RnBeads} runs using the corresponding options:
+<<eval=FALSE>>=
+rnb.options("differential.enrichment.go"=TRUE)
+rnb.options("differential.enrichment.lola"=TRUE)
+@
+
+		If you want to manually extract the enrichment results, you can use \cs{RnBeads}' build-in functions. To compute GO enrichments from the computed differential methylation results you can use the following commands (takes a while because an online GO database is queried for each comparison, region type and for different differential methylation rank cutoffs):
+
+<<eval=FALSE>>=
+enrich.go <- performGoEnrichment.diffMeth(rnb.set, diffmeth, verbose=TRUE)
+@
+		The result is a nested list storing enrichment tables for each comparison, ontology, differential methylation rank cutoff and direction of differential methylation. Each element in this nested list corresponds to a result computed using the \cs{GOStats} package~\cite{Falcon2007}. It contains enrichment odds ratios and p-values. For instance, let us inspect the enrichment of the 500 highest ranking hypomethylated promoters (in ESCs compared to iPSCs) for biological process (BP) ontology terms:
+<<eval=FALSE>>=
+enrich.table.go <- 
+    enrich.go[["region"]][[comparison]][["BP"]][["promoters"]][["rankCut_500"]][["hypo"]]
+class(enrich.table.go)
+summary(enrich.table.go)
+@
+
+		In addition, \cs{RnBeads} supports enrichment analyses of differential methylation results using the \cs{LOLA} tool~\cite{Sheffield2016}. This tool facilitates enrichment analyses of arbitrary genomic and epigenomic annotations using Fisher's exact test. To run a \cs{LOLA} analysis manually, you first need to obtain a corresponding database. For instance, to download the core database from the tool website to a temporary destination, execute the following code:
+<<eval=FALSE>>=
+lolaDest <- tempfile()
+dir.create(lolaDest)
+lolaDirs <- downloadLolaDbs(lolaDest, dbs="LOLACore")
+@
+		
+		This database currently contains annotations for transcription factor binding sites and motifs, DNase accessible regions and genomic features. For more detailed information on the \cs{LOLA} tool, available precomputed databases and instructions on how to assemble your own database, please be referred to the \cs{LOLA} documentation\footnote{\href{http://databio.org/lola/}{http://databio.org/lola/}}. You can now compute the enrichment of differentially methylated regions to reference region sets in the database:
+<<eval=FALSE>>=
+enrich.lola <-
+    performLolaEnrichment.diffMeth(rnb.set, diffmeth, lolaDirs[["hg19"]])
+@
+		The result is a structured object containing enrichment tables for different comparisons, region types and rank cutoffs as well as information on the reference database. These objects are best explored using \cs{RnBeads}' utility functions. Here we plot the enrichment results of the 500 highest ranking hypermethylated promoter regions in ESCs compared to iPSCs.
+<<eval=FALSE>>=
+enrich.table.lola <- enrich.lola$region[[comparison]][["promoters"]]
+enrich.table.lola <-
+    enrich.table.lola[enrich.table.lola$userSet=="rankCut_500_hyper",]
+lolaBarPlot(enrich.lola$lolaDb, enrich.table.lola, scoreCol="oddsRatio",
+    orderCol="maxRnk", pvalCut=0.05)
+lolaBoxPlotPerTarget(enrich.lola$lolaDb, enrich.table.lola, scoreCol="pValueLog",
+    orderCol="maxRnk", pvalCut=0.05)
+@
+		Figures~\ref{fig:lolaBar} and~\ref{fig:lolaBox} show the results as bar and boxplots. Interpreting the results, we find patterns associated with pluripotency hypermethylated in ESCs compared to iPSCs: enriched region sets are associated with reprogramming factors (POU5F1, SOX2, NANOG) and accessible chromatin (DNase) in stem cells. Additionally, signatures of gene repression (repressed state in the ENCODE segmentation and the associated H3K27me3 histone mark) are present in more differentiated cells.
+		\begin{figure}
+			\noindent \begin{centering}
+				\includegraphics[width=0.95\textwidth]{"figures/lola_bar"}
+			\par \end{centering}
+
+			\caption{\label{fig:lolaBar} Bar plot of odds ratios for \cs{LOLA} region sets significantly enriched in promoters hypermethylated in ESCs compared to iPSCs. The bars are grouped by category in the \cs{LOLA} core database. The coloring indicates different features (chromatin marks, states, transcription factors, etc.).}
+		\end{figure}
+		\begin{figure}
+			\noindent \begin{centering}
+				\includegraphics[width=0.95\textwidth]{"figures/lola_box"}
+			\par \end{centering}
+
+			\caption{\label{fig:lolaBox} Box plot of log p-values for \cs{LOLA} region sets significantly enriched in promoters hypermethylated in ESCs compared to iPSCs. Each bar summarizes a given feature across experiments in the \cs{LOLA} core database.}
+		\end{figure}
 
 \subsection{Tracks and Tables}
 
@@ -1250,7 +1550,7 @@ tab.enhancers <- tab.chromHMM.h1[grep("Enhancer", tab.chromHMM.h1$name), ]
 
 # Select the interesting parts of the table and rename columns
 tab.enhancers <- tab.enhancers[, c("chrom", "chromStart", "chromEnd", "name")]
-colnames(tab.enhancers) <- c("chromosome", "start", "end", "name")
+colnames(tab.enhancers) <- c("Chromosome", "Start", "End", "name")
 
 # Create RnBeads annotation by providing a data.frame
 rnb.set.annotation("enhancersH1EscChromHMM", tab.enhancers, assembly="hg19")
@@ -1280,6 +1580,12 @@ rnb.save.annotation(annotation.filename, "enhancersH1EscChromHMM",
 # Load the enhancer annotation as a duplicate
 rnb.load.annotation(annotation.filename, "enhancersH1EscChromHMM_duplicate")
 # Check that the annotation has been successfully loaded
+rnb.region.types()
+@
+
+	On the \cs{RnBeads} website\footnote{\href{http://rnbeads.mpi-inf.mpg.de/regions.html}{http://rnbeads.mpi-inf.mpg.de/regions.html}}, we also provide a resource of region sets that are of general use. These include tiling regions of various window sizes, alternative gene models, variably methylated regions and putative regulatory regions derived from epigenome segmentation data. The code below shows how tiling regions of size 1kb can be loaded.
+<<eval=FALSE>>=
+rnb.load.annotation.from.db("tiling1kb", assembly="hg19")
 rnb.region.types()
 @
 
@@ -1320,7 +1626,7 @@ parallel.teardown()
 	on the hard drive is not as fast as accessing them from the main memory). In
 	order to enable this feature use:
 <<eval=FALSE>>=
-rnb.options(disk.dump.big.matrices=TRUE)
+rnb.options(disk.dump.big.matrices=TRUE, disk.dump.bigff=TRUE)
 @
 
 	The file system location which will be used by the \cs{ff} objects is controlled by a global R option (notice that it is not an \cs{RnBeads} option!):
@@ -1406,17 +1712,17 @@ rnb.plot.betadistribution.sampleGroups(meth(rnb.set),
 		\noindent \begin{centering}
 			\includegraphics[width=0.50\textwidth]{"figures/dreduction_custom"}
 		\par \end{centering}
-		\caption{\label{fig:dreductionCustom} The second and fifth principal components of the (unnormalized) dataset. Point colors denote gender information.}
+		\caption{\label{fig:dreductionCustom} The second and fifth principal components of the (unnormalized) dataset. Point colors denote sex information.}
 	\end{figure}
 
 	\subsubsection{Plotting Low Dimensional representations}
 
-	As mentioned in Section~\ref{sec:exploratory}, RnBeads creates figures that show the high-dimensional methylation data transformed to two dimensions only, by applying the techniques MDS and PCA. Such plots can be created using the function \cs{rnb.plot.dreduction}. This function provides even greater flexibility in the visualization than what can be seen in the reports. For example, the code snippet below modifies the default colors denoting different categories and then displays the second and fifth principal components of the example dataset. Gender information is mapped to colors. The resulting plot is shown in Figure~\ref{fig:dreductionCustom}.
+	As mentioned in Section~\ref{sec:exploratory}, RnBeads creates figures that show the high-dimensional methylation data transformed to two dimensions only, by applying the techniques MDS and PCA. Such plots can be created using the function \cs{rnb.plot.dreduction}. This function provides even greater flexibility in the visualization than what can be seen in the reports. For example, the code snippet below modifies the default colors denoting different categories and then displays the second and fifth principal components of the example dataset. Sex information is mapped to colors. The resulting plot is shown in Figure~\ref{fig:dreductionCustom}.
 <<eval=FALSE>>=
 theme_set(theme_bw())
 rnb.options(colors.category = c("red", "blue", "grey"))
 print(rnb.plot.dreduction(rnb.set, dimensions = c(2, 5),
-    point.colors="Predicted Gender"))
+    point.colors="Predicted Sex"))
 @
 
 	\subsubsection{Generating Locus Profile Plots (aka Genome-Browser-Like Views)}
@@ -1518,7 +1824,7 @@ create.densityScatter(dframe, is.special=isDMP, sparse.points=0.001,
 
 	Cell type heterogeneity of the profiled samples is a widely recognized source of confounding in DNA methylation profiling studies. Several methods have been proposed to tackle it in large data sets, some of which rely upon availability of reference methylomes~\cite{Houseman2012, Guintivano2013},   while the other can be applied directly~\cite{Houseman2014, Zou2014}. \cs{RnBeads} supports several approaches for cell type heterogeneity inference and adjustment. In case the reference methylomes are available, they can be used to estimate the relative contributions of each cell type (see Section~\ref{sec:ct-inference}). Next, the contribution estimates can be used as covariates in the limma-based differential methylation analysis.
 
-	For the case when reference methylomes are absent, differential methylation analysis in \cs{RnBeads} can be corrected using the reference-free method by Houseman {\it et al}.~\cite{Houseman2014}. \cs{RefFreeEWAS} analysis is fully integrated with differential methylation module of \cs{RnBeads}, and, similarly to limma-based analysis, can adjust for covariates. It can be activated using a single option:
+	For the case when reference methylomes are absent, differential methylation analysis in \cs{RnBeads} can be corrected using the reference-free method by Houseman \textit{et al.}~\cite{Houseman2014}. \cs{RefFreeEWAS} analysis is fully integrated with differential methylation module of \cs{RnBeads}, and, similarly to limma-based analysis, can adjust for covariates. It can be activated using a single option:
 <<eval=FALSE>>=
 rnb.options(differential.site.test.method="refFreeEWAS")
 @
@@ -1614,6 +1920,39 @@ setMethod("getSubCmdTokens",
 ?`getSubCmdTokens,ClusterArchitectureSGE-method`
 @
 	It might also be helpful to have a look at the source code for the SGE class. You can find it in the source files of RnBeads (location: \cs{R/clusterArchitectureSGE.R}).
+	
+\subsection{Genome-wide segmentation of the methylome}
+
+Global DNA methylation has been shown to be organized into larger domains using whole-genome bisulfite sequencing data \cite{Salhab2018}. The strategy is based on a hidden-markov model that first classifies the regions into either partially methylated domains (PMDs) and into the remaining. The latter is then further classified into fully methylated domains (FMDs), lowly methylated regions (LMRs), and unmethylated regions (UMRs) according to overall methylation state and CpG content \cite{Burger2013}. Each of these categories is annotated to a distinct biological function. \cs{RnBeads} support segmentation according to this proposed \cs{MethylSeekR} approach.
+
+MethylSeekR is only applicable to larger WGBS datasets and produces a segmentation for each sample individually. Such a dataset is too large to be shiped together with \cs{RnBeads}, thus we assume we loaded a larger, preprocessed \cs{RnBiseqSet} object obtained from WGBS data called \cs{rnb.set}. 
+
+<<eval=FALSE>>=
+?rnb.execute.segmentation
+rnb.set <- rnb.execute.segmentation(rnb.set=rnb.set,
+	sample.name=samples(rnb.set)[1])
+rnb.set
+@
+
+The dataset now contains further regions types representing the segmentation described above. This segmentation can now be exported to BED files or the methylation values of the CpGs in the different segments can be plotted.
+
+<<eval=FALSE>>=
+segmentation.results <- "~/segmentation"
+rnb.bed.from.segmentation(rnb.set = rnb.set, 
+	sample.name = samples(rnb.set)[1], store.path = segmentation.results)
+plot <- rnb.boxplot.from.segmentation(rnb.set = rnb.set,
+	 sample.name = samples(rnb.set)[1])+theme_bw()
+@
+
+The resulting BED file and plots will look as shown in Figure \ref{fig:segmentation}, but might vary from sample to sample.
+
+	\begin{figure}
+		\noindent \begin{centering}
+			\includegraphics[width=1.00\textwidth]{"figures/segmentation"}
+		\par \end{centering}
+		\caption{An example BED files (left) and methylation distribution (right) according to the different segments defined by the MethylSeekR approach.}
+		\label{fig:segmentation}
+	\end{figure}
 
 \section{Beyond DNA Methylation Analysis}
 
@@ -1696,7 +2035,7 @@ stext <- c('<p>Some German umlauts:
                     <li>&Uuml;</li>
                 </ul>
             </p>',
-            '<p> A link: <a href="http://rnbeads.mpi-inf.mpg.de/">
+            '<p> A link: <a href="https://rnbeads.org/">
             RnBeads website</a></p>')
 report <- rnb.add.section(report, "HTML code", stext)
 @
@@ -1864,92 +2203,17 @@ draw.lotto()
       \bibitem{Guintivano2013} Guintivano J., Aryee M.J., Kaminsky Z.A.
       (2013). \newblock \emph{A cell epigenotype specific model for the
       correction of brain cellular heterogeneity bias and its application to age, brain region and major depression}. \newblock Epigenetics, 8(3), 290-302.
+      \bibitem{Ashburner2000} Ashburner, M., Ball, C. A., Blake, J. A., Botstein, D., Butler, H., Cherry, J. M., \emph{et al.} (2000). \newblock \emph{Gene ontology: tool for the unification of biology.}  \newblock Nature Genetics, 25(1), 25-29
+      \bibitem{Sheffield2016} Sheffield, N. C., and Bock, C. (2016). \newblock \emph{LOLA: enrichment analysis for genomic region sets and regulatory elements in R and Bioconductor}. \newblock Bioinformatics, 32(4), 587-589
+      \bibitem{Falcon2007} Falcon, S., and Gentleman, R. (2007). \newblock \emph{Using GOstats to test gene lists for GO term association}. \newblock Bioinformatics, 23(2), 257-258
       \bibitem{Houseman2014} Houseman, E. A., Molitor, J., and Marsit, C. J.
       (2014). \newblock \emph{Reference-Free Cell Mixture Adjustments in Analysis of DNA Methylation Data}. \newblock Bioinformatics, btu029.
       \bibitem{Zou2014}Zou, J., Lippert, C., Heckerman, D., Aryee, M., and
       Listgarten, J. (2014). \newblock \emph{Epigenome-wide association studies without the need for cell-type composition}. \newblock Nature Methods. 11, 309-311.
-      \bibitem{Fortin2014} Fortin, J., Labbe, A., Lemire,
-      M., Zanke, B. W., Hudson, T. J., Fertig, E. J.,
-      Greenwood, C.M.T., and Hansen, K. D. (2014) \emph{Functional normalization
-      of 450k methylation array data improves replication in large cancer studies}.
-      \newblock BioRxiv.
-
-
+      \bibitem{Fortin2014} Fortin, J.-P., Labbe, A., Lemire, M., Zanke, B. W., Hudson, T. J., Fertig, E. J., \emph{et al.} (2014). \newblock \emph{Functional normalization of 450k methylation array data improves replication in large cancer studies}. \newblock Genome Biology, 15(12), 503
+      \bibitem{Aran2015} Aran, D., Sirota, M., Butte, A.J. (2014). \newblock \emph{Systematic pan-cancer analysis of tumour purity}. \newblock Nature Communications, 6, 8971
+      \bibitem{Salhab2018} Salhab, A., Nordstr\"om, K., Gasparoni, G., Kattler, K., Ebert, P., et.al. (2018) \newblock \emph{A comprehensive analysis of 195 DNA methylomes reveals shared and cell-specific features of partially methylated domains.} \newblock Genome Biology, 19(1), 9-11.
+      \bibitem{Burger2013} Burger, L., Gaidatzis, D., Sch\"ubeler, D., and Stadler, M. B. (2013). \newblock\emph{Identification of active regulatory regions from DNA methylation data}. \newblock Nucleic Acids Research, 41(16), e155. https://doi.org/10.1093/nar/gkt599
 	\end{thebibliography}
-
-\appendix
-
-\section{Step-By-Step Installation}
-\label{sec:manualInstall}
-	This section contains instructions for installing \cs{RnBeads} manually. The main package, \cs{RnBeads} is dependent on \cs{RnBeadsData}, its companion annotation package. You need to install both packages in order to run \cs{RnBeads} analyses. Additionally, you might need to install \emph{Ghostscript}.
-    % \todo{CHANGE THIS SECTION TO USE ONLY ONE OR TWO COMMANDS IN AN R SESSION}
-
-% The easiest way to install \cs{RnBeads} is via Bioconductor.
-%
-Alternative ways to install depending on your operating system are also described in this section. As a prerequisite, you should have R already installed\footnote{You can obtain R and instructions on how to install it from \href{http://www.r-project.org/}{http://www.r-project.org/}}.
-
-\subsection{Manually from the \cs{RnBeads} website}
-	First, download both packages for your operating system from the \cs{RnBeads} website\footnote{\href{http://rnbeads.mpi-inf.mpg.de/}{http://rnbeads.mpi-inf.mpg.de/}}. As a prerequisite for installing \cs{RnBeads}, we need to install additional CRAN and Bioconductor packages that \cs{RnBeads} depends on. If you are certain the packages in the following commands are already installed, you can skip this step. Otherwise, start an R session and install them using the following commands:
-
-<<eval=FALSE>>=
-install.packages(c("doParallel", "fields", "foreach", "gplots", "matrixStats",
-    "mclust", "mgcv", "RPMM", "wordcloud", "XML"))
-source("http://bioconductor.org/biocLite.R")
-biocLite(c("biomaRt", "GenomicRanges", "GEOquery", "ggbio", "GOstats", "Gviz",
-    "IlluminaHumanMethylation450k.db", "IlluminaHumanMethylation450kmanifest",
-	"methylumi", "rtracklayer"))
-@
-
-	Multiple packages will be installed, which might take a while. When this is done you are ready to install the \cs{RnBeads} and its data packages. Depending on your operating system there are several options to do so. Follow one of the instructions below.
-
-	\paragraph{Windows:} In your \cs{RGui} application:
-		\begin{enumerate}
-			\item go to \cs{Packages}\ra\cs{Install package(s) from local zip files}
-			\item select the downloaded package \cs{RnBeads.hg19\_0.99.2.zip}
-			\item repeat the above steps for the package \cs{RnBeads\_0.99.20.zip}
-			\item load the package using the following command in the R console:
-<<eval=FALSE>>=
-library(RnBeads)
-@
-			\item If you receive an error matching the pattern \cs{Error: package 'XYZ' could not be loaded} or \cs{There is no package called 'XYZ'} then the package XYZ which \cs{RnBeads} depends on has probably not been installed. You can do this manually by
-<<eval=FALSE>>=
-install.packages("XYZ")
-@
-			where you replace \cs{XYZ} with the corresponding package name that raised the error. Some packages \cs{RnBeads} depends on are not in CRAN but have to be installed from Bioconductor. Hence, if you receive an error that the package is not available try:
-<<eval=FALSE>>=
-source("http://bioconductor.org/biocLite.R")
-biocLite("XYZ")
-@
-			\item repeat the previous two steps until you no longer receive an error when using \cs{library(RnBeads)}
-
-		\end{enumerate}
-
-	\paragraph{Unix/Linux/MacOS:} In the command line (or a Terminal window on MacOS) use:
-
-	    \vspace{5mm}
-		\cs{R CMD INSTALL RnBeadsData [PATH\_OF\_DOWNLOADED\_DATA\_ARCHIVE]}
-
-		\cs{R CMD INSTALL RnBeads [PATH\_OF\_DOWNLOADED\_MAIN\_ARCHIVE]}
-		\vspace{5mm}
-
-	Here, \cs{[PATH\_OF\_DOWNLOADED\_DATA\_ARCHIVE]} and \cs{[PATH\_OF\_DOWNLOADED\_MAIN\_ARCHIVE]} specify the locations where you downloaded the packages to (\cs{RnBeads.hg19\_0.99.2.tar.gz} and \cs{RnBeads\_0.99.20.tar.gz} respectively). Alternatively, within an R session use the following command:
-<<eval=FALSE>>=
-install.packages("[PATH_OF_DOWNLOADED_DATA_ARCHIVE]", repos=NULL)
-install.packages("[PATH_OF_DOWNLOADED_MAIN_ARCHIVE]", repos=NULL)
-@
-
-	You might have to install other packages \cs{RnBeads} depends on from Bioconductor or CRAN. Follow the final three steps described in the Windows section to accomplish that.
-
-%		\subsection{Bioconductor}
-%			\cs{RnBeads} is available from the Bioconductor project. To install it use the following commands within an R session:
-% <<eval=FALSE>>=
-% source("http://bioconductor.org/biocLite.R")
-% biocLite("RnBeads")
-% @
-%			You might have to install other packages \cs{RnBeads} depends on from Bioconductor or CRAN. \todo{check if this is really the case}
-
-\subsection{Ghostscript}
-
-	For some of the methods for figure generation in this package, Ghostscript is required. You can obtain the version corresponding to your operating system freely from the program's website\footnote{\href{http://www.ghostscript.com/download/gsdnld.html}{http://www.ghostscript.com/download/gsdnld.html}}. Follow their installation instructions. You might have to set path variables as well. Additional hints on installation of Ghostscript can be found on the FAQ section of the \cs{RnBeads} website.
 
 \end{document}

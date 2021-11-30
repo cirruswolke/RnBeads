@@ -5,8 +5,7 @@
 \alias{initialize,ClusterArchitectureSGE-method}
 \title{initialize.ClusterArchitectureSGE}
 \usage{
-\S4method{initialize}{ClusterArchitectureSGE}(.Object,
-  name = "ClusterArchitectureSGE", ...)
+\S4method{initialize}{ClusterArchitectureSGE}(.Object, name = "ClusterArchitectureSGE", ...)
 }
 \arguments{
 \item{.Object}{New instance of \code{ClusterArchitectureSGE}.}
@@ -21,4 +20,3 @@ Initialize an ClusterArchitecture object for a Sun Grid Engine (SGE)
 \author{
 Fabian Mueller
 }
-

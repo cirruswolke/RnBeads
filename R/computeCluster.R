@@ -189,12 +189,12 @@ setMethod("getModuleNumCores",
 	}
 )
 
-if (!isGeneric("run")) setGeneric("run", function(rnb.cr,...) standardGeneric("run"))
+if (!isGeneric("run")) setGeneric("run", function(object,...) standardGeneric("run"))
 #' run-methods
 #'
 #' Runs the analysis by submitting jobs for each module to the compute cluster
 #'
-#' @param rnb.cr \code{\linkS4class{RnBClusterRun}} object
+#' @param object \code{\linkS4class{RnBClusterRun}} object
 #' @param analysis.id analysis id. used for naming submitted jobs and log files
 #' @param config.xml XML file specifying the analysis options and parameter settings
 #' @param split.differential flag indicating whether to split the differnetial methylation module
@@ -202,6 +202,7 @@ if (!isGeneric("run")) setGeneric("run", function(rnb.cr,...) standardGeneric("r
 #' @param dry.run Prevent the actual job submission. Rather only write to a shell script file
 #' @param long.cmd.thres commands that are longer than this number will be encapsulated in shell scripts
 #' 		  rather than being submitted as direct command
+#' @param queue The name of the queue the jobs are going to be submitted to
 #' @return Nothing of importance
 #'
 #' @rdname run-RnBClusterRun-methods
@@ -228,16 +229,18 @@ if (!isGeneric("run")) setGeneric("run", function(rnb.cr,...) standardGeneric("r
 #' }
 setMethod("run",
 	signature(
-		rnb.cr="RnBClusterRun"
+		object="RnBClusterRun"
 	),
 	function(
-		rnb.cr,
+		object,
 		analysis.id,
 		config.xml,
 		split.differential=TRUE,
 		dry.run=FALSE,
-		long.cmd.thres=1024L
+		long.cmd.thres=1024L,
+        queue=NULL
 	) {
+		rnb.cr <- object
 		arch = rnb.cr@architecture
 		r.exec <- getExecutable(arch,"Rscript")
 
@@ -279,7 +282,11 @@ setMethod("run",
 		shell.script.dir <- cluster.dir
 		submit.job <- function(name,cmd.tokens,...){
 			r.cmd <- paste(cmd.tokens,collapse=" ")
-			cmd <- getSubCmdStr(arch, cmd.tokens, ...)
+            if(is.null(queue)){
+    			cmd <- getSubCmdStr(arch, cmd.tokens, ...)
+            }else{
+    			cmd <- getSubCmdStr(arch, cmd.tokens, queue=queue, ...)
+            }
 			#make sure the command is not too long. else, wrap it in a shell script
 			if (shell.script.for.long.commands){
 				if (nchar(r.cmd)>long.cmd.thres){
@@ -289,7 +296,11 @@ setMethod("run",
 					close(fileConn)
 					Sys.chmod(shell.script.file, mode = "0755")
 					cmd.tokens.shell <- c(shell.script.file)
-					cmd <- getSubCmdStr(arch, cmd.tokens.shell, sub.binary=FALSE, ...)
+                    if(is.null(queue)){
+					    cmd <- getSubCmdStr(arch, cmd.tokens.shell, sub.binary=FALSE, ...)
+                    }else{
+					    cmd <- getSubCmdStr(arch, cmd.tokens.shell, sub.binary=FALSE, queue=queue, ...)
+                    }
 				}
 			}
 
@@ -320,6 +331,25 @@ setMethod("run",
 		rnb.set.file <- file.path(cluster.dir,paste0("import","_RnBSet"))
 		depend.jobs <- jid.import
 
+		if (rnb.getOption("qc")){
+			mm <- "qc"
+			logger.start(c("Running:",mm))
+				log.file <- file.path(log.dir,paste0(mm,".log"))
+				jid <- paste(analysis.id,mm,sep="_")
+				res.req <- rnb.cr@module.res.req[[mm]]
+				script.file <- system.file(file.path("extdata","Rscript",paste0("rscript_",mm,".R")), package = "RnBeads")
+				cmd.tokens <- c(
+					r.exec,script.file,
+					"-x",config.xml,
+					"-s",rnb.set.file,
+					"-c",getModuleNumCores(rnb.cr)[mm]
+				)
+				cmds.submit[mm] <- submit.job(mm, cmd.tokens, log=log.file, job.name=jid, res.req=res.req, depend.jobs=depend.jobs)
+				deps.wrapup <- c(deps.wrapup,jid)
+				depend.jobs <- jid
+			logger.completed()
+		}
+
 		mm <- "preprocessing"
 		logger.start(c("Running:",mm))
 			log.file <- file.path(log.dir,paste0(mm,".log"))
@@ -338,24 +368,6 @@ setMethod("run",
 			deps.wrapup <- c(deps.wrapup,jid)
 		logger.completed()
 		jid.preprocessing <- jid
-
-		if (rnb.getOption("qc")){
-			mm <- "qc"
-			logger.start(c("Running:",mm))
-				log.file <- file.path(log.dir,paste0(mm,".log"))
-				jid <- paste(analysis.id,mm,sep="_")
-				res.req <- rnb.cr@module.res.req[[mm]]
-				script.file <- system.file(file.path("extdata","Rscript",paste0("rscript_",mm,".R")), package = "RnBeads")
-				cmd.tokens <- c(
-					r.exec,script.file,
-					"-x",config.xml,
-					"-s",rnb.set.file,
-					"-c",getModuleNumCores(rnb.cr)[mm]
-				)
-				cmds.submit[mm] <- submit.job(mm, cmd.tokens, log=log.file, job.name=jid, res.req=res.req, depend.jobs=depend.jobs)
-				deps.wrapup <- c(deps.wrapup,jid)
-			logger.completed()
-		}
 
 		rnb.set.file <- file.path(cluster.dir,paste0("preprocessing","_RnBSet"))
 		depend.jobs <- jid.preprocessing
@@ -434,6 +446,17 @@ setMethod("run",
 				}
 				if (split.differential){
 					logger.info(c("Splitting up into chunks"))
+					if (rnb.getOption("differential.enrichment.lola")){
+						logger.start(c("Checking/Downloading LOLA databases"))
+							dbDownloadDir <- file.path(cluster.dir,paste0("lolaDbs"))
+							lolaDbPaths <- prepLolaDbPaths(rnb.getOption("assembly"), downloadDir=dbDownloadDir)
+							if (length(lolaDbPaths) > 0){
+								saveRDS(lolaDbPaths, file.path(cluster.dir, "lolaDbPaths.rds"))
+							} else {
+								logger.warning(c("No LOLA DB found for assembly", rnb.getOption("assembly"), "--> continuing without LOLA enrichment"))
+							}
+						logger.completed()
+					}
 					logger.start(c("Running chunks"))
 						mm <- "differential_chunk"
 						res.req <- rnb.cr@module.res.req[[mm]]
@@ -573,7 +596,7 @@ logger.machine.name <- function(){
 #' combine.diffMeth.objs
 #'
 #' combine differential methylation objects (output from \code{rnb.run.differential}).
-#' To be more precise, the \code{diffmeth} and \code{dm.enrich} are merged.
+#' To be more precise, the \code{diffmeth} and \code{dm.go.enrich} are merged.
 #' individual objects that are merged are assumed to belong to the same analysis
 #' and vary only in their indexing of region types and comparisons
 #' @param obj.list a list containing outputs from \code{rnb.run.differential}
@@ -588,7 +611,22 @@ combine.diffMeth.objs <- function(obj.list){
 	ontologies <- c("BP","MF")
 	ontol.list.empty <- rep(list(list()),length(ontologies))
 	names(ontol.list.empty) <- ontologies
-	dm.enrich.comb <- list(probe=list(),region=list())
+	dm.go.enrich.comb <- list(probe=list(),region=list())
+	dm.lola.enrich.comb <- list(probe=list(),region=list(),lolaDb=NULL)
+	if(is.element("region_var",names(obj.list[[1]]$dm.go.enrich))){
+	  dm.go.enrich.comb$region_var <- list()
+	}
+  if(is.element("region_var",names(obj.list[[1]]$dm.lola.enrich))){
+    dm.lola.enrich.comb$region_var <- list()
+  }
+
+	# helper to check whether two lola DB objects are the same
+	# necessary to check for compatibility
+	isIdenticalLolaDb <- function(db1, db2){
+		res <- length(db1$dbLocation) > 0 && length(db2$dbLocation) > 0 && length(db1$regionAnno$filename) > 0 && length(db2$regionAnno$filename) > 0
+		res <- res && all(db1$dbLocation==db2$dbLocation) && all(db1$regionAnno$filename==db2$regionAnno$filename)
+		return(res)
+	}
 	
 	diffmeth <- obj.list[[1]]$diffmeth
 	for (i in 1:length(obj.list)){
@@ -597,24 +635,63 @@ combine.diffMeth.objs <- function(obj.list){
 			diffmeth <- join.diffMeth(diffmeth,dm)
 		}
 		
-		#merge dm.enrich parts
 		new.comps <- get.comparisons(dm)
 		if (i > 1){
 			new.comps <- new.comps[!(new.comps %in% get.comparisons(diffmeth))]
 		}
 		n.new.comps <- length(new.comps)
-		if (!is.null(obj.list[[i]]$dm.enrich)) {
-			dmer <- obj.list[[i]]$dm.enrich$region
+		#merge dm.go.enrich parts
+		if (!is.null(obj.list[[i]]$dm.go.enrich)) {
+			dmer <- obj.list[[i]]$dm.go.enrich$region
+			dmer.var <- NULL
 			#add empty lists for new comparisons
 			new.comp.list.empty <- rep(list(ontol.list.empty),n.new.comps)
 			names(new.comp.list.empty) <- new.comps
-			dm.enrich.comb$region <- c(dm.enrich.comb$region,new.comp.list.empty)
+			dm.go.enrich.comb$region <- c(dm.go.enrich.comb$region,new.comp.list.empty)
+			if(is.element("region_var",names(obj.list[[i]]$dm.go.enrich))){
+			  dmer.var <- obj.list[[i]]$dm.go.enrich$region_var
+			  dm.go.enrich.comb$region_var <- c(dm.go.enrich.comb$region_var,new.comp.list.empty)
+			}
 			#fill in the empty entries with the new entries
 			for (cc in names(dmer)){
 				for (oo in names(dmer[[cc]])){
 					for (rr in names(dmer[[cc]][[oo]])){
-						if (!is.element(rr,names(dm.enrich.comb$region[[cc]][[oo]]))){
-							dm.enrich.comb$region[[cc]][[oo]][[rr]] <- dmer[[cc]][[oo]][[rr]]
+						if (!is.element(rr,names(dm.go.enrich.comb$region[[cc]][[oo]]))){
+							dm.go.enrich.comb$region[[cc]][[oo]][[rr]] <- dmer[[cc]][[oo]][[rr]]
+							if(!is.null(dmer.var)){
+							  dm.go.enrich.comb$region_var[[cc]][[oo]][[rr]] <- dmer.var[[cc]][[oo]][[rr]]
+							}
+						}
+					}
+				}
+			}
+		}
+		#merge dm.lola.enrich parts
+		if (!is.null(obj.list[[i]]$dm.lola.enrich)) {
+			if (is.null(dm.lola.enrich.comb$lolaDb)){
+				dm.lola.enrich.comb$lolaDb <- obj.list[[i]]$dm.lola.enrich$lolaDb
+			} else {
+				if (!isIdenticalLolaDb(dm.lola.enrich.comb$lolaDb, obj.list[[i]]$dm.lola.enrich$lolaDb)){
+					logger.error("Encountered incompatible LOLA DB objects")
+				}
+			}
+			dmer <- obj.list[[i]]$dm.lola.enrich$region
+			dmer.var <- NULL
+			#add empty lists for new comparisons
+			new.comp.list.empty <- rep(list(list()),n.new.comps)
+			names(new.comp.list.empty) <- new.comps
+			dm.lola.enrich.comb$region <- c(dm.lola.enrich.comb$region,new.comp.list.empty)
+			if(is.element("region_var",names(obj.list[[i]]$dm.lola.enrich))){
+			  dmer.var <- obj.list[[i]]$dm.lola.enrich$region_var
+			  dm.lola.enrich.comb$region_var <- c(dm.lola.enrich.comb$region_var,new.comp.list.empty)
+			}
+			#fill in the empty entries with the new entries
+			for (cc in names(dmer)){
+				for (rr in names(dmer[[cc]])){
+					if (!is.element(rr,names(dm.lola.enrich.comb$region[[cc]]))){
+						dm.lola.enrich.comb$region[[cc]][[rr]] <- dmer[[cc]][[rr]]
+						if(!is.null(dmer.var)){
+						  dm.lola.enrich.comb$region_var[[cc]][[rr]] <- dmer.var[[cc]][[rr]]
 						}
 					}
 				}
@@ -622,13 +699,19 @@ combine.diffMeth.objs <- function(obj.list){
 		}
 	}
 	
-	#set emtpy enrichment analysis to NULL object
-	if (length(dm.enrich.comb$region)==0){
-		dm.enrich.comb <- NULL
+	#set emtpy GO enrichment analysis to NULL object
+	if (length(dm.go.enrich.comb$region)==0){
+		dm.go.enrich.comb <- NULL
 	} else {
-		class(dm.enrich.comb) <- "DiffMeth.enrich"
+		class(dm.go.enrich.comb) <- "DiffMeth.go.enrich"
+	}
+	#set emtpy LOLA enrichment analysis to NULL object
+	if (length(dm.lola.enrich.comb$region)==0){
+		dm.lola.enrich.comb <- NULL
+	} else {
+		class(dm.lola.enrich.comb) <- "DiffMeth.lola.enrich"
 	}
 
-	res <- list(report=NULL,diffmeth=diffmeth,dm.enrich=dm.enrich.comb)
+	res <- list(report=NULL,diffmeth=diffmeth,dm.go.enrich=dm.go.enrich.comb,dm.lola.enrich=dm.lola.enrich.comb)
 	return(res)
 }

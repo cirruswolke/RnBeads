@@ -2,17 +2,31 @@
 % Please edit documentation in R/RnBeadRawSet-class.R
 \docType{class}
 \name{RnBeadRawSet-class}
-\alias{RnBeadRawSet}
 \alias{RnBeadRawSet-class}
+\alias{RnBeadRawSet}
 \alias{initialize,RnBeadRawSet-method}
 \title{RnBeadRawSet-class}
 \usage{
-RnBeadRawSet(pheno, probes, M, U, M0 = NULL, U0 = NULL,
-  bead.counts.M = NULL, bead.counts.U = NULL, p.values = NULL,
-  qc = NULL, platform = "450k", beta.offset = 100,
-  summarize.bead.counts = TRUE, summarize.regions = TRUE,
-  region.types = rnb.region.types.for.analysis("hg19"),
-  useff = rnb.getOption("disk.dump.big.matrices"), ffcleanup = FALSE)
+RnBeadRawSet(
+  pheno,
+  probes,
+  M,
+  U,
+  M0 = NULL,
+  U0 = NULL,
+  bead.counts.M = NULL,
+  bead.counts.U = NULL,
+  p.values = NULL,
+  qc = NULL,
+  platform = "450k",
+  beta.offset = 100,
+  summarize.bead.counts = TRUE,
+  summarize.regions = TRUE,
+  region.types = rnb.region.types.for.analysis(ifelse(platform == "MMBC", "mm10",
+    "hg19")),
+  useff = rnb.getOption("disk.dump.big.matrices"),
+  ffcleanup = FALSE
+)
 }
 \arguments{
 \item{pheno}{Phenotypic data.}
@@ -54,8 +68,6 @@ an object of class RnBeadRawSet
 }
 \description{
 Main class for storing HumanMethylation micorarray data which includes intensity information
-
-Wrapper function RnBeadRawSet
 }
 \section{Slots}{
 
@@ -79,7 +91,7 @@ Wrapper function RnBeadRawSet
   \item{\code{\link{intensities.by.color}}}{Get probe intensities in each color channel.}
 }
 }
+
 \author{
 Pavlo Lutsik
 }
-

@@ -4,7 +4,7 @@
 \alias{parallel.getNumWorkers}
 \title{parallel.getNumWorkers}
 \usage{
-\method{parallel}{getNumWorkers}()
+parallel.getNumWorkers()
 }
 \value{
 Number of workers used for parallel processing; \code{-1} if parallel processing is not enabled.
@@ -24,4 +24,3 @@ parallel.getNumWorkers()
 \author{
 Fabian Mueller
 }
-

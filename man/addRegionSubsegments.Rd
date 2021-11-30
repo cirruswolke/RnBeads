@@ -4,8 +4,13 @@
 \alias{addRegionSubsegments}
 \title{addRegionSubsegments}
 \usage{
-addRegionSubsegments(rnb.set, annotation.dir, region.types = NULL,
-  add.region.types.to.options = FALSE, ns = 10)
+addRegionSubsegments(
+  rnb.set,
+  annotation.dir,
+  region.types = NULL,
+  add.region.types.to.options = FALSE,
+  ns = 10
+)
 }
 \arguments{
 \item{rnb.set}{an \code{RnBSet object}}
@@ -42,4 +47,3 @@ summary(meth(rnb.set.mod,type="tiling.subsegments"))
 \author{
 Fabian Mueller
 }
-

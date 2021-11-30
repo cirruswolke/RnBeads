@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBSet-class.R
 \docType{methods}
 \name{updateRegionSummaries,RnBSet-method}
-\alias{updateRegionSummaries}
 \alias{updateRegionSummaries,RnBSet-method}
+\alias{updateRegionSummaries}
 \title{updateRegionSummaries}
 \usage{
 \S4method{updateRegionSummaries}{RnBSet}(object)
@@ -18,4 +18,3 @@ Sample annotation information available for the dataset in the form of a \code{d
 Updates the region information present in an RnBSet by invoking summarize.regions on all region types
 present in the object
 }
-

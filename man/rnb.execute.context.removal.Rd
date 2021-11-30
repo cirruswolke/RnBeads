@@ -4,8 +4,10 @@
 \alias{rnb.execute.context.removal}
 \title{rnb.execute.context.removal}
 \usage{
-rnb.execute.context.removal(rnb.set,
-  contexts = rnb.getOption("filtering.context.removal"))
+rnb.execute.context.removal(
+  rnb.set,
+  contexts = rnb.getOption("filtering.context.removal")
+)
 }
 \arguments{
 \item{rnb.set}{Methylation dataset as an object of type \code{\linkS4class{RnBeadSet}}.}
@@ -38,4 +40,3 @@ identical(rnb.set.example, rnb.set.filtered) # FALSE
 \author{
 Yassen Assenov
 }
-

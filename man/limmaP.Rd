@@ -4,8 +4,14 @@
 \alias{limmaP}
 \title{limmaP}
 \usage{
-limmaP(X, inds.g1, inds.g2 = -inds.g1, adjustment.table = NULL,
-  fun.conversion = rnb.beta2mval, paired = FALSE)
+limmaP(
+  X,
+  inds.g1,
+  inds.g2 = -inds.g1,
+  adjustment.table = NULL,
+  fun.conversion = rnb.beta2mval,
+  paired = FALSE
+)
 }
 \arguments{
 \item{X}{Matrix on which the test is performed for every row}
@@ -45,4 +51,3 @@ p.vals <- limmaP(meth.mat,sample.groups[[1]],sample.groups[[2]])
 \author{
 Fabian Mueller
 }
-

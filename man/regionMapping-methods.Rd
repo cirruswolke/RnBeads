@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBSet-class.R
 \docType{methods}
 \name{regionMapping,RnBSet-method}
-\alias{regionMapping}
 \alias{regionMapping,RnBSet-method}
+\alias{regionMapping}
 \title{regionMapping-methods}
 \usage{
 \S4method{regionMapping}{RnBSet}(object, region.type)
@@ -32,4 +32,3 @@ sapply(promoter.probe.list,length)
 \author{
 Fabian Mueller
 }
-

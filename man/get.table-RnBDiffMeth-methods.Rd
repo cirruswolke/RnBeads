@@ -2,12 +2,17 @@
 % Please edit documentation in R/RnBDiffMeth-class.R
 \docType{methods}
 \name{get.table,RnBDiffMeth-method}
-\alias{get.table}
 \alias{get.table,RnBDiffMeth-method}
+\alias{get.table}
 \title{get.table-methods}
 \usage{
-\S4method{get.table}{RnBDiffMeth}(object, comparison, region.type,
-  undump = TRUE, return.data.frame = FALSE)
+\S4method{get.table}{RnBDiffMeth}(
+  object,
+  comparison,
+  region.type,
+  undump = TRUE,
+  return.data.frame = FALSE
+)
 }
 \arguments{
 \item{object}{\code{\linkS4class{RnBDiffMeth}} object}
@@ -40,4 +45,3 @@ summary(dm.promoters)
 \author{
 Fabian Mueller
 }
-

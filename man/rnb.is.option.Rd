@@ -21,10 +21,9 @@ rnb.is.option("logging") # TRUE
 rnb.is.option("Logging") # FALSE
 }
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{rnb.options}} for getting and setting option values
 }
-
+\author{
+Yassen Assenov
+}

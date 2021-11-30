@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBDiffMeth-class.R
 \docType{methods}
 \name{get.region.types,RnBDiffMeth-method}
-\alias{get.region.types}
 \alias{get.region.types,RnBDiffMeth-method}
+\alias{get.region.types}
 \title{get.region.types-methods}
 \usage{
 \S4method{get.region.types}{RnBDiffMeth}(object)
@@ -29,4 +29,3 @@ get.region.types(dm)
 \author{
 Fabian Mueller
 }
-

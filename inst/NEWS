@@ -1,19 +1,227 @@
+RnBeads 2.9.3
+=============
+
+ * Changed some of the default options values
+ * Some bugfixes
+
+RnBeads 2.9.2
+=============
+
+ * Implemented function rnb.execute.pOOBAH. Thanks to Nathan Steenbuck.
+ * Update of contact information in DESCRIPTION
+
+RnBeads 2.9.1
+=============
+
+ * Improved function intensities.by.color. Thanks to Nathan Steenbuck.
+
+RnBeads 2.7.1
+=============
+
+ * Added conversion from RnBeadRawSet to RGChannelSet
+
+RnBeads 2.3.3
+=============
+
+ * Fixed non ASCII column names in age prediction and immune estimation
+
+RnBeads 2.3.2
+=============
+
+ * Added stratification plots for inferred covariates in different sample groups
+
+RnBeads 2.1.3
+=============
+
+ * Implemented methylation based segmentation by the MethylSeekR approach. Thanks to Abdulrahman Salhab for providing code for the integration.
+ * Wrapper for load.rnb.set
+
+RnBeads 2.1.2
+=============
+
+ * Fix in as.RnBeadRawSet
+ * Added new paper to CITATION
+
+RnBeads 2.1.1
+=============
+
+ * Added support for SLURM compute cluster architecture
+
+RnBeads 1.99.0
+=============
+ 
+ * RnBeadsDJ: updated documentation and tooltips
+ * deactivated intersample plots (exploratory module) as default option for BS-seq data
+ * Roxygen documentation updates
+ * Extended methods descriptions in reports (imputation, filtering, differential, ...)
+ * Miscellaneous bugfixes and performance improvements in RnBeadsDJ, imputation, ...
+
+RnBeads 1.13.3
+=============
+ 
+ * added CNV estimation using the GLAD package to QC module
+ * some bugfixes
+ * changed 'gender' to 'sex', affected functions and options are 'rnb.execute.gender.prediction' and 'import.gender.prediction'
+
+RnBeads 1.13.2
+=============
+ 
+ * added qvalue to suggested packages
+
+RnBeads 1.13.1
+=============
+ 
+ * Updated LOLA DB download links
+
+RnBeads 1.11.9
+=============
+ 
+ * Bugfixes and improvements in gender prediction, GEO import, differential variability, installation and others
+
+RnBeads 1.11.8
+=============
+ 
+ * Fixes for bioconductor warnings (combine, etc.)
+ * docoupled missing value imputation from differential methylation
+
+RnBeads 1.11.7
+=============
+ 
+ * enhanced cross-platform combination methods
+ * improved installation routines
+ * enhanced plots in exploratory analysis module
+ * better LOLA annotation
+ * improved performance of missing value imputation
+ * documentation updates
+ * several minor bugfixes
+
+RnBeads 1.11.6
+=============
+ 
+ * Improved combining methods for RnBSet objects of different data types
+ * Interpretation of sample mean methylation levels and other statistics
+ * Improved plots in exploratory analysis module
+ * Improved missing value imputation
+ * Several minor bugfixes
+
+RnBeads 1.11.5
+=============
+ 
+ * bugfixes (loading, imputation)
+
+RnBeads 1.11.4
+=============
+ 
+ * Introducing RnBeadsDJ, a shiny-based interface for running RnBeads analyses and modules (run with rnb.run.dj())
+ * Added implementation of the LUMP algorithm for immune cell content estimation
+ * The default normalization method was changed to "wm.dasen"
+ * Background normalization is now disabled per default.
+ * Option backwards compatibility
+ * bugfixes (LOLA dependencies, 1-sample differential variability, QC visualization, ...)
+
+RnBeads 1.11.2
+=============
+
+ * Fixed a bug concerning failed trackhub exports on Windows
+
+RnBeads 1.9.4
+=============
+
+ * You can now retrieve custom region sets from the RnBeads resource using the rnb.load.annotation.from.db function
+ * improved import from GEO
+ * bigff disk dump is now the default option for dealing with disk-based big matrices
+ * Several bugfixes and performance improvements in Greedycut, normalization, Bisulfite data loading and others
+ * Added differential variability analysis in addition to differential methylation
+
+RnBeads 1.9.3
+=============
+
+ * LOLA support for differentially methylated regions
+ * various LOLA utitility functions
+ * What used to be the "differential.enrichment" option is now called "differential.enrichment.go" to reflect the distinction between GO and LOLA enrichment analyses
+ * Missing methylation data can now be imputed (using mean, random or nearest-neighbor imputation)
+ * Gender prediction now supports sequencing and EPIC data
+ * Added a function for combining two array-based datasets from (potentially) different platforms.
+ * Several bugfixes and performance improvements
+
+RnBeads 1.7.5
+=============
+
+ * Several minor bugfixes and performance improvements
+ * added a vignette section on working with RnBSet objects 
+
+RnBeads 1.7.4
+=============
+
+ * Several minor bugfixes and performance improvements
+ * Vignette installation instructions updated
+ * Reduce warnings in R CMD check
+
+RnBeads 1.7.3
+=============
+
+ * Age predictor (MethylAger) updates and documentation
+ * Support for external tools bedToBigBed and bedGraphToBigWig
+ * Minor bugfixes
+
+RnBeads 1.7.2
+=============
+
+ * Added genetic purity estimation based on SNP probes (option qc.snp.purity, microarrays only)
+
+RnBeads 1.7.1
+=============
+
+ * Added support for the ENmix.oob background subtraction method
+ * Several improvements in age prediction module
+ * Added conversion from minfi raw dataset to RnBeadRawSet
+ * Several minor bug fixes
+
+RnBeads 1.5.1
+=============
+
+ * Reference-based cell type composition estimation now uses the 50,000 most variable sites by default.
+ * Minor bug fixes
+
+RnBeads 1.3.8
+=============
+
+ * Added age prediction from 450K and bisulfite data to inference module
+
+RnBeads 1.3.7
+=============
+
+ * Subsampling for reporting and plotting methylation values distributions in filtering
+   report to reduce memory footprint.
+
+RnBeads 1.3.6
+=============
+
+ * Support for Illumina EPIC array and related bugfixes
+ * Added a section on whitelist and blacklist in the Preprocessing module
+
+RnBeads 1.3.5
+=============
+
+ * Fixes with ggplot in 450K array QC plotting
+ * Added an option 'differential.report.sites' to decrease runtime by skipping the differential site methylation section in the report
+
 RnBeads 1.3.4
 =============
 
- * started implementing support for Illumina EPIC array (not fully tested yet)
+ * Added support for Illumina EPIC array
 
 RnBeads 1.3.3
 =============
 
- * added 'smooth.profile' parameter to rnb.plot.locus.profile function
+ * Added 'smooth.profile' parameter to rnb.plot.locus.profile function
 
 RnBeads 1.3.2
 =============
 
  * Performance and memory improvements during loading, qc and preprocessing of large bisulfite-derived RnBSets
- * added optional arguments to meth() and covg() allowing for partial retrieval of methylation and coverage information from RnBSets. Particularly makes sense for large, disk-based datasets.
- * added option "disk.dump.bigff.finalizer" for setting the finalizer for temporary BigFfMat objects
+ * Added optional arguments to meth() and covg() allowing for partial retrieval of methylation and coverage information from RnBSets. Particularly makes sense for large, disk-based datasets.
+ * Added option "disk.dump.bigff.finalizer" for setting the finalizer for temporary BigFfMat objects
 
 RnBeads 1.3.1
 =============

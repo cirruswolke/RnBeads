@@ -69,9 +69,13 @@ result.diffmeth <- rnb.run.differential(rnb.set, report.dir, close.report = TRUE
 logger.start("Saving")
 	diffmeth.path <- file.path(cmdArgs$output,paste0(module.name,"_rnbDiffMeth"))
 	save.rnb.diffmeth(result.diffmeth$diffmeth, diffmeth.path)
-	diffmeth.enrichment <- result.diffmeth$dm.enrich
-	if (!is.null(diffmeth.enrichment)){
-		save(diffmeth.enrichment, file=file.path(diffmeth.path, "enrichment.RData"))
+	diffmeth.go.enrichment <- result.diffmeth$dm.go.enrich
+	if (!is.null(diffmeth.go.enrichment)){
+		save(diffmeth.go.enrichment, file=file.path(diffmeth.path, "enrichment_go.RData"))
+	}
+	diffmeth.lola.enrichment <- result.diffmeth$dm.lola.enrich
+	if (!is.null(diffmeth.lola.enrichment)){
+		save(diffmeth.lola.enrichment, file=file.path(diffmeth.path, "enrichment_lola.RData"))
 	}
 logger.completed()
 

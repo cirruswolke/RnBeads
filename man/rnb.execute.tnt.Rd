@@ -4,9 +4,14 @@
 \alias{rnb.execute.tnt}
 \title{rnb.execute.tnt}
 \usage{
-rnb.execute.tnt(rnb.set, out.dir, exp.bed = rnb.getOption("export.to.bed"),
+rnb.execute.tnt(
+  rnb.set,
+  out.dir,
+  exp.bed = rnb.getOption("export.to.bed"),
   exp.trackhub = rnb.getOption("export.to.trackhub"),
-  region.types = rnb.getOption("export.types"), ...)
+  region.types = rnb.getOption("export.types"),
+  ...
+)
 }
 \arguments{
 \item{rnb.set}{\code{\linkS4class{RnBSet}} object}
@@ -39,4 +44,3 @@ rnb.execute.tnt(rnb.set.example,tempdir())
 \author{
 Fabian Mueller
 }
-

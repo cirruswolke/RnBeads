@@ -2,12 +2,16 @@
 % Please edit documentation in R/RnBSet-class.R
 \docType{methods}
 \name{summarize.regions,RnBSet-method}
-\alias{summarize.regions}
 \alias{summarize.regions,RnBSet-method}
+\alias{summarize.regions}
 \title{summarize.regions-methods}
 \usage{
-\S4method{summarize.regions}{RnBSet}(object, region.type,
-  aggregation = rnb.getOption("region.aggregation"), overwrite = TRUE)
+\S4method{summarize.regions}{RnBSet}(
+  object,
+  region.type,
+  aggregation = rnb.getOption("region.aggregation"),
+  overwrite = TRUE
+)
 }
 \arguments{
 \item{object}{Dataset of interest.}
@@ -32,4 +36,3 @@ rnb.set.summarized<-summarize.regions(rnb.set.example, "genes", overwrite=TRUE)
 head(meth(rnb.set.summarized, type="genes", row.names=TRUE))
 }
 }
-

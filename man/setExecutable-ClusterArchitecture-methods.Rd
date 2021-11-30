@@ -2,12 +2,12 @@
 % Please edit documentation in R/clusterArchitecture.R
 \docType{methods}
 \name{setExecutable,ClusterArchitecture,character,character-method}
-\alias{setExecutable}
 \alias{setExecutable,ClusterArchitecture,character,character-method}
+\alias{setExecutable}
+\alias{setExecutable,ClusterArchitecture-method}
 \title{setExecutable-methods}
 \usage{
-\S4method{setExecutable}{ClusterArchitecture,character,character}(object,
-  exec.name, exec.loc)
+\S4method{setExecutable}{ClusterArchitecture,character,character}(object, exec.name, exec.loc)
 }
 \arguments{
 \item{object}{\code{\linkS4class{ClusterArchitecture}} object}
@@ -25,4 +25,3 @@ Tells the cluster architecture about an executable that can be submitted as job
 \author{
 Fabian Mueller
 }
-

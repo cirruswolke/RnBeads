@@ -4,10 +4,12 @@
 \alias{rnb.execute.normalization}
 \title{rnb.execute.normalization}
 \usage{
-rnb.execute.normalization(object,
+rnb.execute.normalization(
+  object,
   method = rnb.getOption("normalization.method"),
   bgcorr.method = rnb.getOption("normalization.background.method"),
-  verbose = TRUE)
+  verbose = TRUE
+)
 }
 \arguments{
 \item{object}{Methylation dataset as an object of type \code{\linkS4class{MethyLumiSet}} or
@@ -41,12 +43,11 @@ logger.start(fname=NA)
 rnb.set.norm<-rnb.execute.normalization(rnb.set.example, method="illumina", bgcorr.method="none")
 }
 }
-\author{
-Pavlo Lutsik
-}
 \references{
 1. Triche, Timothy J., Jr., Weisenberger, Daniel J., Van Den Berg, David, Laird, Peter W. and Siegmund, Kimberly D. (2013)
             Low-level processing of Illumina Infinium DNA Methylation BeadArrays.
             Nucleic Acids Research 41(7):e90-e90.
 }
-
+\author{
+Pavlo Lutsik
+}

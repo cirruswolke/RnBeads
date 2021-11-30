@@ -27,12 +27,11 @@ data(small.example.object)
 "promoters" \%in\% rnb.region.types.for.analysis(rnb.set.example)
 }
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{rnb.getOption}} for checking the value of the \code{"region.types"} option;
   \code{\link[=summarized.regions,RnBSet-method]{summarized.regions}} for obtaining the region types summarized in a
   dataset
 }
-
+\author{
+Yassen Assenov
+}

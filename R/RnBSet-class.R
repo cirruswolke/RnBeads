@@ -8,12 +8,6 @@
 ## GLOBALS
 
 RNBSET.SLOTNAMES<-c("meth.sites", "covg.sites")
-get.rnb.version<-function(){
-	tryCatch(
-		as.character(packageVersion("RnBeads")),
-		error = function(err) { return(NULL) }
-	)
-}
 
 ##
 ## ---------------------------------------------------------------------------------------------------------------------
@@ -60,6 +54,7 @@ setClassUnion("characterOrNULL", c("character", "NULL"))
 #'   \item{\code{inferred.covariates}}{\code{list} with covariate information.
 #' 		Can contain elements \code{"sva"} and \code{"cell.types"}.}
 #' 	 \item{\code{version}}{Package version in which the dataset was created.}
+#' 	 \item{\code{imputed}}{Flag indicating if methylation matrix has been imputed.}
 #' }
 #'
 #' @section Methods and Functions:
@@ -77,6 +72,7 @@ setClassUnion("characterOrNULL", c("character", "NULL"))
 #'   \item{\code{\link[BiocGenerics]{combine}}}{Combines two datasets.}
 #'   \item{\code{\link{regionMapping,RnBSet-method}}}{Retrieve the sites mapping to a given region type}
 #'   \item{\code{\link[=rnb.sample.summary.table,RnBSet-method]{rnb.sample.summary.table}}}{Creates a sample summary table from an RnBSet object.}
+#'   \item{\code{\link{isImputed,RnBSet-method}}}{Getter for the imputation slot.}
 #' }
 #'
 #' @name RnBSet-class
@@ -95,7 +91,8 @@ setClass("RnBSet",
 				assembly="character",
 				target="characterOrNULL",
 				inferred.covariates="list",
-				version="characterOrNULL"),
+				version="characterOrNULL",
+		    imputed="logical"),
 		prototype(pheno=data.frame(),
 				sites=matrix(nrow=0, ncol=0),
 				meth.sites=matrix(nrow=0, ncol=0),
@@ -107,7 +104,8 @@ setClass("RnBSet",
 				assembly="hg19",
 				target=NULL,
 				inferred.covariates=list(),
-				version=get.rnb.version()),
+				version=as.character(packageVersion("RnBeads")),
+		    imputed=FALSE),
 		contains = "VIRTUAL",
 		package = "RnBeads")
 
@@ -144,8 +142,7 @@ setClass("RnBSet",
 ## ACCESSORS
 ## ---------------------------------------------------------------------------------------------------------------------
 
-if(!isGeneric("pheno")) setGeneric("pheno",
-			function(object) standardGeneric("pheno"))
+if (!isGeneric("pheno")) setGeneric("pheno", function(object) standardGeneric("pheno"))
 
 #' pheno-methods
 #'
@@ -165,10 +162,7 @@ if(!isGeneric("pheno")) setGeneric("pheno",
 #' data(small.example.object)
 #' pheno(rnb.set.example)
 #' }
-setMethod("pheno", signature(object="RnBSet"),
-		function(object){
-			return(object@pheno)
-		})
+setMethod("pheno", signature(object="RnBSet"), function(object) object@pheno)
 
 ########################################################################################################################
 
@@ -182,7 +176,7 @@ if (!isGeneric("samples")) {
 #'
 #' @param object Dataset of interest.
 #'
-#' @details The column of the sample annotation table which contain identifiers is globally controlled via the
+#' @details The column of the sample annotation table which contains identifiers is globally controlled via the
 #'  \code{"identifiers.column"} option. In case the latter is \code{NULL} column names of the matrix returned
 #' by the \code{meth} method are treated as sample identifiers. In case the latter are also missing, a \code{character}
 #' vector with sample numbers is returned.
@@ -205,36 +199,32 @@ setMethod("samples", signature(object="RnBSet"),
 	function(object) {
 		pheno.table <- pheno(object)
 		id.column <- rnb.getOption("identifiers.column")
+		ids <- NULL
 		if (!(is.null(pheno.table) || is.null(id.column))) {
-			ids <- NA
-			if (is.character(id.column) || length(unique(pheno[,id.column]!=nrow(pheno)))){
-				if(id.column %in% colnames(pheno.table)){
+			if (is.character(id.column)) {
+				if (id.column %in% colnames(pheno.table)) {
 					ids <- pheno.table[, id.column]
-				}else{
-					warning("The supplied identifiers column is not found or is not suitable")
-					return(as.character(1:nrow(object@pheno)))
 				}
-			} else if(1 <= id.column && id.column <= ncol(pheno.table)) {
+			} else if (1L <= id.column && id.column <= ncol(pheno.table)) {
 				ids <- pheno.table[, id.column]
-			}else{
-				return(as.character(1:nrow(object@pheno)))
 			}
 
-			if (any(is.na(ids)) == FALSE && anyDuplicated(ids) == 0) {
-				return(as.character(ids))
-			}else{
-				return(as.character(1:nrow(object@pheno)))
+			if (is.null(ids) || any(is.na(ids)) || anyDuplicated(ids) != 0) {
+				rnb.warning("The supplied identifiers column is not found or is not suitable")
+                ids <- as.character(1:nrow(object@pheno))
 			}
-		}else{
-			if(!is.null(colnames(object@meth.sites))){
-				return(colnames(object@meth.sites))
-			}else{
-			    return(as.character(1:nrow(object@pheno)))
-			}
+			ids <- as.character(ids)
+		} else if (!is.null(colnames(object@meth.sites))) {
+			ids <- colnames(object@meth.sites)
+		} else {
+			ids <- as.character(1:nrow(object@pheno))
 		}
+		ids
 	}
 )
+
 ########################################################################################################################
+
 if(!isGeneric("sites")) setGeneric("sites",
 			function(object) standardGeneric("sites"))
 
@@ -746,41 +736,49 @@ setMethod("remove.sites", signature(object = "RnBSet"),
 			if(length(inds) != 0) {
 					object@sites <- object@sites[-inds, ]
 					if(!is.null(object@status) && object@status$disk.dump){
-						mat <- object@meth.sites[,]
-						new.matrix <- mat[-inds, ,drop=FALSE]
+						doBigFf <- !is.null(object@status$disk.dump.bigff)
+						bff.finalizer <- NULL
+						if (doBigFf) doBigFf <- object@status$disk.dump.bigff
+						if (doBigFf) bff.finalizer <- rnb.getOption("disk.dump.bigff.finalizer")
+						nSites.new <- nrow(object@meth.sites) - length(inds)
+						nSamples <- length(samples(object))
+						# methylation
+						newMat <- NULL
+						if (doBigFf){
+							newMat <- BigFfMat(row.n=nSites.new, col.n=nSamples, row.names=NULL, col.names=samples(object), finalizer=bff.finalizer)
+						} else {
+							newMat <- ff(NA, dim=c(nSites.new, nSamples), dimnames=list(NULL, samples(object)), vmode="double")
+						}
+						for (j in 1:nSamples){
+							newMat[,j] <- object@meth.sites[-inds,j]
+						}
 						if(isTRUE(object@status$discard.ff.matrices)){
 							delete(object@meth.sites)
 						}
-						doBigFf <- !is.null(object@status$disk.dump.bigff)
-						if (doBigFf) doBigFf <- object@status$disk.dump.bigff
+						object@meth.sites <- newMat
 
-						if (doBigFf){
-							bff.finalizer <- rnb.getOption("disk.dump.bigff.finalizer")
-							object@meth.sites <- BigFfMat(new.matrix, finalizer=bff.finalizer)
-						} else {
-							object@meth.sites <- convert.to.ff.matrix.tmp(new.matrix)
-						}
-						rm(new.matrix); rnb.cleanMem()
+						# coverage
 						if(!is.null(object@covg.sites)) {
-							mat <- object@covg.sites[,]
-							new.matrix <- mat[-inds, ,drop=FALSE]
+							newMat <- NULL
+							if (doBigFf){
+								newMat <- BigFfMat(row.n=nSites.new, col.n=nSamples, row.names=NULL, col.names=samples(object), na.prototype=as.integer(NA), finalizer=bff.finalizer)
+							} else {
+								newMat <- ff(NA_integer_, dim=c(nSites.new, nSamples), dimnames=list(NULL, samples(object)))
+							}
+							for (j in 1:nSamples){
+								newMat[,j] <- object@covg.sites[-inds,j]
+							}
 							if(isTRUE(object@status$discard.ff.matrices)){
 								delete(object@covg.sites)
-						 	}
-						 	if (doBigFf){
-						 		object@covg.sites <- BigFfMat(new.matrix, finalizer=bff.finalizer)
-						 	} else {
-								object@covg.sites <- convert.to.ff.matrix.tmp(new.matrix)
 							}
-							rm(new.matrix); rnb.cleanMem()
+							object@covg.sites <- newMat
 						}
-					}else{
+					} else {
 						object@meth.sites <- object@meth.sites[-inds, ,drop=FALSE]
 						if(!is.null(object@covg.sites)) {
 							object@covg.sites <- object@covg.sites[-inds, ,drop=FALSE]
 						}
 					}
-
 			}
 
 			## Update region methylation
@@ -797,7 +795,7 @@ setMethod("remove.sites", signature(object = "RnBSet"),
 
 			## Remove information on inferred covariates (they are likely to change when sites are removed)
 			if (.hasSlot(object, "inferred.covariates")) {
-				i.covariates <- setdiff(names(object@inferred.covariates), "gender")
+				i.covariates <- setdiff(names(object@inferred.covariates), "sex")
 				if (length(i.covariates) != 0) {
 					object@inferred.covariates[i.covariates] <- NULL
 					if(verbose){
@@ -810,6 +808,131 @@ setMethod("remove.sites", signature(object = "RnBSet"),
 			}
 			object
 		}
+)
+
+########################################################################################################################
+
+if (!isGeneric("updateMethylationSites")) {
+  setGeneric("updateMethylationSites", function(object, meth.data, verbose = TRUE) standardGeneric("updateMethylationSites"))
+}
+
+#' updateMethylationSites-methods
+#'
+#' Replaces the methylation info with the specified data frame.
+#'
+#' @param object    Dataset of interest.
+#' @param meth.data This object has to be a \code{data.frame} of equal dimension than the one already contained in 
+#'                  \code{object}, containing the methylation info that should be associated with the object.
+#' @param verbose	if \code{TRUE} additional diagnostic output is generated
+#'
+#' @return The modified dataset.
+#'#'
+#' @rdname updateMethylationSites-methods
+#' @aliases updateMethylationSites
+#' @aliases updateMethylationSites,RnBSet-method
+#' @docType methods
+#' @export
+setMethod("updateMethylationSites", signature(object = "RnBSet"),
+          function(object, meth.data, verbose=FALSE) {
+            if(verbose) {
+              rnb.logger.start("Updating sites")
+            }
+            if(!is.null(object@status) && object@status$disk.dump){
+              doBigFf <- !is.null(object@status$disk.dump.bigff)
+              bff.finalizer <- NULL
+              if (doBigFf) doBigFf <- object@status$disk.dump.bigff
+              if (doBigFf) bff.finalizer <- rnb.getOption("disk.dump.bigff.finalizer")
+              nSites <- nrow(object@meth.sites)
+              if(nSites!=nrow(meth.data)){
+                stop("Dimensions of provided and existing methylation info do not match.")
+              }
+              nSamples <- length(samples(object))
+              if(nSites!=nrow(meth.data)||nSamples!=ncol(meth.data)){
+                stop("Dimensions of provided and existing methylation info do not match.")
+              }
+              # methylation
+              newMat <- NULL
+              if (doBigFf){
+                newMat <- BigFfMat(row.n=nSites, col.n=nSamples, row.names=NULL, col.names=samples(object), finalizer=bff.finalizer)
+              } else {
+                newMat <- ff(NA, dim=c(nSites, nSamples), dimnames=list(NULL, samples(object)), vmode="double")
+              }
+              for (j in 1:nSamples){
+                newMat[,j] <- meth.data[,j]
+              }
+              if(isTRUE(object@status$discard.ff.matrices)){
+                delete(object@meth.sites)
+              }
+              object@meth.sites <- newMat
+                
+            } else {
+              nSites <- nrow(object@meth.sites)
+              if(nSites!=nrow(meth.data)){
+                stop("Dimensions of provided and existing methylation info do not match.")
+              }
+              nSamples <- length(samples(object))
+              if(nSites!=nrow(meth.data)||nSamples!=ncol(meth.data)){
+                stop("Dimensions of provided and existing methylation info do not match.")
+              }
+              object@meth.sites <- meth.data
+            }
+            if(verbose){
+              logger.completed()
+            }
+            if(verbose){
+              logger.start("Update regional methylation")
+            }
+            object <- updateRegionSummaries(object)
+            if(verbose){
+              logger.completed()
+            }
+            object
+          }
+)
+
+########################################################################################################################
+
+if (!isGeneric("mask.sites.meth")) {
+	setGeneric("mask.sites.meth", function(object, mask, verbose=FALSE) standardGeneric("mask.sites.meth"))
+}
+
+#' mask.sites.meth-methods
+#'
+#' Given a logical matrix, sets corresponding entries in the methylation table to NA (masking).
+#' Low memory footprint
+#'
+#' @param object    Dataset of interest.
+#' @param mask      logical matrix indicating which sites should be masked
+#' @param verbose	if \code{TRUE} additional diagnostic output is generated
+#'
+#' @return The modified dataset.
+#'
+#' @rdname mask.sites.meth-methods
+#' @aliases mask.sites.meth
+#' @aliases mask.sites.meth,RnBSet-method
+#' @docType methods
+setMethod("mask.sites.meth", signature(object = "RnBSet"),
+	function(object, mask, verbose=FALSE) {
+		if(!is.null(object@status) && object@status$disk.dump){
+			nSamples <- length(samples(object))
+			for (j in 1:nSamples){
+				object@meth.sites[mask[,j],j] <- NA
+			}
+		} else {
+			object@meth.sites[,][mask] <- NA
+			if(inherits(object, "RnBeadRawSet")){
+				object@M[,][mask] <- NA
+				object@U[,][mask] <- NA
+				if(!is.null(object@M0)){
+					object@M0[,][mask] <- NA
+				}
+				if(!is.null(object@U0)){
+					object@U0[,][mask] <- NA
+				}
+			}
+		}
+		object
+	}
 )
 
 ########################################################################################################################
@@ -936,7 +1059,7 @@ setMethod("remove.samples", signature(object = "RnBSet"),
 
 				## Remove information on inferred covariates (they are likely to change when samples are removed)
 				if (.hasSlot(object, "inferred.covariates")) {
-					i.covariates <- setdiff(names(object@inferred.covariates), "gender")
+					i.covariates <- setdiff(names(object@inferred.covariates), "sex")
 					if (length(i.covariates) != 0) {
 						## FIXME: Wouldn't it make more sense to simply take the samples out?
 						object@inferred.covariates[i.covariates] <- NULL
@@ -1082,24 +1205,34 @@ setMethod("mergeSamples", signature(object = "RnBSet"),
 )
 ########################################################################################################################
 
-#' combine-methods
+setGeneric("combine.rnb.sets", function(x,y, ...) standardGeneric("combine.rnb.sets"))
+
+#' combine.rnb.sets-methods
 #'
 #' Combine two objects inheriting from \code{\linkS4class{RnBSet}} class
 #'
 #' @param x,y 		\code{\linkS4class{RnBeadSet}}, \code{\linkS4class{RnBeadRawSet}}
 #' 					or \code{\linkS4class{RnBiseqSet}} object
-#'
-#' @details The sample sets of \code{x} and \code{y} should be unique.
-#' Sample annotation information is merged only for columns which have identical names in both objects.
-#' CpG sites of the new object are a union of those present in both objects.
+#' @param type		\code{character} singleton defining the set operation applied to the two site sets, 
+#' 					one of "all", "all.x", "all.y" or "common"
+#' 
+#' @details Combine method supports a merge of any two RnBSet objects that contain data of the same specie.
+#' In case a non-synonymous merge is performed, the class conversion will follow the following hierarchy: 
+#' \code{\linkS4class{RnBeadSet}} < \code{\linkS4class{RnBeadRawSet}} < \code{\linkS4class{RnBiseqSet}}.
+#' In case \code{x} and \code{y} are both array data containers (\code{RnBeadSet} or \code{RnBeadRawSet}), 
+#' the resulting object will have an annotation that corresponds to the newer array version 
+#' (\code{27k} < \code{450k} < \code{EPIC}).
+#' The sample sets of \code{x} and \code{y} should be unique. Sample annotation information is merged only for columns 
+#' which have identical names in both objects. CpG sites of the new object are a union of those present in both objects.
 #'
 #' @return combined \code{\linkS4class{RnBeadSet}}, \code{\linkS4class{RnBeadRawSet}} or
 #' \code{\linkS4class{RnBiseqSet}} object
 #'
-#' @rdname combine-methods
+#' @rdname combine.rnb.sets-methods
 #' @docType methods
 #' @export
-#' @aliases combine,RnBSet-method
+#' @aliases combine.rnb.sets
+#' @aliases combine.rnb.sets,RnBSet-method
 #' @examples
 #' \donttest{
 #' library(RnBeads.hg19)
@@ -1113,153 +1246,31 @@ setMethod("mergeSamples", signature(object = "RnBSet"),
 #' r2 <- remove.samples(r2,samples(rnb.set.example)[6:12])
 #' sites.rem.r2 <- sample(1:nrow(meth(rnb.set.example)),800)
 #' r2 <- remove.sites(r2,sites.rem.r2)
-#' rc <- combine(r1,r2)
+#' rc <- combine.rnb.sets(r1,r2)
 #' #assertion: check the number of sites
 #' sites.rem.c <- intersect(sites.rem.r1,sites.rem.r2)
 #' (nrow(meth(rnb.set.example))-length(sites.rem.c)) == nrow(meth(rc))
 #' }
-setMethod("combine", signature(x="RnBSet",y="RnBSet"),
-		function(x,y){
-			if (class(x) != class(y)){
-				stop("Could not combine RnBSet objects: incompatible classes")
-			}
-			if (assembly(x) != assembly(y)){
-				stop("Could not combine RnBSet objects: incompatible assemblies")
-			}
-			if (x@target != y@target){
-				stop("Could not combine RnBSet objects: incompatible platforms")
-			}
-			common.samples <- intersect(samples(x),samples(y))
-			if (length(common.samples)>0){
-				stop(paste0("Could not combine RnBSet objects: the following samples overlap in both objects: ", paste(common.samples,collapse=",")))
-			}
-			useff <- x@status$disk.dump
-			if (x@status$disk.dump != y@status$disk.dump){
-				warning(paste0("disk dump status of the two objects to combine disagree. Using disk dump: ", useff))
-			}
-			usebigff <- useff
-			if (usebigff) usebigff <- !is.null(x@status$disk.dump.bigff)
-			if (usebigff) usebigff <- x@status$disk.dump.bigff
-			if(usebigff){
-				bff.finalizer <- rnb.getOption("disk.dump.bigff.finalizer")
-			}
-			# prepare a new object
-			if(nrow(pheno(x))>=nrow(pheno(y))){
-				new.set<-y
-			}else{
-				new.set<-x
-			}
-
-			new.set@pheno <- plyr::rbind.fill(pheno(x),pheno(y))
-
-			# combine sites
-			sites1<-x@sites
-			sites2<-y@sites
-
-			common.chr<-union(unique(sites1[,2]), unique(sites2[,2]))
-
-			subs1<-list()
-			subs2<-list()
-			common.sites<-list()
-
-			for(chr in common.chr){
-				sts<-sort(union(sites1[sites1[,2]==chr,3],sites2[sites2[,2]==chr,3]))
-				subs1[[chr]]<-match(sites1[sites1[,2]==chr,3], sts)
-				subs2[[chr]]<-match(sites2[sites2[,2]==chr,3], sts)
-				common.sites[[chr]]<-cbind(rep(1,length(sts)), rep(chr,length(sts)), sts)
-			}
-
-			total.sites<-sum(sapply(common.sites, nrow))
-
-			if("ff_matrix" %in% c(class(sites1), class(sites2))){
-				new.sites <- ff(vmode="integer", dim=c(total.sites,3))
-				ixx<-1
-				for(sts in common.sites){
-					new.sites[ixx:(ixx+nrow(sts)),]<-sts
-					ixx<-ixx+nrow(sts)+1
-				}
-			}else{
-				new.sites<-do.call("rbind", common.sites)
-			}
-
-			colnames(new.sites)<-NULL
-			new.set@sites<-new.sites
-
-			slot.names<-RNBSET.SLOTNAMES
-
-			if(inherits(x, "RnBeadSet")){
-				slot.names<-c(slot.names, RNBEADSET.SLOTNAMES)
-			}
-			if(inherits(x, "RnBeadRawSet")){
-				slot.names<-c(slot.names, RNBRAWSET.SLOTNAMES)
-			}
-
-			for(sl in slot.names){
-				if(all(!is.null(slot(x,sl)),!is.null(slot(y,sl)))){
-					if(useff){
-						#new.matrix<-ff(vmode=vmode(slot(x,sl)), dim=c(total.sites,nrow(pheno(new.set))))
-						if (usebigff){
-							new.matrix <- BigFfMat(row.n=total.sites, col.n=nrow(pheno(new.set)), vmode=vmode(slot(x,sl)), finalizer=bff.finalizer)
-						} else {
-							new.matrix <- create.empty.ff.matrix.tmp(vm=vmode(slot(x,sl)), dim=c(total.sites,nrow(pheno(new.set))))
-						}
-					}else{
-						new.matrix<-matrix(NA, nrow=total.sites, ncol=nrow(pheno(new.set)))
-					}
-					for(chr in common.chr){
-						#new.matrix[new.sites[,2]==chr,1:nrow(pheno(x))]<-slot(x,sl)[sites1[,2]==chr,][subs1[[chr]],]
-						#new.matrix[new.sites[,2]==chr,(nrow(pheno(x))+1):nrow(pheno(new.set))]<-slot(y,sl)[sites2[,2]==chr,][subs2[[chr]],]
-						ix<-which(new.sites[,2]==chr)
-						new.matrix[ix[subs1[[chr]]],1:nrow(pheno(x))]<-slot(x,sl)[sites1[,2]==chr,,drop=FALSE]
-						new.matrix[ix[subs2[[chr]]],(nrow(pheno(x))+1):nrow(pheno(new.set))]<-slot(y,sl)[sites2[,2]==chr,,drop=FALSE]
-					}
-					#colnames(new.matrix)<-c(colnames(slot(x,sl)), colnames(slot(y,sl)))
-					slot(new.set, sl)<-new.matrix
-					rm(new.matrix)
-					rnb.cleanMem()
-				}else{
-					slot(new.set, sl)<-NULL
-				}
-
-				if(x@status$disk.dump && isTRUE(x@status$discard.ff.matrices)){
-					delete(slot(x, sl))
-				}
-				if(y@status$disk.dump && isTRUE(y@status$discard.ff.matrices)){
-					delete(slot(y, sl))
-				}
-			}
-
-			if(inherits(x,"RnBeadSet")){
-				if(all(!is.null(qc(x)),!is.null(qc(y)))){
-					cpn<-intersect(rownames(qc(x)$Cy3), rownames(qc(x)$Cy3))
-					cy3.new<-cbind(qc(x)$Cy3[cpn,], qc(y)$Cy3[cpn,])
-					cy5.new<-cbind(qc(x)$Cy5[cpn,], qc(y)$Cy5[cpn,])
-					colnames(cy3.new)<-NULL
-					colnames(cy5.new)<-NULL
-					new.set@qc<-list(Cy3=cy3.new, Cy5=cy5.new)
-				}else{
-					new.set@qc<-NULL
-				}
-			}
-
-			new.set@status<-list()
-			if(inherits(new.set, "RnBeadSet")){
-				new.set@status$normalized<-"none"
-				new.set@status$background<-"none"
-			}
-			new.set@status$disk.dump<-useff
-
-			for (region.type in union(summarized.regions(x), summarized.regions(y))) {
-				if (region.type %in% rnb.region.types(assembly(new.set))) {
-					new.set <- summarize.regions(new.set, region.type)
-				}
-			}
-			new.set@inferred.covariates<-list()
-
-			rm(common.sites, sites1, sites2, subs1, subs2, x, y)
-			rnb.cleanMem()
-			new.set
-		}
+setMethod("combine.rnb.sets", signature(x="RnBSet", y="RnBSet"),
+        function(x, y, type="all"){
+            if(class(x)==class(y)){
+                if(inherits(x, "RnBeadSet")){
+                    rnb.combine.arrays(x, y, type=type)
+                }else if(inherits(x, "RnBiseqSet")){
+                    rnb.combine.seq(x, y, type=type)
+                }else{
+                    rnb.error("This combine operation is currently not supported")
+                }
+            }else{
+                if(inherits(x, "RnBiseqSet")){
+                    y.seq<-as(y, "RnBiseqSet")
+                    rnb.combine.seq(x, y.seq, type=type)
+                }else if(inherits(y, "RnBiseqSet")){
+                    x.seq<-as(x, "RnBiseqSet")
+                    rnb.combine.seq(x.seq, y, type=type)
+                }
+            }
+        }
 )
 
 ########################################################################################################################
@@ -2007,6 +2018,11 @@ load.rnb.set<-function(path, temp.dir=tempdir()){
 	}else{
 		method="unzip"
 	}
+  
+  if(grepl("rnb.set.RData",path)){
+    logger.info("The path to the data set directory should be provided, not to the invidual file. Changing to parent directory.")
+    path <- dirname(path)
+  }
 
 	if(!file.info(path)[["isdir"]]){
 		td<-tempfile("extraction", temp.dir)
@@ -2167,7 +2183,11 @@ if(!isGeneric("sampleMethApply")) setGeneric("sampleMethApply", function(object,
 #' sampleMethApply-methods
 #'
 #' Applies a function over the methylation values for all samples in an \code{RnBSet} using a low memory footprint.
+#' 
+#' @param object object inheriting from \code{\linkS4class{RnBSet}}
 #' @param fn function to be applied
+#' @param type \code{character} singleton. Specify "sites" (default) or a region type over which the function is applied
+#' @param ... arguments passed on to the function
 #' @return Result analogous to \code{apply(meth(rnbSet, type), 2, FUN=FUN)}
 #'
 #' @seealso \code{\link[=meth,RnBSet-method]{meth}} Retrieving the matrix of methylation values
@@ -2195,7 +2215,10 @@ if(!isGeneric("sampleCovgApply")) setGeneric("sampleCovgApply", function(object,
 #' sampleCovgApply-methods
 #'
 #' Applies a function over the coverage values for all samples in an \code{RnBSet} using a low memory footprint.
+#' @param object object inheriting from \code{\linkS4class{RnBSet}}
 #' @param fn function to be applied
+#' @param type \code{character} singleton. Specify "sites" (default) or a region type over which the function is applied
+#' @param ... arguments passed on to the function
 #' @return Result analogous to \code{apply(covg(rnbSet, type), 2, FUN=FUN)}
 #'
 #' @seealso \code{\link[=meth,RnBSet-method]{covg}} Retrieving the matrix of coverage values
@@ -2209,7 +2232,7 @@ setMethod("sampleCovgApply", signature(object = "RnBSet"),
 			stop("invalid value for type")
 		}
 		if (type %in% c("sites", object@target)) {
-			result <- nrow(object@meth.sites)
+			result <- nrow(object@covg.sites)
 		} else if (!(type %in% names(object@regions))) {
 			stop("unsupported region type")
 		}
@@ -2219,6 +2242,65 @@ setMethod("sampleCovgApply", signature(object = "RnBSet"),
 		return(res)
 	}
 )
+########################################################################################################################
+if(!isGeneric("getNumNaMeth")) setGeneric("getNumNaMeth", function(object, ...) standardGeneric("getNumNaMeth"))
+#' getNumNaMeth-methods
+#'
+#' for each site/region, the getNumNaMeth retrieves the number of NA values accross all samples.
+#' Does this efficiently by breaking down the methylation matrix into submatrices
+#' @param object object inheriting from \code{\linkS4class{RnBSet}}
+#' @param type "sites" or region type
+#' @param chunkSize size of each submatrix (performance tuning parameter)
+#' @param mask logical matrix. its entries will also be considered NAs in counting
+#' @return vector containing the number of NAs per site/region
+#'
+#' @rdname getNumNaMeth-methods
+#' @docType methods
+#' @aliases getNumNaMeth
+#' @aliases getNumNaMeth,RnBSet-method
+setMethod("getNumNaMeth", signature(object = "RnBSet"),
+	function(object, type="sites", chunkSize=1e5, mask=NULL) {
+		if (!(is.character(type) && length(type) == 1 && (!is.na(type)))) {
+			stop("invalid value for type")
+		}
+		if (!(type %in% c("sites", object@target, names(object@regions)))) {
+			stop("unsupported region type")
+		}
+		#get start and end indices for the chunks
+		n <- nsites(object, type)
+		indStarts <- seq(1,n,by=chunkSize)
+		indEnds <- c(indStarts[-1]-1, n)
+		#apply to each chunk
+		res <- unlist(lapply(1:length(indStarts), FUN=function(i){
+			indsCur <- indStarts[i]:indEnds[i]
+			mm <- meth(object, type=type, i=indsCur)
+			isNaMat <- is.na(mm)
+			if (!is.null(mask)) isNaMat <- isNaMat | mask[indsCur,]
+			return(as.integer(rowSums(isNaMat)))
+		}))
+		
+		return(res)
+	}
+)
+if(!isGeneric("isImputed")) setGeneric("isImputed", function(object, ...) standardGeneric("isImputed"))
+#' isImputed
+#' 
+#' Getter for the imputation field. Return TRUE, if the object has been imputed and FALSE otherwise.
+#' @param object Object for which the information should be returned
+#' @return TRUE, if the object has been imputed and FALSE otherwise.
+#' @author Michael Scherer
+#' @aliases isImputed
+#' @aliases isImputed,RnBSet-method
+#' @export
+setMethod("isImputed",signature(object="RnBSet"),
+  function(object){
+    if(.hasSlot(object,"imputed")){
+      return(object@imputed)
+    }
+    return(FALSE)
+  }          
+)
+
 ########################################################################################################################
 #' rnb.sample.summary.table
 #'

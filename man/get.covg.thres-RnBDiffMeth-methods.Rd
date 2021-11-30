@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBDiffMeth-class.R
 \docType{methods}
 \name{get.covg.thres,RnBDiffMeth-method}
-\alias{get.covg.thres}
 \alias{get.covg.thres,RnBDiffMeth-method}
+\alias{get.covg.thres}
 \title{get.covg.thres-methods}
 \usage{
 \S4method{get.covg.thres}{RnBDiffMeth}(object)
@@ -29,4 +29,3 @@ get.covg.thres(dm)
 \author{
 Fabian Mueller
 }
-

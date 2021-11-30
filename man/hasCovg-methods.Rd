@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBSet-class.R
 \docType{methods}
 \name{hasCovg,RnBSet-method}
-\alias{hasCovg}
 \alias{hasCovg,RnBSet-method}
+\alias{hasCovg}
 \title{hasCovg-methods}
 \usage{
 \S4method{hasCovg}{RnBSet}(object, type = "sites")
@@ -27,4 +27,3 @@ data(small.example.object)
 hasCovg(rnb.set.example)
 }
 }
-

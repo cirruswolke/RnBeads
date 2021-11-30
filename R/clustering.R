@@ -45,7 +45,6 @@ AGGLOMERATIONS <- c("average" = "average", "complete" = "complete", "median" = "
 #' @name RnBeadClustering-class
 #' @rdname RnBeadClustering-class
 #' @aliases initialize,RnBeadClustering-method
-#' @aliases samples,RnBeadClustering-method
 #' @author Yassen Assenov
 #' @exportClass RnBeadClustering
 setClass("RnBeadClustering",
@@ -323,8 +322,11 @@ rnb.section.clustering.add.heatmap <- function(report, X, fname, cluster.rows, c
 	attr(cresult, "class") <- "hclust"
 	cresult <- as.dendrogram(cresult)
 
+	meth.colors <- get.methylation.color.panel()
+	meth.breaks <- seq(0, 1, length.out = length(meth.colors) + 1L)
 	heatmap.parameters <- list(x = X, Rowv = FALSE, Colv = cresult, dendrogram = "column", scale = "none",
-		col = get.methylation.color.panel(), trace = "none")
+		breaks = meth.breaks, col = meth.colors, trace = "none",
+		density.info = "density", key.title = NA, key.xlab = expression(beta), key.ylab = "Density")
 	if (cluster.rows) {
 		## Plotting sites/regions, attempt to cluster rows
 		heatmap.parameters$labRow <- NA
@@ -350,10 +352,13 @@ rnb.section.clustering.add.heatmap <- function(report, X, fname, cluster.rows, c
 		heatmap.parameters$labRow <- rownames(X)
 		heatmap.parameters$margins <- c(4, 3)
 	}
+	if(any(nchar(sample.ids)>10)){
+		heatmap.parameters$margins[1] <- 10 
+	}
 	heatmap.parameters$labCol <- sample.ids
 	heatmap.parameters$RowSideColors <- locus.colors
 	heatmap.parameters$ColSideColors <- sample.colors
-	tryCatch(do.call(heatmap.2, heatmap.parameters), error = function(err) {
+	tryCatch(suppressWarnings(do.call(heatmap.2, heatmap.parameters)), error = function(err) {
 			print(rnb.message.plot("Heatmap could not be created"))
 			list()
 		}

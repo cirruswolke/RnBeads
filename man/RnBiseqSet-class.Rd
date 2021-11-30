@@ -2,16 +2,24 @@
 % Please edit documentation in R/RnBiseqSet-class.R
 \docType{class}
 \name{RnBiseqSet-class}
-\alias{RnBiseqSet}
 \alias{RnBiseqSet-class}
+\alias{RnBiseqSet}
 \alias{initialize,RnBiseqSet-method}
 \title{RnBiseqSet Class}
 \usage{
-RnBiseqSet(pheno, sites, meth, covg = NULL, assembly = "hg19",
-  target = "CpG", summarize.regions = TRUE,
+RnBiseqSet(
+  pheno,
+  sites,
+  meth,
+  covg = NULL,
+  assembly = "hg19",
+  target = "CpG",
+  summarize.regions = TRUE,
   region.types = rnb.region.types.for.analysis(assembly),
   useff = rnb.getOption("disk.dump.big.matrices"),
-  usebigff = rnb.getOption("disk.dump.bigff"), verbose = FALSE)
+  usebigff = rnb.getOption("disk.dump.bigff"),
+  verbose = FALSE
+)
 }
 \arguments{
 \item{pheno}{phenotypic data.}
@@ -45,8 +53,6 @@ an object of class RnBiseqSet
 }
 \description{
 A class for storing the DNA methylation and quality information from bisulfite sequencing experiments
-
-Wrapper function RnBiseqSet
 }
 \details{
 TBA
@@ -64,7 +70,7 @@ TBA
   \item{\code{\link[BiocGenerics]{combine}}}{Combines two datasets.}
 }
 }
+
 \author{
 Pavlo Lutsik
 }
-

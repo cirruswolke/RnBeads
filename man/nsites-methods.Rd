@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBSet-class.R
 \docType{methods}
 \name{nsites,RnBSet-method}
-\alias{nsites}
 \alias{nsites,RnBSet-method}
+\alias{nsites}
 \title{nsites-methods}
 \usage{
 \S4method{nsites}{RnBSet}(object, type = "sites")
@@ -30,4 +30,3 @@ nsites(rnb.set.example)
 \seealso{
 \code{\link[=meth,RnBSet-method]{meth}} Retrieving the matrix of methylation values
 }
-

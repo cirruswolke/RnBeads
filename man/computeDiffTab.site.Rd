@@ -2,18 +2,35 @@
 % Please edit documentation in R/differentialMethylation.R
 \name{computeDiffTab.default.site}
 \alias{computeDiffTab.default.site}
-\alias{computeDiffTab.extended.site}
 \alias{computeDiffTab.site}
+\alias{computeDiffTab.extended.site}
 \title{computeDiffTab.site}
 \usage{
-computeDiffTab.default.site(X, inds.g1, inds.g2,
+computeDiffTab.default.site(
+  X,
+  inds.g1,
+  inds.g2,
   diff.method = rnb.getOption("differential.site.test.method"),
-  paired = FALSE, adjustment.table = NULL, eps = 0.01)
+  variability.method = rnb.getOption("differential.variability.method"),
+  paired = FALSE,
+  adjustment.table = NULL,
+  eps = 0.01,
+  imputed = FALSE
+)
 
-computeDiffTab.extended.site(X, inds.g1, inds.g2,
+computeDiffTab.extended.site(
+  X,
+  inds.g1,
+  inds.g2,
   diff.method = rnb.getOption("differential.site.test.method"),
-  paired = FALSE, adjustment.table = NULL, eps = 0.01, covg = NULL,
-  covg.thres = rnb.getOption("filtering.coverage.threshold"))
+  variability.method = rnb.getOption("differential.variability.method"),
+  paired = FALSE,
+  adjustment.table = NULL,
+  eps = 0.01,
+  covg = NULL,
+  covg.thres = rnb.getOption("filtering.coverage.threshold"),
+  imputed = FALSE
+)
 }
 \arguments{
 \item{X}{Matrix on which the difference measures are calculated for every row}
@@ -27,6 +44,10 @@ computeDiffTab.extended.site(X, inds.g1, inds.g2,
     and "limma" for p-values resulting from linear modeling of the transformed beta values (M-values)
 and using techniques from expression microarray analysis employed in the \code{limma} package.}
 
+\item{variability.method}{Method to determine p-values for differential variability. Currently supported are 
+"diffVar" for the diffVar method implemented in the missMethyl bioconductor package,
+and "iEVORA".}
+
 \item{paired}{should a paired a analysis be performed. If \code{TRUE} then inds.g1 and inds.g2 should have exactly the same length and should be
 order, such that the first element of inds.g1 corresponds to the first element of inds.g2 and so on.}
 
@@ -34,6 +55,8 @@ order, such that the first element of inds.g1 corresponds to the first element o
 \code{diff.method=="limma"}}
 
 \item{eps}{Epsilon for computing quotients (avoid division by 0 by adding this value to denominator and enumerator before calculating the quotient)}
+
+\item{imputed}{flag indicating if methylation matrix was already imputed}
 
 \item{covg}{coverage information (should be NULL for disabled or of equal dimensions as X)}
 
@@ -78,4 +101,3 @@ summary(dm)
 \author{
 Fabian Mueller
 }
-

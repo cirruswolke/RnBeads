@@ -21,52 +21,64 @@ replicate.id.column	character	no	yes		NULL
 import	logical	no	no		TRUE
 import.default.data.type	character	no	no	(data.dir,idat.dir,GS.report,GEO,bed.dir,rnb.set,rnb.set.dir)	idat.dir
 import.table.separator	character	no	no		,
-import.bed.style	character	no	no	(BisSNP,Encode,EPP,bismarkCytosine,bismarkCov,custom)	BisSNP
+import.bed.style	character	no	no	(BisSNP,Encode,EPP,bismarkCytosine,bismarkCov,custom)	bismarkCov
 import.bed.columns	integer.vector	NULL	no	[1,	(chr=1,start=2,end=3,strand=6,meth=4,coverage=5)
 import.bed.frame.shift	integer	no	no		1
 import.bed.test	logical	no	no		TRUE
 import.bed.test.only	logical	no	no		FALSE
 import.skip.object.check	logical	no	no		FALSE
 import.idat.chunk.size	integer	no	yes	(1,	NULL
-import.gender.prediction	logical	no	no		TRUE
+import.idat.platform	character	no	no	(probes27,probes450,probesEPIC,probesMMBC,auto)	auto
+import.sex.prediction	logical	no	no		TRUE
 qc	logical	no	no		TRUE
 qc.boxplots	logical	no	no		TRUE
 qc.barplots	logical	no	no		TRUE
 qc.negative.boxplot	logical	no	no		TRUE
 qc.snp.heatmap	logical	no	no		TRUE
-qc.snp.distances	logical	no	no		TRUE
-qc.snp.boxplot	logical	no	no		FALSE
 qc.snp.barplot	logical	no	no		FALSE
+qc.snp.boxplot	logical	no	no		FALSE
+qc.snp.distances	logical	no	no		TRUE
+qc.snp.purity	logical	no	no		FALSE
 qc.coverage.plots	logical	no	no		FALSE
 qc.coverage.threshold.plot	integer.vector	no	yes	[1,	(1,2,3,4,5,6,7,8,9,10)
 qc.coverage.histograms	logical	no	no		TRUE
 qc.coverage.violins	logical	no	no		TRUE
 qc.sample.batch.size	integer	no	no		500
+qc.cnv	logical	no	no		FALSE
+qc.cnv.refbased	logical	no	no		FALSE
 preprocessing	logical	no	no		TRUE
 normalization	logical	no	yes		NULL
-normalization.method	character	no	no	(none,bmiq,illumina,swan,minfi.funnorm,wm.dasen,wm.nasen,wm.betaqn,wm.naten,wm.nanet,wm.nanes,wm.danes,wm.danet,wm.danen,wm.daten1,wm.daten2,wm.tost,wm.fuks,wm.swan)	swan
-normalization.background.method	character	no	no	(none,methylumi.noob,methylumi.goob)	methylumi.noob
+normalization.method	character	no	no	(none,scaling,bmiq,illumina,methylumi.illumina,swan,minfi.funnorm,wm.dasen,wm.nasen,wm.betaqn,wm.naten,wm.nanet,wm.nanes,wm.danes,wm.danet,wm.danen,wm.daten1,wm.daten2,wm.tost,wm.fuks,wm.swan)	wm.dasen
+normalization.background.method	character	no	no	(none,subtraction,methylumi.noob,methylumi.goob,enmix.oob)	none
 normalization.plot.shifts	logical	no	no		TRUE
 filtering.whitelist	character	no	yes		NULL
 filtering.blacklist	character	no	yes		NULL
 filtering.context.removal	character.vector	no	yes	(CC,CG,CAG,CAH,CTG,CTH,Other)	(CC,CAG,CAH,CTG,CTH,Other)
-filtering.snp	character	no	no	(no,3,5,any,yes)	3
-filtering.cross.reactive	logical	no	no		FALSE
-filtering.greedycut	logical	no	no		TRUE
+filtering.snp	character	no	no	(no,3,5,any,yes)	any
+filtering.cross.reactive	logical	no	no		TRUE
+filtering.greedycut	logical	no	yes		NULL
 filtering.greedycut.pvalue.threshold	double	no	no	[0,1]	0.05
 filtering.greedycut.rc.ties	character	no	no	(any,column,row)	row
-filtering.sex.chromosomes.removal	logical	no	no		FALSE
-filtering.missing.value.quantile	double	no	no	[0,1]	1
+filtering.sex.chromosomes.removal	logical	no	no		TRUE
+filtering.missing.value.quantile	double	no	no	[0,1]	0.5
 filtering.coverage.threshold	integer	no	no	[0,	5
 filtering.low.coverage.masking	logical	no	no		FALSE
 filtering.high.coverage.outliers	logical	no	no		FALSE
 filtering.deviation.threshold	double	no	no	[0,1]	0
+imputation.method	character	no	no	(none,mean.cpgs,mean.samples,random,knn,median.cpgs,median.samples)	none
 inference	logical	no	no		FALSE
+inference.genome.methylation	character	no	yes		Genome-wide methylation
 inference.targets.sva	character.vector	no	no		()
 inference.reference.methylome.column	character	no	yes		NULL
-inference.max.cell.type.markers	integer	no	no	[1,	10000
+inference.max.cell.type.markers	integer	no	yes	[1,	50000
 inference.top.cell.type.markers	integer	no	no	[1,	500
 inference.sva.num.method	character	no	no	(be,leek)	leek
+inference.age.column	character	no	no		age
+inference.age.prediction	logical	no	no		TRUE
+inference.age.prediction.training	logical	no	no		FALSE
+inference.age.prediction.predictor	character	no	yes		NULL
+inference.age.prediction.cv	logical	no	no		FALSE
+inference.immune.cells	logical	no	no		TRUE
 exploratory	logical	no	no		TRUE
 exploratory.columns	integer.vector	no	yes		NULL
 exploratory.top.dimensions	integer	no	no	[0,	0
@@ -75,25 +87,30 @@ exploratory.correlation.pvalue.threshold	double	no	no	[0,1]	0.01
 exploratory.correlation.permutations	integer	no	no	[0,	10000
 exploratory.correlation.qc	logical	no	no		TRUE
 exploratory.beta.distribution	logical	no	no		TRUE
-exploratory.intersample	logical	no	no		TRUE
-exploratory.deviation.plots	logical	no	yes		NULL
+exploratory.intersample	logical	no	yes		FALSE
+exploratory.deviation.plots	logical	no	yes		FALSE
 exploratory.clustering	character	no	no	(all,none,top)	all
 exploratory.clustering.top.sites	integer.vector	no	no	[1,	(1000)
 exploratory.clustering.heatmaps.pdf	logical	no	no		FALSE
-exploratory.region.profiles	character.vector	no	yes		(genes,promoters,cpgislands)
+exploratory.region.profiles	character.vector	no	yes		()
 exploratory.gene.symbols	character.vector	no	yes		NULL
 exploratory.custom.loci.bed	character	no	yes		NULL
 differential	logical	no	no		TRUE
 differential.site.test.method	character	no	no	(limma,ttest,refFreeEWAS)	limma
+differential.variability	logical	no	no		FALSE
+differential.variability.method	character	no	no	(diffVar,iEVORA)	diffVar
 differential.permutations	integer	no	no	[0,	0
 differential.comparison.columns	integer.vector	no	yes		NULL
 differential.comparison.columns.all.pairwise	integer.vector	no	yes		NULL
 covariate.adjustment.columns	integer.vector	no	yes		NULL
-differential.adjustment.sva	logical	no	no		TRUE
-differential.adjustment.celltype	logical	no	no		TRUE
-differential.enrichment	logical	no	no		FALSE
-export.to.bed	logical	no	no		TRUE
-export.to.trackhub	character.vector	no	yes	(bigBed,bigWig)	(bigBed,bigWig)
+differential.adjustment.sva	logical	no	no		FALSE
+differential.adjustment.celltype	logical	no	no		FALSE
+differential.enrichment.go	logical	no	no		FALSE
+differential.enrichment.lola	logical	no	no		FALSE
+differential.enrichment.lola.dbs	character.vector	no	yes		(${LOLACore})
+differential.report.sites	logical	no	no		TRUE
+export.to.bed	logical	no	no		FALSE
+export.to.trackhub	character.vector	no	yes	(bigBed,bigWig)	()
 export.to.csv	logical	no	no		FALSE
 export.to.ewasher	logical	no	no		FALSE
 export.types	character.vector	no	yes		(sites)
@@ -104,7 +121,7 @@ logging.disk	logical	no	no		FALSE
 logging.exit.on.error	logical	no	no		FALSE
 distribution.subsample	integer	no	no	[0,	1000000
 disk.dump.big.matrices	logical	no	no		TRUE
-disk.dump.bigff	logical	no	no		FALSE
+disk.dump.bigff	logical	no	no		TRUE
 disk.dump.bigff.finalizer	character	no	no	(delete,close)	delete
 enforce.memory.management	logical	no	no		FALSE
 enforce.destroy.disk.dumps	logical	no	no		FALSE

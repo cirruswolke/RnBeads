@@ -25,4 +25,3 @@ Extracts all control probe types in the HumanMethylation450 assay.
 \author{
 Pavlo Lutsik
 }
-

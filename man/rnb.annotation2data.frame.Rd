@@ -30,4 +30,3 @@ head(rnb.annotation2data.frame(rnb.get.annotation("probes450")))
 \author{
 Yassen Assenov
 }
-

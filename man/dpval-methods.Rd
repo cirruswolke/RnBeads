@@ -2,11 +2,11 @@
 % Please edit documentation in R/RnBeadSet-class.R
 \docType{methods}
 \name{dpval,RnBeadSet-method}
-\alias{dpval}
 \alias{dpval,RnBeadSet-method}
+\alias{dpval}
 \title{dpval-methods}
 \usage{
-\S4method{dpval}{RnBeadSet}(object, type = "sites", row.names = FALSE)
+\S4method{dpval}{RnBeadSet}(object, type = "sites", row.names = FALSE, i = NULL, j = NULL)
 }
 \arguments{
 \item{object}{\code{\linkS4class{RnBeadSet}} or \code{\linkS4class{RnBeadRawSet}} object}
@@ -16,6 +16,10 @@ site is returned. Otherwise should be one of region types for for which the summ
 p-values are available}
 
 \item{row.names}{Flag indicating of row names are to be generated in the result.}
+
+\item{i}{Indices of sites/regions to be retrieved. By default (\code{NULL}), all will be retrieved.}
+
+\item{j}{Indices of samples to be retrieved. By default (\code{NULL}), all will be retrieved.}
 }
 \value{
 detection p-values available for the dataset in the form of a \code{matrix}.
@@ -31,4 +35,3 @@ dp<-dpval(rnb.set.example, row.names=TRUE)
 head(dp)
 }
 }
-

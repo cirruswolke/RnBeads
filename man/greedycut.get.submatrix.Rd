@@ -4,8 +4,11 @@
 \alias{greedycut.get.submatrix}
 \title{greedycut.get.submatrix}
 \usage{
-greedycut.get.submatrix(mm, filter.info, it.num = nrow(filter.info) -
-  as.integer(1))
+greedycut.get.submatrix(
+  mm,
+  filter.info,
+  it.num = nrow(filter.info) - as.integer(1)
+)
 }
 \arguments{
 \item{mm}{Data \code{matrix} to be filtered.}
@@ -24,4 +27,3 @@ Filters a data matrix executing the given number of iterations of Greedycut.
 \author{
 Yassen Assenov
 }
-

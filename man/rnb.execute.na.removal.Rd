@@ -4,8 +4,10 @@
 \alias{rnb.execute.na.removal}
 \title{rnb.execute.na.removal}
 \usage{
-rnb.execute.na.removal(rnb.set,
-  threshold = rnb.getOption("filtering.missing.value.quantile"))
+rnb.execute.na.removal(
+  rnb.set,
+  threshold = rnb.getOption("filtering.missing.value.quantile")
+)
 }
 \arguments{
 \item{rnb.set}{Methylation dataset as an object of type inheriting \code{\linkS4class{RnBSet}}.}
@@ -20,6 +22,7 @@ List of four or five elements:
           \item{\code{"filtered"}}{\code{integer} vector storing the indices (in beta matrix of the unfiltered
                dataset) of all removed sites.}
 			 \item{\code{"threshold"}}{Copy of \code{threshold}.}
+			 \item{\code{"naCounts"}}{Vector storing the number of NAs per site}
         }
 }
 \description{
@@ -36,4 +39,3 @@ identical(meth(rnb.set.example), meth(rnb.set.filtered)) # TRUE
 \author{
 Yassen Assenov
 }
-

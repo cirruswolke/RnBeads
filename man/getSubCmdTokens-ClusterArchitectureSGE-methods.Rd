@@ -5,9 +5,17 @@
 \alias{getSubCmdTokens,ClusterArchitectureSGE-method}
 \title{getSubCmdTokens-methods}
 \usage{
-\S4method{getSubCmdTokens}{ClusterArchitectureSGE}(object, cmd.tokens, log,
-  job.name = "", res.req = character(0), depend.jobs = character(0),
-  sub.binary = TRUE, quote.cmd = TRUE)
+\S4method{getSubCmdTokens}{ClusterArchitectureSGE}(
+  object,
+  cmd.tokens,
+  log,
+  job.name = "",
+  res.req = character(0),
+  depend.jobs = character(0),
+  sub.binary = TRUE,
+  quote.cmd = TRUE,
+  queue = NULL
+)
 }
 \arguments{
 \item{object}{\code{\linkS4class{ClusterArchitectureSGE}} object}
@@ -26,6 +34,8 @@ the names should specify the resource name}
 \item{sub.binary}{treat the command as binary (see \code{-b} flag of \code{qsub} of the SGE documentation)}
 
 \item{quote.cmd}{Flag indicating whether the submitted cammed should also be wrapped in quotes}
+
+\item{queue}{The name of the queue to submit jobs to}
 }
 \value{
 A character vector containing the submission command tokens
@@ -48,4 +58,3 @@ getSubCmdTokens(arch,c("Rscript","my_great_script.R"),"my_logfile.log")
 \author{
 Fabian Mueller
 }
-

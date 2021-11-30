@@ -22,7 +22,7 @@ RNBEADSET.SLOTNAMES<-c("pval.sites")
 #' \describe{
 #'  \item{Loading from files}{Dataset can be loaded from text or binary files. See the function
 #'       \code{\link{rnb.execute.import}} for more details.}
-#'  \item{Downloading from GEO}{See the function \code{\link{read.geo}} for details.}
+#'  \item{Downloading from GEO}{See the function \code{\link{rnb.read.geo}} for details.}
 #'  \item{Converting from \code{MethyLumiSet}}{...}
 #' } 
 #'
@@ -141,7 +141,7 @@ setMethod("initialize", "RnBeadSet",
 					meth.sites=meth.sites,
 					covg.sites=covg.sites,
 					status=status,
-					assembly="hg19",
+					assembly=ifelse(target=="probesMMBC", "mm10", "hg19"),
 					target=target
 			)
 			
@@ -178,7 +178,7 @@ RnBeadSet<-function(
 		qc = NULL,
 		platform = "450k",
 		summarize.regions = TRUE,
-		region.types = rnb.region.types.for.analysis("hg19"),
+		region.types = rnb.region.types.for.analysis(ifelse(platform=="MMBC", "mm10", "hg19")),
 		useff=rnb.getOption("disk.dump.big.matrices")
 		){
 		
@@ -245,7 +245,7 @@ RnBeadSet<-function(
 			assembly <- "hg19"
 		} else if(platform == "27k"){ 
 			target <- "probes27"
-			assembly <- "h19"
+			assembly <- "hg19"
 		}else{
 			stop("Invalid value for platform")
 		}
@@ -340,6 +340,9 @@ rnb.show.rnbeadset <- function(object) {
 		}else{
 			cat(sprintf("\tBackground correction was performed with method %s.\n", object@status$background))			
 		}
+	}
+	if(isImputed(object)){
+	  cat("\tData set was imputed.\n")
 	}
 }
 
@@ -439,7 +442,8 @@ if(!isGeneric("dpval")) setGeneric('dpval',
 #' 						site is returned. Otherwise should be one of region types for for which the summarized 
 #' 						p-values are available
 #' @param row.names	    Flag indicating of row names are to be generated in the result.
-
+#' @param i     	    Indices of sites/regions to be retrieved. By default (\code{NULL}), all will be retrieved.
+#' @param j     	    Indices of samples to be retrieved. By default (\code{NULL}), all will be retrieved.
 #' 
 #' @return detection p-values available for the dataset in the form of a \code{matrix}.
 #'
@@ -455,10 +459,11 @@ if(!isGeneric("dpval")) setGeneric('dpval',
 #' dp<-dpval(rnb.set.example, row.names=TRUE)
 #' head(dp)
 #' }
-setMethod("dpval", signature(object="RnBeadSet"),
-          function(object, type="sites", row.names=FALSE){
-			  get.dataset.matrix(object, type, row.names, object@pval.sites, object@meth.regions)
-          })
+setMethod("dpval", signature(object = "RnBeadSet"),
+	function(object, type = "sites", row.names = FALSE, i = NULL, j = NULL) {
+		get.dataset.matrix(object, type, row.names, object@pval.sites, object@meth.regions, i, j)
+	}
+)
 
 ########################################################################################################################
   
@@ -510,7 +515,7 @@ if (!isGeneric("remove.sites")) {
 #' @export
 setMethod("remove.sites", signature(object = "RnBeadSet"),
 	function(object, probelist, verbose = TRUE) {
-		inds <- get.i.vector(probelist, rownames(object@meth.sites))
+		inds <- get.i.vector(probelist, rownames(object@sites))
 		if (length(inds) != 0) {
 			if (!is.null(object@pval.sites)) {
 				if(object@status$disk.dump){
@@ -731,7 +736,7 @@ combine.sites<-function(sites1, sites2){
 		
 }
 ########################################################################################################################
-match.probes2annotation<-function(probes, target="probes450", assembly="h19"){
+match.probes2annotation<-function(probes, target="probes450", assembly="hg19"){
 	
 	if(!is.character(probes)){
 		stop("wrong value for probes")
@@ -743,12 +748,18 @@ match.probes2annotation<-function(probes, target="probes450", assembly="h19"){
 	
 	dupl<-duplicated(probes)
 	if(any(dupl)){
-		stop(sprintf("some supplied probe IDs are duplicated: e.g. %s"), paste(probes[which(dupl)[1:3]],collapse=", ")) 
+		stop(sprintf("some supplied probe IDs are duplicated: e.g. %s", paste(probes[which(dupl)[1:3]],collapse=", ")))
 	}
 		
 	## Load probe annotation table
 	probe.annotation <- rnb.get.annotation(target, assembly)
-	
+    ### TODO: remove after fixing the annotation
+    if(target=="probesMMBC"){
+        probe.annotation<-endoapply(probe.annotation, function(ag) {
+                    names(ag)<-mcols(ag)[["ID"]]
+                    mcols(ag)[["Context"]]<-factor(c("cg"="CG", "ch"="CH", "rs"="Other")[substr(names(ag), 1,2)], levels=c("CG", "CH", "Other"))
+                    return(ag)})
+    }
 	## Construct the matrix of site indices
 	#x.data<-GenomicRanges::as.data.frame(probe.annotation)
 	
@@ -764,7 +775,7 @@ match.probes2annotation<-function(probes, target="probes450", assembly="h19"){
 		warn<-"Some of the supplied probes are missing annotation and will be discarded"
 		rnb.warning(warn)			
 	}
-	
+	    
 	x.data<-rnb.annotation2data.frame(probe.annotation)
 	rownames(x.data)<-annotated.probes
 	rm(annotated.probes)
@@ -774,7 +785,7 @@ match.probes2annotation<-function(probes, target="probes450", assembly="h19"){
 	p.infos <- lapply(unique(x.data[["Chromosome"]]), 
 			function(chr) {
 				chr.map<-which(x.data[["Chromosome"]]==chr)
-				chr.ids<-x.data[chr.map,"ID"]
+				chr.ids<-x.data[chr.map, "ID"]
 				table<-match(probes, chr.ids)
 				present<-!is.na(table)
 				po<-order(table[present])

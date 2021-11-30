@@ -4,8 +4,15 @@
 \alias{createReportPlot}
 \title{createReportPlot}
 \usage{
-createReportPlot(fname, report = NULL, width = 7, height = 7,
-  create.pdf = TRUE, low.png = 100L, high.png = 0L)
+createReportPlot(
+  fname,
+  report = NULL,
+  width = 7,
+  height = 7,
+  create.pdf = TRUE,
+  low.png = 100L,
+  high.png = 0L
+)
 }
 \arguments{
 \item{fname}{\code{character} vector with one element storing the name of the output file, without the
@@ -56,11 +63,10 @@ off(plot.image)
 }
 
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{pdf}} for manually initializing a graphics device; \code{\linkS4class{Report}} for other
   functions adding contents to an HTML report
 }
-
+\author{
+Yassen Assenov
+}

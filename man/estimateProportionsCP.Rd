@@ -2,10 +2,16 @@
 % Please edit documentation in R/cellTypeAdjustment.R
 \name{estimateProportionsCP}
 \alias{estimateProportionsCP}
-\title{estimatePropotionsCP}
+\title{estimateProportionsCP}
 \usage{
-estimateProportionsCP(rnb.set, cell.type.column, n.most.variable = NA,
-  n.markers = 500L, constrained = TRUE, full.output = FALSE)
+estimateProportionsCP(
+  rnb.set,
+  cell.type.column,
+  n.most.variable = NA,
+  n.markers = 500L,
+  constrained = TRUE,
+  full.output = FALSE
+)
 }
 \arguments{
 \item{rnb.set}{RnBSet object}
@@ -15,8 +21,9 @@ in the RnBSet object sample annotation table
 which gives the mapping to reference cell type
 samples}
 
-\item{n.most.variable}{singleton integer specifying how many top variable CpGs should be used for marker selection.
-If \code{NA} all the sites are considered (take into account extended computation times).}
+\item{n.most.variable}{Singleton integer specifying how many top variable CpGs should be used for marker selection.
+   If this option is set to \code{NA} or \code{NULL}, all sites are considered. Please take
+into account the extended computation time in such a case.}
 
 \item{n.markers}{singleton integer specifying how many CpGs should
 be used as markers for fitting the projection model}
@@ -34,14 +41,16 @@ a matrix of estimated cell type contributions (samples times cell types) or a li
 Estimates cell type proportions using the constrained projection method from Houseman et al. [1]
 }
 \details{
-The column specified by \code{cell.type.column} should give 
-assignment of each reference sample to a cell type and missing values for 
-all the target samples. First the marker selection model is fit to estimate association of each CpG 
-with the given reference cell types (first expression in eq. (1) of [1]) . The strength of association is expressed as an F-statistic.
-Since fitting the marker selection model to all CpGs can take a lot of time, one can limit the marker search only to variable CpG positions  
-by setting \code{n.most.variable} to non-\code{NA} positive integer. The CpGs will be ranked by decreasing across-sample variance in the 
-reference data set and \code{n.most.variable} will be taken to fit the marker selection model. 
-Coefficients of the fit together with the F-statistic value for each CpG are returned in case \code{full.output} is \code{TRUE}. 
+This is a minimally customized implementation of the method by Houseman et al. [1] based on the orginial code kindly provided by 
+Andres Houseman. Note that RnBeads does not provide any reference data sets, and the methylomes of purified cell types should be provided 
+by the user as a part of the object supplied via \code{rnb.set}. The column specified by \code{cell.type.column} should 
+give assignment of each reference methylome replicate to a cell type and missing values for all the target samples. 
+First the marker selection model is fit to estimate association of each CpG with the given reference cell types (first expression in eq. (1) of [1]). 
+The strength of association is expressed as an F-statistic.
+Since fitting the marker selection model to all CpGs can take a lot of time, one can limit the marker search only to variable CpG positions
+by setting \code{n.most.variable} to non-\code{NA} positive integer. The CpGs will be ranked using across-sample variance in the 
+reference data set and \code{n.most.variable} will be taken to fit the marker selection model.
+Coefficients of the fit, together with the F-statistic value for each CpG, are returned in case \code{full.output} is \code{TRUE}. 
 Thereafter, \code{n.markers} are selected as true quantitative markers and the projection model (eq. [2]) is fit to estimate contributions of each cell type.
 Depending on the value of \code{constrained} the returned coefficients can be either raw or enforced to attain values between 0 and 1 with within-sample sum 
 less or equal to 1.
@@ -49,12 +58,11 @@ less or equal to 1.
 \note{
 Requires the package \pkg{nlme}.
 }
-\author{
-Pavlo Lutsik
-}
 \references{
 1. Houseman, Eugene and Accomando, William and Koestler, Devin and Christensen, Brock and Marsit, Carmen and Nelson, 
 	Heather and Wiencke, John and Kelsey, Karl. DNA methylation arrays as surrogate measures of cell mixture distribution. 
  BMC Bioinformatics 2012, 13:86
 }
-
+\author{
+Pavlo Lutsik
+}

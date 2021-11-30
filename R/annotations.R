@@ -129,6 +129,23 @@ HM27.CONTROL.TARGETS<-c(
 	"pUC19" = "pUC19",
 	"phiX174" = "phiX174")
 
+MMBC.CONTROL.TARGETS <- c(
+        "bisulfite conversion I" = "BISULFITE CONVERSION I",
+        "bisulfite conversion II" = "BISULFITE CONVERSION II",
+        "extension" = "EXTENSION",
+        "hybridization" = "HYBRIDIZATION",
+        "negative control" = "NEGATIVE",
+        "non-polymorphic" = "NON-POLYMORPHIC",
+        "norm A" = "NORM_A",
+        "norm C" = "NORM_C",
+        "norm G" = "NORM_G",
+        "norm T" = "NORM_T",
+        "restoration" = "RESTORATION",
+        "specificity I" = "SPECIFICITY I",
+        "specificity II" = "SPECIFICITY II",
+        "staining" = "STAINING",
+        "target removal" = "TARGET REMOVAL")
+
 ## Sample-independent control probe types (subset of CONTROL.TARGETS)
 CONTROL.TARGETS.SAMPLE.INDEPENDENT <- c("STAINING", "HYBRIDIZATION", "TARGET REMOVAL", "EXTENSION")
 
@@ -204,20 +221,52 @@ rnb.sort.regions <- function(x) {
 
 ########################################################################################################################
 
+#' Get chromosome sizes
+#' 
+#' Gets the lengths of the supported chromosomes for the given genome assembly.
+#' 
+#' @param assembly   Genome assembly of interest. Must be one of \code{\link{rnb.get.assemblies}}.
+#' @param file.chrom Optionally, the name of the text file to save the chromosome lengths to. If this file exists, it
+#'                   will be overwritten.
+#' @return Invisibly, a named \code{integer} vector listing the lengths, in base pairs, of all supported chromosomes.
+#' @author Yassen Assenov
+#' @noRd
+rnb.chromosome.lengths <- function(assembly, file.chrom = NULL) {
+	a.table <- NULL
+	if (exists(assembly, .rnb.annotations, inherits = FALSE)) {
+		a.table <- get(assembly, .rnb.annotations, inherits = FALSE)[["sites"]]
+		if (length(a.table) == 0) {
+			a.table <- NULL
+		} else {
+			a.table <- a.table[[1]]
+		}
+	}
+	if (is.null(a.table)) {
+		a.table <- rnb.get.annotation(assembly = assembly)
+	}
+	c.lengths <- seqlengths(a.table)
+	if (!is.null(file.chrom)) {
+		write(paste0(names(c.lengths), "\t", c.lengths), file.chrom, sep = "\t")
+	}
+	invisible(c.lengths)
+}
+
+########################################################################################################################
+
 #' rnb.load.bed
 #'
 #' Loads a BED file into a \code{data.frame} with fixed column names. The file contents is validated for structure
 #' (at least 3 columns), as well as for integer values in columns 2 and 3.
 #'
 #' @param fname BED file to load.
-#' @return \code{data.frame} with at least 3 and at most 6 columns. The column names are: \code{"chromosome"},
-#'         \code{"start"}, \code{"end"}, \code{"id"}, \code{"score"} and \code{"strand"}. Columns after the sixth one,
+#' @return \code{data.frame} with at least 3 and at most 6 columns. The column names are: \code{"Chromosome"},
+#'         \code{"Start"}, \code{"End"}, \code{"id"}, \code{"score"} and \code{"strand"}. Columns after the sixth one,
 #'         if present, are dropped.
 #'
 #' @author Yassen Assenov
 #' @noRd
 rnb.load.bed <- function(fname) {
-	BED.COLUMNS <- c("chromosome", "start", "end", "id", "score", "strand")
+	BED.COLUMNS <- c("Chromosome", "Start", "End", "id", "score", "strand")
 	tbl <- tryCatch(suppressWarnings(read.delim(fname, header = FALSE, quote = "", comment.char = "#",
 				stringsAsFactors = FALSE, na.strings = "")), error = function(e) { e })
 	if (inherits(tbl, "error")) {
@@ -348,8 +397,8 @@ append.cpg.stats <- function(genome.data, regionlist) {
 #'
 #' @author Yassen Assenov
 #' @export
-data.frame2GRanges <- function(dframe, ids = rownames(dframe), chrom.column = "chromosome", start.column = "start",
-	end.column = "end", strand.column = NULL, assembly = "hg19", sort.result = TRUE) {
+data.frame2GRanges <- function(dframe, ids = rownames(dframe), chrom.column = "Chromosome", start.column = "Start",
+	end.column = "End", strand.column = NULL, assembly = "hg19", sort.result = TRUE) {
 	if (is.character(chrom.column)) { chrom.column <- which(colnames(dframe) == chrom.column) }
 	if (is.character(start.column)) { start.column <- which(colnames(dframe) == start.column) }
 	if (is.character(end.column)) { end.column <- which(colnames(dframe) == end.column) }
@@ -409,9 +458,10 @@ load.annotations <- function(assembly = NULL, sites = NULL) {
 				return(invisible(FALSE))
 			}
 		}
-		tryCatch(load(system.file(paste0("data/", fname), package = pname), envir = .rnb.annotations),
+		fp <- system.file(file.path("data", fname), package=pname)
+		tryCatch(load(fp, envir = .rnb.annotations),
 			error = function(e) {
-				stop(paste0("Internal error in ", pname, ": loading required file", fname, "failed"))
+				stop(paste0("Internal error in ", pname, ": loading required file '", fp, "' failed"))
 			}
 		)
 		invisible(TRUE)
@@ -419,7 +469,7 @@ load.annotations <- function(assembly = NULL, sites = NULL) {
 
 	if (!is.null(assembly)) {
 		updated <- character()
-		if (!exists(assembly, where = .rnb.annotations)) {
+		if (!exists(assembly, where = .rnb.annotations, inherits = F)) {
 			## Add scaffold for sites, probes and control probes
 			if (!load.f(paste0(assembly, ".RData"))) {
 				return(FALSE)
@@ -484,9 +534,9 @@ load.annotations <- function(assembly = NULL, sites = NULL) {
 			for (a.name in updated) {
 				.rnb.annotations[[assembly]][["lengths"]][, a.name] <- 0L
 				if (a.name %in% names(genome.info$regions)) {
-					a.lengths <- elementLengths(genome.info$regions[[a.name]])
+					a.lengths <- elementNROWS(genome.info$regions[[a.name]])
 				} else { # a.name %in% names(genome.info$sites)
-					a.lengths <- elementLengths(genome.info$sites[[a.name]])
+					a.lengths <- elementNROWS(genome.info$sites[[a.name]])
 				}
 				.rnb.annotations[[assembly]][["lengths"]][names(a.lengths), a.name] <- a.lengths
 			}
@@ -535,7 +585,7 @@ rnb.update.annotation.infos <- function(type, assembly) {
 	CHROMOSOMES <- names(.rnb.annotations[[assembly]][['CHROMOSOMES']])
 	a.lengths.full <- rep.int(0L, length(CHROMOSOMES))
 	names(a.lengths.full) <- CHROMOSOMES
-	a.lengths <- elementLengths(.rnb.annotations[[assembly]][["regions"]][[type]])
+	a.lengths <- elementNROWS(.rnb.annotations[[assembly]][["regions"]][[type]])
 	a.lengths.full[names(a.lengths)] <- a.lengths
 	i.type <- which(colnames(.rnb.annotations[[assembly]][["lengths"]]) == type)
 	if (length(i.type) == 0) {
@@ -584,7 +634,14 @@ rnb.annotation.size <- function(type = "CpG", assembly = "hg19") {
 	if (!(type %in% colnames(.rnb.annotations[[assembly]][["lengths"]]))) {
 		stop("unsupported annotation type")
 	}
-	.rnb.annotations[[assembly]][["lengths"]][, type]
+	res<-.rnb.annotations[[assembly]][["lengths"]][, type]
+    if(type=="probesMMBC"){
+        annot.flagged<-rnb.get.annotation("flaggedMMBC", assembly)
+        annot.rs.size<-sapply(annot.flagged, function (fa) length(grep("rs", names(fa))))
+        annot.rs.size<-annot.rs.size[names(res)]
+        res<-res + annot.rs.size
+    }
+    return(res)
 }
 
 ########################################################################################################################
@@ -718,6 +775,16 @@ rnb.get.annotation <- function(type = "CpG", assembly = "hg19") {
 	} else {
 		stop("unsupported annotation type")
 	}
+    # temporary workaround for rs probes on mouse array
+    if(assembly=="mm10" && type=="probesMMBC"){
+        load.annotations(assembly, "flaggedMMBC")
+        probe.annotation.flagged<-rnb.get.annotation("flaggedMMBC", assembly)
+        probe.annotation.flagged<-probe.annotation.flagged[names(result)]
+        probe.annotation.flagged.rs<-endoapply(probe.annotation.flagged, function(ag) ag[grep("rs", names(ag))])
+        result<-pc(result, probe.annotation.flagged.rs)
+        result<-endoapply(result, function(ag) sort(ag, ignore.strand=TRUE))
+    }
+    
 	return(result)
 }
 
@@ -733,7 +800,7 @@ rnb.get.annotation <- function(type = "CpG", assembly = "hg19") {
 #'                    annotation tables of CpG dinucleotides, and Infinium methylation and control probes, respectively.
 #' @param regions     BED file defining regions (see \emph{Details}). Alternatively, the value of this parameter can be
 #'                    a table of genomic regions in the form of a \code{\link{data.frame}}, containing at least the
-#'                    following three columns - \code{"chromosome"}, \code{"start"} and \code{"end"} (notice the lower
+#'                    following three columns - \code{"Chromosome"}, \code{"Start"} and \code{"End"} (notice the upper
 #'                    case). The \code{"chromosome"} column must be a \code{character} or \code{factor} vector that
 #'                    lists chromosome names. The \code{"start"} and \code{"end"} columns are expected to contain
 #'                    genomic positions as \code{integer}s. The row names of this \code{data.frame} are used as region
@@ -786,9 +853,9 @@ rnb.set.annotation <- function(type, regions, description = NULL, assembly = "hg
 		}
 		regions <- rnb.load.bed(regions)
 	}
-	if (!(ncol(regions) >= 3 && all(c("chromosome", "start", "end") %in% colnames(regions)) &&
-			(is.character(regions[["chromosome"]]) || is.factor(regions[["chromosome"]])) &&
-			is.integer(regions[["start"]]) && is.integer(regions[["end"]]))) {
+	if (!(ncol(regions) >= 3 && all(c("Chromosome", "Start", "End") %in% colnames(regions)) &&
+			(is.character(regions[["Chromosome"]]) || is.factor(regions[["Chromosome"]])) &&
+			is.integer(regions[["Start"]]) && is.integer(regions[["End"]]))) {
 		stop("invalid format for regions")
 	}
 	if (!is.null(description)) {
@@ -807,7 +874,7 @@ rnb.set.annotation <- function(type, regions, description = NULL, assembly = "hg
 	}
 
 	## Construct list of region annotation tables with sorted coordinates, one per chromosome
-	strand.column <- which(colnames(regions) == "strand")
+	strand.column <- which(colnames(regions) == "Strand")
 	if (length(strand.column) == 0) {
 		strand.column <- NULL
 	}
@@ -847,16 +914,14 @@ rnb.set.annotation <- function(type, regions, description = NULL, assembly = "hg
 rnb.set.annotation.and.cpg.stats <- function(type, regions, description = NULL, assembly = "hg19"){
 	## FIXME: Incorporate this function as a parameter in rnb.set.annotation
 	GENOME <- .rnb.annotations[[assembly]][['GENOME']]
-	if (!suppressWarnings(suppressPackageStartupMessages(require(GENOME, character.only = TRUE)))) {
-		stop(paste("missing required package"), GENOME)
-	}
+	rnb.require(GENOME)
 	genome.data <- get(GENOME)
 	regs.gr <- data.frame2GRanges(regions, chrom.column = "Chromosome", start.column = "Start",
 		end.column = "End", strand.column = "Strand", assembly = assembly)
 	regs.grl <- GenomicRanges::split(regs.gr, seqnames(regs.gr))
 
 	regs.grl <- append.cpg.stats(genome.data, regs.grl)
-	regs.gr <- GenomicRanges::unlist(regs.grl,use.names=FALSE)
+	regs.gr <- BiocGenerics::unlist(regs.grl,use.names=FALSE)
 
 	regs.df <- GenomicRanges::as.data.frame(regs.gr)
 	colnames(regs.df)[colnames(regs.df)=="seqnames"] <- "chromosome"
@@ -948,7 +1013,7 @@ rnb.export.annotation <- function(fname, type, assembly = "hg19", format = "bed"
 	}
 	aa <- rnb.get.annotation(type,assembly)
 	names(aa) <- NULL
-	aa <- GenomicRanges::unlist(aa)
+	aa <- BiocGenerics::unlist(aa)
 	names(aa) <- NULL
 	aa.df <- GenomicRanges::as.data.frame(aa)
 	colnames(aa.df)[colnames(aa.df)=="seqnames"] <- "chrom"
@@ -1083,6 +1148,58 @@ rnb.load.annotation <- function(fname, type) {
 	.rnb.annotations[[assembly]][["regions"]][[type]] <- regions
 	.rnb.annotations[[assembly]][["mappings"]][[type]] <- mappings[site.names.loaded]
 	rnb.update.annotation.infos(type, assembly)
+	invisible(TRUE)
+}
+
+########################################################################################################################
+
+#' rnb.load.annotation.from.db
+#'
+#' Loads a previously region annotation from the RnBeads resource database
+#'
+#' @param types  One-element \code{character} vector giving the name of the region annotation. If this annotation
+#'              is already available, it will be overwritten for the current session.
+#' @param assembly Genome assembly of interest. See \code{\link{rnb.get.assemblies}} for the list of supported genomes.
+#' @return Invisibly, \code{TRUE} if the annotation was loaded successfully; an error message if the objects in the
+#'         given file do not encode an annotation.
+#'
+#' @details
+#' This function checks whether a region annotation is present in the RnBeads resources,
+#' downloads the corresponding annotation file(s) from the and then runs \code{\link{rnb.load.annotation}}
+#' to import the annotation.
+#' 
+#' @examples
+#' \donttest{
+#' rnb.region.types() 
+#' rnb.load.annotation.from.db(c("tiling1kb", "dynamicMethZiller2013"))
+#' rnb.region.types()
+#' }
+#' 
+#' @seealso \code{\link{rnb.load.annotation}} for loading annotation from a binary file
+#' @author Fabian Mueller
+#' @export
+rnb.load.annotation.from.db <- function(types, assembly="hg19") {
+	# db.url <- "http://rnbeads.mpi-inf.mpg.de/publication/data/regiondb"
+	db.url <- "https://rnbeads.org/materials/data/regiondb"
+	if (!(is.character(types) && length(types) > 0 && (!any(is.na(types))))) {
+		stop("invalid value for types")
+	}
+	if (!(is.character(assembly) && length(assembly) == 1 && (!is.na(assembly)))) {
+		stop("invalid value for assembly")
+	}
+	for (tt in types){
+		fname <- paste0("annotation_", assembly, "_", tt, ".RData")
+		tmpFn <- tempfile(fileext=".RData")
+		success <- tryCatch(
+			download.file(paste(db.url, fname, sep="/"), destfile=tmpFn, mode = "wb"),
+			error = function(err) { return(-1) }
+		)
+		if (success != 0){
+			logger.error(c("Failed to download region set annotation:", tt))
+		}
+		rnb.load.annotation(tmpFn, tt)
+		unlink(tmpFn, recursive=FALSE) # remove temp files
+	}
 	invisible(TRUE)
 }
 
@@ -1260,6 +1377,8 @@ rnb.infinium.control.targets <- function(target="probes450") {
 		return(HM450.CONTROL.TARGETS)
 	}else if(target=="probes27"){
 		return(HM27.CONTROL.TARGETS)
+    }else if(target=="probesMMBC"){
+        return(MMBC.CONTROL.TARGETS)
 	}else{
 		stop("Unsupported platform")
 	}

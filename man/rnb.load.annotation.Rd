@@ -34,11 +34,10 @@ following short failure messages:
   \item{\code{"invalid format of mappings"}}{The specified region mapping tables are invalid.}
 }
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{rnb.save.annotation}} for saving annotation to a binary file; \code{\link{rnb.set.annotation}}
          for loading an annotation from a BED file.
 }
-
+\author{
+Yassen Assenov
+}

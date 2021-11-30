@@ -4,8 +4,11 @@
 \alias{rnb.get.directory}
 \title{rnb.get.directory}
 \usage{
-rnb.get.directory(report, dir = c("data", "images", "images-high", "pdfs"),
-  absolute = FALSE)
+rnb.get.directory(
+  report,
+  dir = c("data", "images", "images-high", "pdfs"),
+  absolute = FALSE
+)
 }
 \arguments{
 \item{report}{Report of interest.}
@@ -28,10 +31,9 @@ report <- createReport("example.html", "Example", init.configuration = TRUE)
 rnb.get.directory(report, "data")
 }
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\linkS4class{Report}} for functions adding contents to an HTML report
 }
-
+\author{
+Yassen Assenov
+}

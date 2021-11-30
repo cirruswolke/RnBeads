@@ -15,4 +15,3 @@ has.covariates.ct(rnb.set)
 \description{
 Checks whether the given \code{RnBSet} object contains cell type contribution estimates
 }
-

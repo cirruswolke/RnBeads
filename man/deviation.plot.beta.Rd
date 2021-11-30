@@ -34,4 +34,3 @@ Creates a deviation plot based on the methylation beta values of a population.
 \author{
 Yassen Assenov
 }
-

@@ -2,8 +2,8 @@
 % Please edit documentation in R/RnBDiffMeth-class.R
 \docType{methods}
 \name{includes.sites,RnBDiffMeth-method}
-\alias{includes.sites}
 \alias{includes.sites,RnBDiffMeth-method}
+\alias{includes.sites}
 \title{includes.sites-methods}
 \usage{
 \S4method{includes.sites}{RnBDiffMeth}(object)
@@ -29,4 +29,3 @@ includes.sites(dm)
 \author{
 Fabian Mueller
 }
-

@@ -4,9 +4,15 @@
 \alias{create.densityScatter}
 \title{create.densityScatter}
 \usage{
-create.densityScatter(df2p, is.special = NULL, dens.subsample = FALSE,
-  dens.special = TRUE, sparse.points = 0.01, dens.n = 100,
-  add.text.cor = FALSE)
+create.densityScatter(
+  df2p,
+  is.special = NULL,
+  dens.subsample = FALSE,
+  dens.special = TRUE,
+  sparse.points = 0.01,
+  dens.n = 100,
+  add.text.cor = FALSE
+)
 }
 \arguments{
 \item{df2p}{\code{data.frame} to be plotted. Only the fist two columns are taken into account as
@@ -48,4 +54,3 @@ create.densityScatter(d,s)
 \author{
 Fabian Mueller
 }
-

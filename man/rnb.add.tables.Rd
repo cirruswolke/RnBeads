@@ -4,8 +4,14 @@
 \alias{rnb.add.tables}
 \title{rnb.add.tables}
 \usage{
-rnb.add.tables(report, tables, setting.names, selected.table = 1L,
-  indent = 2L, ...)
+rnb.add.tables(
+  report,
+  tables,
+  setting.names,
+  selected.table = 1L,
+  indent = 2L,
+  ...
+)
 }
 \arguments{
 \item{report}{Report to write the text to.}
@@ -29,11 +35,10 @@ The modified report.
 \description{
 Generates HTML code for a listing of tables (of which only one is visible at any moment) in the specified report.
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\link{rnb.add.table}} for adding a single table to a report; \code{\linkS4class{Report}} for other
   functions adding contents to an HTML report
 }
-
+\author{
+Yassen Assenov
+}

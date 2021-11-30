@@ -269,6 +269,9 @@ limmaP <- function(X,inds.g1,inds.g2=-inds.g1,adjustment.table=NULL,fun.conversi
 #' 				"ttest" for a two-sided Welch t-test, "refFreeEWAS" for adjusting for cell mixtures,
 #' 				and "limma" for p-values resulting from linear modeling of the transformed beta values (M-values)
 #'				and using techniques from expression microarray analysis employed in the \code{limma} package.
+#' @param variability.method Method to determine p-values for differential variability. Currently supported are 
+#' 				"diffVar" for the diffVar method implemented in the missMethyl bioconductor package,
+#' 				and "iEVORA".
 #' @param paired should a paired a analysis be performed. If \code{TRUE} then inds.g1 and inds.g2 should have exactly the same length and should be
 #' 			     order, such that the first element of inds.g1 corresponds to the first element of inds.g2 and so on.
 #' @param adjustment.table a table of variables to be adjusted for in the differential methylation test. Currently this is only supported for
@@ -276,6 +279,7 @@ limmaP <- function(X,inds.g1,inds.g2=-inds.g1,adjustment.table=NULL,fun.conversi
 #' @param eps Epsilon for computing quotients (avoid division by 0 by adding this value to denominator and enumerator before calculating the quotient)
 #' @param covg coverage information (should be NULL for disabled or of equal dimensions as X)
 #' @param covg.thres a coverage threshold
+#' @param imputed flag indicating if methylation matrix was already imputed
 #' @return a dataframe containing the following variables:
 #' \item{mean.g1}{Mean of group 1}
 #' \item{mean.g2}{Mean of group 2}
@@ -306,13 +310,14 @@ limmaP <- function(X,inds.g1,inds.g2=-inds.g1,adjustment.table=NULL,fun.conversi
 #' }
 computeDiffTab.default.site <- function(X,inds.g1,inds.g2,
 		diff.method=rnb.getOption("differential.site.test.method"),
-		paired=FALSE,adjustment.table=NULL,eps=0.01){
+		variability.method=rnb.getOption("differential.variability.method"),
+		paired=FALSE,adjustment.table=NULL,eps=0.01,imputed=FALSE){
 	if (!(diff.method %in% c("ttest","limma","refFreeEWAS"))) {
 		stop("Invalid method for differential site methylation test method")
 	}
 	# require(matrixStats)
-	tab.g1 <- X[,inds.g1]
-	tab.g2 <- X[,inds.g2]
+	tab.g1 <- X[,inds.g1,drop=FALSE]
+	tab.g2 <- X[,inds.g2,drop=FALSE]
 	if(length(inds.g1)<2) {
 		logger.info("Group 1 has less than 2 members")
 		tab.g1 <- as.matrix(tab.g1)
@@ -372,19 +377,94 @@ computeDiffTab.default.site <- function(X,inds.g1,inds.g2,
 		logger.warning("Skipping p-value computation due to insufficient sample numbers")
 	}
 	tt <- data.frame(mean.g1=mean.g1,mean.g2=mean.g2,mean.diff=mean.diff,mean.quot.log2=mean.quot.log2,diffmeth.p.val=p.vals)
+
+	if(rnb.getOption("differential.variability")){
+	  if(!imputed){
+	    X <- rnb.execute.imputation(X)
+	    tab.g1 <- X[,inds.g1,drop=FALSE]
+	    tab.g2 <- X[,inds.g2,drop=FALSE]
+	  }
+	  p.vals.var <- rep(as.double(NA),nrow(X))
+	  do.p.vals <- ncol(tab.g1) > 1 || ncol(tab.g2) > 1
+	  if (do.p.vals) {
+	    if (variability.method == "diffVar"){
+	      logger.info("Conducting differential variability using diffVar")
+	      tryCatch(
+	        p.vals.var <- diffVar(X,inds.g1,inds.g2,adjustment.table=adjustment.table,paired=paired),
+	        error = function(ee) {
+	          logger.warning(c("Could not compute p-values using diffVar:",ee$message))
+	          logger.completed()
+	        }
+	      )
+	    } else if (variability.method == "iEVORA"){
+	      logger.info("Conducting differential variability using iEVORA")
+	      if(paired){
+	        logger.warning("Cannot conduct paired variability analysis with iEVORA, changing to diffVar.")
+	        rnb.options("differential.variability.method"="diffVar")
+	        tryCatch(
+	          p.vals.var <- diffVar(X,inds.g1,inds.g2,adjustment.table=adjustment.table,paired=paired),
+	          error = function(ee) {
+	            logger.warning(c("Could not compute p-values using diffVar:",ee$message))
+	            logger.completed()
+	          }
+	        )
+	      }else{
+  	      tryCatch(
+  	        p.vals.var <- apply.iEVORA(X,inds.g1,inds.g2),
+  	        error = function(ee) {
+  	          logger.warning(c("Could not compute p-values using iEVORA:",ee$message))
+  	          logger.completed()
+  	        }
+  	      )
+	      }
+	    }
+	  } else {
+	    logger.warning("Skipping p-value computation due to insufficient sample numbers")
+	  }
+	  p.vals.is.na <- is.na(p.vals.var)
+	  if (!all(p.vals.is.na)){
+	    if (any(p.vals.is.na)){
+	      logger.info(c(sum(p.vals.is.na),"p-values are NA. They are treated as 1 in FDR adjustment"))
+	      p.vals.var[is.na(p.vals.t.na.adj)] <- 1
+	    }
+	    p.vals.var.adj <- p.adjust(p.vals.var, method = "fdr")
+	  } else {
+	    p.vals.var.adj <- rep(NA,length(p.vals.var))
+	  }
+	  
+	  var.g1 <- apply(tab.g1,1,var)
+	  var.g2 <- apply(tab.g2,1,var)
+	  
+	  if(paired){
+	    var.diff <- apply(tab.g1 - tab.g2,1,var)
+	    var.log.ratio <- apply(X,1,function(X,inds.g1,inds.g2){
+	      var((X[,inds.g1]+eps)/(X[.inds.g2]+eps))
+	    })
+	  }else{
+	    var.diff <- var.g1-var.g2
+	    var.log.ratio <- ifelse(var.g1==0|var.g2==0,1,log2(var.g1/var.g2))
+	  }
+	  neg.log10.p <- -log10(p.vals.var)
+	  neg.log10.fdr <- -log10(p.vals.var.adj)
+	  tt <- data.frame(tt,var.g1=var.g1,var.g2=var.g2,var.diff=var.diff,var.log.ratio=var.log.ratio,diffVar.p.val=p.vals.var,diffVar.p.adj.fdr=p.vals.var.adj,log10P=neg.log10.p,
+	                   log10FDR=neg.log10.fdr)
+	}
 	return(tt)
 }
 #' @rdname computeDiffTab.site
 #' @export
 computeDiffTab.extended.site <- function(X,inds.g1,inds.g2,
 		diff.method=rnb.getOption("differential.site.test.method"),
+		variability.method=rnb.getOption("differential.variability.method"),
 		paired=FALSE,adjustment.table=NULL,
-		eps=0.01,covg=NULL,covg.thres=rnb.getOption("filtering.coverage.threshold")){
+		eps=0.01,covg=NULL,covg.thres=rnb.getOption("filtering.coverage.threshold"),imputed=FALSE){
 	# require(matrixStats)
 	tt.basic <- computeDiffTab.default.site(
 		X,inds.g1=inds.g1,inds.g2=inds.g2,
-		diff.method=diff.method,paired=paired,
-		adjustment.table=adjustment.table,eps=eps
+		diff.method=diff.method,variability.method=variability.method,
+		paired=paired,
+		adjustment.table=adjustment.table,eps=eps,
+		imputed=imputed
 	)
 	tab.g1 <- X[,inds.g1]
 	tab.g2 <- X[,inds.g2]
@@ -458,7 +538,6 @@ computeDiffTab.extended.site <- function(X,inds.g1,inds.g2,
 								  covg.thresh.nsamples.g1=covg.thresh.nsamples.g1,covg.thresh.nsamples.g2=covg.thresh.nsamples.g2)
 		tt.ext <- cbind(tt.ext,tt.ext.covg)	
 	}
-
 	tt <- cbind(tt.basic,tt.ext)
 	return(tt)
 }
@@ -614,6 +693,19 @@ computeDiffTab.default.region <- function(dmtp,regions2sites,includeCovg=FALSE){
 	if (includeCovg) {
 		col.vec <- c(col.vec,c(col.id.mean.covg.g1, col.id.mean.covg.g2, col.id.covg.thresh.ns.g1, col.id.covg.thresh.ns.g2))
 	}
+	if(rnb.getOption("differential.variability")){
+	  col.id.var.g1 <- "var.g1"
+	  col.id.var.g2 <- "var.g2"
+	  col.id.diff.var <- "var.diff"
+	  col.id.quot.var <- "var.log.ratio"
+	  col.id.p.var <- "diffVar.p.val"
+	  mean.var.g1 <- rep(NA,n.regs.with.sites)
+	  mean.var.g2 <- rep(NA,n.regs.with.sites)
+	  diff.var <- rep(NA,n.regs.with.sites)
+	  quot.var <- rep(NA,n.regs.with.sites)
+	  p.vals.var <- rep(NA,n.regs.with.sites)
+	  col.vec <- c(col.vec, col.id.var.g1, col.id.var.g2, col.id.diff.var, col.id.quot.var, col.id.p.var)
+	}
 	dmt4fastProc <- dmtp[,col.vec] #not looking up the columns by name, but by index reduces runtime
 	
 	if(parallel.isEnabled()){
@@ -628,11 +720,13 @@ computeDiffTab.default.region <- function(dmtp,regions2sites,includeCovg=FALSE){
 			num.sites <- length(pids)
 			mean.num.na.g1 <- mean(subtab[,6])
 			mean.num.na.g2 <- mean(subtab[,7])
+			var.start <- 8
 			if (includeCovg){
 				mean.mean.covg.g1 <- mean(subtab[,8])
 				mean.mean.covg.g2 <- mean(subtab[,9])
 				mean.nsamples.covg.thresh.g1 <- mean(subtab[,10])
 				mean.nsamples.covg.thresh.g2 <- mean(subtab[,11])
+				var.start <- 12
 			} else {
 				mean.mean.covg.g1 <- NA
 				mean.mean.covg.g2 <- NA
@@ -643,9 +737,24 @@ computeDiffTab.default.region <- function(dmtp,regions2sites,includeCovg=FALSE){
 			res <- combineTestPvalsMeth(na.omit(subtab[,5]),correlated=TRUE)
 			p.vals <- NA
 			if (length(res)>0) p.vals <- res
+			if(rnb.getOption("differential.variability")){
+			  mean.var.g1   <- mean(subtab[,var.start],na.rm=TRUE)
+			  mean.var.g2   <- mean(subtab[,var.start+1],na.rm=TRUE)
+			  diff.var      <- mean(subtab[,var.start+2],na.rm=TRUE)
+			  quot.var      <- mean(subtab[,var.start+3],na.rm=TRUE)
+			  res <- combineTestPvalsMeth(na.omit(subtab[,var.start+4]),correlated=TRUE)
+			  p.vals.var <- NA
+			  if (length(res)>0) p.vals.var <- res
+			}else{
+			  mean.var.g1 <- NA
+			  mean.var.g2 <- NA
+			  diff.var <- NA
+			  quot.var <- NA
+			  p.vals.var <- NA
+			}
 			c(mean.g1, mean.g2, diff, quot, num.sites, mean.num.na.g1, mean.num.na.g2,
 			  mean.mean.covg.g1, mean.mean.covg.g2, mean.nsamples.covg.thresh.g1, mean.nsamples.covg.thresh.g2,
-			  p.vals)
+			  p.vals,mean.var.g1,mean.var.g2,diff.var,quot.var,p.vals.var)
 		}
 		mean.g1                      <- dm[, 1]
 		mean.g2                      <- dm[, 2]
@@ -659,7 +768,12 @@ computeDiffTab.default.region <- function(dmtp,regions2sites,includeCovg=FALSE){
 		mean.nsamples.covg.thresh.g1 <- dm[,10]
 		mean.nsamples.covg.thresh.g2 <- dm[,11]
 		p.vals                       <- dm[,12]
-		
+		mean.var.g1                  <- dm[,13]
+		mean.var.g2                  <- dm[,14]
+		diff.var                     <- dm[,15]
+		quot.var                     <- dm[,16]
+		p.vals.var                  <- dm[,17]
+
 	} else {
 		dummy <- sapply(1:n.regs.with.sites,FUN=function(i){
 			pids <- regions2sites[[i]]
@@ -673,15 +787,26 @@ computeDiffTab.default.region <- function(dmtp,regions2sites,includeCovg=FALSE){
 			num.sites[i] <<- length(pids)
 			mean.num.na.g1[i] <<- mean(subtab[,6])
 			mean.num.na.g2[i] <<- mean(subtab[,7])
+			var.start <- 8
 			if (includeCovg){
 				mean.mean.covg.g1[i] <<- mean(subtab[,8])
 				mean.mean.covg.g2[i] <<- mean(subtab[,9])
 				mean.nsamples.covg.thresh.g1[i] <<- mean(subtab[,10])
 				mean.nsamples.covg.thresh.g2[i] <<- mean(subtab[,11])
+				var.start <- 12
 			}
-					
+			
 			res <- combineTestPvalsMeth(na.omit(subtab[,5]),correlated=TRUE)
 			if (length(res)>0) p.vals[i]  <<- res
+			if(rnb.getOption("differential.variability")){
+			  mean.var.g1[i] <<- mean(subtab[,var.start],na.rm=TRUE)
+			  mean.var.g2[i] <<- mean(subtab[,var.start+1],na.rm=TRUE)
+			  diff.var[i] <<- mean(subtab[,var.start+2],na.rm=TRUE)
+			  quot.var[i] <<- mean(subtab[,var.start+3],na.rm=TRUE)
+			  res <- combineTestPvalsMeth(na.omit(subtab[,var.start+4]),correlated=TRUE)
+			  if (length(res)>0) p.vals.var[i]  <<- res
+			}
+			
 			return(TRUE)
 		})
 	}
@@ -693,13 +818,24 @@ computeDiffTab.default.region <- function(dmtp,regions2sites,includeCovg=FALSE){
 		p.vals.na.adj[is.na(p.vals.na.adj)] <- 1
 	}
 	p.vals.adj <- p.adjust(p.vals.na.adj, method = "fdr")
-
+	
 	tt <- data.frame(mean.mean.g1=mean.g1,mean.mean.g2=mean.g2,mean.mean.diff=diff,mean.mean.quot.log2=quot,comb.p.val=p.vals,comb.p.adj.fdr=p.vals.adj,
 					 num.sites=num.sites,
 					 mean.num.na.g1=mean.num.na.g1,mean.num.na.g2=mean.num.na.g2)
 	if (includeCovg){
 		tt <- cbind(tt,data.frame(mean.mean.covg.g1=mean.mean.covg.g1,mean.mean.covg.g2=mean.mean.covg.g2,
 								  mean.nsamples.covg.thresh.g1=mean.nsamples.covg.thresh.g1,mean.nsamples.covg.thresh.g2=mean.nsamples.covg.thresh.g2))
+	}
+	if(rnb.getOption("differential.variability")){
+	  p.vals.var.na.adj <- p.vals.var
+	  p.vals.var.is.na <- is.na(p.vals.var)
+	  if (any(p.vals.var.is.na)){
+	    logger.info(c(sum(p.vals.var.is.na),"p-values are NA. They are treated as 1 in FDR adjustment"))
+	    p.vals.var.na.adj[is.na(p.vals.var.na.adj)] <- 1
+	  }
+	  p.vals.var.adj <- p.adjust(p.vals.var.na.adj, method = "fdr")
+	  tt <- cbind(tt,data.frame(mean.var.g1=mean.var.g1,mean.var.g2=mean.var.g2,mean.var.diff=diff.var,
+	                            mean.var.log.ratio=quot.var,comb.p.val.var=p.vals.var,comb.p.adj.var.fdr=p.vals.var.adj))
 	}
 	rownames(tt) <- names(regions2sites)
 	return(tt)
@@ -829,11 +965,16 @@ computeDiffMeth.bin.site <- function(b,inds.g1,inds.g2,n.perm=0,...){
 	if (length(union(inds.g1,inds.g2)) != (length(inds.g1)+length(inds.g2))){
 		logger.error("Overlapping sample sets in differential methylation analysis")
 	}
-	logger.start("Computing Differential Methylation Table (Site Level)")
+	logger.start("Computing Differential Methylation Table")
 	diffmeth.tab <- computeDiffTab.extended.site(b,inds.g1=inds.g1,inds.g2=inds.g2,...)
 	diffmethTab4ranks <- extractRankingCols.site(diffmeth.tab)
 	combRank <- combinedRanking.tab(diffmethTab4ranks,rerank=FALSE)
 	diffmeth.tab$combinedRank <- combRank
+	if(rnb.getOption("differential.variability")){
+	  cols.rank.var <- cols.to.rank.site(diffmeth.tab)
+	  comb.rank.var <- combinedRanking.tab(cols.rank.var,rerank=FALSE)
+	  diffmeth.tab$combinedRank.var <- comb.rank.var
+	}
 	logger.completed()
 	if (n.perm > 0){
 		logger.start("Conducting Permutation Tests")
@@ -863,7 +1004,7 @@ computeDiffMeth.bin.site <- function(b,inds.g1,inds.g2,n.perm=0,...){
 ### @param inds.g2 column indices in \code{b} of group 2 members
 ### @param n.perm number of permutations to be performed for the ranking permutaion tests. Set to values < 1 to disable permutation tests
 ### @return blubb
-computeDiffMeth.bin.region <- function(rnbSet,dmtp,inds.g1,inds.g2,region.types=rnb.region.types(assembly(rnbSet)), ...){
+computeDiffMeth.bin.region <- function(rnbSet,dmtp,inds.g1,inds.g2,region.types=rnb.region.types.for.analysis(rnbSet), ...){
 	#sanity checks
 	if (length(union(inds.g1,inds.g2)) != (length(inds.g1)+length(inds.g2))){
 		logger.error("Overlapping sample sets in differential methylation analysis")
@@ -893,6 +1034,11 @@ computeDiffMeth.bin.region <- function(rnbSet,dmtp,inds.g1,inds.g2,region.types=
 			dmtr4ranks <- extractRankingCols.region(dmtr)
 			combRank <- combinedRanking.tab(dmtr4ranks,rerank=FALSE)
 			dmtr$combinedRank <- combRank
+			if(rnb.getOption("differential.variability")){
+			  diff.var.ranks <- cols.to.rank.region(dmtr)
+			  comb.rank.var <- combinedRanking.tab(diff.var.ranks,rerank=FALSE)
+			  dmtr$combinedRank.var <- comb.rank.var
+			}
 		}
 		diffmeth.tabs <- c(diffmeth.tabs,list(dmtr))
 		logger.status(c("Computed table for", rt))
@@ -978,60 +1124,6 @@ auto.select.rank.cut <- function(p,r,alpha=0.1){
 	return(res)
 }
 
-### create.diffMeth.bin.dens.dmp.scatter
-###
-### Helper function for addReportPlots.diffMeth.bin.site.scatter().
-### creates a plot that based on the categorization of Differentially Methylated Probes (DMPs) 
-### @author Fabian Mueller
-### @param df2p differential methylation table. Must contain the columns "mean.g1","mean.g2","isDMP"
-### @param grp1.name name as it appears on the x axis
-### @param grp2.name name as it appears on the y axis
-### @return ggplot2 plot
-create.diffMeth.bin.dens.dmp.scatter <- function(df2p,grp1.name,grp2.name){
-	n.points <- nrow(df2p)
-	#plot order: plot DMPs last
-	df2p$plotOrder <- NA
-	is.dmp <- df2p$isDMP
-	is.dmp[is.na(is.dmp)] <- FALSE
-	num.not.dmp <- sum(!is.dmp)
-	df2p$plotOrder[!is.dmp] <- seq_len(num.not.dmp)
-	df2p$plotOrder[is.dmp] <- seq((num.not.dmp+1),n.points)
-	
-	df2p <- na.omit(df2p[,c("mean.g1","mean.g2","isDMP","plotOrder")])
-	
-	df2p$color <- NA
-	if (sum(!df2p$isDMP)>1){
-		colors.nodmp <- DENS.COLORS.LOW[1]
-		tryCatch(
-			colors.nodmp <- densCols(x=df2p[!df2p$isDMP,"mean.g1"],y=df2p[!df2p$isDMP,"mean.g2"],colramp = colorRampPalette(c(DENS.COLORS.LOW[1],DENS.COLORS.HIGH[1]))),
-			error=function(ee){
-				logger.warning(c("Could not assess density colors using densCols:",ee$message))
-			}
-		)
-		df2p[!df2p$isDMP,"color"] <- colors.nodmp
-	} else if (sum(!df2p$isDMP)==1){
-		df2p[!df2p$isDMP,"color"] <- DENS.COLORS.LOW[1]
-	}
-	if (sum(df2p$isDMP)>1){
-		colors.dmp <- DENS.COLORS.LOW[2]
-		tryCatch(
-			colors.dmp   <- densCols(x=df2p[ df2p$isDMP,"mean.g1"],y=df2p[ df2p$isDMP,"mean.g2"],colramp = colorRampPalette(c(DENS.COLORS.LOW[2],DENS.COLORS.HIGH[2]))),
-			error=function(ee){
-				logger.warning(c("Could not assess density colors using densCols:",ee$message))
-			}
-		)
-		df2p[df2p$isDMP,"color"] <- colors.dmp
-	} else if (sum(df2p$isDMP)==1){
-		df2p[df2p$isDMP,"color"] <- DENS.COLORS.LOW[2]
-	}
-	
-	pp <- ggplot(df2p) + aes(mean.g1,mean.g2) +
-			labs(x=paste("mean.beta",grp1.name,sep="."),y=paste("mean.beta",grp2.name,sep=".")) + coord_fixed() +
-			geom_point(aes(color=color,order=plotOrder)) + scale_color_identity()
-	
-	return(pp)
-}
-
 ### addReportPlots.diffMeth.bin.site.scatter
 ###
 ### adds report scatterplots for differential methylation for the site level binary case to a report.
@@ -1054,7 +1146,7 @@ addReportPlots.diffMeth.bin.site.scatter <- function(report,dmt,cmpName,diffSite
 		sparse.points <- DENS.SCATTER.SPARSE.POINTS.MAX
 	}
 	dens.subsample <- FALSE
-	if (nrow(df2p) > dens.subsample){
+	if (nrow(df2p) > DENS.SCATTER.SUBSAMPLE.THRES){
 		dens.subsample <- DENS.SCATTER.SUBSAMPLE.THRES
 	}
 
@@ -1146,10 +1238,13 @@ addReportPlots.diffMeth.bin.site.volcano <- function(report,dmt,cmpName,grp1.nam
 	report.plot <- off(report.plot,handle.errors=TRUE)
 	figPlots <- c(figPlots,list(report.plot))
 	
+	#order the plotting data frame according to rank (descending order to plot best/lowest-ranking last)
+	df2p <- df2p[order(df2p[,"combinedRank"], na.last=FALSE, decreasing=TRUE),]
+
 	figName <- paste("diffMeth_site_volcano",cmpName,"quot","pVal",sep="_")
 	if (!dont.plot.p.val){
 		pp <- ggplot(df2p) + aes(mean.quot.log2,-log10(diffmeth.p.val),color=log10(combinedRank)) + scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-				geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))
+				geom_point()
 	} else {
 		pp <- rnb.message.plot("No p-value available")
 	}
@@ -1160,7 +1255,7 @@ addReportPlots.diffMeth.bin.site.volcano <- function(report,dmt,cmpName,grp1.nam
 	figName <- paste("diffMeth_site_volcano",cmpName,"diff","pValAdj",sep="_")
 	pp <- ggplot(df2p) + aes(mean.diff,-log10(diffmeth.p.adj.fdr),color=log10(combinedRank)) + 
 		  scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-		  geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))
+		  geom_point()
 	report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
 	report.plot <- off(report.plot,handle.errors=TRUE)
 	figPlots <- c(figPlots,list(report.plot))
@@ -1168,7 +1263,7 @@ addReportPlots.diffMeth.bin.site.volcano <- function(report,dmt,cmpName,grp1.nam
 	figName <- paste("diffMeth_site_volcano",cmpName,"quot","pValAdj",sep="_")
 	pp <- ggplot(df2p) + aes(mean.quot.log2,-log10(diffmeth.p.adj.fdr),color=log10(combinedRank)) + 
 		  scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-		  geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))
+		  geom_point()
 	report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
 	report.plot <- off(report.plot,handle.errors=TRUE)
 	figPlots <- c(figPlots,list(report.plot))
@@ -1176,7 +1271,7 @@ addReportPlots.diffMeth.bin.site.volcano <- function(report,dmt,cmpName,grp1.nam
 	#mean vs quotient plot
 	figName <- paste("diffMeth_site_volcano",cmpName,"diff","quotSig",sep="_")
 	pp <- ggplot(df2p) + aes(mean.diff,mean.quot.log2,color=log10(combinedRank)) + scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-			geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))
+			geom_point()
 	report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
 	report.plot <- off(report.plot,handle.errors=TRUE)
 	figPlots <- c(figPlots,list(report.plot))
@@ -1188,60 +1283,6 @@ addReportPlots.diffMeth.bin.site.volcano <- function(report,dmt,cmpName,grp1.nam
 	figPlots <- c(figPlots,list(report.plot))
 	
 	return(figPlots)
-}
-
-### create.diffMeth.bin.dens.dmr.scatter
-###
-### Helper function for addReportPlots.diffMeth.bin.region.scatter().
-### creates a plot that based on the categorization of Differentially Methylated Regions (DMRs) 
-### @author Fabian Mueller
-### @param df2p differential methylation table. Must contain the columns "mean.mean.g1","mean.mean.g2","isDMR"
-### @param grp1.name name as it appears on the x axis
-### @param grp2.name name as it appears on the y axis
-### @return ggplot2 plot
-create.diffMeth.bin.dens.dmr.scatter <- function(df2p,grp1.name,grp2.name){
-	n.points <- nrow(df2p)
-	#plot order: plot DMRs last
-	df2p$plotOrder <- NA
-	is.dmr <- df2p$isDMR
-	is.dmr[is.na(is.dmr)] <- FALSE
-	num.not.dmr <- sum(!is.dmr)
-	df2p$plotOrder[!is.dmr] <- seq_len(num.not.dmr)
-	df2p$plotOrder[is.dmr] <- seq((num.not.dmr+1),n.points)
-	
-	df2p <- na.omit(df2p[,c("mean.mean.g1","mean.mean.g2","isDMR","plotOrder")])
-	
-	df2p$color <- NA
-	if (sum(!df2p$isDMR)>1){
-		colors.nodmr <- DENS.COLORS.LOW[1]
-		tryCatch(
-			colors.nodmr <- densCols(x=df2p[!df2p$isDMR,"mean.mean.g1"],y=df2p[!df2p$isDMR,"mean.mean.g2"],colramp = colorRampPalette(c(DENS.COLORS.LOW[1],DENS.COLORS.HIGH[1]))),
-			error=function(ee){
-				logger.warning(c("Could not assess density colors using densCols:",ee$message))
-			}
-		)
-		df2p[!df2p$isDMR,"color"] <- colors.nodmr
-	} else if (sum(!df2p$isDMR)==1){
-		df2p[!df2p$isDMR,"color"] <- DENS.COLORS.LOW[1]
-	}
-	if (sum(df2p$isDMR)>1){
-		colors.dmr <- DENS.COLORS.LOW[2]
-		tryCatch(
-			colors.dmr   <- densCols(x=df2p[ df2p$isDMR,"mean.mean.g1"],y=df2p[ df2p$isDMR,"mean.mean.g2"],colramp = colorRampPalette(c(DENS.COLORS.LOW[2],DENS.COLORS.HIGH[2]))),
-			error=function(ee){
-				logger.warning(c("Could not assess density colors using densCols:",ee$message))
-			}
-		)
-		df2p[df2p$isDMR,"color"] <- colors.dmr
-			
-	} else if (sum(df2p$isDMR)==1){
-		df2p[df2p$isDMR,"color"] <- DENS.COLORS.LOW[2]
-	}
-	pp <- ggplot(df2p) + aes(mean.mean.g1,mean.mean.g2) +
-			labs(x=paste("mean.mean.beta",grp1.name,sep="."),y=paste("mean.mean.beta",grp2.name,sep=".")) + coord_fixed() +
-			geom_point(aes(color=color,order=plotOrder)) + scale_color_identity()
-	
-	return(pp)
 }
 
 ### addReportPlots.diffMeth.bin.region.scatter
@@ -1272,11 +1313,18 @@ addReportPlots.diffMeth.bin.region.scatter <- function(report,dmt,cmpName,regNam
 		al.x <- paste("mean.beta",grp1.name,sep=".")
 		al.y <- paste("mean.beta",grp2.name,sep=".")
 	}
+
+	#subsampling for the densitity estimation when there are too many regions
+	dens.subsample <- FALSE
+	if (nrow(df2p) > DENS.SCATTER.SUBSAMPLE.THRES){
+		dens.subsample <- DENS.SCATTER.SUBSAMPLE.THRES
+	}
+
 	#scatterplot based on adjusted p-value significance
 	if (is.element("comb.p.adj.fdr",colnames(dmt))){
 		df2p$isDMR <- df2p[,"comb.p.adj.fdr"] < P.VAL.CUT
 
-		pp <- create.densityScatter(df2p[,c(cn.x, cn.y)],is.special=df2p$isDMR,add.text.cor=TRUE) +
+		pp <- create.densityScatter(df2p[,c(cn.x, cn.y)],is.special=df2p$isDMR,dens.subsample=dens.subsample,add.text.cor=TRUE) +
 				labs(x=al.x, y=al.y) + coord_fixed()
 		cur.cut.name <- "fdrAdjPval"
 		figName <- paste("diffMeth_region",cmpName,regName,cur.cut.name,sep="_")
@@ -1292,7 +1340,7 @@ addReportPlots.diffMeth.bin.region.scatter <- function(report,dmt,cmpName,regNam
 		cur.cut.name <- paste("rc",i,sep="")
 		df2p$isDMR <- rrs < rc
 		
-		pp <- create.densityScatter(df2p[,c(cn.x, cn.y)],is.special=df2p$isDMR,add.text.cor=TRUE) +
+		pp <- create.densityScatter(df2p[,c(cn.x, cn.y)],is.special=df2p$isDMR,dens.subsample=dens.subsample,add.text.cor=TRUE) +
 				labs(x=al.x, y=al.y) + coord_fixed()
 		
 		figName <- paste("diffMeth_region",cmpName,regName,cur.cut.name,sep="_")
@@ -1303,7 +1351,7 @@ addReportPlots.diffMeth.bin.region.scatter <- function(report,dmt,cmpName,regNam
 	
 	if (is.integer(autoRankCut)){
 		df2p$isDMR <- dmt[,"combinedRank"] <= autoRankCut
-		pp <- create.densityScatter(df2p[,c(cn.x, cn.y)],is.special=df2p$isDMR,add.text.cor=TRUE) +
+		pp <- create.densityScatter(df2p[,c(cn.x, cn.y)],is.special=df2p$isDMR,dens.subsample=dens.subsample,add.text.cor=TRUE) +
 				labs(x=al.x, y=al.y) + coord_fixed()
 		figName <- paste("diffMeth_region",cmpName,regName,"rcAuto",sep="_")
 		report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
@@ -1349,12 +1397,15 @@ addReportPlots.diffMeth.bin.region.volcano <- function(report,dmt,cmpName,regNam
 	df2p <- dmt #data frame to plot
 	figPlots <- list()
 	dont.plot.p.val <- all(is.na(df2p[,cn.p]))
+
+	#order the plotting data frame according to rank (descending order to plot best/lowest-ranking last)
+	df2p <- df2p[order(df2p[,"combinedRank"], na.last=FALSE, decreasing=TRUE),]
 	
 	figName <- paste("diffMeth_region_volcano",cmpName,regName,"diff","pVal",sep="_")
 	if (!dont.plot.p.val){
 		pp <- ggplot(df2p) + aes_string(cn.d, paste0("-log10(",cn.p,")"), color="log10(combinedRank)") +
 			scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-			geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))#(alpha=0.3)
+			geom_point()#(alpha=0.3)
 	} else {
 		pp <- rnb.message.plot("No p-value available")
 	}
@@ -1365,7 +1416,7 @@ addReportPlots.diffMeth.bin.region.volcano <- function(report,dmt,cmpName,regNam
 	figName <- paste("diffMeth_region_volcano",cmpName,regName,"diff","pValAdj",sep="_")
 	pp <- ggplot(df2p) + aes_string(cn.d, paste0("-log10(",cn.pa,")"), color="log10(combinedRank)") +
 		scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-		geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))#(alpha=0.3)
+		geom_point()#(alpha=0.3)
 	report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
 	report.plot <- off(report.plot,handle.errors=TRUE)
 	figPlots <- c(figPlots,list(report.plot))
@@ -1374,7 +1425,7 @@ addReportPlots.diffMeth.bin.region.volcano <- function(report,dmt,cmpName,regNam
 	if (!dont.plot.p.val){
 		pp <- ggplot(df2p) + aes_string(cn.q, paste0("-log10(",cn.p,")"), color="log10(combinedRank)") +
 			scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-			geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))#(alpha=0.3)
+			geom_point()#(alpha=0.3)
 	} else {
 		pp <- rnb.message.plot("No p-value available")
 	}
@@ -1385,7 +1436,7 @@ addReportPlots.diffMeth.bin.region.volcano <- function(report,dmt,cmpName,regNam
 	figName <- paste("diffMeth_region_volcano",cmpName,regName,"quot","pValAdj",sep="_")
 	pp <- ggplot(df2p) + aes_string(cn.q, paste0("-log10(",cn.pa,")"), color="log10(combinedRank)") +
 		scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-		geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))#(alpha=0.3)
+		geom_point()#(alpha=0.3)
 	report.plot <- createReportGgPlot(pp,figName, report,create.pdf=FALSE,high.png=200)
 	report.plot <- off(report.plot,handle.errors=TRUE)
 	figPlots <- c(figPlots,list(report.plot))
@@ -1393,7 +1444,7 @@ addReportPlots.diffMeth.bin.region.volcano <- function(report,dmt,cmpName,regNam
 	figName <- paste("diffMeth_region_volcano",cmpName,regName,"diff","quotSig",sep="_")
 	pp <- ggplot(df2p) + aes_string(cn.d, cn.q, color="log10(combinedRank)") +
 		scale_color_gradientn(colours=rev(rnb.getOption("colors.gradient"))) +
-		geom_point(aes(order=plyr::desc(rank(combinedRank,ties.method="first",na.last=TRUE))))#(alpha=0.3)
+		geom_point()#(alpha=0.3)
 	report.plot <- createReportGgPlot(pp, figName, report,create.pdf=FALSE,high.png=200)
 	report.plot <- off(report.plot,handle.errors=TRUE)
 	figPlots <- c(figPlots,list(report.plot))
@@ -1409,7 +1460,7 @@ addReportPlots.diffMeth.bin.region.volcano <- function(report,dmt,cmpName,regNam
 
 ### a more robust version of summary.GOHyperGResult (from GOstats)
 robustHyperGResultSummary <- function(hgr,maxPval=0.01,htmlLinks=FALSE){
-	require(Category)
+	rnb.require("Category")
 	AMIGO_URL <- "http://amigo.geneontology.org/amigo/term/%s"
 	GOenv <- function(what) {
 		annotate::getAnnMap(what, "GO", load=TRUE, type=c("db", "env"))
@@ -1420,7 +1471,12 @@ robustHyperGResultSummary <- function(hgr,maxPval=0.01,htmlLinks=FALSE){
 	ec <- expectedCounts(hgr)[goIds]
 	cc <- geneCounts(hgr)[goIds]
 	ss <- universeCounts(hgr)[goIds]
-	goTerms <- sapply(BiocGenerics::mget(goIds, GOenv("TERM"), ifnotfound=NA), Term)
+	go.info <- BiocGenerics::mget(goIds, GOenv("TERM"), ifnotfound=NA)
+	if(any(is.na(go.info))){
+	  logger.info(paste("Invalid GOID found, removing",names(go.info[is.na(go.info)]),collapse = " "))
+	}    
+	goTerms <- rep(NA,length(cc))
+	goTerms[!is.na(go.info)] <- sapply(go.info[!is.na(go.info)],Term)
 	if (htmlLinks) {
 		goTerms <- paste0('<a href="', sprintf(AMIGO_URL, goIds), '">', goTerms, '</a>')
 	}
@@ -1635,7 +1691,7 @@ rnb.section.replicate.concordance <- function(rnbSet,replicateList,types,report)
 	return(report)
 }
 
-get.diffmeth.tab.col.desc.list.txt <- function(target, includeCovg, covgThres=-1L, comb.p.ref.txt="", skipSites=FALSE){
+get.diffmeth.tab.col.desc.list.txt <- function(target, includeCovg, hasVariability, covgThres=-1L, comb.p.ref.txt="", skipSites=FALSE){
 	targ <- "site"
 	if (target=="regions") targ <- "region"
 
@@ -1675,6 +1731,20 @@ get.diffmeth.tab.col.desc.list.txt <- function(target, includeCovg, covgThres=-1
 				paste0("covg.thresh.nsamples.g1,covg.thresh.nsamples.g2: number of samples in group 1 and 2 respectively exceeding the coverage threshold (", covgThres, ") for this ", targ,".")
 			))
 		}
+		if(hasVariability){
+		  res <- c(res, list(
+		    "Strand: strand of the site",
+		    c("var.g1, var.g2: (g1 and g2 are replaced by the corrspondinhg group used in the differentiality analysis) ",
+		      "the variances found in the groups"),
+		    "var.diff: difference in variance values between the two groups g1 and g2 (=var.g1-var.g2). In case of paired analysis, it is the variance of the pairwise differences.",
+		    "var.log.ratio: Log2 of the ratio between the variances of the two groups g1 and g2 (=log2(var.g1+eps/var.g2+eps), default eps=0.01). In case of paired analysis, it is the variance of the pairwise quotients.",
+		    "diffVar.p.val: p-value resulting from applying the selected differentially variability method (diffVar or iEVORA)",
+		    "diffVar.p.adj.fdr: FDR-adjusted p-value for differential variability",
+		    "log10P: negative decadic logarithm of the p-value",
+		    "log10FDR: negative decadic logarithmn of the FDR-adjusted p-value",
+		    "combinedRank.var: var.diff, var.log.ratio and comb.p.val.var are ranked for all sites and the higher (=worst) rank is selected. "
+		  ))
+		}
 	} else {
 		res <- c(res, list(
 			"[symbol]: associated gene symbol to the given region [only valid for gene associated regions]",
@@ -1694,6 +1764,19 @@ get.diffmeth.tab.col.desc.list.txt <- function(target, includeCovg, covgThres=-1
 			"mean.mean.covg.g1,mean.mean.covg.g2: Mean value of mean coverage values (across all samples in a group) across all sites in a region",
 			c("mean.nsamples.covg.thresh.g1,mean.nsamples.covg.thresh.g2: mean number of samples (accross all considered sites) that have a coverage larger than ", covgThres," for the site in group 1 and group 2 respectively")
 			))
+		}
+		if(hasVariability){
+		  res <- c(res, list(
+		    paste0("End: end coordinate of the ", target),
+		    "[symbol]: associated gene symbol to the given region [only valid for gene associated regions]",
+		    "[entrezID]: Entrez ID of the gene associated with the region [only valid for gene associated regions]",
+		    "mean.var.g1, mean.var.g2: Average variances found in the regions for the twp groups. g1 and g2 is replaced by the group name",
+		    "mean.var.diff: Average difference between the variances found in the two groups over the regions",
+		    "mean.var.log.ratio: Region-wise average for the log2 ratio between the variances found in the two groups",
+		    "comb.p.val.var: Combined p-value aggregating p-values of all sites in the region using a generalization of Fisher's method ",
+		    "comb.p.adj.var.fdr: FDR adjusted combined p-value",
+		    "combinedRank.var: mean.var.diff, mean.var.log.ratio and comb.p.val.var are ranked for all regions and the higher (=worst) rank is selected. "
+		  ))
 		}
 	}
 	return(res)
@@ -1724,7 +1807,7 @@ get.diffmeth.tab.col.desc.list.txt <- function(target, includeCovg, covgThres=-1
 		))
 	}
 }
-get.diffmeth.tab.annot.cols <- function(target, includeCovg, covgThres=-1L, skipSites=FALSE){
+get.diffmeth.tab.annot.cols <- function(target, includeCovg, hasVariability, covgThres=-1L, skipSites=FALSE){
 	res <- c()
 	if (target=="sites" || skipSites) {
 		res <- c("mean.g1","mean.g2","mean.diff","mean.quot.log2",
@@ -1737,6 +1820,12 @@ get.diffmeth.tab.annot.cols <- function(target, includeCovg, covgThres=-1L, skip
 							"min.covg.g1","min.covg.g2","max.covg.g1","max.covg.g2",
 							"covg.thresh.nsamples.g1","covg.thresh.nsamples.g2"))
 		}
+		if(hasVariability){
+		  res <- c(res,"var.g1","var.g2","var.diff",
+		           "var.log.ratio","diffVar.p.val",
+		           "diffVar.p.adj.fdr","log10P",
+		           "log10FDR","combinedRank.var")
+		}
 	} else {
 		res <- c("mean.mean.g1","mean.mean.g2",
 					"mean.mean.diff","mean.mean.quot.log2",
@@ -1746,10 +1835,14 @@ get.diffmeth.tab.annot.cols <- function(target, includeCovg, covgThres=-1L, skip
 			res <- c(res,c("mean.mean.covg.g1","mean.mean.covg.g2",
 									   "mean.nsamples.covg.thresh.g1","mean.nsamples.covg.thresh.g2"))
 		}
+		if(hasVariability){
+		  res <- c(res,"mean.var.g1","mean.var.g2","mean.var.diff",
+		           "mean.var.log.ratio","comb.p.val.var","comb.p.adj.var.fdr","combinedRank.var")
+		}
 	}
 	return(res)
 }
-get.diffmeth.tab.annot.colnames.pretty <- function(target, name.g1, name.g2, includeCovg, covgThres=-1L, skipSites=FALSE){
+get.diffmeth.tab.annot.colnames.pretty <- function(target, name.g1, name.g2, includeCovg, hasVariability, covgThres=-1L, skipSites=FALSE){
 	if (target=="sites" || skipSites) {
 		res <- c(paste("mean",name.g1,sep="."),paste("mean",name.g2,sep="."),"mean.diff","mean.quot.log2",
 				"diffmeth.p.val",paste("max",name.g1,sep="."),paste("min",name.g1,sep="."),paste("sd",name.g1,sep="."),
@@ -1763,6 +1856,11 @@ get.diffmeth.tab.annot.colnames.pretty <- function(target, name.g1, name.g2, inc
 										   paste("nsamples.covg",paste("thres",covgThres,sep=""),name.g1,sep="."),
 										   paste("nsamples.covg",paste("thres",covgThres,sep=""),name.g2,sep=".")))
 		}
+		if(hasVariability){
+		  res <- c(res,
+		           paste("var",name.g1,sep="."),paste("var",name.g2,sep="."),"var.diff",
+		           "var.log.ratio","diffVar.p.val","diffVar.p.adj.fdr","log10P","log10FDR","combinedRank.var")
+		}
 	} else {
 		res <- c(paste("mean.mean",name.g1,sep="."),paste("mean.mean",name.g2,sep="."),
 				"mean.mean.diff","mean.mean.quot.log2",
@@ -1772,6 +1870,11 @@ get.diffmeth.tab.annot.colnames.pretty <- function(target, name.g1, name.g2, inc
 			res <- c(res,c(paste("mean.mean.covg",name.g1,sep="."),paste("mean.mean.covg",name.g2,sep="."),
 										   paste("mean.nsamples.covg",paste("thres",covgThres,sep=""),name.g1,sep="."),
 										   paste("mean.nsamples.covg",paste("thres",covgThres,sep=""),name.g2,sep=".")))
+		}
+		if(hasVariability){
+		  res <- c(res,
+		           paste("mean.var",name.g1,sep="."),paste("mean.var",name.g2,sep="."),"mean.var.diff",
+		           "mean.var.log.ratio","comb.p.val.var","comb.p.adj.var.fdr","combinedRank.var")
 		}
 	}
 	return(res)
@@ -1916,12 +2019,13 @@ rnb.section.diffMeth.site <- function(rnbSet,diffmeth,report,gzTable=FALSE){
 	logger.completed()
 	logger.start("Adding tables")
 	includeCovg <- hasCovg(rnbSet)
+	hasVariability <- rnb.getOption("differential.variability")
 	
 	sectionText <- c("A tabular overview of measures for differential methylation on the site level for the individual comparisons are provided in this section.
 					  Below, a brief explanation of the different columns can be found:")
 	report <- rnb.add.section(report, "Differential Methylation Tables", sectionText, level = 2)
 
-	sectionColDescList <- get.diffmeth.tab.col.desc.list.txt("sites", includeCovg, covgThres=get.covg.thres(diffmeth), skipSites=FALSE)
+	sectionColDescList <- get.diffmeth.tab.col.desc.list.txt("sites", includeCovg, hasVariability,covgThres=get.covg.thres(diffmeth), skipSites=FALSE)
 	rnb.add.list(report, sectionColDescList)
 	
 
@@ -1936,8 +2040,8 @@ rnb.section.diffMeth.site <- function(rnbSet,diffmeth,report,gzTable=FALSE){
 	for (i in 1:length(comps)){
 		cc <- comps[i]
 		
-		annot.vec <- get.diffmeth.tab.annot.cols("sites", includeCovg)
-		colname.vec <- get.diffmeth.tab.annot.colnames.pretty("sites", grp.names[i,1], grp.names[i,2], includeCovg, covgThres=get.covg.thres(diffmeth), skipSites=FALSE)
+		annot.vec <- get.diffmeth.tab.annot.cols("sites", includeCovg, hasVariability)
+		colname.vec <- get.diffmeth.tab.annot.colnames.pretty("sites", grp.names[i,1], grp.names[i,2], includeCovg, hasVariability, covgThres=get.covg.thres(diffmeth), skipSites=FALSE)
 		dmt <- get.table(diffmeth,cc,"sites",return.data.frame=TRUE)[,annot.vec]		
 		colnames(dmt) <- colname.vec
 		dmt <- cbind(rownames(dmt),sites.info,dmt)
@@ -1955,6 +2059,9 @@ rnb.section.diffMeth.site <- function(rnbSet,diffmeth,report,gzTable=FALSE){
 	logger.completed()
 	
 	logger.completed()
+	if(rnb.getOption("differential.variability")){
+	  report <- rnb.section.diffVar(rnbSet,diffmeth,report,gzTable=gzTable,level=2)
+	}
 	return(report)
 }
 
@@ -1965,10 +2072,12 @@ rnb.section.diffMeth.site <- function(rnbSet,diffmeth,report,gzTable=FALSE){
 ### @aliases rnb.section.diffMeth.region
 ### @param diffmeth RnBDiffMeth object. See \code{\link{RnBDiffMeth-class}} for details.
 ### @param report report object to which the content is added
-### @param dm.enrich If enrichment analysis reports are desired this argument should not be \code{NULL} (which is the default value
-###                  it should be an object of type \code{DiffMeth.enrich} (see \code{performEnrichment.diffMeth()} for details)
+### @param dm.go.enrich If GO enrichment analysis reports are desired this argument should not be \code{NULL} (which is the default value
+###                  it should be an object of type \code{DiffMeth.go.enrich} (see \code{performGoEnrichment.diffMeth()} for details)
+### @param dm.lola.enrich If LOLA enrichment analysis reports are desired this argument should not be \code{NULL} (which is the default value
+###                  it should be an object of type \code{DiffMeth.lola.enrich} (see \code{performLolaEnrichment.diffMeth()} for details)
 ### @return the updated report object
-rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gzTable=FALSE){
+rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.go.enrich=NULL,dm.lola.enrich=NULL,gzTable=FALSE){
 	if (length(get.comparisons(diffmeth))<1){
 		stop("no valid comparisons")
 	}
@@ -2140,11 +2249,12 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 
 	logger.start("Adding tables")
 	includeCovg <- hasCovg(rnbSet)
+	hasVariability <- rnb.getOption("differential.variability")
 	sectionText <- c("A tabular overview of measures for differential methylation on the region level for the ",
 		"individual comparisons are provided in this section.")
 	report <- rnb.add.section(report, "Differential Methylation Tables", sectionText, level = 2)
 	#TODO: change section text when sites are skipped
-	sectionColDescList <- get.diffmeth.tab.col.desc.list.txt("regions", includeCovg, covgThres=get.covg.thres(diffmeth), comb.p.ref.txt=rnb.get.reference(report, refText), skipSites=skipSites)
+	sectionColDescList <- get.diffmeth.tab.col.desc.list.txt("regions", includeCovg, hasVariability, covgThres=get.covg.thres(diffmeth), comb.p.ref.txt=rnb.get.reference(report, refText), skipSites=skipSites)
 	rnb.add.list(report, sectionColDescList)
 
 	sectionText <- "The tables for the individual comparisons can be found here:"
@@ -2164,8 +2274,8 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 			region.info.cols.cur <- intersect(region.info.cols,colnames(reg.info))
 			reg.info <- reg.info[,region.info.cols.cur]
 			
-			annot.vec <- get.diffmeth.tab.annot.cols("regions", includeCovg, skipSites=skipSites)
-			colname.vec <- get.diffmeth.tab.annot.colnames.pretty("regions", grp.labels[ic,1], grp.labels[ic,2], includeCovg, covgThres=get.covg.thres(diffmeth), skipSites=skipSites)
+			annot.vec <- get.diffmeth.tab.annot.cols("regions", includeCovg, hasVariability, skipSites=skipSites)
+			colname.vec <- get.diffmeth.tab.annot.colnames.pretty("regions", grp.labels[ic,1], grp.labels[ic,2], includeCovg, hasVariability, covgThres=get.covg.thres(diffmeth), skipSites=skipSites)
 			
 			dmt <- get.table(diffmeth,cc,rr,return.data.frame=TRUE)[,annot.vec]
 			colnames(dmt) <- colname.vec
@@ -2184,17 +2294,27 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 	rnb.add.table(report,file.tab)
 	logger.completed()
 	
-	sectionText <- "No Enrichment Analysis was conducted"
-	if (class(dm.enrich)=="DiffMeth.enrich" & length(dm.enrich$region)>0){
-		sectionText <- "Enrichment Analysis was conducted. The wordclouds and tables below contains significant GO terms as determined by a hypergeometric test."
+	if(rnb.getOption("differential.variability")){
+	  report <- rnb.section.diffVar.region(rnbSet,diffmeth,report,gzTable=gzTable,level=2)
 	}
-	report <- rnb.add.section(report, 'Enrichment Analysis', sectionText, level = 2)
-	if (class(dm.enrich)=="DiffMeth.enrich" && length(dm.enrich$region)>0){
-		logger.start("Adding enrichment analysis results")
-		require(annotate)
-		comps <- names(dm.enrich$region)
+	
+	sectionText <- "No GO Enrichment Analysis was conducted"
+	if (class(dm.go.enrich)=="DiffMeth.go.enrich" & length(dm.go.enrich$region)>0){
+		refText.gostats <- c("Falcon, S., & Gentleman, R. (2007). Using GOstats to test gene lists for GO term association. <i>Bioinformatics</i>, <b>23</b>(2), 257-258")
+		report <- rnb.add.reference(report, refText.gostats)
+		sectionText <- c(
+			"GO Enrichment Analysis was conducted using a hypergeometric test that addresses the hierarchical structure of the ontology ",
+			"(see ", rnb.get.reference(report, refText.gostats), " for details). ",
+			"The wordclouds and tables below contain significant GO terms according to these tests."
+		)
+	}
+	report <- rnb.add.section(report, 'GO Enrichment Analysis', sectionText, level = 2)
+	if (class(dm.go.enrich)=="DiffMeth.go.enrich" && length(dm.go.enrich$region)>0){
+		logger.start("Adding GO enrichment analysis results")
+		rnb.require("annotate")
+		comps <- names(dm.go.enrich$region)
 		names(comps) <- paste("comp",1:length(comps),sep="")
-		ontol <- names(dm.enrich$region[[1]])
+		ontol <- names(dm.go.enrich$region[[1]])
 		names(ontol) <- paste("ontol",1:length(ontol),sep="")
 		names(reg.types) <- paste("reg",1:length(reg.types),sep="")
 		hyper.hypo <- c("hypermethylated","hypomethylated")
@@ -2206,26 +2326,26 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 		}
 		rank.cuts <- paste("combined rank among the ",diffRegionRankCut," best ranking regions",sep="")
 		rank.cuts <- c(rank.cuts,paste("automatically selected rank cutoff"))
-		rank.cuts.names.dm.enrich <-  paste("rankCut_",c(diffRegionRankCut,"autoSelect"),sep="")
+		rank.cuts.names.dm.go.enrich <-  paste("rankCut_",c(diffRegionRankCut,"autoSelect"),sep="")
 		names(rank.cuts) <- c(paste("rc",1:length(diffRegionRankCut),sep=""),"rcAuto")
-		names(rank.cuts.names.dm.enrich) <- c(paste("rc",1:length(diffRegionRankCut),sep=""),"rcAuto")
+		names(rank.cuts.names.dm.go.enrich) <- c(paste("rc",1:length(diffRegionRankCut),sep=""),"rcAuto")
 		setting.names <- list(
 				'comparison' = comps,
 				'Hypermethylation/hypomethylation' = hyper.hypo,
 				'ontology' = ontol,
 				'regions' = reg.types,
 				'differential methylation measure' = rank.cuts)
-
+		
 		colnames2round <- c("Pvalue","OddsRatio","ExpCount")
 		do.enrichment.table <- function(ccn,hhn,oon,rrn,rcn){
-			require(Category)
+			rnb.require("Category")
 			cc <- comps[ccn]
 			hh <- hyper.hypo[hhn]
 			oo <- ontol[oon]
 			rr <- reg.types[rrn]
-			rc <- rank.cuts.names.dm.enrich[rcn]
+			rc <- rank.cuts.names.dm.go.enrich[rcn]
 
-			ee <- dm.enrich$region[[cc]][[oo]][[rr]][[rc]][[hhn]]
+			ee <- dm.go.enrich$region[[cc]][[oo]][[rr]][[rc]][[hhn]]
 			kk <- paste(c(ccn,hhn,oon,rrn,rcn),collapse="_")
 			if (!is.null(ee)){
 				if (length(sigCategories(ee))>0){
@@ -2240,19 +2360,56 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 			}
 			return(tt)
 		}
+		do.enrichment.table.var <- function(ccn,hhn,oon,rrn,rcn){
+		  rnb.require("Category")
+		  cc <- comps[ccn]
+		  hh <- hyper.hypo[hhn]
+		  oo <- ontol[oon]
+		  rr <- reg.types[rrn]
+		  rc <- rank.cuts.names.dm.go.enrich[rcn]
+		  
+		  ee <- dm.go.enrich$region_var[[cc]][[oo]][[rr]][[rc]][[hhn]]
+		  kk <- paste(c("var",ccn,hhn,oon,rrn,rcn),collapse="_")
+		  if (!is.null(ee)){
+		    if (length(sigCategories(ee))>0){
+		      tt <- robustHyperGResultSummary(ee,htmlLinks=TRUE)
+		      tt[,colnames2round] <- round(tt[,colnames2round],4)
+		    }
+		    else {
+		      tt <- data.frame("NA"=NA)
+		    }
+		  } else {
+		    tt <- data.frame("NA"=NA)
+		  }
+		  return(tt)
+		}
 		do.enrichment.wordcloud <- function(ccn,hhn,oon,rrn,rcn){
 			cc <- comps[ccn]
 			hh <- hyper.hypo[hhn]
 			oo <- ontol[oon]
 			rr <- reg.types[rrn]
-			rc <- rank.cuts.names.dm.enrich[rcn]
+			rc <- rank.cuts.names.dm.go.enrich[rcn]
 
-			ee <- dm.enrich$region[[cc]][[oo]][[rr]][[rc]][[hhn]]
+			ee <- dm.go.enrich$region[[cc]][[oo]][[rr]][[rc]][[hhn]]
 							
 			kk <- paste(c(ccn,hhn,oon,rrn,rcn),collapse="_")
 			figName <- paste("enrichGOwordcloud_",kk,sep="")
 			report.plot <- addReportPlots.diffMeth.enrich.GO.wordcloud(report,ee,figName)
 			return(report.plot)
+		}
+		do.enrichment.wordcloud.var <- function(ccn,hhn,oon,rrn,rcn){
+		  cc <- comps[ccn]
+		  hh <- hyper.hypo[hhn]
+		  oo <- ontol[oon]
+		  rr <- reg.types[rrn]
+		  rc <- rank.cuts.names.dm.go.enrich[rcn]
+		  
+		  ee <- dm.go.enrich$region_var[[cc]][[oo]][[rr]][[rc]][[hhn]]
+		  
+		  kk <- paste(c(ccn,hhn,oon,rrn,rcn),collapse="_")
+		  figName <- paste("enrichGOwordcloudVar_",kk,sep="")
+		  report.plot <- addReportPlots.diffMeth.enrich.GO.wordcloud(report,ee,figName)
+		  return(report.plot)
 		}
 
 		#generate tuples of parameter combinations
@@ -2269,16 +2426,239 @@ rnb.section.diffMeth.region <- function(rnbSet,diffmeth,report,dm.enrich=NULL,gz
 
 		})
 		names(addedPlots) <- kks
-
+		
 		description <- "Wordclouds for GO enrichment terms."
 		report <- rnb.add.figure(report, description, addedPlots, setting.names)
 		report <- rnb.add.tables(report, tabs2write, setting.names, row.names = FALSE)
+		if(is.element("region_var",names(dm.go.enrich))){
+		  tabs2write.var <- lapply(1:nrow(pps),FUN=function(k){
+		    do.enrichment.table.var(pps[k,1],pps[k,2],pps[k,3],pps[k,4],pps[k,5])
+		    
+		  })
+		  kks <- paste(kks,sep = "_")
+		  names(tabs2write.var) <- kks
+		  addedPlots.var <- lapply(1:nrow(pps),FUN=function(k){
+		    do.enrichment.wordcloud.var(pps[k,1],pps[k,2],pps[k,3],pps[k,4],pps[k,5])
+		    
+		  })
+		  names(addedPlots) <- kks
+		  
+		  hyper.hypo <- c("hypervariable","hypovariable")
+		  names(hyper.hypo) <- c("hyper","hypo")
+		  setting.names$'Hypermethylation/hypomethylation' <- hyper.hypo
+		  sec.text <- "GO enrichment analysis was also performed for differentially variable regions (see differential methylation section for details on the methods)."
+		  report <- rnb.add.section(report, title = "Differential Variability",description = sec.text,level = 3)
+		  description <- "Workclouds for GO enrichment terms (Differential Variability)"
+		  report <- rnb.add.figure(report,description,addedPlots.var,setting.names)
+		  report <- rnb.add.tables(report,tabs2write.var,setting.names,row.names = FALSE)
+		}
+		logger.completed()
+	}
+
+	sectionText <- "No LOLA Enrichment Analysis was conducted"
+	lolaDone <- class(dm.lola.enrich)=="DiffMeth.lola.enrich" && length(dm.lola.enrich$region)>0
+	if (lolaDone){
+		refText.lola <- c("Sheffield, N. C., & Bock, C. (2016). LOLA: enrichment analysis for genomic region sets and regulatory elements in R and Bioconductor. ",
+			"<i>Bioinformatics</i>, <b>32</b>(4), 587-589")
+		report <- rnb.add.reference(report, refText.lola)
+		sectionText <- c("LOLA Enrichment Analysis ", rnb.get.reference(report, refText.lola),
+		 " was conducted. The plots and tables below show enrichments across annotations in the supplied LOLA ",
+		 "reference databases for the following collections:"
+		)
+	}
+	report <- rnb.add.section(report, 'LOLA Enrichment Analysis', sectionText, level = 2)
+	if (lolaDone){
+		logger.start("Adding LOLA enrichment analysis results")
+		lolaDb <- dm.lola.enrich$lolaDb
+		rnb.add.list(report, as.list(lolaDb$collectionAnno[["collectionname"]]))
+
+		comps <- names(dm.lola.enrich$region)
+		names(comps) <- paste("comp",1:length(comps),sep="")
+		reg.types <- get.region.types(diffmeth)
+		names(reg.types) <- paste("reg",1:length(reg.types),sep="")
+		hyper.hypo <- c("hypermethylated","hypomethylated")
+		names(hyper.hypo) <- c("hyper","hypo")
+
+		rank.cuts <- paste("combined rank among the ",diffRegionRankCut," best ranking regions",sep="")
+		rank.cuts <- c(rank.cuts,paste("automatically selected rank cutoff"))
+		rank.cuts.names.dm.lola.enrich <-  paste("rankCut_",c(diffRegionRankCut,"autoSelect"),sep="")
+		names(rank.cuts) <- c(paste("rc",1:length(diffRegionRankCut),sep=""),"rcAuto")
+		names(rank.cuts.names.dm.lola.enrich) <- c(paste("rc",1:length(diffRegionRankCut),sep=""),"rcAuto")
+		setting.names <- list(
+				'comparison' = comps,
+				'Hypermethylation/hypomethylation' = hyper.hypo,
+				'regions' = reg.types,
+				'differential methylation measure' = rank.cuts)
+		
+		lolaTargets <- sort(unique(getTargetFromLolaDb(lolaDb)))
+		targetColors <- sample(rainbow(length(lolaTargets), v=0.5))
+		names(targetColors) <- lolaTargets
+
+		collectionNames <- unique(lolaDb$collectionAnno[["collectionname"]])
+		collectionColors <- rep(rnb.getOption("colors.category"), length.out=length(collectionNames))
+		names(collectionColors) <- collectionNames
+
+		volcano.colorBy <- c("maxRnk"="combined LOLA rank", "target"="target", "collection"="LOLA DB collection")
+		setting.names.volcano <- c(setting.names, list('color'=volcano.colorBy))
+
+		lolaVolcanoPlots <- list()
+		lolaBarPlots <- list()
+		lolaBoxPlots <- list()
+		lolaVolcanoPlots.var <- list()
+		lolaBarPlots.var <- list()
+		lolaBoxPlots.var <- list()
+		for (ccn in names(comps)){
+			cc <- comps[ccn]
+			for (rrn in names(reg.types)){
+				rr <- reg.types[rrn]
+				dmRes <- dm.lola.enrich$region[[cc]][[rr]]
+				for (rcn in names(rank.cuts.names.dm.lola.enrich)){
+					rc <- rank.cuts.names.dm.lola.enrich[rcn]
+					# dmTab.hh <- dmRes[grepl(paste0("^", rc), dmRes[["userSet"]]),]
+					for (hhn in names(hyper.hypo)){
+						hh <- hyper.hypo[hhn]
+						kk <- paste(c(ccn,hhn,rrn,rcn),collapse="_")
+						dmTab <- dmRes[dmRes[["userSet"]]==paste(rc, hhn, sep="_"),]
+						# print(dmTab)
+
+						for (vcbn in names(volcano.colorBy)){
+							kkk <- paste(kk, vcbn, sep="_")
+							figName <- paste("lolaVolcano_", kkk, sep="")
+							cpanel <- c()
+							if (vcbn == "target")     cpanel <- targetColors
+							if (vcbn == "collection") cpanel <- collectionColors
+							pp <- tryCatch(
+								lolaVolcanoPlot(lolaDb, dmTab, signifCol="qValue", colorBy=vcbn, colorpanel=cpanel),
+								error = function(e) {
+									logger.warning(c("Plotting error:", e$message))
+									rnb.message.plot("Plotting error")
+								}
+							)
+							if (vcbn == "target") pp <- pp + guides(color=FALSE)
+							rPlot <- createReportGgPlot(pp, figName, report, create.pdf=FALSE, high.png=200)
+							lolaVolcanoPlots[[kkk]] <- off(rPlot, handle.errors=TRUE)
+						}
+						
+
+						figName <- paste("lolaBox_", kk, sep="")
+						pp <- tryCatch(
+							lolaBoxPlotPerTarget(lolaDb, dmTab, scoreCol="oddsRatio", orderCol="maxRnk", pvalCut=0.01, colorpanel=targetColors, maxTerms=100),
+							error = function(e) {
+								logger.warning(c("Plotting error:", e$message))
+								rnb.message.plot("Plotting error")
+							}
+						)
+						rPlot <- createReportGgPlot(pp, figName, report, create.pdf=TRUE, width=20, height=5)
+						# lolaBoxPlots[[kk]] <- off(rPlot, handle.errors=TRUE)
+						lolaBoxPlots[[kk]] <- suppressMessages(off(rPlot, handle.errors=TRUE))
+
+						figName <- paste("lolaBar_", kk, sep="")
+						pp <- tryCatch(
+							lolaBarPlot(lolaDb, dmTab, scoreCol="oddsRatio", orderCol="maxRnk", pvalCut=0.01, colorpanel=targetColors, maxTerms=100),
+							error = function(e) {
+								logger.warning(c("Plotting error:", e$message))
+								rnb.message.plot("Plotting error")
+							}
+						)
+						rPlot <- createReportGgPlot(pp, figName, report, create.pdf=TRUE, width=20, height=5)
+						lolaBarPlots[[kk]] <- off(rPlot, handle.errors=TRUE)
+					}
+				}
+				if(is.element("region_var",names(dm.lola.enrich))){
+				  dmRes <- dm.lola.enrich$region_var[[cc]][[rr]]
+  				for (rcn in names(rank.cuts.names.dm.lola.enrich)){
+  				  rc <- rank.cuts.names.dm.lola.enrich[rcn]
+  				  for (hhn in names(hyper.hypo)){
+  				    hh <- hyper.hypo[hhn]
+  				    kk <- paste(c(ccn,hhn,rrn,rcn),collapse="_")
+  				    dmTab <- dmRes[dmRes[["userSet"]]==paste(rc, hhn, sep="_"),]
+
+  				    for (vcbn in names(volcano.colorBy)){
+  				      kkk <- paste(kk, vcbn, sep="_")
+  				      figName <- paste("lolaVolcanoVar_", kkk, sep="")
+  				      cpanel <- c()
+  				      if (vcbn == "target")     cpanel <- targetColors
+  				      if (vcbn == "collection") cpanel <- collectionColors
+  				      pp <- tryCatch(
+  				      	lolaVolcanoPlot(lolaDb, dmTab, signifCol="qValue", colorBy=vcbn, colorpanel=cpanel),
+  				      	error = function(e) {
+  				      		logger.warning(c("Plotting error:", e$message))
+  				      		rnb.message.plot("Plotting error")
+  				      	}
+  				      )
+  				      if (vcbn == "target") pp <- pp + guides(color=FALSE)
+  				      rPlot <- createReportGgPlot(pp, figName, report, create.pdf=FALSE, high.png=200)
+  				      lolaVolcanoPlots.var[[kkk]] <- off(rPlot, handle.errors=TRUE)
+  				    }
+  				    
+  				    
+  				    figName <- paste("lolaBoxVar_", kk, sep="")
+  				    pp <- tryCatch(
+  				    	lolaBoxPlotPerTarget(lolaDb, dmTab, scoreCol="oddsRatio", orderCol="maxRnk", pvalCut=0.01, colorpanel=targetColors, maxTerms=100),
+  				    	error = function(e) {
+  				    		logger.warning(c("Plotting error:", e$message))
+  				    		rnb.message.plot("Plotting error")
+  				    	}
+  				    )
+  				    rPlot <- createReportGgPlot(pp, figName, report, create.pdf=TRUE, width=20, height=5)
+  				    lolaBoxPlots.var[[kk]] <- suppressMessages(off(rPlot, handle.errors=TRUE))
+  				    
+  				    figName <- paste("lolaBarVar_", kk, sep="")
+  				    pp <- tryCatch(
+  				    	lolaBarPlot(lolaDb, dmTab, scoreCol="oddsRatio", orderCol="maxRnk", pvalCut=0.01, colorpanel=targetColors, maxTerms=100),
+  				    	error = function(e) {
+  				    		logger.warning(c("Plotting error:", e$message))
+  				    		rnb.message.plot("Plotting error")
+  				    	}
+  				    )
+  				    rPlot <- createReportGgPlot(pp, figName, report, create.pdf=TRUE, width=20, height=5)
+  				    lolaBarPlots.var[[kk]] <- off(rPlot, handle.errors=TRUE)
+  				  }
+  				}
+				}
+			}
+		}
+
+		desc <- c(
+			"Scatter plot showing the effect size (log-odds ratio) vs. the significance (-log10(q-value)), similar to a 'volcano plot' ",
+			"as it is called in other contexts."
+		)
+		report <- rnb.add.figure(report, desc, lolaVolcanoPlots, setting.names.volcano)
+		
+		desc <- c(
+			"Boxplots showing log-odds ratios from LOLA enrichment analysis. Shown are those groups of terms  per category ",
+			"that share the same putative target. Only terms that exhibit statistical significance (p-value < 0.01) are included. ",
+			"If more than 100 terms are enriched, the 100 terms receiving the highest joined ",
+			"LOLA ranks are shown. Coloring of the bars reflects the putative targets of the terms."
+		)
+		report <- rnb.add.figure(report, desc, lolaBoxPlots, setting.names)
+
+		desc <- c(
+			"Barplots showing log-odds ratios from LOLA enrichment analysis. Shown are those terms that exhibit statistical ",
+			"significance (p-value < 0.01). If more than 100 terms are enriched, the 100 terms receiving the highest joined ",
+			"LOLA ranks are shown. Coloring of the bars reflects the putative targets of the terms."
+		)
+		report <- rnb.add.figure(report, desc, lolaBarPlots, setting.names)
+
+		if(rnb.getOption("differential.variability") && is.element("region_var",names(dm.lola.enrich))){
+		  hyper.hypo <- c("hypervariable","hypovariable")
+		  names(hyper.hypo) <- c("hyper","hypo")
+		  setting.names.volcano$'Hypermethylation/hypomethylation' <- hyper.hypo
+		  setting.names$'Hypermethylation/hypomethylation' <- hyper.hypo
+		  sec.text <- "LOLA enrichment analysis was also conducted for differentially variable regions."
+		  report <- rnb.add.section(report = report, title = "Differential Variability",description = sec.text,level = 3)
+		  report <- rnb.add.figure(report,desc,lolaVolcanoPlots.var,setting.names.volcano)
+		  report <- rnb.add.figure(report,desc,lolaBoxPlots.var,setting.names)
+		  report <- rnb.add.figure(report,desc,lolaBarPlots.var,setting.names)
+		}
+		
 		logger.completed()
 	}
 	
 	logger.completed()
 	return(report)
 }
+
 #' get.adjustment.variables
 #'
 #' Given indices for two groups of samples for comparison, this function
@@ -2661,9 +3041,13 @@ rnb.execute.computeDiffMeth <- function(x,pheno.cols,region.types=rnb.region.typ
 	}
 
 	diff.method <- rnb.getOption("differential.site.test.method")
+	variability.method <- rnb.getOption("differential.variability.method")
 	dot.args <- list(...)
 	if (is.element("diff.method",names(dot.args))){
 		diff.method <- dot.args[["diff.method"]]
+	}
+	if(is.element("variability.method",names(dot.args))){
+	  variability.method <- dot.args[["variability.method"]]
 	}
 	logger.start("Computing differential methylation tables")
 
@@ -2684,6 +3068,7 @@ rnb.execute.computeDiffMeth <- function(x,pheno.cols,region.types=rnb.region.typ
 					meth(x),inds.g1=cmp.info.cur$group.inds$group1,inds.g2=cmp.info.cur$group.inds$group2,
 					covg=covg(x),covg.thres=covg.thres,
 					paired=cmp.info.cur$paired, adjustment.table=cmp.info.cur$adjustment.table,
+					imputed=isImputed(x),
 					...
 			)
 			diffmeth <- addDiffMethTable(diffmeth,dm,cmp.info.cur$comparison,"sites",cmp.info.cur$group.names)

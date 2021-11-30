@@ -4,17 +4,19 @@
 \alias{rnb.plot.snp.boxplot}
 \title{rnb.plot.snp.boxplot}
 \usage{
-rnb.plot.snp.boxplot(rnb.set, writeToFile = FALSE, ...)
+rnb.plot.snp.boxplot(dataset, writeToFile = FALSE, ...)
 }
 \arguments{
-\item{rnb.set}{\code{\linkS4class{RnBeadSet}} object}
+\item{dataset}{Dataset as an object of type inheriting \code{\linkS4class{RnBeadSet}}, or a matrix of
+methylation beta values.}
 
-\item{writeToFile}{a flag specifying whether the output should be saved as \code{\linkS4class{ReportPlot}}}
+\item{writeToFile}{Flag specifying whether the output should be saved as \code{\linkS4class{ReportPlot}}.}
 
-\item{...}{other arguments to \code{\link{createReportPlot}}
-
- @return plot as an object of type \code{\linkS4class{ReportPlot}} if \code{writeToFile} is \code{TRUE} and of class
-            \code{\link{ggplot}} otherwise.}
+\item{...}{Additional named arguments passed to \code{\link{createReportPlot}}.}
+}
+\value{
+If \code{writeToFile} is \code{TRUE}: plot as an object of type \code{\linkS4class{ReportPlot}}. Otherwise:
+        plot as an object of type \code{\link{ggplot}}.
 }
 \description{
 Box plots of beta-values from the genotyping probes
@@ -29,4 +31,3 @@ rnb.plot.snp.boxplot(rnb.set.example)
 \author{
 Pavlo Lutsik
 }
-

@@ -20,4 +20,3 @@ Enables one of the pre-installed anlaysis option profiles.
 \author{
 Pavlo Lutsik
 }
-

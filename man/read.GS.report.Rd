@@ -4,9 +4,13 @@
 \alias{read.GS.report}
 \title{read.GS.report}
 \usage{
-read.GS.report(gsReportFile, pd = NULL,
-  sep = rnb.getOption("import.table.separator"), keep.methylumi = FALSE,
-  verbose = TRUE)
+read.GS.report(
+  gsReportFile,
+  pd = NULL,
+  sep = rnb.getOption("import.table.separator"),
+  keep.methylumi = FALSE,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{gsReportFile}{location of the GS report file}
@@ -30,4 +34,3 @@ MethylumiSet object with the data from the report
 \description{
 Reads in a Genome Studio report, exported as a single file.
 }
-

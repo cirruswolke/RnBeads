@@ -4,9 +4,16 @@
 \alias{refFreeEWASP}
 \title{refFreeEWASP}
 \usage{
-refFreeEWASP(X, inds.g1, inds.g2 = -inds.g1, adjustment.table = NULL,
-  paired = FALSE, nboot = 100, ignore.na = TRUE,
-  rescale.residual = TRUE)
+refFreeEWASP(
+  X,
+  inds.g1,
+  inds.g2 = -inds.g1,
+  adjustment.table = NULL,
+  paired = FALSE,
+  nboot = 100,
+  ignore.na = TRUE,
+  rescale.residual = TRUE
+)
 }
 \arguments{
 \item{X}{Matrix on which the test is performed for every row}
@@ -36,11 +43,10 @@ returns corrected p-values
 \note{
 Requires the package \pkg{RefFreeEWAS}.
 }
-\author{
-Pavlo Lutsik
-}
 \references{
 1. Houseman, E. Andres, John Molitor, and Carmen J. Marsit. "Reference-Free Cell Mixture Adjustments in Analysis of DNA Methylation Data." 
 Bioinformatics (2014): btu029.
 }
-
+\author{
+Pavlo Lutsik
+}

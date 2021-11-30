@@ -4,8 +4,14 @@
 \alias{logger.argument}
 \title{logger.argument}
 \usage{
-logger.argument(arg.names, full.name, arg.type = "character",
-  accepted.values = NULL, default = NULL, arg.list = commandArgs())
+logger.argument(
+  arg.names,
+  full.name,
+  arg.type = "character",
+  accepted.values = NULL,
+  default = NULL,
+  arg.list = commandArgs()
+)
 }
 \arguments{
 \item{arg.names}{\code{character} vector of acceptable argument names. This function scans the provided
@@ -50,4 +56,3 @@ logger.close()
 \author{
 Yassen Assenov
 }
-

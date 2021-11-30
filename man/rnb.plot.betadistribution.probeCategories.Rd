@@ -4,9 +4,14 @@
 \alias{rnb.plot.betadistribution.probeCategories}
 \title{rnb.plot.betadistribution.probeCategories}
 \usage{
-rnb.plot.betadistribution.probeCategories(beta.matrix, probe.cat,
-  annotation = "Group", color.legend = NULL, log.str = NULL,
-  points.per.group = rnb.getOption("distribution.subsample"))
+rnb.plot.betadistribution.probeCategories(
+  beta.matrix,
+  probe.cat,
+  annotation = "Group",
+  color.legend = NULL,
+  log.str = NULL,
+  points.per.group = rnb.getOption("distribution.subsample")
+)
 }
 \arguments{
 \item{beta.matrix}{Beta values in the form of a non-empty \code{matrix} of type \code{double}. Rows in this matrix
@@ -42,10 +47,9 @@ probe.types <- annotation(rnb.set.example)[, "Design"]
 rnb.plot.betadistribution.probeCategories(meth.mat,probe.types,annotation="Infinium probe type")
 }
 }
-\author{
-Fabian Mueller
-}
 \seealso{
 rnb.plot.betadistribution.sampleGroups
 }
-
+\author{
+Fabian Mueller
+}

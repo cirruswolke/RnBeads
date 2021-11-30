@@ -4,8 +4,14 @@
 \alias{createReport}
 \title{createReport}
 \usage{
-createReport(fname, title, page.title = "RnBeads report", authors = NULL,
-  dirs = NULL, init.configuration = FALSE)
+createReport(
+  fname,
+  title,
+  page.title = "RnBeads report",
+  authors = NULL,
+  dirs = NULL,
+  init.configuration = FALSE
+)
 }
 \arguments{
 \item{fname}{Single-element \code{character} vector denoting the name of the file to contain the HTML
@@ -77,10 +83,9 @@ Thus, all supporting directories that already exist and contain hidden files onl
 report <- createReport("example.html", "Example", init.configuration = TRUE)
 }
 }
-\author{
-Yassen Assenov
-}
 \seealso{
 \code{\linkS4class{Report}} for functions adding contents to an HTML report
 }
-
+\author{
+Yassen Assenov
+}

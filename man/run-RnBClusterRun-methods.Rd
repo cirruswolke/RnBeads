@@ -2,15 +2,22 @@
 % Please edit documentation in R/computeCluster.R
 \docType{methods}
 \name{run,RnBClusterRun-method}
-\alias{run}
 \alias{run,RnBClusterRun-method}
+\alias{run}
 \title{run-methods}
 \usage{
-\S4method{run}{RnBClusterRun}(rnb.cr, analysis.id, config.xml,
-  split.differential = TRUE, dry.run = FALSE, long.cmd.thres = 1024L)
+\S4method{run}{RnBClusterRun}(
+  object,
+  analysis.id,
+  config.xml,
+  split.differential = TRUE,
+  dry.run = FALSE,
+  long.cmd.thres = 1024L,
+  queue = NULL
+)
 }
 \arguments{
-\item{rnb.cr}{\code{\linkS4class{RnBClusterRun}} object}
+\item{object}{\code{\linkS4class{RnBClusterRun}} object}
 
 \item{analysis.id}{analysis id. used for naming submitted jobs and log files}
 
@@ -23,6 +30,8 @@ into seperate jobs according to sample annotation column and region type.}
 
 \item{long.cmd.thres}{commands that are longer than this number will be encapsulated in shell scripts
 rather than being submitted as direct command}
+
+\item{queue}{The name of the queue the jobs are going to be submitted to}
 }
 \value{
 Nothing of importance
@@ -50,4 +59,3 @@ run(rnb.cr, "rnbeads_analysis", xml.file, dry.run=TRUE)
 \author{
 Fabian Mueller
 }
-

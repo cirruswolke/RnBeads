@@ -4,9 +4,14 @@
 \alias{rnb.plot.region.profiles}
 \title{rnb.plot.region.profiles}
 \usage{
-rnb.plot.region.profiles(rnb.set, group.index.list, region.type = "",
-  region.profile = NULL, extend.by = 0.33,
-  cvalues = rnb.getOption("colors.category"))
+rnb.plot.region.profiles(
+  rnb.set,
+  group.index.list,
+  region.type = "",
+  region.profile = NULL,
+  extend.by = 0.33,
+  cvalues = rnb.getOption("colors.category")
+)
 }
 \arguments{
 \item{rnb.set}{RnBSet object}
@@ -48,4 +53,3 @@ rnb.plot.region.profiles(rnb.set.example,rnb.sample.groups(rnb.set.example)[[1]]
 \author{
 Fabian Mueller
 }
-

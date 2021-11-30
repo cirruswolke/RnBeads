@@ -4,9 +4,12 @@
 \alias{rnb.execute.import}
 \title{rnb.execute.import}
 \usage{
-rnb.execute.import(data.source,
-  data.type = rnb.getOption("import.default.data.type"), dry.run = FALSE,
-  verbose = TRUE)
+rnb.execute.import(
+  data.source,
+  data.type = rnb.getOption("import.default.data.type"),
+  dry.run = FALSE,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{data.source}{non-empty \code{character} vector or \code{list} specifying the location of the data items. The
@@ -72,12 +75,11 @@ data.source <- c(idat.dir, sample.annotation)
 rnb.set <- rnb.execute.import(data.source = data.source, data.type = "idat.dir")
 }
 }
+\seealso{
+\code{\link{read.data.dir}}, \code{\link{read.idat.files}}, \code{\link{read.GS.report}},
+         \code{\link{rnb.read.geo}}, \code{\link{read.bed.files}}
+#'
+}
 \author{
 Pavlo Lutsik
 }
-\seealso{
-\code{\link{read.data.dir}}, \code{\link{read.idat.files}}, \code{\link{read.GS.report}},
-         \code{\link{read.geo}}, \code{\link{read.bed.files}}
-#'
-}
-

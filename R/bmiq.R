@@ -44,6 +44,10 @@
 #'           \item{\code{"th2"}}{Estimated thresholds used for type II probes.}
 #'         }
 #' 
+#' @description This function makes 3 indipendent attempts to fit a 3-state beta mixture model on the provided type I
+#'              probes. An attempt is successful if at least 4 probes are assigned to each level. In case all attempts
+#'              fail, the return value is \code{NULL}.
+#' 
 #' @author Andrew Teschendorff and Steve Horvath; with minor modifications by Yassen Assenov
 #' @export
 BMIQ <- function(beta.v,design.v,doH=TRUE,nfit=50000,th1.v=c(0.2,0.75),th2.v=NULL,niter=5,tol=0.001){
@@ -72,16 +76,26 @@ BMIQ <- function(beta.v,design.v,doH=TRUE,nfit=50000,th1.v=c(0.2,0.75),th2.v=NUL
 	}
 
 	### Fit type I
-	betam.v <- sample(beta1.v,nfit)
-	em1.o <- fit.blc(betam.v, th1.v)
-	subsetclass.v <- apply(em1.o$w,1,which.max)
-	i2 <- which(subsetclass.v==2L)
-	subsetth1.v <- c(
-		mean(c(max(betam.v[subsetclass.v==1L]),min(betam.v[i2]))),
-		mean(c(max(betam.v[i2]),min(betam.v[subsetclass.v==3L]))))
-	class1.v <- rep(2L,length(beta1.v))
-	class1.v[which(beta1.v < subsetth1.v[1])] <- 1L
-	class1.v[which(beta1.v > subsetth1.v[2])] <- 3L
+	lt <- 1L # number of attempts made to fit type I
+	repeat {
+		betam.v <- sample(beta1.v,nfit)
+		em1.o <- fit.blc(betam.v, th1.v)
+		subsetclass.v <- apply(em1.o$w,1,which.max)
+		i2 <- which(subsetclass.v==2L)
+		subsetth1.v <- c(
+			mean(c(max(betam.v[subsetclass.v==1L]),min(betam.v[i2]))),
+			mean(c(max(betam.v[i2]),min(betam.v[subsetclass.v==3L]))))
+		class1.v <- rep(2L,length(beta1.v))
+		class1.v[which(beta1.v < subsetth1.v[1])] <- 1L
+		class1.v[which(beta1.v > subsetth1.v[2])] <- 3L
+		if (all(tabulate(class1.v, 3L) > 3L)) {
+			break
+		}
+		if (lt == 3L) {
+			return(NULL)
+		}
+		lt <- lt + 1L
+	}
 
 	## Estimate modes
 	d1U.o <- density(beta1.v[class1.v==1L])
